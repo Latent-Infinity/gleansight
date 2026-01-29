@@ -1,0 +1,16 @@
+[data]
+root = "data"
+db_path = "data/db/app.sqlite"
+blobs_dir = "data/blobs"
+blobs_pdf_dir = "data/blobs/pdf"
+blobs_md_dir = "data/blobs/md"
+blobs_analysis_dir = "data/blobs/analysis"
+lancedb_dir = "data/lancedb"
+
+[embeddings]
+model = "sentence-transformers/all-MiniLM-L6-v2"
+dimension = 384
+text_slice_strategy = "markdown_full"
+
+[llm]
+default_profile = "default"
