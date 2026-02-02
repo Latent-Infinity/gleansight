@@ -27,6 +27,7 @@ def _settings(tmp_path: Path) -> Settings:
                 "text_slice_strategy": "markdown_full",
             },
             "llm": {"default_profile": "default"},
+            "scholar": {"api_key": "", "rate_limit_per_second": 10},
         }
     )
 

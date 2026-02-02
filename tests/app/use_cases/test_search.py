@@ -46,7 +46,9 @@ class FakeExtractionStore:
     """Fake extraction store for testing."""
 
     def __init__(self) -> None:
-        self.extractions: dict[str, list[dict[str, Any]]] = {}
+        self.extractions: dict[str, list[str]] = {}
+        self.counts: dict[str, dict[str, int]] = {}
+        self.averages: dict[str, float | dict[str, float] | None] = {}
 
     def query(
         self,
@@ -54,6 +56,7 @@ class FakeExtractionStore:
         *,
         prompt_version_id: str,
         constraints: dict[str, Any],
+        latest_only: bool = True,
     ) -> list[str]:
         """Return paper IDs matching constraints."""
         # Simplified fake - just return stored results
@@ -70,6 +73,54 @@ class FakeExtractionStore:
         """Set expected query result for testing."""
         key = f"{field_path}:{prompt_version_id}:{str(constraints)}"
         self.extractions[key] = paper_ids
+
+    def count_by_value(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        latest_only: bool = True,
+    ) -> dict[str, int]:
+        """Return counts by value."""
+        key = f"{field_path}:{prompt_version_id}"
+        return self.counts.get(key, {})
+
+    def set_count_result(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        counts: dict[str, int],
+    ) -> None:
+        """Set expected count result for testing."""
+        key = f"{field_path}:{prompt_version_id}"
+        self.counts[key] = counts
+
+    def average_numeric(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        group_by: str | None = None,
+        latest_only: bool = True,
+    ) -> float | dict[str, float] | None:
+        """Return average numeric value."""
+        if group_by:
+            key = f"{field_path}:{prompt_version_id}:{group_by}"
+        else:
+            key = f"{field_path}:{prompt_version_id}"
+        return self.averages.get(key)
+
+    def set_average_result(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        average: float | dict[str, float] | None,
+        group_by: str | None = None,
+    ) -> None:
+        """Set expected average result for testing."""
+        if group_by:
+            key = f"{field_path}:{prompt_version_id}:{group_by}"
+        else:
+            key = f"{field_path}:{prompt_version_id}"
+        self.averages[key] = average
 
 
 class FakeAnalysisRunStore:
@@ -311,23 +362,53 @@ class TestFilterByExtractionsUseCase:
 
         assert results == []
 
+    def test_filter_with_latest_only_false(self) -> None:
+        """Should pass latest_only=False to extraction store."""
+        extraction_store = FakeExtractionStore()
+        extraction_store.set_query_result(
+            field_path="algorithm_family",
+            prompt_version_id="pv1",
+            constraints={"value_text": "transformer"},
+            paper_ids=["p1", "p2"],
+        )
+
+        use_case = FilterByExtractionsUseCase(extraction_store=extraction_store)
+
+        results = use_case.filter(
+            field_path="algorithm_family",
+            prompt_version_id="pv1",
+            constraints={"value_text": "transformer"},
+            latest_only=False,
+        )
+
+        assert results == ["p1", "p2"]
+
 
 class TestAggregateExtractionsUseCase:
     """Test AggregateExtractionsUseCase."""
 
     def test_aggregate_count_by_field_value(self) -> None:
         """Should aggregate counts by field value."""
-        # This is a simplified fake - in reality this would query the database
-        use_case = AggregateExtractionsUseCase()
+        extraction_store = FakeExtractionStore()
+        extraction_store.set_count_result(
+            field_path="algorithm_family",
+            prompt_version_id="pv1",
+            counts={"transformer": 10, "cnn": 5, "rnn": 3},
+        )
 
-        # For now, just verify the interface exists
-        # Real implementation will query analysis_extractions table
-        assert hasattr(use_case, "count_by_value")
-        assert hasattr(use_case, "average_numeric")
+        use_case = AggregateExtractionsUseCase(extraction_store=extraction_store)
+
+        result = use_case.count_by_value(
+            field_path="algorithm_family",
+            prompt_version_id="pv1",
+        )
+
+        assert result == {"transformer": 10, "cnn": 5, "rnn": 3}
 
     def test_count_by_value_interface(self) -> None:
         """Should have count_by_value method."""
-        use_case = AggregateExtractionsUseCase()
+        extraction_store = FakeExtractionStore()
+        use_case = AggregateExtractionsUseCase(extraction_store=extraction_store)
 
         # Verify method signature
         result = use_case.count_by_value(
@@ -340,7 +421,14 @@ class TestAggregateExtractionsUseCase:
 
     def test_average_numeric_interface(self) -> None:
         """Should have average_numeric method."""
-        use_case = AggregateExtractionsUseCase()
+        extraction_store = FakeExtractionStore()
+        extraction_store.set_average_result(
+            field_path="rigor_rating",
+            prompt_version_id="pv1",
+            average=4.5,
+        )
+
+        use_case = AggregateExtractionsUseCase(extraction_store=extraction_store)
 
         # Verify method signature
         result = use_case.average_numeric(
@@ -349,5 +437,5 @@ class TestAggregateExtractionsUseCase:
             group_by=None,
         )
 
-        # Should return average or grouped averages
-        assert isinstance(result, (float, dict)) or result is None
+        # Should return average
+        assert result == 4.5

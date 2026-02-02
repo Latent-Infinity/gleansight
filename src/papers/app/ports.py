@@ -53,6 +53,8 @@ class JobQueue(Protocol):
 
     def is_cancelled(self, job_id: str) -> bool: ...
 
+    def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]: ...
+
 
 @runtime_checkable
 class PaperStore(Protocol):
@@ -94,6 +96,8 @@ class PaperStore(Protocol):
 
     def clear_pipeline_health_if_recovered(self, paper_id: str, job_type: str) -> None: ...
 
+    def list_papers_with_markdown(self) -> list[str]: ...
+
 
 @runtime_checkable
 class Extraction(Protocol):
@@ -128,7 +132,23 @@ class ExtractionStore(Protocol):
         *,
         prompt_version_id: str,
         constraints: dict[str, Any],
+        latest_only: bool = True,
     ) -> list[str]: ...
+
+    def count_by_value(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        latest_only: bool = True,
+    ) -> dict[str, int]: ...
+
+    def average_numeric(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        group_by: str | None = None,
+        latest_only: bool = True,
+    ) -> float | dict[str, float] | None: ...
 
 
 @runtime_checkable
@@ -155,6 +175,8 @@ class VectorIndex(Protocol):
     def upsert(self, paper_id: str, embedding: list[float]) -> None: ...
 
     def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]: ...
+
+    def reset(self) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -214,7 +236,17 @@ class ScholarClient(Protocol):
 
 @runtime_checkable
 class PromptStore(Protocol):
-    def create_prompt(self, prompt_id: str, name: str, created_at: str | None = None) -> None: ...
+    def create_prompt(
+        self,
+        prompt_id: str,
+        name: str,
+        description: str | None = None,
+        domain: str | None = None,
+        tags: list[str] | None = None,
+        created_at: str | None = None,
+    ) -> None: ...
+
+    def get_prompt(self, prompt_id: str) -> dict[str, Any] | None: ...
 
     def create_version(
         self,
@@ -272,3 +304,45 @@ class AnalysisRunStore(Protocol):
         profile_id: str,
         model_name: str,
     ) -> dict[str, Any] | None: ...
+
+
+@runtime_checkable
+class TagStore(Protocol):
+    def create_tag(
+        self, tag_id: str, name: str, tag_type: str, created_at: str | None = None
+    ) -> None: ...
+
+    def get(self, tag_id: str) -> dict[str, Any] | None: ...
+
+    def get_by_name(self, name: str) -> dict[str, Any] | None: ...
+
+
+@runtime_checkable
+class PaperTagStore(Protocol):
+    def is_attached(self, paper_id: str, tag_id: str) -> bool: ...
+
+    def attach(self, paper_id: str, tag_id: str, confidence: float | None = None) -> None: ...
+
+
+@runtime_checkable
+class ProjectStore(Protocol):
+    def create_project(
+        self,
+        project_id: str,
+        name: str,
+        description: str | None = None,
+        created_at: str | None = None,
+    ) -> None: ...
+
+    def get(self, project_id: str) -> dict[str, Any] | None: ...
+
+    def get_by_name(self, name: str) -> dict[str, Any] | None: ...
+
+
+@runtime_checkable
+class PaperProjectStore(Protocol):
+    def is_attached(self, paper_id: str, project_id: str) -> bool: ...
+
+    def attach(self, paper_id: str, project_id: str, label: str | None = None) -> None: ...
+
+    def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]: ...

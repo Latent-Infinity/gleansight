@@ -27,6 +27,10 @@ text_slice_strategy = "markdown_full"
 
 [llm]
 default_profile = "default"
+
+[scholar]
+api_key = ""
+rate_limit_per_second = 10
 """.strip()
     )
 
@@ -65,3 +69,33 @@ model = "sentence-transformers/all-mpnet-base-v2"
     )
 
     assert settings.embeddings.model == "sentence-transformers/all-mpnet-base-v2"
+
+
+def test_load_settings_scholar_config(tmp_path: Path) -> None:
+    """Test that scholar config is loaded correctly."""
+    defaults_path = tmp_path / "defaults.toml"
+    _write_defaults(defaults_path)
+
+    settings = load_settings(defaults_path=defaults_path, base_dir=tmp_path)
+
+    assert settings.scholar.api_key == ""
+    assert settings.scholar.rate_limit_per_second == 10
+
+    # Test with API key override
+    override_path = tmp_path / "override.toml"
+    override_path.write_text(
+        """
+[scholar]
+api_key = "test_key_123"
+rate_limit_per_second = 100
+""".strip()
+    )
+
+    settings = load_settings(
+        defaults_path=defaults_path,
+        override_path=override_path,
+        base_dir=tmp_path,
+    )
+
+    assert settings.scholar.api_key == "test_key_123"
+    assert settings.scholar.rate_limit_per_second == 100

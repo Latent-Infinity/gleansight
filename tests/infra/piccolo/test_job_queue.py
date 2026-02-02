@@ -44,3 +44,16 @@ def test_retryable_moves_job_back_to_queue(tmp_path: Path) -> None:
     queue.mark_retryable(job_id, "oops", datetime.now() + timedelta(seconds=60))
     next_job = queue.claim_next(datetime.now())
     assert next_job is None
+
+
+def test_list_jobs_filters_by_status(tmp_path: Path) -> None:
+    queue = _setup_queue(tmp_path)
+    job_id = queue.enqueue("download", "paper", None, {})
+    _ = queue.claim_next(datetime.now())
+    queue.mark_succeeded(job_id)
+
+    jobs_all = queue.list_jobs()
+    jobs_succeeded = queue.list_jobs(status="succeeded")
+
+    assert any(job["job_id"] == job_id for job in jobs_all)
+    assert all(job["status"] == "succeeded" for job in jobs_succeeded)

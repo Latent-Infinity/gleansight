@@ -71,6 +71,10 @@ class OutputParseFailed(BaseModuleError):
     """Structured output could not be parsed."""
 
 
+class InvalidExtractionSchemaError(ValidationError):
+    """Extraction schema is invalid."""
+
+
 class PipelineError(BaseModuleError):
     """Pipeline error with a canonical error code."""
 

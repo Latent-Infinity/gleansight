@@ -46,10 +46,16 @@ class LLMSettings(BaseModel):
     default_profile: str
 
 
+class ScholarSettings(BaseModel):
+    api_key: str = ""
+    rate_limit_per_second: int = Field(default=10, ge=1, le=100)
+
+
 class Settings(BaseModel):
     data: DataPaths
     embeddings: EmbeddingSettings
     llm: LLMSettings
+    scholar: ScholarSettings
 
 
 @dataclass(frozen=True)

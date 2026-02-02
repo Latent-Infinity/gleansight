@@ -14,8 +14,6 @@ from papers.app.use_cases.discovery import (
 )
 from papers.app.use_cases.search import SearchPapersUseCase
 from papers.domain.models import PipelineStage
-from papers.infra.scholar_s2.adapter import SemanticScholarClient
-
 
 # Fake implementations for integration testing
 
@@ -119,13 +117,15 @@ class FakeJobQueue:
         run_after=None,
     ) -> str:
         job_id = str(uuid.uuid4())
-        self.jobs.append({
-            "job_id": job_id,
-            "type": type,
-            "paper_id": paper_id,
-            "run_id": run_id,
-            "payload": payload,
-        })
+        self.jobs.append(
+            {
+                "job_id": job_id,
+                "type": type,
+                "paper_id": paper_id,
+                "run_id": run_id,
+                "payload": payload,
+            }
+        )
         return job_id
 
 
@@ -161,7 +161,8 @@ class FakeVectorIndex:
 
     def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]:
         # Return all papers with dummy similarity scores
-        return [(paper_id, 0.9 - i * 0.1) for i, paper_id in enumerate(self.embeddings.keys())][:limit]
+        results = [(paper_id, 0.9 - i * 0.1) for i, paper_id in enumerate(self.embeddings.keys())]
+        return results[:limit]
 
 
 class FakeEmbedder:

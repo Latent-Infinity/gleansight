@@ -19,8 +19,12 @@ from papers.infra.piccolo.tables import (
     EndpointProfile,
     Job,
     Paper,
+    PaperProject,
+    PaperTag,
+    Project,
     Prompt,
     PromptVersion,
+    Tag,
 )
 
 
@@ -98,21 +102,25 @@ class PiccoloCandidateStore:
 
     def mark_imported(self, candidate_id: str, paper_id: str) -> None:
         (
-            Candidate.update({
-                Candidate.imported_paper_id: paper_id,
-                Candidate.imported_at: datetime.now(),
-                Candidate.updated_at: datetime.now(),
-            })
+            Candidate.update(
+                {
+                    Candidate.imported_paper_id: paper_id,
+                    Candidate.imported_at: datetime.now(),
+                    Candidate.updated_at: datetime.now(),
+                }
+            )
             .where(Candidate.candidate_id == candidate_id)
             .run_sync()
         )
 
     def mark_rejected(self, candidate_id: str) -> None:
         (
-            Candidate.update({
-                Candidate.rejected_at: datetime.now(),
-                Candidate.updated_at: datetime.now(),
-            })
+            Candidate.update(
+                {
+                    Candidate.rejected_at: datetime.now(),
+                    Candidate.updated_at: datetime.now(),
+                }
+            )
             .where(Candidate.candidate_id == candidate_id)
             .where(Candidate.rejected_at.is_null())  # Only update if not already rejected
             .run_sync()
@@ -238,6 +246,14 @@ class PiccoloPaperStore(ports.PaperStore):
             }
         ).where(Paper.paper_id == paper_id).run_sync()
 
+    def list_papers_with_markdown(self) -> list[str]:
+        rows = (
+            Paper.select(Paper.paper_id)
+            .where(Paper.md_fingerprint_xxh64.is_not_null())
+            .run_sync()
+        )
+        return [row["paper_id"] for row in rows]
+
 
 class PiccoloExtractionStore(ports.ExtractionStore):
     def upsert_extractions(
@@ -296,16 +312,220 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         *,
         prompt_version_id: str,
         constraints: dict[str, Any],
+        latest_only: bool = True,
     ) -> list[str]:
-        query = (
-            AnalysisExtraction.select(AnalysisExtraction.paper_id)
-            .where(AnalysisExtraction.field_path == field_path)
-            .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
-        )
+        if not latest_only:
+            # Simple query without run selection
+            query = (
+                AnalysisExtraction.select(AnalysisExtraction.paper_id)
+                .where(AnalysisExtraction.field_path == field_path)
+                .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
+            )
+            for key, value in constraints.items():
+                query = query.where(getattr(AnalysisExtraction, key) == value)
+            rows = query.run_sync()
+            return [row["paper_id"] for row in rows]
+
+        # Query with latest successful run filtering
+        from piccolo.querystring import QueryString
+
+        constraint_sql = ""
+        params = [field_path, prompt_version_id]
         for key, value in constraints.items():
-            query = query.where(getattr(AnalysisExtraction, key) == value)
-        rows = query.run_sync()
+            constraint_sql += f" AND ae.{key} = {{}}"
+            params.append(value)
+
+        sql = f"""
+            SELECT DISTINCT ae.paper_id
+            FROM analysis_extractions ae
+            WHERE ae.field_path = {{}}
+              AND ae.prompt_version_id = {{}}
+              {constraint_sql}
+              AND ae.run_id IN (
+                SELECT ar.run_id
+                FROM analysis_runs ar
+                JOIN jobs j ON j.run_id = ar.run_id
+                WHERE j.type = 'analyze'
+                  AND j.status = 'succeeded'
+                  AND ar.prompt_version_id = {{}}
+                  AND ar.created_at = (
+                    SELECT MAX(ar2.created_at)
+                    FROM analysis_runs ar2
+                    JOIN jobs j2 ON j2.run_id = ar2.run_id
+                    WHERE ar2.paper_id = ar.paper_id
+                      AND ar2.prompt_version_id = ar.prompt_version_id
+                      AND j2.type = 'analyze'
+                      AND j2.status = 'succeeded'
+                  )
+              )
+        """
+        params.append(prompt_version_id)
+        query = QueryString(sql, *params)
+        rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
         return [row["paper_id"] for row in rows]
+
+    def count_by_value(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        latest_only: bool = True,
+    ) -> dict[str, int]:
+        if not latest_only:
+            # Simple count without run selection
+            from piccolo.query.functions import Count
+
+            query = (
+                AnalysisExtraction.select(
+                    AnalysisExtraction.value_text,
+                    Count(distinct=[AnalysisExtraction.paper_id]).as_alias("count"),
+                )
+                .where(AnalysisExtraction.field_path == field_path)
+                .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
+                .where(AnalysisExtraction.value_text.is_not_null())
+                .group_by(AnalysisExtraction.value_text)
+            )
+            rows = query.run_sync()
+            return {row["value_text"]: row["count"] for row in rows}
+
+        # Count with latest successful run filtering
+        from piccolo.querystring import QueryString
+
+        sql = """
+            SELECT ae.value_text, COUNT(DISTINCT ae.paper_id) as count
+            FROM analysis_extractions ae
+            WHERE ae.field_path = {}
+              AND ae.prompt_version_id = {}
+              AND ae.value_text IS NOT NULL
+              AND ae.run_id IN (
+                SELECT ar.run_id
+                FROM analysis_runs ar
+                JOIN jobs j ON j.run_id = ar.run_id
+                WHERE j.type = 'analyze'
+                  AND j.status = 'succeeded'
+                  AND ar.prompt_version_id = {}
+                  AND ar.created_at = (
+                    SELECT MAX(ar2.created_at)
+                    FROM analysis_runs ar2
+                    JOIN jobs j2 ON j2.run_id = ar2.run_id
+                    WHERE ar2.paper_id = ar.paper_id
+                      AND ar2.prompt_version_id = ar.prompt_version_id
+                      AND j2.type = 'analyze'
+                      AND j2.status = 'succeeded'
+                  )
+              )
+            GROUP BY ae.value_text
+        """
+        query = QueryString(sql, field_path, prompt_version_id, prompt_version_id)
+        rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
+        return {row["value_text"]: row["count"] for row in rows}
+
+    def average_numeric(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        group_by: str | None = None,
+        latest_only: bool = True,
+    ) -> float | dict[str, float] | None:
+        if not latest_only:
+            # Simple average without run selection
+            from piccolo.query.functions import Avg
+
+            if group_by:
+                # Grouped average
+                group_field = getattr(AnalysisExtraction, group_by)
+                query = (
+                    AnalysisExtraction.select(
+                        group_field,
+                        Avg(AnalysisExtraction.value_numeric).as_alias("avg"),
+                    )
+                    .where(AnalysisExtraction.field_path == field_path)
+                    .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
+                    .where(AnalysisExtraction.value_numeric.is_not_null())
+                    .group_by(group_field)
+                )
+                rows = query.run_sync()
+                if not rows:
+                    return None
+                return {str(row[group_by]): float(row["avg"]) for row in rows}
+            else:
+                # Simple average
+                query = (
+                    AnalysisExtraction.select(Avg(AnalysisExtraction.value_numeric).as_alias("avg"))
+                    .where(AnalysisExtraction.field_path == field_path)
+                    .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
+                    .where(AnalysisExtraction.value_numeric.is_not_null())
+                )
+                rows = query.run_sync()
+                if not rows or rows[0]["avg"] is None:
+                    return None
+                return float(rows[0]["avg"])
+
+        # Average with latest successful run filtering
+        from piccolo.querystring import QueryString
+
+        if group_by:
+            # Grouped average with latest run filtering
+            sql = f"""
+                SELECT ae.{group_by}, AVG(ae.value_numeric) as avg
+                FROM analysis_extractions ae
+                WHERE ae.field_path = {{}}
+                  AND ae.prompt_version_id = {{}}
+                  AND ae.value_numeric IS NOT NULL
+                  AND ae.run_id IN (
+                    SELECT ar.run_id
+                    FROM analysis_runs ar
+                    JOIN jobs j ON j.run_id = ar.run_id
+                    WHERE j.type = 'analyze'
+                      AND j.status = 'succeeded'
+                      AND ar.prompt_version_id = {{}}
+                      AND ar.created_at = (
+                        SELECT MAX(ar2.created_at)
+                        FROM analysis_runs ar2
+                        JOIN jobs j2 ON j2.run_id = ar2.run_id
+                        WHERE ar2.paper_id = ar.paper_id
+                          AND ar2.prompt_version_id = ar.prompt_version_id
+                          AND j2.type = 'analyze'
+                          AND j2.status = 'succeeded'
+                      )
+                  )
+                GROUP BY ae.{group_by}
+            """
+            query = QueryString(sql, field_path, prompt_version_id, prompt_version_id)
+            rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
+            if not rows:
+                return None
+            return {str(row[group_by]): float(row["avg"]) for row in rows}
+        else:
+            # Simple average with latest run filtering
+            sql = """
+                SELECT AVG(ae.value_numeric) as avg
+                FROM analysis_extractions ae
+                WHERE ae.field_path = {}
+                  AND ae.prompt_version_id = {}
+                  AND ae.value_numeric IS NOT NULL
+                  AND ae.run_id IN (
+                    SELECT ar.run_id
+                    FROM analysis_runs ar
+                    JOIN jobs j ON j.run_id = ar.run_id
+                    WHERE j.type = 'analyze'
+                      AND j.status = 'succeeded'
+                      AND ar.prompt_version_id = {}
+                      AND ar.created_at = (
+                        SELECT MAX(ar2.created_at)
+                        FROM analysis_runs ar2
+                        JOIN jobs j2 ON j2.run_id = ar2.run_id
+                        WHERE ar2.paper_id = ar.paper_id
+                          AND ar2.prompt_version_id = ar.prompt_version_id
+                          AND j2.type = 'analyze'
+                          AND j2.status = 'succeeded'
+                      )
+                  )
+            """
+            query = QueryString(sql, field_path, prompt_version_id, prompt_version_id)
+            rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
+            if not rows or rows[0]["avg"] is None:
+                return None
+            return float(rows[0]["avg"])
 
 
 class PiccoloJobQueue(ports.JobQueue):
@@ -418,16 +638,71 @@ class PiccoloJobQueue(ports.JobQueue):
         row = Job.select(Job.status).where(Job.job_id == job_id).first().run_sync()
         return row is not None and row["status"] == "canceled"
 
+    def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]:
+        rows = (
+            Job.select(Job.job_id)
+            .where(Job.status == "running")
+            .where(Job.updated_at < cutoff)
+            .run_sync()
+        )
+        job_ids = [row["job_id"] for row in rows]
+        if not job_ids:
+            return []
+        (
+            Job.update(
+                {
+                    "status": "queued",
+                    "last_error": error,
+                    "run_after": None,
+                    "updated_at": datetime.now(),
+                }
+            )
+            .where(Job.job_id.is_in(job_ids))
+            .run_sync()
+        )
+        return job_ids
+
+    def list_jobs(self, status: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        query = Job.select()
+        if status is not None:
+            query = query.where(Job.status == status)
+        rows = query.order_by(Job.created_at).limit(limit).run_sync()
+        return [dict(row) for row in rows]
+
 
 class PiccoloPromptStore(ports.PromptStore):
-    def create_prompt(self, prompt_id: str, name: str, created_at: str | None = None) -> None:
+    def create_prompt(
+        self,
+        prompt_id: str,
+        name: str,
+        description: str | None = None,
+        domain: str | None = None,
+        tags: list[str] | None = None,
+        created_at: str | None = None,
+    ) -> None:
         Prompt(
             _data={
                 Prompt.prompt_id: prompt_id,
                 Prompt.name: name,
+                Prompt.description: description,
+                Prompt.domain: domain,
+                Prompt.tags_json: json.dumps(tags) if tags is not None else None,
                 Prompt.created_at: created_at or datetime.now(),
             }
         ).save().run_sync()
+
+    def get_prompt(self, prompt_id: str) -> dict[str, Any] | None:
+        row = Prompt.select().where(Prompt.prompt_id == prompt_id).first().run_sync()
+        if row is None:
+            return None
+        data = dict(row)
+        tags_json = data.get("tags_json")
+        if tags_json:
+            try:
+                data["tags"] = json.loads(tags_json)
+            except (json.JSONDecodeError, TypeError):
+                data["tags"] = None
+        return data
 
     def create_version(
         self,
@@ -581,3 +856,108 @@ class _RowExtraction:
     value_text: str | None
     value_numeric: float | None
     value_boolean: int | None
+
+
+class PiccoloTagStore(ports.TagStore):
+    def create_tag(
+        self,
+        tag_id: str,
+        name: str,
+        tag_type: str,
+        created_at: str | None = None,
+    ) -> None:
+        Tag(
+            _data={
+                Tag.tag_id: tag_id,
+                Tag.name: name,
+                Tag.type: tag_type,
+                Tag.created_at: created_at or datetime.now(),
+                Tag.updated_at: datetime.now(),
+            }
+        ).save().run_sync()
+
+    def get(self, tag_id: str) -> dict[str, Any] | None:
+        row = Tag.select().where(Tag.tag_id == tag_id).first().run_sync()
+        return None if row is None else dict(row)
+
+    def get_by_name(self, name: str) -> dict[str, Any] | None:
+        row = Tag.select().where(Tag.name == name).first().run_sync()
+        return None if row is None else dict(row)
+
+
+class PiccoloPaperTagStore(ports.PaperTagStore):
+    def is_attached(self, paper_id: str, tag_id: str) -> bool:
+        row = (
+            PaperTag.select()
+            .where(PaperTag.paper_id == paper_id)
+            .where(PaperTag.tag_id == tag_id)
+            .first()
+            .run_sync()
+        )
+        return row is not None
+
+    def attach(self, paper_id: str, tag_id: str, confidence: float | None = None) -> None:
+        PaperTag(
+            _data={
+                PaperTag.paper_id: paper_id,
+                PaperTag.tag_id: tag_id,
+                PaperTag.confidence: confidence,
+            }
+        ).save().run_sync()
+
+
+class PiccoloProjectStore(ports.ProjectStore):
+    def create_project(
+        self,
+        project_id: str,
+        name: str,
+        description: str | None = None,
+        created_at: str | None = None,
+    ) -> None:
+        Project(
+            _data={
+                Project.project_id: project_id,
+                Project.name: name,
+                Project.description: description,
+                Project.created_at: created_at or datetime.now(),
+                Project.updated_at: datetime.now(),
+            }
+        ).save().run_sync()
+
+    def get(self, project_id: str) -> dict[str, Any] | None:
+        row = Project.select().where(Project.project_id == project_id).first().run_sync()
+        return None if row is None else dict(row)
+
+    def get_by_name(self, name: str) -> dict[str, Any] | None:
+        row = Project.select().where(Project.name == name).first().run_sync()
+        return None if row is None else dict(row)
+
+
+class PiccoloPaperProjectStore(ports.PaperProjectStore):
+    def is_attached(self, paper_id: str, project_id: str) -> bool:
+        row = (
+            PaperProject.select()
+            .where(PaperProject.paper_id == paper_id)
+            .where(PaperProject.project_id == project_id)
+            .first()
+            .run_sync()
+        )
+        return row is not None
+
+    def attach(self, paper_id: str, project_id: str, label: str | None = None) -> None:
+        PaperProject(
+            _data={
+                PaperProject.paper_id: paper_id,
+                PaperProject.project_id: project_id,
+                PaperProject.label: label,
+            }
+        ).save().run_sync()
+
+    def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]:
+        query = PaperProject.select(PaperProject.paper_id).where(
+            PaperProject.project_id == project_id
+        )
+        if label is not None:
+            query = query.where(PaperProject.label == label)
+        rows = query.run_sync()
+        return [row["paper_id"] for row in rows]

@@ -1,13 +1,43 @@
 from __future__ import annotations
 
-import json
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
 from papers.domain.errors import ErrorCode, PipelineError
-from papers.infra.scholar_s2.adapter import SemanticScholarClient, build_s2_client
+from papers.infra.scholar_s2.adapter import RateLimiter, SemanticScholarClient, build_s2_client
+
+
+class TestRateLimiter:
+    """Test RateLimiter class."""
+
+    def test_rate_limiter_enforces_minimum_interval(self) -> None:
+        """Rate limiter should enforce minimum interval between requests."""
+        import time
+
+        limiter = RateLimiter(rate_per_second=10.0)  # 10 req/s = 0.1s interval
+
+        start = time.time()
+        limiter.acquire()  # First call is immediate
+        limiter.acquire()  # Second call should wait ~0.1s
+        elapsed = time.time() - start
+
+        assert elapsed >= 0.1, f"Expected >= 0.1s, got {elapsed}s"
+        assert elapsed < 0.15, f"Expected < 0.15s, got {elapsed}s (too slow)"
+
+    def test_rate_limiter_allows_high_rate(self) -> None:
+        """Rate limiter should allow high rate limits."""
+        import time
+
+        limiter = RateLimiter(rate_per_second=100.0)  # 100 req/s = 0.01s interval
+
+        start = time.time()
+        limiter.acquire()
+        limiter.acquire()
+        elapsed = time.time() - start
+
+        assert elapsed >= 0.01, f"Expected >= 0.01s, got {elapsed}s"
+        assert elapsed < 0.02, f"Expected < 0.02s, got {elapsed}s (too slow)"
 
 
 class TestSemanticScholarClient:
@@ -90,12 +120,12 @@ class TestSemanticScholarClient:
         page2 = {
             "total": 250,
             "offset": 100,
-            "data": [{"paperId": f"page2_{i}", "title": f"Paper {i+100}"} for i in range(100)],
+            "data": [{"paperId": f"page2_{i}", "title": f"Paper {i + 100}"} for i in range(100)],
         }
         page3 = {
             "total": 250,
             "offset": 200,
-            "data": [{"paperId": f"page3_{i}", "title": f"Paper {i+200}"} for i in range(50)],
+            "data": [{"paperId": f"page3_{i}", "title": f"Paper {i + 200}"} for i in range(50)],
         }
 
         call_count = 0
@@ -154,6 +184,7 @@ class TestSemanticScholarClient:
 
     def test_search_handles_year_filter(self) -> None:
         """Search should pass year filter to API."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             assert params["year"] == "2020-2025"
             return {"total": 0, "offset": 0, "data": []}
@@ -187,6 +218,7 @@ class TestSemanticScholarClient:
 
     def test_search_rate_limiting_exceeds_max_retries(self) -> None:
         """Search should fail after max retries on rate limit."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             exc = Exception("429 Too Many Requests")
             exc.status_code = 429  # type: ignore
@@ -201,6 +233,7 @@ class TestSemanticScholarClient:
 
     def test_search_network_error_translation(self) -> None:
         """Network errors should be translated to domain errors."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             raise ConnectionError("Network unreachable")
 
@@ -212,6 +245,7 @@ class TestSemanticScholarClient:
 
     def test_search_timeout_error_translation(self) -> None:
         """Timeout errors should be translated to domain errors."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             raise TimeoutError("Request timed out")
 
@@ -223,6 +257,7 @@ class TestSemanticScholarClient:
 
     def test_search_http_error_translation(self) -> None:
         """HTTP errors should be translated to domain errors."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             exc = Exception("500 Internal Server Error")
             exc.status_code = 500  # type: ignore
@@ -236,6 +271,7 @@ class TestSemanticScholarClient:
 
     def test_search_invalid_response_format(self) -> None:
         """Invalid response format should raise error."""
+
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             return {"invalid": "response"}
 
@@ -244,6 +280,28 @@ class TestSemanticScholarClient:
             client.search(query="test", filters={}, max_results=10, page_size=100)
 
         assert exc_info.value.code == ErrorCode.OUTPUT_PARSE_FAILED
+
+    def test_search_respects_rate_limit(self) -> None:
+        """Search should use rate limiter to enforce rate limits."""
+        import time
+
+        call_times: list[float] = []
+
+        def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+            call_times.append(time.time())
+            # Return minimal valid response
+            return {"total": 2, "offset": 0, "data": [{"paperId": "p1"}, {"paperId": "p2"}]}
+
+        # Create client with 10 req/s rate limit (0.1s minimum interval)
+        client = SemanticScholarClient(
+            send_func=send_func,
+            rate_limiter=RateLimiter(rate_per_second=10.0),
+        )
+
+        client.search(query="test", filters={}, max_results=2, page_size=100)
+
+        # Should have made 1 call
+        assert len(call_times) == 1
 
 
 class TestBuildS2Client:
@@ -258,3 +316,15 @@ class TestBuildS2Client:
         """Should build client without API key (works with S2 API)."""
         client = build_s2_client(api_key=None)
         assert isinstance(client, SemanticScholarClient)
+
+    def test_build_client_with_custom_rate_limit(self) -> None:
+        """Should build client with custom rate limit."""
+        client = build_s2_client(api_key=None, rate_limit_per_second=100)
+        assert isinstance(client, SemanticScholarClient)
+        assert client.rate_limiter.rate_per_second == 100.0
+
+    def test_build_client_default_rate_limit(self) -> None:
+        """Should build client with default rate limit of 10 req/s."""
+        client = build_s2_client(api_key=None)
+        assert isinstance(client, SemanticScholarClient)
+        assert client.rate_limiter.rate_per_second == 10.0

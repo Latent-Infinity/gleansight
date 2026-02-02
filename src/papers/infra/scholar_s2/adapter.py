@@ -2,17 +2,39 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from papers.domain.errors import ErrorCode, PipelineError
 
 
-@dataclass(frozen=True)
+class RateLimiter:
+    """Token bucket rate limiter."""
+
+    def __init__(self, rate_per_second: float) -> None:
+        self.rate_per_second = rate_per_second
+        self.min_interval = 1.0 / rate_per_second
+        self.last_request_time: float | None = None
+
+    def acquire(self) -> None:
+        """Wait if necessary to respect rate limit."""
+        if self.last_request_time is None:
+            self.last_request_time = time.time()
+            return
+
+        elapsed = time.time() - self.last_request_time
+        if elapsed < self.min_interval:
+            time.sleep(self.min_interval - elapsed)
+
+        self.last_request_time = time.time()
+
+
+@dataclass
 class SemanticScholarClient:
     """Semantic Scholar API client implementing ScholarClient protocol."""
 
     send_func: Callable[[str, dict[str, Any], dict[str, str]], dict[str, Any]]
+    rate_limiter: RateLimiter = field(default_factory=lambda: RateLimiter(10.0))
     max_retries: int = 3
     retry_delay_s: float = 1.0
 
@@ -109,6 +131,7 @@ class SemanticScholarClient:
 
         for attempt in range(self.max_retries):
             try:
+                self.rate_limiter.acquire()
                 return self.send_func(url, params, headers)
             except TimeoutError as exc:
                 raise PipelineError(ErrorCode.TIMEOUT, str(exc)) from exc
@@ -161,11 +184,16 @@ class SemanticScholarClient:
         }
 
 
-def build_s2_client(*, api_key: str | None = None) -> SemanticScholarClient:
+def build_s2_client(
+    *,
+    api_key: str | None = None,
+    rate_limit_per_second: int = 10,
+) -> SemanticScholarClient:
     """Build Semantic Scholar client with httpx backend.
 
     Args:
         api_key: Optional S2 API key (increases rate limits)
+        rate_limit_per_second: Max requests per second (default: 10)
 
     Returns:
         SemanticScholarClient instance
@@ -184,4 +212,7 @@ def build_s2_client(*, api_key: str | None = None) -> SemanticScholarClient:
             resp.raise_for_status()
             return resp.json()
 
-    return SemanticScholarClient(send_func=_send)
+    return SemanticScholarClient(
+        send_func=_send,
+        rate_limiter=RateLimiter(float(rate_limit_per_second)),
+    )

@@ -14,3 +14,7 @@ text_slice_strategy = "markdown_full"
 
 [llm]
 default_profile = "default"
+
+[scholar]
+api_key = ""  # Optional Semantic Scholar API key for higher rate limits
+rate_limit_per_second = 10  # Max requests per second (100/s with API key, 10/s without)

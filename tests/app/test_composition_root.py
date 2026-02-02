@@ -49,6 +49,11 @@ class _FakeLLM:
         raise AssertionError("not used")
 
 
+class _FakeScholarClient:
+    def search(self, query: str, filters: dict, max_results: int, page_size: int):
+        raise AssertionError("not used")
+
+
 def _settings(tmp_path: Path) -> Settings:
     return Settings.model_validate(
         {
@@ -67,6 +72,7 @@ def _settings(tmp_path: Path) -> Settings:
                 "text_slice_strategy": "markdown_full",
             },
             "llm": {"default_profile": "default"},
+            "scholar": {"api_key": "", "rate_limit_per_second": 10},
         }
     )
 
@@ -96,6 +102,9 @@ def test_build_container_wires_dependencies(
         assert api_key == "token"
         return _FakeLLM()
 
+    def _fake_build_s2_client(*, api_key: str | None = None, rate_limit_per_second: int = 10):
+        return _FakeScholarClient()
+
     original_find_spec = importlib.util.find_spec
 
     def _fake_find_spec(name: str):
@@ -113,6 +122,7 @@ def test_build_container_wires_dependencies(
     )
     monkeypatch.setattr(composition_root, "build_docling_converter", _fake_build_converter)
     monkeypatch.setattr(composition_root, "build_openai_compat_client", _fake_build_llm_client)
+    monkeypatch.setattr(composition_root, "build_s2_client", _fake_build_s2_client)
 
     container = composition_root.build_container(
         settings,
@@ -132,6 +142,7 @@ def test_build_container_wires_dependencies(
     assert container.job_runner.context is container.handler_context
     assert isinstance(container.blob_store, _FakeBlobStore)
     assert isinstance(container.vector_index, _FakeVectorIndex)
+    assert isinstance(container.scholar_client, _FakeScholarClient)
 
     row = container.db.fetchone(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'papers'"
@@ -159,6 +170,10 @@ def test_load_settings_validation_failure(tmp_path: Path) -> None:
 
         [llm]
         default_profile = "default"
+
+        [scholar]
+        api_key = ""
+        rate_limit_per_second = 10
         """,
         encoding="utf-8",
     )

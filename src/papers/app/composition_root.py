@@ -21,6 +21,7 @@ from papers.infra.piccolo.stores import (
     PiccoloProfileStore,
     PiccoloPromptStore,
 )
+from papers.infra.scholar_s2.adapter import build_s2_client
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,7 @@ class AppContainer:
     embedder: ports.Embedder
     converter: ports.Converter
     llm_client: ports.LLMClient
+    scholar_client: ports.ScholarClient
     handler_context: HandlerContext
     job_runner: JobRunner
 
@@ -62,6 +64,10 @@ def build_container(
     embedder = build_sentence_transformer_embedder(settings.embeddings.model)
     converter = build_docling_converter()
     llm_client = build_openai_compat_client(base_url=llm_base_url, api_key=llm_api_key)
+    scholar_client = build_s2_client(
+        api_key=settings.scholar.api_key or None,
+        rate_limit_per_second=settings.scholar.rate_limit_per_second,
+    )
 
     handler_context = HandlerContext(
         paper_store=paper_store,
@@ -90,6 +96,7 @@ def build_container(
         embedder=embedder,
         converter=converter,
         llm_client=llm_client,
+        scholar_client=scholar_client,
         handler_context=handler_context,
         job_runner=job_runner,
     )

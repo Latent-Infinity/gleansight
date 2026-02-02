@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import PiccoloCandidateStore
 
@@ -20,19 +18,21 @@ def test_create_and_get_candidate(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
     candidate_id = "cand-1"
 
-    store.create_candidate({
-        "candidate_id": candidate_id,
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-123",
-        "title": "Test Paper",
-        "year": 2024,
-        "venue": "Conference",
-        "authors_json": '["Alice", "Bob"]',
-        "abstract": "Abstract text",
-        "external_ids_json": '{"arxiv": "2401.12345"}',
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": candidate_id,
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-123",
+            "title": "Test Paper",
+            "year": 2024,
+            "venue": "Conference",
+            "authors_json": '["Alice", "Bob"]',
+            "abstract": "Abstract text",
+            "external_ids_json": '{"arxiv": "2401.12345"}',
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     candidate = store.get_candidate(candidate_id)
     assert candidate is not None
@@ -54,14 +54,16 @@ def test_list_candidates_all(tmp_path: Path) -> None:
 
     # Create multiple candidates
     for i in range(3):
-        store.create_candidate({
-            "candidate_id": f"cand-{i}",
-            "source": "semantic_scholar",
-            "source_paper_id": f"s2-{i}",
-            "title": f"Paper {i}",
-            "created_at": now,
-            "updated_at": now,
-        })
+        store.create_candidate(
+            {
+                "candidate_id": f"cand-{i}",
+                "source": "semantic_scholar",
+                "source_paper_id": f"s2-{i}",
+                "title": f"Paper {i}",
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
 
     candidates = store.list_candidates()
     assert len(candidates) == 3
@@ -74,25 +76,29 @@ def test_list_candidates_not_imported(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
 
     # Create candidates - one imported, one not
-    store.create_candidate({
-        "candidate_id": "cand-1",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-1",
-        "title": "Not Imported",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-1",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-1",
+            "title": "Not Imported",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
-    store.create_candidate({
-        "candidate_id": "cand-2",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-2",
-        "title": "Imported",
-        "imported_paper_id": "paper-123",
-        "imported_at": now,
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-2",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-2",
+            "title": "Imported",
+            "imported_paper_id": "paper-123",
+            "imported_at": now,
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     not_imported = store.list_candidates(imported=False)
     assert len(not_imported) == 1
@@ -104,24 +110,28 @@ def test_list_candidates_not_rejected(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
 
     # Create candidates - one rejected, one not
-    store.create_candidate({
-        "candidate_id": "cand-1",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-1",
-        "title": "Not Rejected",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-1",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-1",
+            "title": "Not Rejected",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
-    store.create_candidate({
-        "candidate_id": "cand-2",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-2",
-        "title": "Rejected",
-        "rejected_at": now,
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-2",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-2",
+            "title": "Rejected",
+            "rejected_at": now,
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     not_rejected = store.list_candidates(rejected=False)
     assert len(not_rejected) == 1
@@ -134,44 +144,52 @@ def test_list_candidates_available(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
 
     # Create 4 candidates with different states
-    store.create_candidate({
-        "candidate_id": "cand-available",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-1",
-        "title": "Available",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-available",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-1",
+            "title": "Available",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
-    store.create_candidate({
-        "candidate_id": "cand-imported",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-2",
-        "title": "Imported",
-        "imported_paper_id": "paper-123",
-        "imported_at": now,
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-imported",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-2",
+            "title": "Imported",
+            "imported_paper_id": "paper-123",
+            "imported_at": now,
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
-    store.create_candidate({
-        "candidate_id": "cand-rejected",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-3",
-        "title": "Rejected",
-        "rejected_at": now,
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-rejected",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-3",
+            "title": "Rejected",
+            "rejected_at": now,
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
-    store.create_candidate({
-        "candidate_id": "cand-available2",
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-4",
-        "title": "Available 2",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": "cand-available2",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-4",
+            "title": "Available 2",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     available = store.list_candidates(imported=False, rejected=False)
     assert len(available) == 2
@@ -184,14 +202,16 @@ def test_mark_imported(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
     candidate_id = "cand-1"
 
-    store.create_candidate({
-        "candidate_id": candidate_id,
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-123",
-        "title": "Test Paper",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": candidate_id,
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-123",
+            "title": "Test Paper",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     # Mark as imported
     paper_id = "paper-456"
@@ -210,14 +230,16 @@ def test_mark_imported_idempotent(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
     candidate_id = "cand-1"
 
-    store.create_candidate({
-        "candidate_id": candidate_id,
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-123",
-        "title": "Test Paper",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": candidate_id,
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-123",
+            "title": "Test Paper",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     paper_id = "paper-456"
     store.mark_imported(candidate_id, paper_id)
@@ -234,14 +256,16 @@ def test_mark_rejected(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
     candidate_id = "cand-1"
 
-    store.create_candidate({
-        "candidate_id": candidate_id,
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-123",
-        "title": "Test Paper",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": candidate_id,
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-123",
+            "title": "Test Paper",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     # Mark as rejected
     store.mark_rejected(candidate_id)
@@ -258,14 +282,16 @@ def test_mark_rejected_idempotent(tmp_path: Path) -> None:
     now = datetime.now(UTC).isoformat()
     candidate_id = "cand-1"
 
-    store.create_candidate({
-        "candidate_id": candidate_id,
-        "source": "semantic_scholar",
-        "source_paper_id": "s2-123",
-        "title": "Test Paper",
-        "created_at": now,
-        "updated_at": now,
-    })
+    store.create_candidate(
+        {
+            "candidate_id": candidate_id,
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-123",
+            "title": "Test Paper",
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
 
     store.mark_rejected(candidate_id)
     first_rejected_at = store.get_candidate(candidate_id)["rejected_at"]

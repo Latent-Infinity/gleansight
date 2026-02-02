@@ -14,6 +14,9 @@ dependencies = [
   "pydantic>=2.10",
   "xxhash>=3.4",
   "piccolo[sqlite]>=1.6",
+  "jsonschema>=4.21",
+  "typer>=0.12",
+  "rich>=13.7",
 ]
 
 [tool.setuptools]

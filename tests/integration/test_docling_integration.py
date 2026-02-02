@@ -17,9 +17,7 @@ def _build_pdf_bytes(text: str) -> bytes:
         b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
         b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] ",
         b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
-        b"4 0 obj << /Length %d >>\nstream\n" % len(content)
-        + content
-        + b"\nendstream\nendobj\n",
+        b"4 0 obj << /Length %d >>\nstream\n" % len(content) + content + b"\nendstream\nendobj\n",
         b"5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
     ]
 

@@ -47,6 +47,9 @@ class FakeJobQueue:
     def is_cancelled(self, job_id: str) -> bool:
         return False
 
+    def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]:
+        return []
+
 
 class FakePaperStore:
     def create_paper(self, fields: dict) -> str:
@@ -96,6 +99,9 @@ class FakePaperStore:
     def clear_pipeline_health_if_recovered(self, paper_id: str, job_type: str) -> None:
         return None
 
+    def list_papers_with_markdown(self) -> list[str]:
+        return []
+
 
 class FakeExtraction:
     entity_type = "paper"
@@ -124,8 +130,27 @@ class FakeExtractionStore:
     ):
         return []
 
-    def query(self, field_path: str, *, prompt_version_id: str, constraints: dict):
+    def query(
+        self,
+        field_path: str,
+        *,
+        prompt_version_id: str,
+        constraints: dict,
+        latest_only: bool = True,
+    ):
         return []
+
+    def count_by_value(self, field_path: str, prompt_version_id: str, latest_only: bool = True):
+        return {}
+
+    def average_numeric(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        group_by: str | None = None,
+        latest_only: bool = True,
+    ):
+        return None
 
 
 class FakeBlobStore:
@@ -158,6 +183,9 @@ class FakeVectorIndex:
     def query(self, embedding: list[float], limit: int):
         return []
 
+    def reset(self) -> None:
+        return None
+
 
 class FakeConverter:
     def pdf_to_markdown(self, pdf_path: Path):
@@ -189,7 +217,18 @@ class FakeScholarClient:
 
 
 class FakePromptStore:
-    def create_prompt(self, prompt_id: str, name: str, created_at: str | None = None) -> None:
+    def create_prompt(
+        self,
+        prompt_id: str,
+        name: str,
+        description: str | None = None,
+        domain: str | None = None,
+        tags: list[str] | None = None,
+        created_at: str | None = None,
+    ) -> None:
+        return None
+
+    def get_prompt(self, prompt_id: str):
         return None
 
     def create_version(
@@ -257,6 +296,53 @@ class FakeAnalysisRunStore:
         return None
 
 
+class FakeTagStore:
+    def create_tag(self, tag_id: str, name: str, tag_type: str, created_at: str | None = None):
+        return None
+
+    def get(self, tag_id: str):
+        return None
+
+    def get_by_name(self, name: str):
+        return None
+
+
+class FakePaperTagStore:
+    def is_attached(self, paper_id: str, tag_id: str) -> bool:
+        return False
+
+    def attach(self, paper_id: str, tag_id: str, confidence: float | None = None) -> None:
+        return None
+
+
+class FakeProjectStore:
+    def create_project(
+        self,
+        project_id: str,
+        name: str,
+        description: str | None = None,
+        created_at: str | None = None,
+    ) -> None:
+        return None
+
+    def get(self, project_id: str):
+        return None
+
+    def get_by_name(self, name: str):
+        return None
+
+
+class FakePaperProjectStore:
+    def is_attached(self, paper_id: str, project_id: str) -> bool:
+        return False
+
+    def attach(self, paper_id: str, project_id: str, label: str | None = None) -> None:
+        return None
+
+    def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]:
+        return []
+
+
 def test_protocols_are_runtime_checkable():
     assert isinstance(FakeJob(), ports.Job)
     assert isinstance(FakeJobQueue(), ports.JobQueue)
@@ -272,3 +358,7 @@ def test_protocols_are_runtime_checkable():
     assert isinstance(FakePromptStore(), ports.PromptStore)
     assert isinstance(FakeProfileStore(), ports.ProfileStore)
     assert isinstance(FakeAnalysisRunStore(), ports.AnalysisRunStore)
+    assert isinstance(FakeTagStore(), ports.TagStore)
+    assert isinstance(FakePaperTagStore(), ports.PaperTagStore)
+    assert isinstance(FakeProjectStore(), ports.ProjectStore)
+    assert isinstance(FakePaperProjectStore(), ports.PaperProjectStore)

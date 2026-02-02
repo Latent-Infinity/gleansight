@@ -3,11 +3,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
-from papers.app.ports import ScholarClient
 from papers.app.use_cases.discovery import (
     DiscoverCandidatesUseCase,
     ImportCandidateUseCase,
@@ -71,14 +69,16 @@ class FakeJobQueue:
         run_after: datetime | None = None,
     ) -> str:
         job_id = str(uuid.uuid4())
-        self.jobs.append({
-            "job_id": job_id,
-            "type": type,
-            "paper_id": paper_id,
-            "run_id": run_id,
-            "payload": payload,
-            "run_after": run_after,
-        })
+        self.jobs.append(
+            {
+                "job_id": job_id,
+                "type": type,
+                "paper_id": paper_id,
+                "run_id": run_id,
+                "payload": payload,
+                "run_after": run_after,
+            }
+        )
         return job_id
 
 
@@ -183,20 +183,22 @@ class TestImportCandidateUseCase:
     def test_import_creates_paper_and_enqueues_job(self) -> None:
         """Should create paper and enqueue download job."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": "ACL",
-            "authors_json": '["Alice"]',
-            "abstract": "Abstract text",
-            "external_ids_json": '{"ArXiv": "2001.12345"}',
-            "rejected_at": None,
-            "imported_paper_id": None,
-            "imported_at": None,
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": "ACL",
+                "authors_json": '["Alice"]',
+                "abstract": "Abstract text",
+                "external_ids_json": '{"ArXiv": "2001.12345"}',
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
 
         paper_store = FakePaperStore()
         job_queue = FakeJobQueue()
@@ -232,20 +234,22 @@ class TestImportCandidateUseCase:
     def test_import_is_idempotent(self) -> None:
         """Should be idempotent - second import returns same paper_id."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": None,
-            "authors_json": "[]",
-            "abstract": None,
-            "external_ids_json": None,
-            "rejected_at": None,
-            "imported_paper_id": None,
-            "imported_at": None,
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
 
         paper_store = FakePaperStore()
         job_queue = FakeJobQueue()
@@ -277,20 +281,22 @@ class TestImportCandidateUseCase:
     def test_import_raises_if_candidate_already_rejected(self) -> None:
         """Should raise error if candidate was rejected."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": None,
-            "authors_json": "[]",
-            "abstract": None,
-            "external_ids_json": None,
-            "rejected_at": datetime.now(),  # Already rejected
-            "imported_paper_id": None,
-            "imported_at": None,
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": datetime.now(),  # Already rejected
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
 
         use_case = ImportCandidateUseCase(
             candidate_store=candidate_store,
@@ -310,20 +316,22 @@ class TestRejectCandidateUseCase:
     def test_reject_marks_candidate_rejected(self) -> None:
         """Should mark candidate as rejected."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": None,
-            "authors_json": "[]",
-            "abstract": None,
-            "external_ids_json": None,
-            "rejected_at": None,
-            "imported_paper_id": None,
-            "imported_at": None,
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
 
         use_case = RejectCandidateUseCase(candidate_store=candidate_store)
         use_case.reject(candidate_id)
@@ -335,20 +343,22 @@ class TestRejectCandidateUseCase:
     def test_reject_is_idempotent(self) -> None:
         """Should be idempotent - can reject multiple times."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": None,
-            "authors_json": "[]",
-            "abstract": None,
-            "external_ids_json": None,
-            "rejected_at": None,
-            "imported_paper_id": None,
-            "imported_at": None,
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
 
         use_case = RejectCandidateUseCase(candidate_store=candidate_store)
         use_case.reject(candidate_id)
@@ -370,20 +380,22 @@ class TestRejectCandidateUseCase:
     def test_reject_raises_if_already_imported(self) -> None:
         """Should raise error if candidate was already imported."""
         candidate_store = FakeCandidateStore()
-        candidate_id = candidate_store.create_candidate({
-            "candidate_id": str(uuid.uuid4()),
-            "source": "semantic_scholar",
-            "source_paper_id": "s2_abc123",
-            "title": "Test Paper",
-            "year": 2020,
-            "venue": None,
-            "authors_json": "[]",
-            "abstract": None,
-            "external_ids_json": None,
-            "rejected_at": None,
-            "imported_paper_id": "paper_123",  # Already imported
-            "imported_at": datetime.now(),
-        })
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": "paper_123",  # Already imported
+                "imported_at": datetime.now(),
+            }
+        )
 
         use_case = RejectCandidateUseCase(candidate_store=candidate_store)
 

@@ -6,8 +6,12 @@ from papers.infra.piccolo.stores import (
     PiccoloExtractionStore,
     PiccoloJobQueue,
     PiccoloPaperStore,
+    PiccoloPaperProjectStore,
+    PiccoloPaperTagStore,
     PiccoloProfileStore,
+    PiccoloProjectStore,
     PiccoloPromptStore,
+    PiccoloTagStore,
 )
 
 __all__ = [
@@ -16,6 +20,10 @@ __all__ = [
     "PiccoloExtractionStore",
     "PiccoloJobQueue",
     "PiccoloPaperStore",
+    "PiccoloPaperProjectStore",
+    "PiccoloPaperTagStore",
     "PiccoloProfileStore",
+    "PiccoloProjectStore",
     "PiccoloPromptStore",
+    "PiccoloTagStore",
 ]

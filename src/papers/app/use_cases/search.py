@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from papers.app import ports
+
 
 class PapersFTS(Protocol):
     """Protocol for full-text search."""
@@ -111,8 +113,7 @@ class SearchPapersUseCase:
         )
 
         return [
-            {"paper_id": paper_id, "score": score}
-            for paper_id, score in sorted_results[:limit]
+            {"paper_id": paper_id, "score": score} for paper_id, score in sorted_results[:limit]
         ]
 
 
@@ -127,6 +128,7 @@ class FilterByExtractionsUseCase:
         field_path: str,
         prompt_version_id: str,
         constraints: dict[str, Any],
+        latest_only: bool = True,
     ) -> list[str]:
         """Filter papers by extraction constraints.
 
@@ -134,6 +136,7 @@ class FilterByExtractionsUseCase:
             field_path: Field path to filter on (e.g., "algorithm_family")
             prompt_version_id: Prompt version to scope query to
             constraints: Dict of constraints (e.g., {"value_text": "transformer"})
+            latest_only: Only include extractions from latest successful runs (default: True)
 
         Returns:
             List of matching paper IDs
@@ -142,6 +145,7 @@ class FilterByExtractionsUseCase:
             field_path=field_path,
             prompt_version_id=prompt_version_id,
             constraints=constraints,
+            latest_only=latest_only,
         )
 
 
@@ -149,33 +153,36 @@ class FilterByExtractionsUseCase:
 class AggregateExtractionsUseCase:
     """Aggregate extractions for meta-analysis."""
 
+    extraction_store: ports.ExtractionStore
+
     def count_by_value(
         self,
         field_path: str,
         prompt_version_id: str,
+        latest_only: bool = True,
     ) -> dict[str, int]:
         """Count papers by field value.
 
         Args:
             field_path: Field path to aggregate on
             prompt_version_id: Prompt version to scope query to
+            latest_only: Only include extractions from latest successful runs (default: True)
 
         Returns:
             Dict mapping field values to counts
         """
-        # Placeholder implementation - real version would query database
-        # This would execute SQL like:
-        # SELECT value_text, COUNT(DISTINCT paper_id)
-        # FROM analysis_extractions
-        # WHERE field_path = ? AND prompt_version_id = ?
-        # GROUP BY value_text
-        return {}
+        return self.extraction_store.count_by_value(
+            field_path=field_path,
+            prompt_version_id=prompt_version_id,
+            latest_only=latest_only,
+        )
 
     def average_numeric(
         self,
         field_path: str,
         prompt_version_id: str,
         group_by: str | None = None,
+        latest_only: bool = True,
     ) -> float | dict[str, float] | None:
         """Average numeric field value, optionally grouped.
 
@@ -183,13 +190,14 @@ class AggregateExtractionsUseCase:
             field_path: Field path to average
             prompt_version_id: Prompt version to scope query to
             group_by: Optional field to group by
+            latest_only: Only include extractions from latest successful runs (default: True)
 
         Returns:
             Average value, or dict of averages if grouped, or None if no data
         """
-        # Placeholder implementation - real version would query database
-        # This would execute SQL like:
-        # SELECT AVG(value_numeric) FROM analysis_extractions
-        # WHERE field_path = ? AND prompt_version_id = ?
-        # (with GROUP BY if group_by specified)
-        return None
+        return self.extraction_store.average_numeric(
+            field_path=field_path,
+            prompt_version_id=prompt_version_id,
+            group_by=group_by,
+            latest_only=latest_only,
+        )

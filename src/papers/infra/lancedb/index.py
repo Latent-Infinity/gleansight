@@ -71,3 +71,9 @@ class LanceDBVectorIndex(ports.VectorIndex):
             score = float(row.get("_distance", row.get("score", 0.0)))
             output.append((row["paper_id"], score))
         return output
+
+    def reset(self) -> None:
+        try:
+            self._db.drop_table(self._config.table_name)
+        except Exception:
+            return None

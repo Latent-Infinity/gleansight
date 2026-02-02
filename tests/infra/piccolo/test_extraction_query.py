@@ -30,5 +30,6 @@ def test_query_by_field(tmp_path: Path) -> None:
         "field",
         prompt_version_id="prompt",
         constraints={"value_text": "value"},
+        latest_only=False,
     )
     assert paper_ids == ["paper"]
