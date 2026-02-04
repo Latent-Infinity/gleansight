@@ -231,43 +231,149 @@ class TestSemanticScholarClient:
         assert exc_info.value.code == ErrorCode.RATE_LIMITED
         assert "rate limit" in str(exc_info.value).lower()
 
-    def test_search_network_error_translation(self) -> None:
+    def test_search_network_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Network errors should be translated to domain errors."""
+
+        class FakeRateLimiter:
+            def acquire(self) -> None:
+                return None
+
+        sleeps: list[float] = []
+
+        def fake_sleep(delay: float) -> None:
+            sleeps.append(delay)
+
+        def fake_jitter(_: float, __: float) -> float:
+            return 1.0
 
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             raise ConnectionError("Network unreachable")
 
-        client = SemanticScholarClient(send_func=send_func)
+        import papers.infra.scholar_s2.adapter as adapter
+
+        monkeypatch.setattr(adapter.time, "sleep", fake_sleep)
+        monkeypatch.setattr(adapter.random, "uniform", fake_jitter)
+
+        client = SemanticScholarClient(
+            send_func=send_func,
+            rate_limiter=FakeRateLimiter(),
+            max_retries=3,
+            retry_delay_s=0.5,
+        )
         with pytest.raises(PipelineError) as exc_info:
             client.search(query="test", filters={}, max_results=10, page_size=100)
 
         assert exc_info.value.code == ErrorCode.NETWORK_ERROR
+        assert len(sleeps) == 2
 
-    def test_search_timeout_error_translation(self) -> None:
+    def test_search_timeout_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Timeout errors should be translated to domain errors."""
+
+        class FakeRateLimiter:
+            def acquire(self) -> None:
+                return None
+
+        sleeps: list[float] = []
+
+        def fake_sleep(delay: float) -> None:
+            sleeps.append(delay)
+
+        def fake_jitter(_: float, __: float) -> float:
+            return 1.0
 
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             raise TimeoutError("Request timed out")
 
-        client = SemanticScholarClient(send_func=send_func)
+        import papers.infra.scholar_s2.adapter as adapter
+
+        monkeypatch.setattr(adapter.time, "sleep", fake_sleep)
+        monkeypatch.setattr(adapter.random, "uniform", fake_jitter)
+
+        client = SemanticScholarClient(
+            send_func=send_func,
+            rate_limiter=FakeRateLimiter(),
+            max_retries=3,
+            retry_delay_s=0.5,
+        )
         with pytest.raises(PipelineError) as exc_info:
             client.search(query="test", filters={}, max_results=10, page_size=100)
 
         assert exc_info.value.code == ErrorCode.TIMEOUT
+        assert len(sleeps) == 2
 
-    def test_search_http_error_translation(self) -> None:
+    def test_search_http_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """HTTP errors should be translated to domain errors."""
+
+        class FakeRateLimiter:
+            def acquire(self) -> None:
+                return None
+
+        sleeps: list[float] = []
+
+        def fake_sleep(delay: float) -> None:
+            sleeps.append(delay)
+
+        def fake_jitter(_: float, __: float) -> float:
+            return 1.0
 
         def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
             exc = Exception("500 Internal Server Error")
             exc.status_code = 500  # type: ignore
             raise exc
 
-        client = SemanticScholarClient(send_func=send_func)
+        import papers.infra.scholar_s2.adapter as adapter
+
+        monkeypatch.setattr(adapter.time, "sleep", fake_sleep)
+        monkeypatch.setattr(adapter.random, "uniform", fake_jitter)
+
+        client = SemanticScholarClient(
+            send_func=send_func,
+            rate_limiter=FakeRateLimiter(),
+            max_retries=3,
+            retry_delay_s=0.5,
+        )
         with pytest.raises(PipelineError) as exc_info:
             client.search(query="test", filters={}, max_results=10, page_size=100)
 
         assert exc_info.value.code == ErrorCode.NETWORK_ERROR
+        assert len(sleeps) == 2
+
+    def test_retry_backoff_caps_at_30s(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Backoff should be exponential with jitter and capped at 30s."""
+
+        class FakeRateLimiter:
+            def acquire(self) -> None:
+                return None
+
+        sleeps: list[float] = []
+
+        def fake_sleep(delay: float) -> None:
+            sleeps.append(delay)
+
+        def fake_jitter(_: float, __: float) -> float:
+            return 1.0
+
+        def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+            exc = Exception("429 Too Many Requests")
+            exc.status_code = 429  # type: ignore
+            raise exc
+
+        import papers.infra.scholar_s2.adapter as adapter
+
+        monkeypatch.setattr(adapter.time, "sleep", fake_sleep)
+        monkeypatch.setattr(adapter.random, "uniform", fake_jitter)
+
+        client = SemanticScholarClient(
+            send_func=send_func,
+            rate_limiter=FakeRateLimiter(),
+            max_retries=4,
+            retry_delay_s=20.0,
+        )
+        with pytest.raises(PipelineError) as exc_info:
+            client.search(query="test", filters={}, max_results=10, page_size=100)
+
+        assert exc_info.value.code == ErrorCode.RATE_LIMITED
+        assert sleeps == [20.0, 30.0, 30.0]
 
     def test_search_invalid_response_format(self) -> None:
         """Invalid response format should raise error."""

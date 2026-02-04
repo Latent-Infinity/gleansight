@@ -16,5 +16,15 @@ text_slice_strategy = "markdown_full"
 default_profile = "default"
 
 [scholar]
-api_key = ""  # Optional Semantic Scholar API key for higher rate limits
-rate_limit_per_second = 10  # Max requests per second (100/s with API key, 10/s without)
+api_key = ""  # Optional Semantic Scholar API key (env: SEMANTIC_SCHOLAR_API_KEY)
+rate_limit_per_second = 1  # Max requests per second (1/s with basic API key)
+require_open_access = true  # Only search for papers with open access PDFs (ArXiv, etc.)
+
+[ui]
+search_max_results = 10
+
+[pdf]
+unpaywall_email = ""  # Email for Unpaywall API (env: UNPAYWALL_EMAIL)
+download_rate_limit_per_second = 2.0  # Max download requests per second
+download_max_retries = 3  # Max download retry attempts
+download_timeout_s = 120.0  # Download timeout in seconds

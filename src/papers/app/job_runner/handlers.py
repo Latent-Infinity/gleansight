@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -7,8 +9,10 @@ from typing import Any
 
 from papers.app import ports
 from papers.app.observability import MetricsSink, NoopMetrics
-from papers.domain.errors import ErrorCode, NotFoundError, NotReadyError
+from papers.domain.errors import ErrorCode, NotFoundError, NotReadyError, PipelineError
 from papers.domain.models import PipelineStage
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -24,6 +28,10 @@ class HandlerContext:
     profile_store: ports.ProfileStore
     analysis_store: ports.AnalysisRunStore
     metrics: MetricsSink = field(default_factory=NoopMetrics)
+    # Optional PDF resolution dependencies
+    pdf_resolver: ports.PdfResolver | None = None
+    pdf_downloader: ports.PdfDownloader | None = None
+    external_id_store: ports.PaperExternalIdStore | None = None
 
 
 @dataclass(frozen=True)
@@ -86,16 +94,94 @@ def _is_transient_error(message: str) -> bool:
 
 
 def handle_download(job: ports.Job, ctx: HandlerContext) -> HandlerResult:
+    """Handle download job by resolving PDF URL and downloading.
+
+    Downloads PDF either from:
+    1. Local source_path (legacy, for manual imports)
+    2. Resolved URL from external IDs (ArXiv, DOI via Unpaywall)
+
+    External IDs are retrieved from job payload or external_id_store.
+    """
     if job.paper_id is None:
         return HandlerResult.failed("paper_id is required")
     cancelled = _check_cancelled(job, ctx)
     if cancelled is not None:
         return cancelled
-    source_path = Path(job.payload["source_path"])
-    pdf_xxh64, _ = ctx.blob_store.put_pdf(source_path)
+
+    # Check for local source_path (legacy path)
+    if "source_path" in job.payload:
+        source_path = Path(job.payload["source_path"])
+        pdf_xxh64, _ = ctx.blob_store.put_pdf(source_path)
+        cancelled = _check_cancelled(job, ctx)
+        if cancelled is not None:
+            return cancelled
+        ctx.paper_store.set_pdf_fingerprint(job.paper_id, pdf_xxh64)
+        ctx.paper_store.advance_pipeline_stage_monotonic(job.paper_id, PipelineStage.downloaded)
+        ctx.paper_store.clear_pipeline_health_if_recovered(job.paper_id, job.type)
+        return HandlerResult.succeeded()
+
+    # Need PDF resolver and downloader for URL-based download
+    if ctx.pdf_resolver is None or ctx.pdf_downloader is None:
+        return HandlerResult.failed(
+            "PDF resolver not configured; cannot download without source_path",
+            error_code=str(ErrorCode.NO_OPEN_PDF),
+        )
+
+    # Get external IDs from payload or store
+    external_ids: dict[str, str] = job.payload.get("external_ids", {})
+    if not external_ids and ctx.external_id_store is not None:
+        external_ids = ctx.external_id_store.get_external_ids(job.paper_id)
+
+    if not external_ids:
+        return HandlerResult.failed(
+            "No external IDs available to resolve PDF URL",
+            error_code=str(ErrorCode.NO_OPEN_PDF),
+        )
+
+    # Resolve PDF URL
+    resolved = ctx.pdf_resolver.resolve(external_ids)
+    if resolved is None:
+        return HandlerResult.failed(
+            f"Could not resolve PDF URL from external IDs: {list(external_ids.keys())}",
+            error_code=str(ErrorCode.NO_OPEN_PDF),
+        )
+
+    logger.info("Resolved PDF URL for paper %s: %s (source: %s)", job.paper_id, resolved.url, resolved.source)
+
+    # Download to temp file
     cancelled = _check_cancelled(job, ctx)
     if cancelled is not None:
         return cancelled
+
+    # Create temp file path
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+
+    try:
+        ctx.pdf_downloader.download(resolved.url, tmp_path)
+    except PipelineError as e:
+        # Clean up temp file on error
+        if tmp_path.exists():
+            tmp_path.unlink()
+        # Map pipeline errors to handler results
+        if e.code in {ErrorCode.TIMEOUT, ErrorCode.RATE_LIMITED, ErrorCode.NETWORK_ERROR}:
+            delay_s = 60 if e.code == ErrorCode.RATE_LIMITED else 30
+            return HandlerResult.retryable(str(e), delay_s=delay_s, error_code=str(e.code))
+        return HandlerResult.failed(str(e), error_code=str(e.code))
+
+    cancelled = _check_cancelled(job, ctx)
+    if cancelled is not None:
+        if tmp_path.exists():
+            tmp_path.unlink()
+        return cancelled
+
+    # Store PDF in blob store
+    try:
+        pdf_xxh64, _ = ctx.blob_store.put_pdf(tmp_path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
+
     ctx.paper_store.set_pdf_fingerprint(job.paper_id, pdf_xxh64)
     ctx.paper_store.advance_pipeline_stage_monotonic(job.paper_id, PipelineStage.downloaded)
     ctx.paper_store.clear_pipeline_health_if_recovered(job.paper_id, job.type)

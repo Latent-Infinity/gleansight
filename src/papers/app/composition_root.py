@@ -14,9 +14,16 @@ from papers.infra.embedder_st.adapter import build_sentence_transformer_embedder
 from papers.infra.lancedb.index import LanceDBConfig, LanceDBVectorIndex
 from papers.infra.llm_openai_compat.client import build_openai_compat_client
 from papers.infra.piccolo.database import PiccoloDatabase
+from papers.infra.pdf_resolver import (
+    ArxivPdfResolver,
+    ChainedPdfResolver,
+    PdfDownloader,
+    UnpaywallPdfResolver,
+)
 from papers.infra.piccolo.stores import (
     PiccoloAnalysisRunStore,
     PiccoloJobQueue,
+    PiccoloPaperExternalIdStore,
     PiccoloPaperStore,
     PiccoloProfileStore,
     PiccoloPromptStore,
@@ -33,12 +40,15 @@ class AppContainer:
     prompt_store: PiccoloPromptStore
     profile_store: PiccoloProfileStore
     analysis_store: PiccoloAnalysisRunStore
+    external_id_store: PiccoloPaperExternalIdStore
     blob_store: FileSystemBlobStore
     vector_index: LanceDBVectorIndex
     embedder: ports.Embedder
     converter: ports.Converter
     llm_client: ports.LLMClient
     scholar_client: ports.ScholarClient
+    pdf_resolver: ports.PdfResolver
+    pdf_downloader: ports.PdfDownloader
     handler_context: HandlerContext
     job_runner: JobRunner
 
@@ -58,6 +68,7 @@ def build_container(
     prompt_store = PiccoloPromptStore()
     profile_store = PiccoloProfileStore()
     analysis_store = PiccoloAnalysisRunStore()
+    external_id_store = PiccoloPaperExternalIdStore()
 
     blob_store = FileSystemBlobStore(settings.data.blobs_dir)
     vector_index = LanceDBVectorIndex(LanceDBConfig(path=settings.data.lancedb_dir))
@@ -67,6 +78,18 @@ def build_container(
     scholar_client = build_s2_client(
         api_key=settings.scholar.api_key or None,
         rate_limit_per_second=settings.scholar.rate_limit_per_second,
+    )
+
+    # Build PDF resolver chain (ArXiv first, then Unpaywall)
+    resolvers: list[ports.PdfResolver] = [ArxivPdfResolver()]
+    unpaywall_email = settings.pdf.unpaywall_email
+    if unpaywall_email:
+        resolvers.append(UnpaywallPdfResolver(email=unpaywall_email))
+    pdf_resolver = ChainedPdfResolver(resolvers=resolvers)
+    pdf_downloader = PdfDownloader(
+        rate_limit_per_second=settings.pdf.download_rate_limit_per_second,
+        max_retries=settings.pdf.download_max_retries,
+        timeout_s=settings.pdf.download_timeout_s,
     )
 
     handler_context = HandlerContext(
@@ -80,6 +103,9 @@ def build_container(
         prompt_store=prompt_store,
         profile_store=profile_store,
         analysis_store=analysis_store,
+        pdf_resolver=pdf_resolver,
+        pdf_downloader=pdf_downloader,
+        external_id_store=external_id_store,
     )
     job_runner = JobRunner(job_queue=job_queue, context=handler_context)
 
@@ -91,12 +117,15 @@ def build_container(
         prompt_store=prompt_store,
         profile_store=profile_store,
         analysis_store=analysis_store,
+        external_id_store=external_id_store,
         blob_store=blob_store,
         vector_index=vector_index,
         embedder=embedder,
         converter=converter,
         llm_client=llm_client,
         scholar_client=scholar_client,
+        pdf_resolver=pdf_resolver,
+        pdf_downloader=pdf_downloader,
         handler_context=handler_context,
         job_runner=job_runner,
     )
@@ -117,8 +146,14 @@ def validate_startup(settings: Settings) -> None:
 
 
 def _ensure_dir_exists(path: Path, label: str) -> None:
-    if not path.exists():
-        raise ConfigurationError(f"Missing required directory: {label} ({path})")
+    if path.exists():
+        return
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ConfigurationError(
+            f"Unable to create required directory: {label} ({path})"
+        ) from exc
 
 
 def _require_dependency(module_name: str) -> None:

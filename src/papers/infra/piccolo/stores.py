@@ -19,6 +19,7 @@ from papers.infra.piccolo.tables import (
     EndpointProfile,
     Job,
     Paper,
+    PaperExternalId,
     PaperProject,
     PaperTag,
     Project,
@@ -76,6 +77,18 @@ class PiccoloCandidateStore:
 
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         row = Candidate.select().where(Candidate.candidate_id == candidate_id).first().run_sync()
+        if row is None:
+            return None
+        return dict(row)
+
+    def get_candidate_by_source(self, source: str, source_paper_id: str) -> dict[str, Any] | None:
+        row = (
+            Candidate.select()
+            .where(Candidate.source == source)
+            .where(Candidate.source_paper_id == source_paper_id)
+            .first()
+            .run_sync()
+        )
         if row is None:
             return None
         return dict(row)
@@ -847,6 +860,19 @@ class PiccoloAnalysisRunStore(ports.AnalysisRunStore):
         data = AnalysisRun._meta.db.transform_response_to_dicts(rows)
         return data[0] if data else None
 
+    def list_runs(self, paper_id: str) -> list[dict[str, Any]]:
+        """List all analysis runs for a paper with their status from jobs table."""
+        sql = """
+            SELECT ar.*, j.status FROM analysis_runs ar
+            JOIN jobs j ON j.run_id = ar.run_id AND j.type = 'analyze'
+            WHERE ar.paper_id = {}
+            ORDER BY ar.created_at DESC
+        """
+        query = QueryString(sql, paper_id)
+        rows = run_sync(AnalysisRun._meta.db.run_querystring(query))
+        data = AnalysisRun._meta.db.transform_response_to_dicts(rows)
+        return data
+
 
 @dataclass(frozen=True)
 class _RowExtraction:
@@ -961,3 +987,48 @@ class PiccoloPaperProjectStore(ports.PaperProjectStore):
             query = query.where(PaperProject.label == label)
         rows = query.run_sync()
         return [row["paper_id"] for row in rows]
+
+
+class PiccoloPaperExternalIdStore(ports.PaperExternalIdStore):
+    """Store for paper external identifiers (ArXiv, DOI, etc.)."""
+
+    def create_external_ids(self, paper_id: str, external_ids: dict[str, str]) -> None:
+        """Create external ID records for a paper."""
+        if not external_ids:
+            return
+        for kind, value in external_ids.items():
+            # Check if this kind already exists for the paper
+            existing = (
+                PaperExternalId.select()
+                .where(PaperExternalId.paper_id == paper_id)
+                .where(PaperExternalId.kind == kind)
+                .first()
+                .run_sync()
+            )
+            if existing is not None:
+                # Update existing record
+                (
+                    PaperExternalId.update({PaperExternalId.value: value})
+                    .where(PaperExternalId.paper_id == paper_id)
+                    .where(PaperExternalId.kind == kind)
+                    .run_sync()
+                )
+            else:
+                # Create new record
+                PaperExternalId(
+                    _data={
+                        PaperExternalId.paper_external_id_id: str(uuid.uuid4()),
+                        PaperExternalId.paper_id: paper_id,
+                        PaperExternalId.kind: kind,
+                        PaperExternalId.value: value,
+                    }
+                ).save().run_sync()
+
+    def get_external_ids(self, paper_id: str) -> dict[str, str]:
+        """Get all external IDs for a paper."""
+        rows = (
+            PaperExternalId.select(PaperExternalId.kind, PaperExternalId.value)
+            .where(PaperExternalId.paper_id == paper_id)
+            .run_sync()
+        )
+        return {row["kind"]: row["value"] for row in rows}

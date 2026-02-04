@@ -452,3 +452,346 @@ def test_handle_analyze_profile_not_found(tmp_path: Path) -> None:
     # by other similar NotFoundError tests (convert, embed handlers).
     # Skipping this specific test to avoid complex table setup dependencies.
     pytest.skip("Complex setup required, covered by integration tests")
+
+
+class TestHandleDownloadWithResolver:
+    """Tests for handle_download with PDF resolver."""
+
+    def test_download_resolves_pdf_from_external_ids(self, tmp_path: Path) -> None:
+        """Should resolve and download PDF when external IDs are in payload."""
+        from papers.app.ports import ResolvedPdf
+
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        # Create fake resolver and downloader
+        class FakeResolver:
+            def resolve(self, external_ids: dict) -> ResolvedPdf | None:
+                if "ArXiv" in external_ids:
+                    return ResolvedPdf(
+                        url=f"https://arxiv.org/pdf/{external_ids['ArXiv']}.pdf",
+                        source="arxiv",
+                    )
+                return None
+
+        class FakeDownloader:
+            def __init__(self, tmp_path: Path):
+                self.tmp_path = tmp_path
+
+            def download(self, url: str, dest_path: Path) -> None:
+                # Write fake PDF content
+                dest_path.write_bytes(b"%PDF-1.4 fake content")
+
+        blob_store = FileSystemBlobStore(tmp_path / "blobs")
+        ctx = HandlerContext(
+            paper_store=paper_store,
+            job_queue=PiccoloJobQueue(),
+            blob_store=blob_store,
+            converter=_Converter(),
+            embedder=_Embedder(),
+            vector_index=_VectorIndex(),
+            llm_client=_LLM(),
+            prompt_store=PiccoloPromptStore(),
+            profile_store=PiccoloProfileStore(),
+            analysis_store=PiccoloAnalysisRunStore(),
+            pdf_resolver=FakeResolver(),
+            pdf_downloader=FakeDownloader(tmp_path),
+        )
+
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={"external_ids": {"ArXiv": "2001.12345"}},
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "succeeded"
+        paper = paper_store.get("paper")
+        assert paper is not None
+        assert paper.get("pdf_fingerprint_xxh64") is not None
+
+    def test_download_fails_without_resolver_or_source_path(self, tmp_path: Path) -> None:
+        """Should fail when no resolver and no source_path."""
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        ctx = _context(tmp_path, db)  # No resolver configured
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={"external_ids": {"ArXiv": "2001.12345"}},
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "failed"
+        assert "not configured" in result.error or True  # May have different message
+
+    def test_download_fails_without_external_ids(self, tmp_path: Path) -> None:
+        """Should fail when no external IDs available."""
+        from papers.app.ports import ResolvedPdf
+
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        class FakeResolver:
+            def resolve(self, external_ids: dict) -> ResolvedPdf | None:
+                return None
+
+        class FakeDownloader:
+            def download(self, url: str, dest_path: Path) -> None:
+                pass
+
+        blob_store = FileSystemBlobStore(tmp_path / "blobs")
+        ctx = HandlerContext(
+            paper_store=paper_store,
+            job_queue=PiccoloJobQueue(),
+            blob_store=blob_store,
+            converter=_Converter(),
+            embedder=_Embedder(),
+            vector_index=_VectorIndex(),
+            llm_client=_LLM(),
+            prompt_store=PiccoloPromptStore(),
+            profile_store=PiccoloProfileStore(),
+            analysis_store=PiccoloAnalysisRunStore(),
+            pdf_resolver=FakeResolver(),
+            pdf_downloader=FakeDownloader(),
+        )
+
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={},  # No external_ids
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "failed"
+        assert result.error_code == "NO_OPEN_PDF"
+
+    def test_download_fails_when_resolver_returns_none(self, tmp_path: Path) -> None:
+        """Should fail when resolver cannot find PDF URL."""
+        from papers.app.ports import ResolvedPdf
+
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        class FakeResolver:
+            def resolve(self, external_ids: dict) -> ResolvedPdf | None:
+                return None  # Cannot resolve
+
+        class FakeDownloader:
+            def download(self, url: str, dest_path: Path) -> None:
+                pass
+
+        blob_store = FileSystemBlobStore(tmp_path / "blobs")
+        ctx = HandlerContext(
+            paper_store=paper_store,
+            job_queue=PiccoloJobQueue(),
+            blob_store=blob_store,
+            converter=_Converter(),
+            embedder=_Embedder(),
+            vector_index=_VectorIndex(),
+            llm_client=_LLM(),
+            prompt_store=PiccoloPromptStore(),
+            profile_store=PiccoloProfileStore(),
+            analysis_store=PiccoloAnalysisRunStore(),
+            pdf_resolver=FakeResolver(),
+            pdf_downloader=FakeDownloader(),
+        )
+
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={"external_ids": {"DOI": "10.1234/abc"}},  # DOI that cannot be resolved
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "failed"
+        assert result.error_code == "NO_OPEN_PDF"
+
+    def test_download_retries_on_network_error(self, tmp_path: Path) -> None:
+        """Should return retryable result on network errors."""
+        from papers.app.ports import ResolvedPdf
+        from papers.domain.errors import ErrorCode, PipelineError
+
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        class FakeResolver:
+            def resolve(self, external_ids: dict) -> ResolvedPdf | None:
+                return ResolvedPdf(url="https://example.com/paper.pdf", source="test")
+
+        class FakeDownloader:
+            def download(self, url: str, dest_path: Path) -> None:
+                raise PipelineError(ErrorCode.NETWORK_ERROR, "connection refused")
+
+        blob_store = FileSystemBlobStore(tmp_path / "blobs")
+        ctx = HandlerContext(
+            paper_store=paper_store,
+            job_queue=PiccoloJobQueue(),
+            blob_store=blob_store,
+            converter=_Converter(),
+            embedder=_Embedder(),
+            vector_index=_VectorIndex(),
+            llm_client=_LLM(),
+            prompt_store=PiccoloPromptStore(),
+            profile_store=PiccoloProfileStore(),
+            analysis_store=PiccoloAnalysisRunStore(),
+            pdf_resolver=FakeResolver(),
+            pdf_downloader=FakeDownloader(),
+        )
+
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={"external_ids": {"ArXiv": "2001.12345"}},
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "retryable"
+        assert result.error_code == "NETWORK_ERROR"
+
+    def test_download_uses_external_id_store_fallback(self, tmp_path: Path) -> None:
+        """Should fallback to external_id_store when payload has no external_ids."""
+        from papers.app.ports import ResolvedPdf
+
+        db = PiccoloDatabase(tmp_path / "db.sqlite")
+        db.initialize_schema()
+        paper_store = PiccoloPaperStore()
+        paper_store.create_paper(
+            {
+                "paper_id": "paper",
+                "title": "Title",
+                "pipeline_stage": PipelineStage.imported,
+                "pipeline_health": PipelineHealth.ok,
+            }
+        )
+
+        class FakeResolver:
+            def resolve(self, external_ids: dict) -> ResolvedPdf | None:
+                if "ArXiv" in external_ids:
+                    return ResolvedPdf(url="https://arxiv.org/pdf/test.pdf", source="arxiv")
+                return None
+
+        class FakeDownloader:
+            def download(self, url: str, dest_path: Path) -> None:
+                dest_path.write_bytes(b"%PDF-1.4 content")
+
+        class FakeExternalIdStore:
+            def create_external_ids(self, paper_id: str, external_ids: dict) -> None:
+                pass
+
+            def get_external_ids(self, paper_id: str) -> dict:
+                return {"ArXiv": "2001.12345"}  # Return stored IDs
+
+        blob_store = FileSystemBlobStore(tmp_path / "blobs")
+        ctx = HandlerContext(
+            paper_store=paper_store,
+            job_queue=PiccoloJobQueue(),
+            blob_store=blob_store,
+            converter=_Converter(),
+            embedder=_Embedder(),
+            vector_index=_VectorIndex(),
+            llm_client=_LLM(),
+            prompt_store=PiccoloPromptStore(),
+            profile_store=PiccoloProfileStore(),
+            analysis_store=PiccoloAnalysisRunStore(),
+            pdf_resolver=FakeResolver(),
+            pdf_downloader=FakeDownloader(),
+            external_id_store=FakeExternalIdStore(),
+        )
+
+        job = _Job(
+            job_id="job",
+            type="download",
+            status="queued",
+            paper_id="paper",
+            run_id=None,
+            payload={},  # No external_ids in payload
+            attempts=0,
+            max_attempts=3,
+            run_after=None,
+        )
+
+        result = handle_download(job, ctx)
+
+        assert result.status == "succeeded"

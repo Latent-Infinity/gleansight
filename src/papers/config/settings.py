@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,6 +50,41 @@ class LLMSettings(BaseModel):
 class ScholarSettings(BaseModel):
     api_key: str = ""
     rate_limit_per_second: int = Field(default=10, ge=1, le=100)
+    require_open_access: bool = Field(
+        default=True,
+        description="Only return papers with open access PDFs (ArXiv, etc.)",
+    )
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _env_override_api_key(cls, value: Any) -> str:
+        """Use env var SEMANTIC_SCHOLAR_API_KEY if set, otherwise use config value."""
+        env_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
+        if env_key:
+            return env_key
+        return value if value else ""
+
+
+class UISettings(BaseModel):
+    search_max_results: int = Field(default=10, ge=1, le=100)
+
+
+class PdfSettings(BaseModel):
+    """Settings for PDF downloading."""
+
+    unpaywall_email: str = ""
+    download_rate_limit_per_second: float = Field(default=2.0, ge=0.1, le=10.0)
+    download_max_retries: int = Field(default=3, ge=1, le=10)
+    download_timeout_s: float = Field(default=120.0, ge=10.0, le=600.0)
+
+    @field_validator("unpaywall_email", mode="before")
+    @classmethod
+    def _env_override_email(cls, value: Any) -> str:
+        """Use env var UNPAYWALL_EMAIL if set, otherwise use config value."""
+        env_email = os.environ.get("UNPAYWALL_EMAIL", "")
+        if env_email:
+            return env_email
+        return value if value else ""
 
 
 class Settings(BaseModel):
@@ -56,6 +92,8 @@ class Settings(BaseModel):
     embeddings: EmbeddingSettings
     llm: LLMSettings
     scholar: ScholarSettings
+    ui: UISettings
+    pdf: PdfSettings = Field(default_factory=PdfSettings)
 
 
 @dataclass(frozen=True)
@@ -69,6 +107,23 @@ def _load_toml(path: Path) -> dict[str, Any]:
         raise ConfigurationError(f"Missing config file: {path}")
     with path.open("rb") as handle:
         return tomllib.load(handle)
+
+
+def _load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+    try:
+        for line in path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except OSError as exc:
+        raise ConfigurationError(f"Unable to read .env file: {path}") from exc
 
 
 def _merge_dicts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -101,6 +156,7 @@ def load_settings(
     base_dir: Path | None = None,
 ) -> Settings:
     base_dir = base_dir or Path.cwd()
+    _load_dotenv(base_dir / ".env")
     defaults = _load_toml(defaults_path)
     combined = defaults
     if override_path:

@@ -73,6 +73,7 @@ def _settings(tmp_path: Path) -> Settings:
             },
             "llm": {"default_profile": "default"},
             "scholar": {"api_key": "", "rate_limit_per_second": 10},
+            "ui": {"search_max_results": 10},
         }
     )
 

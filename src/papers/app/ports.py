@@ -305,6 +305,10 @@ class AnalysisRunStore(Protocol):
         model_name: str,
     ) -> dict[str, Any] | None: ...
 
+    def list_runs(self, paper_id: str) -> list[dict[str, Any]]:
+        """List all analysis runs for a paper with their status from jobs table."""
+        ...
+
 
 @runtime_checkable
 class TagStore(Protocol):
@@ -346,3 +350,34 @@ class PaperProjectStore(Protocol):
     def attach(self, paper_id: str, project_id: str, label: str | None = None) -> None: ...
 
     def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]: ...
+
+
+@dataclass(frozen=True)
+class ResolvedPdf:
+    """Result of resolving a PDF URL from external IDs."""
+
+    url: str
+    source: str  # "arxiv" | "unpaywall"
+
+
+@runtime_checkable
+class PdfResolver(Protocol):
+    """Protocol for resolving PDF URLs from external identifiers."""
+
+    def resolve(self, external_ids: dict[str, str]) -> ResolvedPdf | None: ...
+
+
+@runtime_checkable
+class PdfDownloader(Protocol):
+    """Protocol for downloading PDFs from URLs."""
+
+    def download(self, url: str, dest_path: Path) -> None: ...
+
+
+@runtime_checkable
+class PaperExternalIdStore(Protocol):
+    """Protocol for storing paper external identifiers."""
+
+    def create_external_ids(self, paper_id: str, external_ids: dict[str, str]) -> None: ...
+
+    def get_external_ids(self, paper_id: str) -> dict[str, str]: ...

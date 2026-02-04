@@ -29,6 +29,17 @@ class FakeCandidateStore:
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         return self.candidates.get(candidate_id)
 
+    def get_candidate_by_source(
+        self, source: str, source_paper_id: str
+    ) -> dict[str, Any] | None:
+        for candidate in self.candidates.values():
+            if (
+                candidate.get("source") == source
+                and candidate.get("source_paper_id") == source_paper_id
+            ):
+                return candidate
+        return None
+
     def mark_imported(self, candidate_id: str, paper_id: str) -> None:
         if candidate_id in self.candidates:
             self.candidates[candidate_id]["imported_paper_id"] = paper_id
@@ -176,6 +187,82 @@ class TestDiscoverCandidatesUseCase:
 
         assert len(candidate_ids) == 0
 
+    def test_discover_skips_missing_source_paper_id(self) -> None:
+        """Should skip results missing source_paper_id to avoid collisions."""
+        scholar_results = [
+            {
+                "source_paper_id": "",
+                "title": "Missing ID",
+                "year": 2020,
+                "venue": "NeurIPS",
+                "authors": ["Alice Smith"],
+                "abstract": "This paper presents...",
+                "external_ids": {"ArXiv": "2001.12345"},
+            }
+        ]
+
+        scholar_client = FakeScholarClient(results=scholar_results)
+        candidate_store = FakeCandidateStore()
+
+        use_case = DiscoverCandidatesUseCase(
+            scholar_client=scholar_client,
+            candidate_store=candidate_store,
+        )
+
+        candidate_ids = use_case.discover(
+            query="deep learning",
+            filters={},
+            max_results=10,
+        )
+
+        assert candidate_ids == []
+
+    def test_discover_reuses_existing_candidate(self) -> None:
+        """Should reuse existing candidate when source_paper_id already stored."""
+        scholar_results = [
+            {
+                "source_paper_id": "s2_abc123",
+                "title": "Deep Learning Paper",
+                "year": 2020,
+                "venue": "NeurIPS",
+                "authors": ["Alice Smith", "Bob Jones"],
+                "abstract": "This paper presents...",
+                "external_ids": {"ArXiv": "2001.12345"},
+            }
+        ]
+
+        scholar_client = FakeScholarClient(results=scholar_results)
+        candidate_store = FakeCandidateStore()
+        existing_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Old Title",
+                "year": 2019,
+                "venue": "OldConf",
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
+
+        use_case = DiscoverCandidatesUseCase(
+            scholar_client=scholar_client,
+            candidate_store=candidate_store,
+        )
+
+        candidate_ids = use_case.discover(
+            query="deep learning",
+            filters={},
+            max_results=10,
+        )
+
+        assert candidate_ids == [existing_id]
+
 
 class TestImportCandidateUseCase:
     """Test ImportCandidateUseCase."""
@@ -308,6 +395,127 @@ class TestImportCandidateUseCase:
             use_case.import_candidate(candidate_id)
 
         assert "already rejected" in str(exc_info.value).lower()
+
+    def test_import_preserves_external_ids_in_job_payload(self) -> None:
+        """Should include external IDs in download job payload."""
+        candidate_store = FakeCandidateStore()
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": "ACL",
+                "authors_json": '["Alice"]',
+                "abstract": "Abstract text",
+                "external_ids_json": '{"ArXiv": "2001.12345", "DOI": "10.1234/abc"}',
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
+
+        paper_store = FakePaperStore()
+        job_queue = FakeJobQueue()
+
+        use_case = ImportCandidateUseCase(
+            candidate_store=candidate_store,
+            paper_store=paper_store,
+            job_queue=job_queue,
+        )
+
+        use_case.import_candidate(candidate_id)
+
+        # Verify external IDs are in job payload
+        assert len(job_queue.jobs) == 1
+        job = job_queue.jobs[0]
+        assert job["payload"]["external_ids"] == {"ArXiv": "2001.12345", "DOI": "10.1234/abc"}
+
+    def test_import_stores_external_ids_when_store_provided(self) -> None:
+        """Should store external IDs when external_id_store is provided."""
+
+        class FakeExternalIdStore:
+            def __init__(self) -> None:
+                self.external_ids: dict[str, dict[str, str]] = {}
+
+            def create_external_ids(
+                self, paper_id: str, external_ids: dict[str, str]
+            ) -> None:
+                self.external_ids[paper_id] = external_ids
+
+            def get_external_ids(self, paper_id: str) -> dict[str, str]:
+                return self.external_ids.get(paper_id, {})
+
+        candidate_store = FakeCandidateStore()
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": "ACL",
+                "authors_json": '["Alice"]',
+                "abstract": "Abstract text",
+                "external_ids_json": '{"ArXiv": "2001.12345"}',
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
+
+        paper_store = FakePaperStore()
+        job_queue = FakeJobQueue()
+        external_id_store = FakeExternalIdStore()
+
+        use_case = ImportCandidateUseCase(
+            candidate_store=candidate_store,
+            paper_store=paper_store,
+            job_queue=job_queue,
+            external_id_store=external_id_store,
+        )
+
+        paper_id = use_case.import_candidate(candidate_id)
+
+        # Verify external IDs were stored
+        assert external_id_store.get_external_ids(paper_id) == {"ArXiv": "2001.12345"}
+
+    def test_import_handles_empty_external_ids(self) -> None:
+        """Should handle candidate with no external IDs."""
+        candidate_store = FakeCandidateStore()
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": str(uuid.uuid4()),
+                "source": "semantic_scholar",
+                "source_paper_id": "s2_abc123",
+                "title": "Test Paper",
+                "year": 2020,
+                "venue": None,
+                "authors_json": "[]",
+                "abstract": None,
+                "external_ids_json": None,
+                "rejected_at": None,
+                "imported_paper_id": None,
+                "imported_at": None,
+            }
+        )
+
+        paper_store = FakePaperStore()
+        job_queue = FakeJobQueue()
+
+        use_case = ImportCandidateUseCase(
+            candidate_store=candidate_store,
+            paper_store=paper_store,
+            job_queue=job_queue,
+        )
+
+        paper_id = use_case.import_candidate(candidate_id)
+
+        # Should succeed and have empty payload
+        assert paper_id is not None
+        assert len(job_queue.jobs) == 1
+        assert job_queue.jobs[0]["payload"] == {}
 
 
 class TestRejectCandidateUseCase:

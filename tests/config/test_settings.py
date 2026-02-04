@@ -30,7 +30,10 @@ default_profile = "default"
 
 [scholar]
 api_key = ""
-rate_limit_per_second = 10
+rate_limit_per_second = 1
+
+[ui]
+search_max_results = 10
 """.strip()
     )
 
@@ -79,7 +82,7 @@ def test_load_settings_scholar_config(tmp_path: Path) -> None:
     settings = load_settings(defaults_path=defaults_path, base_dir=tmp_path)
 
     assert settings.scholar.api_key == ""
-    assert settings.scholar.rate_limit_per_second == 10
+    assert settings.scholar.rate_limit_per_second == 1
 
     # Test with API key override
     override_path = tmp_path / "override.toml"
@@ -99,3 +102,70 @@ rate_limit_per_second = 100
 
     assert settings.scholar.api_key == "test_key_123"
     assert settings.scholar.rate_limit_per_second == 100
+
+
+def test_scholar_api_key_from_env_overrides_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Environment variable should override config file value."""
+    defaults_path = tmp_path / "defaults.toml"
+    _write_defaults(defaults_path)
+
+    # Override TOML has a key
+    override_path = tmp_path / "override.toml"
+    override_path.write_text(
+        """
+[scholar]
+api_key = "from_config"
+""".strip()
+    )
+
+    monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "from_env")
+
+    settings = load_settings(
+        defaults_path=defaults_path,
+        override_path=override_path,
+        base_dir=tmp_path,
+    )
+
+    assert settings.scholar.api_key == "from_env"
+
+
+def test_scholar_api_key_from_env_when_config_empty(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Environment variable should be used when config value is empty."""
+    defaults_path = tmp_path / "defaults.toml"
+    _write_defaults(defaults_path)
+
+    monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "from_env_only")
+
+    settings = load_settings(defaults_path=defaults_path, base_dir=tmp_path)
+
+    assert settings.scholar.api_key == "from_env_only"
+
+
+def test_scholar_api_key_uses_config_when_env_unset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Config value should be used when environment variable is not set."""
+    defaults_path = tmp_path / "defaults.toml"
+    _write_defaults(defaults_path)
+
+    override_path = tmp_path / "override.toml"
+    override_path.write_text(
+        """
+[scholar]
+api_key = "from_config_only"
+""".strip()
+    )
+
+    monkeypatch.delenv("SEMANTIC_SCHOLAR_API_KEY", raising=False)
+
+    settings = load_settings(
+        defaults_path=defaults_path,
+        override_path=override_path,
+        base_dir=tmp_path,
+    )
+
+    assert settings.scholar.api_key == "from_config_only"

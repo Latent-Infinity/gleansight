@@ -29,6 +29,9 @@ class CandidateStore(Protocol):
 
     def create_candidate(self, fields: dict[str, Any]) -> str: ...
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None: ...
+    def get_candidate_by_source(
+        self, source: str, source_paper_id: str
+    ) -> dict[str, Any] | None: ...
     def mark_imported(self, candidate_id: str, paper_id: str) -> None: ...
     def mark_rejected(self, candidate_id: str) -> None: ...
 
@@ -51,6 +54,14 @@ class JobQueue(Protocol):
         payload: dict[str, Any],
         run_after: datetime | None = None,
     ) -> str: ...
+
+
+class PaperExternalIdStore(Protocol):
+    """Protocol for storing paper external identifiers."""
+
+    def create_external_ids(self, paper_id: str, external_ids: dict[str, str]) -> None: ...
+
+    def get_external_ids(self, paper_id: str) -> dict[str, str]: ...
 
 
 @dataclass(frozen=True)
@@ -81,19 +92,30 @@ class DiscoverCandidatesUseCase:
             query=query,
             filters=filters,
             max_results=max_results,
-            page_size=100,
+            page_size=min(100, max_results),
         )
 
         # Store each result as a candidate
         candidate_ids = []
         for result in results:
+            source_paper_id = result.get("source_paper_id") or ""
+            if not source_paper_id.strip():
+                continue
+            existing = self.candidate_store.get_candidate_by_source(
+                "semantic_scholar",
+                source_paper_id,
+            )
+            if existing is not None:
+                candidate_ids.append(existing["candidate_id"])
+                continue
+
             candidate_id = str(uuid.uuid4())
 
             # Prepare candidate fields
             fields = {
                 "candidate_id": candidate_id,
                 "source": "semantic_scholar",
-                "source_paper_id": result["source_paper_id"],
+                "source_paper_id": source_paper_id,
                 "title": result["title"],
                 "year": result.get("year"),
                 "venue": result.get("venue"),
@@ -121,6 +143,7 @@ class ImportCandidateUseCase:
     candidate_store: CandidateStore
     paper_store: PaperStore
     job_queue: JobQueue
+    external_id_store: PaperExternalIdStore | None = None
 
     def import_candidate(self, candidate_id: str) -> str:
         """Import candidate as a paper and enqueue download job.
@@ -159,6 +182,14 @@ class ImportCandidateUseCase:
             except (json.JSONDecodeError, TypeError):
                 authors = []
 
+        # Parse external IDs JSON if it exists
+        external_ids: dict[str, str] = {}
+        if candidate.get("external_ids_json"):
+            try:
+                external_ids = json.loads(candidate["external_ids_json"])
+            except (json.JSONDecodeError, TypeError):
+                external_ids = {}
+
         paper_fields = {
             "paper_id": paper_id,
             "title": candidate["title"],
@@ -172,12 +203,16 @@ class ImportCandidateUseCase:
 
         self.paper_store.create_paper(paper_fields)
 
-        # Enqueue download job
+        # Store external IDs if store is available
+        if self.external_id_store and external_ids:
+            self.external_id_store.create_external_ids(paper_id, external_ids)
+
+        # Enqueue download job with external IDs in payload
         self.job_queue.enqueue(
             type="download",
             paper_id=paper_id,
             run_id=None,
-            payload={},
+            payload={"external_ids": external_ids} if external_ids else {},
         )
 
         # Mark candidate as imported

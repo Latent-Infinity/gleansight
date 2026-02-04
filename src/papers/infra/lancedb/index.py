@@ -64,7 +64,10 @@ class LanceDBVectorIndex(ports.VectorIndex):
         )
 
     def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]:
-        table = self._get_table()
+        try:
+            table = self._get_table()
+        except Exception:
+            return []
         results = table.search(embedding, vector_column_name="embedding").limit(limit).to_list()
         output: list[tuple[str, float]] = []
         for row in results:

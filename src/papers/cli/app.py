@@ -9,7 +9,7 @@ from rich.console import Console
 
 from papers.app import use_cases
 from papers.app.composition_root import build_container
-from papers.config.settings import load_settings
+from papers.config.settings import Settings, load_settings
 from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import PiccoloCandidateStore, PiccoloExtractionStore
 
@@ -19,6 +19,7 @@ console = Console()
 
 @dataclass
 class CLIContainer:
+    settings: Settings
     discover: use_cases.DiscoverCandidatesUseCase
     import_candidate: use_cases.ImportCandidateUseCase
     run_analysis: use_cases.RunAnalysisUseCase
@@ -69,6 +70,7 @@ def get_container() -> CLIContainer:
     papers_fts = PiccoloPaperFTS()
 
     _container = CLIContainer(
+        settings=settings,
         discover=use_cases.DiscoverCandidatesUseCase(
             scholar_client=base.scholar_client,
             candidate_store=candidate_store,
@@ -77,6 +79,7 @@ def get_container() -> CLIContainer:
             candidate_store=candidate_store,
             paper_store=base.paper_store,
             job_queue=base.job_queue,
+            external_id_store=base.external_id_store,
         ),
         run_analysis=use_cases.RunAnalysisUseCase(
             job_queue=base.job_queue,

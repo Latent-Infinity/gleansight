@@ -76,6 +76,17 @@ class FakeCandidateStore:
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         return self.candidates.get(candidate_id)
 
+    def get_candidate_by_source(
+        self, source: str, source_paper_id: str
+    ) -> dict[str, Any] | None:
+        for candidate in self.candidates.values():
+            if (
+                candidate.get("source") == source
+                and candidate.get("source_paper_id") == source_paper_id
+            ):
+                return candidate
+        return None
+
     def mark_imported(self, candidate_id: str, paper_id: str) -> None:
         if candidate_id in self.candidates:
             self.candidates[candidate_id]["imported_paper_id"] = paper_id

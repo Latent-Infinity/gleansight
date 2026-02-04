@@ -16,6 +16,11 @@ def discover(
     max_results: int = typer.Option(50, help="Maximum results"),
     year_min: int | None = typer.Option(None, help="Minimum year"),
     year_max: int | None = typer.Option(None, help="Maximum year"),
+    include_paywalled: bool = typer.Option(
+        False,
+        "--include-paywalled",
+        help="Include papers without open access PDFs (overrides config)",
+    ),
 ) -> None:
     container = cli_app.get_container()
     filters: dict[str, Any] = {}
@@ -23,6 +28,11 @@ def discover(
         filters["year_min"] = year_min
     if year_max is not None:
         filters["year_max"] = year_max
+
+    # Apply open access filter from settings (unless overridden)
+    if not include_paywalled and container.settings.scholar.require_open_access:
+        filters["open_access_pdf"] = True
+
     candidate_ids = container.discover.discover(query=query, filters=filters, max_results=max_results)
     table = Table(title="Discovery Results")
     table.add_column("Candidate ID")
