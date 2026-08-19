@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from datetime import datetime
-
-import importlib
 
 from typer.testing import CliRunner
 
