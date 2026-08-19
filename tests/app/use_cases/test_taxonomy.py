@@ -27,7 +27,9 @@ class FakeTagStore:
     tags_by_id: dict[str, dict[str, Any]] = field(default_factory=dict)
     tags_by_name: dict[str, dict[str, Any]] = field(default_factory=dict)
 
-    def create_tag(self, tag_id: str, name: str, tag_type: str, created_at: str | None = None) -> None:
+    def create_tag(
+        self, tag_id: str, name: str, tag_type: str, created_at: str | None = None
+    ) -> None:
         payload = {"tag_id": tag_id, "name": name, "type": tag_type}
         self.tags_by_id[tag_id] = payload
         self.tags_by_name[name] = payload

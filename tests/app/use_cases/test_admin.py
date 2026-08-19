@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from papers.app.use_cases.admin import RecoverStuckJobsUseCase, RebuildVectorIndexUseCase
+from papers.app.use_cases.admin import RebuildVectorIndexUseCase, RecoverStuckJobsUseCase
 
 
 @dataclass
