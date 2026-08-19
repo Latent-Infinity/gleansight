@@ -55,6 +55,12 @@ class JobQueue(Protocol):
 
     def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]: ...
 
+    def delete_job(self, job_id: str) -> None: ...
+
+    def bulk_delete_jobs(self, job_ids: list[str]) -> int: ...
+
+    def bulk_cancel_jobs(self, job_ids: list[str]) -> int: ...
+
 
 @runtime_checkable
 class PaperStore(Protocol):
@@ -97,6 +103,10 @@ class PaperStore(Protocol):
     def clear_pipeline_health_if_recovered(self, paper_id: str, job_type: str) -> None: ...
 
     def list_papers_with_markdown(self) -> list[str]: ...
+
+    def delete_paper(self, paper_id: str) -> None: ...
+
+    def reset_pipeline_stage(self, paper_id: str, stage: str) -> None: ...
 
 
 @runtime_checkable
@@ -150,6 +160,17 @@ class ExtractionStore(Protocol):
         latest_only: bool = True,
     ) -> float | dict[str, float] | None: ...
 
+    def search_text(
+        self,
+        query: str,
+        *,
+        prompt_version_id: str,
+        field_path: str | None = None,
+        entity_type: str | None = None,
+        entity_ref: str | None = None,
+        limit: int = 50,
+    ) -> list[str]: ...
+
 
 @runtime_checkable
 class BlobStore(Protocol):
@@ -174,7 +195,13 @@ class BlobStore(Protocol):
 class VectorIndex(Protocol):
     def upsert(self, paper_id: str, embedding: list[float]) -> None: ...
 
-    def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]: ...
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]: ...
 
     def reset(self) -> None: ...
 
@@ -231,7 +258,19 @@ class ScholarClient(Protocol):
         filters: dict[str, Any],
         max_results: int,
         page_size: int,
+        offset: int = 0,
     ) -> list[dict[str, Any]]: ...
+
+
+@runtime_checkable
+class CandidateStore(Protocol):
+    def create_candidate(self, fields: dict[str, Any]) -> str: ...
+
+    def get_candidate_by_source(
+        self,
+        source: str,
+        source_paper_id: str,
+    ) -> dict[str, Any] | None: ...
 
 
 @runtime_checkable
@@ -371,7 +410,7 @@ class PdfResolver(Protocol):
 class PdfDownloader(Protocol):
     """Protocol for downloading PDFs from URLs."""
 
-    def download(self, url: str, dest_path: Path) -> None: ...
+    def download(self, url: str, dest_path: Path, *, source: str = "") -> None: ...
 
 
 @runtime_checkable

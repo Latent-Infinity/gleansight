@@ -50,6 +50,15 @@ class FakeJobQueue:
     def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]:
         return []
 
+    def delete_job(self, job_id: str) -> None:
+        return None
+
+    def bulk_delete_jobs(self, job_ids: list[str]) -> int:
+        return len(job_ids)
+
+    def bulk_cancel_jobs(self, job_ids: list[str]) -> int:
+        return len(job_ids)
+
 
 class FakePaperStore:
     def create_paper(self, fields: dict) -> str:
@@ -102,6 +111,12 @@ class FakePaperStore:
     def list_papers_with_markdown(self) -> list[str]:
         return []
 
+    def delete_paper(self, paper_id: str) -> None:
+        return None
+
+    def reset_pipeline_stage(self, paper_id: str, stage: str) -> None:
+        return None
+
 
 class FakeExtraction:
     entity_type = "paper"
@@ -151,6 +166,18 @@ class FakeExtractionStore:
         latest_only: bool = True,
     ):
         return None
+
+    def search_text(
+        self,
+        query: str,
+        *,
+        prompt_version_id: str,
+        field_path: str | None = None,
+        entity_type: str | None = None,
+        entity_ref: str | None = None,
+        limit: int = 50,
+    ):
+        return []
 
 
 class FakeBlobStore:
@@ -294,6 +321,9 @@ class FakeAnalysisRunStore:
         model_name: str,
     ):
         return None
+
+    def list_runs(self, paper_id: str) -> list[dict]:
+        return []
 
 
 class FakeTagStore:
