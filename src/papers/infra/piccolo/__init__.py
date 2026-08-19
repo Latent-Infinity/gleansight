@@ -3,10 +3,11 @@ from __future__ import annotations
 from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import (
     PiccoloAnalysisRunStore,
+    PiccoloCandidateImporter,
     PiccoloExtractionStore,
     PiccoloJobQueue,
-    PiccoloPaperStore,
     PiccoloPaperProjectStore,
+    PiccoloPaperStore,
     PiccoloPaperTagStore,
     PiccoloProfileStore,
     PiccoloProjectStore,
@@ -16,6 +17,7 @@ from papers.infra.piccolo.stores import (
 
 __all__ = [
     "PiccoloAnalysisRunStore",
+    "PiccoloCandidateImporter",
     "PiccoloDatabase",
     "PiccoloExtractionStore",
     "PiccoloJobQueue",

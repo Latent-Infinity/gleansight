@@ -22,8 +22,8 @@ def test_list_runs_returns_all_runs_for_paper(tmp_path: Path) -> None:
     jobs.mark_failed(job2, "test error")
 
     runs.create_run("run-3", "paper-a", "prompt", "profile", "model")
-    job3 = jobs.enqueue("analyze", "paper-a", "run-3", {})
-    # job3 is still queued
+    jobs.enqueue("analyze", "paper-a", "run-3", {})
+    # third job remains queued
 
     # Create a run for a different paper
     runs.create_run("run-other", "paper-b", "prompt", "profile", "model")

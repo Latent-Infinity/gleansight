@@ -197,6 +197,52 @@ def test_list_candidates_available(tmp_path: Path) -> None:
     assert titles == {"Available", "Available 2"}
 
 
+def test_create_candidate_upserts_on_source_and_refreshes_metadata(tmp_path: Path) -> None:
+    store = _setup_store(tmp_path)
+    now = datetime.now(UTC).isoformat()
+
+    first_id = store.create_candidate(
+        {
+            "candidate_id": "cand-1",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-dup",
+            "title": "Old Title",
+            "year": 2020,
+            "authors_json": '["Alice"]',
+            "abstract": "old abstract",
+            "external_ids_json": '{"DOI":"10.1/old"}',
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
+    assert first_id == "cand-1"
+
+    second_id = store.create_candidate(
+        {
+            "candidate_id": "cand-2",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-dup",
+            "title": "New Title",
+            "year": 2024,
+            "authors_json": '["Alice", "Bob"]',
+            "abstract": "new abstract",
+            "external_ids_json": '{"DOI":"10.1/new"}',
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
+    assert second_id == "cand-1"
+
+    candidate = store.get_candidate("cand-1")
+    assert candidate is not None
+    assert candidate["title"] == "New Title"
+    assert candidate["year"] == 2024
+    assert candidate["authors_json"] == '["Alice", "Bob"]'
+    assert candidate["abstract"] == "new abstract"
+    assert candidate["external_ids_json"] == '{"DOI":"10.1/new"}'
+    assert store.get_candidate("cand-2") is None
+
+
 def test_mark_imported(tmp_path: Path) -> None:
     store = _setup_store(tmp_path)
     now = datetime.now(UTC).isoformat()
@@ -248,6 +294,7 @@ def test_mark_imported_idempotent(tmp_path: Path) -> None:
     store.mark_imported(candidate_id, paper_id)
 
     candidate = store.get_candidate(candidate_id)
+    assert candidate is not None
     assert candidate["imported_paper_id"] == paper_id
 
 
@@ -294,10 +341,13 @@ def test_mark_rejected_idempotent(tmp_path: Path) -> None:
     )
 
     store.mark_rejected(candidate_id)
-    first_rejected_at = store.get_candidate(candidate_id)["rejected_at"]
+    first = store.get_candidate(candidate_id)
+    assert first is not None
+    first_rejected_at = first["rejected_at"]
 
     # Mark again - should not error
     store.mark_rejected(candidate_id)
 
     candidate = store.get_candidate(candidate_id)
+    assert candidate is not None
     assert candidate["rejected_at"] == first_rejected_at  # Should not change

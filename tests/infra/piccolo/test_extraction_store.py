@@ -31,9 +31,48 @@ def test_upsert_and_list(tmp_path: Path) -> None:
         prompt_version_id="prompt",
         extractions=[_Extraction("field", value_text="value")],
     )
-    results = store.list_by_paper("paper")
+    results = store.list_by_paper("paper", successful_only=False)
     assert len(results) == 1
     assert results[0].field_path == "field"
+
+
+def test_list_by_paper_excludes_extractions_without_succeeded_job(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "extract-unsuccessful.sqlite")
+    db.initialize_schema()
+    store = PiccoloExtractionStore()
+    store.upsert_extractions(
+        run_id="run",
+        paper_id="paper",
+        prompt_version_id="prompt",
+        extractions=[_Extraction("field", value_text="value")],
+    )
+
+    assert store.list_by_paper("paper", successful_only=True) == []
+
+
+def test_upsert_extractions_replaces_existing_run_rows(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "extract-upsert.sqlite")
+    db.initialize_schema()
+    store = PiccoloExtractionStore()
+    store.upsert_extractions(
+        run_id="run",
+        paper_id="paper",
+        prompt_version_id="prompt",
+        extractions=[_Extraction("field", value_text="old value")],
+    )
+
+    store.upsert_extractions(
+        run_id="run",
+        paper_id="paper",
+        prompt_version_id="prompt",
+        extractions=[_Extraction("field", value_text="new value")],
+    )
+
+    results = store.list_by_paper("paper", successful_only=False)
+    assert len(results) == 1
+    assert results[0].value_text == "new value"
+    assert store.search_text("old", prompt_version_id="prompt") == []
+    assert store.search_text("new", prompt_version_id="prompt") == ["paper"]
 
 
 def test_count_by_value(tmp_path: Path) -> None:

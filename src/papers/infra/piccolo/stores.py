@@ -3,15 +3,17 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
+from piccolo.engine.sqlite import TransactionType
 from piccolo.querystring import QueryString
 from piccolo.utils.sync import run_sync
 
 from papers.app import ports
-from papers.domain.errors import InvalidStateTransition, NotFoundError
+from papers.domain.errors import NotFoundError
 from papers.domain.models import PipelineHealth, PipelineStage
+from papers.infra.piccolo.fts import literal_fts_query
 from papers.infra.piccolo.tables import (
     AnalysisExtraction,
     AnalysisRun,
@@ -53,27 +55,94 @@ def _stage_rank(stage: PipelineStage) -> int:
     return order.index(stage)
 
 
+_EXTRACTION_CONSTRAINT_COLUMNS: dict[str, str] = {
+    "value_text": "ae.value_text",
+    "value_numeric": "ae.value_numeric",
+    "value_boolean": "ae.value_boolean",
+    "entity_type": "ae.entity_type",
+    "entity_ref": "ae.entity_ref",
+    "paper_id": "ae.paper_id",
+    "run_id": "ae.run_id",
+}
+
+_EXTRACTION_GROUP_BY_COLUMNS: dict[str, str] = {
+    "value_text": "value_text",
+    "value_numeric": "value_numeric",
+    "value_boolean": "value_boolean",
+    "paper_id": "paper_id",
+    "run_id": "run_id",
+    "prompt_version_id": "prompt_version_id",
+    "entity_type": "entity_type",
+    "entity_ref": "entity_ref",
+}
+
+
 class PiccoloCandidateStore:
     """Store for candidate papers discovered from external sources."""
 
     def create_candidate(self, fields: dict[str, Any]) -> str:
         candidate_id = fields["candidate_id"]
-        payload = {
-            Candidate.candidate_id: candidate_id,
-            Candidate.source: fields["source"],
-            Candidate.source_paper_id: fields["source_paper_id"],
-            Candidate.title: fields["title"],
-            Candidate.year: fields.get("year"),
-            Candidate.venue: fields.get("venue"),
-            Candidate.authors_json: fields.get("authors_json", "[]"),
-            Candidate.abstract: fields.get("abstract"),
-            Candidate.external_ids_json: fields.get("external_ids_json"),
-            Candidate.rejected_at: fields.get("rejected_at"),
-            Candidate.imported_paper_id: fields.get("imported_paper_id"),
-            Candidate.imported_at: fields.get("imported_at"),
-        }
-        Candidate(_data=payload).save().run_sync()
-        return candidate_id
+        now = datetime.now(UTC)
+        created_at = fields.get("created_at", now)
+        updated_at = fields.get("updated_at", now)
+        source = fields["source"]
+        source_paper_id = fields["source_paper_id"]
+        run_sync(
+            Candidate._meta.db.run_querystring(
+                QueryString(
+                    """
+                    INSERT INTO candidates(
+                        candidate_id,
+                        source,
+                        source_paper_id,
+                        title,
+                        year,
+                        venue,
+                        authors_json,
+                        abstract,
+                        external_ids_json,
+                        rejected_at,
+                        imported_paper_id,
+                        imported_at,
+                        created_at,
+                        updated_at
+                    ) VALUES({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+                    ON CONFLICT(source, source_paper_id) DO UPDATE SET
+                        title=excluded.title,
+                        year=excluded.year,
+                        venue=excluded.venue,
+                        authors_json=excluded.authors_json,
+                        abstract=excluded.abstract,
+                        external_ids_json=excluded.external_ids_json,
+                        updated_at=excluded.updated_at
+                    """,
+                    candidate_id,
+                    source,
+                    source_paper_id,
+                    fields["title"],
+                    fields.get("year"),
+                    fields.get("venue"),
+                    fields.get("authors_json", "[]"),
+                    fields.get("abstract"),
+                    fields.get("external_ids_json"),
+                    fields.get("rejected_at"),
+                    fields.get("imported_paper_id"),
+                    fields.get("imported_at"),
+                    created_at,
+                    updated_at,
+                )
+            )
+        )
+        row = (
+            Candidate.select(Candidate.candidate_id)
+            .where(Candidate.source == source)
+            .where(Candidate.source_paper_id == source_paper_id)
+            .first()
+            .run_sync()
+        )
+        if row is None:
+            return candidate_id
+        return row["candidate_id"]
 
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         row = Candidate.select().where(Candidate.candidate_id == candidate_id).first().run_sync()
@@ -118,8 +187,8 @@ class PiccoloCandidateStore:
             Candidate.update(
                 {
                     Candidate.imported_paper_id: paper_id,
-                    Candidate.imported_at: datetime.now(),
-                    Candidate.updated_at: datetime.now(),
+                    Candidate.imported_at: datetime.now(UTC),
+                    Candidate.updated_at: datetime.now(UTC),
                 }
             )
             .where(Candidate.candidate_id == candidate_id)
@@ -130,8 +199,8 @@ class PiccoloCandidateStore:
         (
             Candidate.update(
                 {
-                    Candidate.rejected_at: datetime.now(),
-                    Candidate.updated_at: datetime.now(),
+                    Candidate.rejected_at: datetime.now(UTC),
+                    Candidate.updated_at: datetime.now(UTC),
                 }
             )
             .where(Candidate.candidate_id == candidate_id)
@@ -140,20 +209,130 @@ class PiccoloCandidateStore:
         )
 
 
+class PiccoloCandidateImporter:
+    """Atomically import a candidate, its identifiers, and its download job."""
+
+    def import_candidate(self, candidate_id: str) -> str:
+        async def import_in_transaction() -> str:
+            database = Candidate._meta.db
+            async with database.transaction(transaction_type=TransactionType.immediate):
+                candidate = await (
+                    Candidate.select().where(Candidate.candidate_id == candidate_id).first().run()
+                )
+                if candidate is None:
+                    raise NotFoundError(f"candidate not found: {candidate_id}")
+                if candidate["rejected_at"] is not None:
+                    raise ValueError("cannot import candidate that was already rejected")
+                if imported_paper_id := candidate["imported_paper_id"]:
+                    return imported_paper_id
+
+                try:
+                    authors = json.loads(candidate["authors_json"] or "[]")
+                except (json.JSONDecodeError, TypeError):
+                    authors = []
+                try:
+                    parsed_external_ids = json.loads(candidate["external_ids_json"] or "{}")
+                except (json.JSONDecodeError, TypeError):
+                    parsed_external_ids = {}
+                external_ids = {
+                    str(kind): str(value)
+                    for kind, value in parsed_external_ids.items()
+                    if value is not None
+                }
+
+                paper_id = str(uuid.uuid4())
+                await (
+                    Paper(
+                        _data={
+                            Paper.paper_id: paper_id,
+                            Paper.title: candidate["title"],
+                            Paper.year: candidate["year"],
+                            Paper.venue: candidate["venue"],
+                            Paper.authors_json: json.dumps(authors),
+                            Paper.abstract: candidate["abstract"],
+                            Paper.pipeline_stage: str(PipelineStage.imported),
+                            Paper.pipeline_health: str(PipelineHealth.ok),
+                        }
+                    )
+                    .save()
+                    .run()
+                )
+                await database.run_querystring(
+                    QueryString(
+                        "INSERT INTO papers_fts(title, abstract, paper_id) VALUES({}, {}, {})",
+                        candidate["title"],
+                        candidate["abstract"] or "",
+                        paper_id,
+                    )
+                )
+
+                for kind, value in external_ids.items():
+                    await (
+                        PaperExternalId(
+                            _data={
+                                PaperExternalId.paper_external_id_id: str(uuid.uuid4()),
+                                PaperExternalId.paper_id: paper_id,
+                                PaperExternalId.kind: kind,
+                                PaperExternalId.value: value,
+                            }
+                        )
+                        .save()
+                        .run()
+                    )
+
+                await (
+                    Job(
+                        _data={
+                            Job.job_id: str(uuid.uuid4()),
+                            Job.type: "download",
+                            Job.status: "queued",
+                            Job.paper_id: paper_id,
+                            Job.run_id: None,
+                            Job.payload_json: json.dumps(
+                                {"external_ids": external_ids} if external_ids else {}
+                            ),
+                            Job.attempts: 0,
+                            Job.max_attempts: 3,
+                            Job.run_after: None,
+                        }
+                    )
+                    .save()
+                    .run()
+                )
+                now = datetime.now(UTC)
+                await (
+                    Candidate.update(
+                        {
+                            Candidate.imported_paper_id: paper_id,
+                            Candidate.imported_at: now,
+                            Candidate.updated_at: now,
+                        }
+                    )
+                    .where(Candidate.candidate_id == candidate_id)
+                    .run()
+                )
+                return paper_id
+
+        return run_sync(import_in_transaction())
+
+
 class PiccoloPaperStore(ports.PaperStore):
     def create_paper(self, fields: dict[str, Any]) -> str:
         paper_id = fields["paper_id"]
+        title = fields["title"]
+        abstract = fields.get("abstract")
         payload = {
             Paper.paper_id: paper_id,
-            Paper.title: fields["title"],
+            Paper.title: title,
             Paper.year: fields.get("year"),
             Paper.venue: fields.get("venue"),
             Paper.authors_json: json.dumps(fields.get("authors", [])),
-            Paper.abstract: fields.get("abstract"),
+            Paper.abstract: abstract,
             Paper.pipeline_stage: str(fields.get("pipeline_stage", PipelineStage.imported)),
             Paper.pipeline_health: str(fields.get("pipeline_health", PipelineHealth.ok)),
         }
         Paper(_data=payload).save().run_sync()
+        self._upsert_paper_fts(paper_id=paper_id, title=title, abstract=abstract)
         return paper_id
 
     def get(self, paper_id: str) -> dict[str, Any] | None:
@@ -170,11 +349,23 @@ class PiccoloPaperStore(ports.PaperStore):
         updates = dict(fields)
         if "authors" in updates:
             updates["authors_json"] = json.dumps(updates.pop("authors"))
-        updates["updated_at"] = datetime.now()
+        updates["updated_at"] = datetime.now(UTC)
         Paper.update(updates).where(Paper.paper_id == paper_id).run_sync()
+        refreshed = (
+            Paper.select(Paper.title, Paper.abstract)
+            .where(Paper.paper_id == paper_id)
+            .first()
+            .run_sync()
+        )
+        if refreshed is not None:
+            self._upsert_paper_fts(
+                paper_id=paper_id,
+                title=refreshed["title"],
+                abstract=refreshed.get("abstract"),
+            )
 
     def set_pdf_fingerprint(self, paper_id: str, pdf_xxh64: str) -> None:
-        Paper.update({"pdf_fingerprint_xxh64": pdf_xxh64, "updated_at": datetime.now()}).where(
+        Paper.update({"pdf_fingerprint_xxh64": pdf_xxh64, "updated_at": datetime.now(UTC)}).where(
             Paper.paper_id == paper_id
         ).run_sync()
 
@@ -192,7 +383,7 @@ class PiccoloPaperStore(ports.PaperStore):
                 "md_source_pdf_fingerprint_xxh64": src_pdf_xxh64,
                 "md_converter": converter,
                 "md_converter_version": converter_version,
-                "updated_at": datetime.now(),
+                "updated_at": datetime.now(UTC),
             }
         ).where(Paper.paper_id == paper_id).run_sync()
 
@@ -210,7 +401,7 @@ class PiccoloPaperStore(ports.PaperStore):
                 "embedding_dimension": embedding_dimension,
                 "text_slice_strategy": text_slice_strategy,
                 "embedded_from_md_fingerprint_xxh64": embedded_from_md_xxh64,
-                "updated_at": datetime.now(),
+                "updated_at": datetime.now(UTC),
             }
         ).where(Paper.paper_id == paper_id).run_sync()
 
@@ -222,8 +413,8 @@ class PiccoloPaperStore(ports.PaperStore):
             raise NotFoundError(f"paper not found: {paper_id}")
         current = PipelineStage(row["pipeline_stage"])
         if _stage_rank(PipelineStage(new_stage)) < _stage_rank(current):
-            raise InvalidStateTransition("cannot regress pipeline stage")
-        Paper.update({"pipeline_stage": str(new_stage), "updated_at": datetime.now()}).where(
+            return  # already past this stage; monotonic means no regression, not an error
+        Paper.update({"pipeline_stage": str(new_stage), "updated_at": datetime.now(UTC)}).where(
             Paper.paper_id == paper_id
         ).run_sync()
 
@@ -240,8 +431,8 @@ class PiccoloPaperStore(ports.PaperStore):
                 "last_error_job_id": job_id,
                 "last_error_code": error_code,
                 "last_error_message": message,
-                "last_error_at": datetime.now(),
-                "updated_at": datetime.now(),
+                "last_error_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
             }
         ).where(Paper.paper_id == paper_id).run_sync()
 
@@ -255,17 +446,64 @@ class PiccoloPaperStore(ports.PaperStore):
                 "last_error_code": None,
                 "last_error_message": None,
                 "last_error_at": None,
-                "updated_at": datetime.now(),
+                "updated_at": datetime.now(UTC),
             }
         ).where(Paper.paper_id == paper_id).run_sync()
 
     def list_papers_with_markdown(self) -> list[str]:
         rows = (
-            Paper.select(Paper.paper_id)
-            .where(Paper.md_fingerprint_xxh64.is_not_null())
-            .run_sync()
+            Paper.select(Paper.paper_id).where(Paper.md_fingerprint_xxh64.is_not_null()).run_sync()
         )
         return [row["paper_id"] for row in rows]
+
+    def delete_paper(self, paper_id: str) -> None:
+        run_sync(
+            Paper._meta.db.run_querystring(
+                QueryString("DELETE FROM papers_fts WHERE paper_id = {}", paper_id)
+            )
+        )
+        run_sync(
+            Paper._meta.db.run_querystring(
+                QueryString("DELETE FROM extractions_fts WHERE paper_id = {}", paper_id)
+            )
+        )
+        Job.delete().where(Job.paper_id == paper_id).run_sync()
+        PaperExternalId.delete().where(PaperExternalId.paper_id == paper_id).run_sync()
+        PaperTag.delete().where(PaperTag.paper_id == paper_id).run_sync()
+        PaperProject.delete().where(PaperProject.paper_id == paper_id).run_sync()
+        AnalysisExtraction.delete().where(AnalysisExtraction.paper_id == paper_id).run_sync()
+        AnalysisRun.delete().where(AnalysisRun.paper_id == paper_id).run_sync()
+        Paper.delete().where(Paper.paper_id == paper_id).run_sync()
+
+    def reset_pipeline_stage(self, paper_id: str, stage: str) -> None:
+        Paper.update(
+            {
+                "pipeline_stage": str(stage),
+                "pipeline_health": str(PipelineHealth.ok),
+                "last_error_code": None,
+                "last_error_message": None,
+                "last_error_job_id": None,
+                "last_error_at": None,
+                "updated_at": datetime.now(UTC),
+            }
+        ).where(Paper.paper_id == paper_id).run_sync()
+
+    def _upsert_paper_fts(self, *, paper_id: str, title: str, abstract: str | None) -> None:
+        run_sync(
+            Paper._meta.db.run_querystring(
+                QueryString("DELETE FROM papers_fts WHERE paper_id = {}", paper_id)
+            )
+        )
+        run_sync(
+            Paper._meta.db.run_querystring(
+                QueryString(
+                    "INSERT INTO papers_fts(title, abstract, paper_id) VALUES({}, {}, {})",
+                    title,
+                    abstract or "",
+                    paper_id,
+                )
+            )
+        )
 
 
 class PiccoloExtractionStore(ports.ExtractionStore):
@@ -276,26 +514,75 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         prompt_version_id: str,
         extractions: list[ports.Extraction],
     ) -> None:
-        if not extractions:
-            return
-        rows = []
-        for extraction in extractions:
-            rows.append(
-                {
-                    AnalysisExtraction.extraction_id: str(uuid.uuid4()),
-                    AnalysisExtraction.run_id: run_id,
-                    AnalysisExtraction.paper_id: paper_id,
-                    AnalysisExtraction.prompt_version_id: prompt_version_id,
-                    AnalysisExtraction.entity_type: extraction.entity_type,
-                    AnalysisExtraction.entity_ref: extraction.entity_ref,
-                    AnalysisExtraction.field_path: extraction.field_path,
-                    AnalysisExtraction.value_text: extraction.value_text,
-                    AnalysisExtraction.value_numeric: extraction.value_numeric,
-                    AnalysisExtraction.value_boolean: extraction.value_boolean,
-                }
-            )
+        rows = [
+            {
+                AnalysisExtraction.extraction_id: str(uuid.uuid4()),
+                AnalysisExtraction.run_id: run_id,
+                AnalysisExtraction.paper_id: paper_id,
+                AnalysisExtraction.prompt_version_id: prompt_version_id,
+                AnalysisExtraction.entity_type: extraction.entity_type,
+                AnalysisExtraction.entity_ref: extraction.entity_ref,
+                AnalysisExtraction.field_path: extraction.field_path,
+                AnalysisExtraction.value_text: extraction.value_text,
+                AnalysisExtraction.value_numeric: extraction.value_numeric,
+                AnalysisExtraction.value_boolean: extraction.value_boolean,
+            }
+            for extraction in extractions
+        ]
         instances = [AnalysisExtraction(_data=row) for row in rows]
-        AnalysisExtraction.insert(*instances).run_sync()
+
+        async def replace_rows() -> None:
+            database = AnalysisExtraction._meta.db
+            async with database.transaction():
+                await database.run_querystring(
+                    QueryString(
+                        "DELETE FROM extractions_fts "
+                        "WHERE paper_id = {} AND prompt_version_id = {}",
+                        paper_id,
+                        prompt_version_id,
+                    )
+                )
+                await AnalysisExtraction.delete().where(AnalysisExtraction.run_id == run_id).run()
+                if instances:
+                    await AnalysisExtraction.insert(*instances).run()
+
+                text_rows = await (
+                    AnalysisExtraction.select(
+                        AnalysisExtraction.value_text,
+                        AnalysisExtraction.paper_id,
+                        AnalysisExtraction.prompt_version_id,
+                        AnalysisExtraction.entity_type,
+                        AnalysisExtraction.entity_ref,
+                        AnalysisExtraction.field_path,
+                    )
+                    .where(AnalysisExtraction.paper_id == paper_id)
+                    .where(AnalysisExtraction.prompt_version_id == prompt_version_id)
+                    .where(AnalysisExtraction.value_text.is_not_null())
+                    .run()
+                )
+                for text_row in text_rows:
+                    await database.run_querystring(
+                        QueryString(
+                            """
+                            INSERT INTO extractions_fts(
+                                value_text,
+                                paper_id,
+                                prompt_version_id,
+                                entity_type,
+                                entity_ref,
+                                field_path
+                            ) VALUES({}, {}, {}, {}, {}, {})
+                            """,
+                            text_row["value_text"],
+                            text_row["paper_id"],
+                            text_row["prompt_version_id"],
+                            text_row["entity_type"],
+                            text_row["entity_ref"],
+                            text_row["field_path"],
+                        )
+                    )
+
+        run_sync(replace_rows())
 
     def list_by_paper(
         self,
@@ -307,6 +594,20 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         if prompt_version_id:
             query = query.where(AnalysisExtraction.prompt_version_id == prompt_version_id)
         rows = query.run_sync()
+
+        if successful_only:
+            run_ids = {row["run_id"] for row in rows}
+            if run_ids:
+                succeeded_rows = (
+                    Job.select(Job.run_id)
+                    .where(Job.type == "analyze")
+                    .where(Job.status == "succeeded")
+                    .where(Job.run_id.is_in(list(run_ids)))
+                    .run_sync()
+                )
+                succeeded_run_ids = {row["run_id"] for row in succeeded_rows}
+                rows = [row for row in rows if row["run_id"] in succeeded_run_ids]
+
         return [
             _RowExtraction(
                 entity_type=row["entity_type"],
@@ -327,6 +628,10 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         constraints: dict[str, Any],
         latest_only: bool = True,
     ) -> list[str]:
+        for key in constraints:
+            if key not in _EXTRACTION_CONSTRAINT_COLUMNS:
+                raise ValueError(f"unsupported extraction constraint field: {key}")
+
         if not latest_only:
             # Simple query without run selection
             query = (
@@ -345,7 +650,7 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         constraint_sql = ""
         params = [field_path, prompt_version_id]
         for key, value in constraints.items():
-            constraint_sql += f" AND ae.{key} = {{}}"
+            constraint_sql += f" AND {_EXTRACTION_CONSTRAINT_COLUMNS[key]} = {{}}"
             params.append(value)
 
         sql = f"""
@@ -375,6 +680,42 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         params.append(prompt_version_id)
         query = QueryString(sql, *params)
         rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
+        return [row["paper_id"] for row in rows]
+
+    def search_text(
+        self,
+        query: str,
+        *,
+        prompt_version_id: str,
+        field_path: str | None = None,
+        entity_type: str | None = None,
+        entity_ref: str | None = None,
+        limit: int = 50,
+    ) -> list[str]:
+        if not query.strip():
+            return []
+
+        sql = """
+            SELECT DISTINCT paper_id
+            FROM extractions_fts
+            WHERE extractions_fts MATCH {}
+              AND prompt_version_id = {}
+        """
+        literal_query = literal_fts_query(query)
+        params: list[Any] = [literal_query, prompt_version_id]
+        if field_path is not None:
+            sql += " AND field_path = {}"
+            params.append(field_path)
+        if entity_type is not None:
+            sql += " AND entity_type = {}"
+            params.append(entity_type)
+        if entity_ref is not None:
+            sql += " AND entity_ref = {}"
+            params.append(entity_ref)
+        sql += " LIMIT {}"
+        params.append(limit)
+
+        rows = run_sync(AnalysisExtraction._meta.db.run_querystring(QueryString(sql, *params)))
         return [row["paper_id"] for row in rows]
 
     def count_by_value(
@@ -439,13 +780,19 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         group_by: str | None = None,
         latest_only: bool = True,
     ) -> float | dict[str, float] | None:
+        group_by_column = None
+        if group_by is not None:
+            group_by_column = _EXTRACTION_GROUP_BY_COLUMNS.get(group_by)
+            if group_by_column is None:
+                raise ValueError(f"unsupported extraction group_by field: {group_by}")
+
         if not latest_only:
             # Simple average without run selection
             from piccolo.query.functions import Avg
 
-            if group_by:
+            if group_by and group_by_column:
                 # Grouped average
-                group_field = getattr(AnalysisExtraction, group_by)
+                group_field = getattr(AnalysisExtraction, group_by_column)
                 query = (
                     AnalysisExtraction.select(
                         group_field,
@@ -459,7 +806,7 @@ class PiccoloExtractionStore(ports.ExtractionStore):
                 rows = query.run_sync()
                 if not rows:
                     return None
-                return {str(row[group_by]): float(row["avg"]) for row in rows}
+                return {str(row[group_by_column]): float(row["avg"]) for row in rows}
             else:
                 # Simple average
                 query = (
@@ -476,10 +823,10 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         # Average with latest successful run filtering
         from piccolo.querystring import QueryString
 
-        if group_by:
+        if group_by_column:
             # Grouped average with latest run filtering
             sql = f"""
-                SELECT ae.{group_by}, AVG(ae.value_numeric) as avg
+                SELECT ae.{group_by_column}, AVG(ae.value_numeric) as avg
                 FROM analysis_extractions ae
                 WHERE ae.field_path = {{}}
                   AND ae.prompt_version_id = {{}}
@@ -501,13 +848,13 @@ class PiccoloExtractionStore(ports.ExtractionStore):
                           AND j2.status = 'succeeded'
                       )
                   )
-                GROUP BY ae.{group_by}
+                GROUP BY ae.{group_by_column}
             """
             query = QueryString(sql, field_path, prompt_version_id, prompt_version_id)
             rows = run_sync(AnalysisExtraction._meta.db.run_querystring(query))
             if not rows:
                 return None
-            return {str(row[group_by]): float(row["avg"]) for row in rows}
+            return {str(row[group_by_column]): float(row["avg"]) for row in rows}
         else:
             # Simple average with latest run filtering
             sql = """
@@ -590,34 +937,41 @@ class PiccoloJobQueue(ports.JobQueue):
         return job_id
 
     def claim_next(self, now: datetime) -> JobRow | None:
-        row = (
-            Job.select()
-            .where(Job.status == "queued")
-            .where((Job.run_after.is_null()) | (Job.run_after <= now))
-            .where(Job.attempts < Job.max_attempts)
-            .order_by(Job.created_at)
-            .first()
-            .run_sync()
-        )
-        if row is None:
+        sql = """
+            UPDATE jobs
+            SET status = 'running',
+                attempts = attempts + 1,
+                updated_at = {}
+            WHERE job_id = (
+                SELECT job_id
+                FROM jobs
+                WHERE status = 'queued'
+                  AND (run_after IS NULL OR run_after <= {})
+                  AND attempts < max_attempts
+                ORDER BY created_at
+                LIMIT 1
+            )
+            RETURNING job_id, type, status, paper_id, run_id,
+                      payload_json, attempts, max_attempts, run_after
+        """
+        rows = run_sync(Job._meta.db.run_querystring(QueryString(sql, datetime.now(UTC), now)))
+        if not rows:
             return None
-        Job.update(
-            {"status": "running", "attempts": row["attempts"] + 1, "updated_at": datetime.now()}
-        ).where(Job.job_id == row["job_id"]).run_sync()
+        row = rows[0]
         return JobRow(
             job_id=row["job_id"],
             type=row["type"],
-            status="running",
+            status=row["status"],
             paper_id=row["paper_id"],
             run_id=row["run_id"],
             payload=json.loads(row["payload_json"]),
-            attempts=row["attempts"] + 1,
+            attempts=row["attempts"],
             max_attempts=row["max_attempts"],
             run_after=row["run_after"],
         )
 
     def mark_succeeded(self, job_id: str, metrics: dict[str, Any] | None = None) -> None:
-        Job.update({"status": "succeeded", "updated_at": datetime.now()}).where(
+        Job.update({"status": "succeeded", "updated_at": datetime.now(UTC)}).where(
             Job.job_id == job_id
         ).run_sync()
 
@@ -633,17 +987,17 @@ class PiccoloJobQueue(ports.JobQueue):
                 "status": "queued",
                 "last_error": error,
                 "run_after": run_after,
-                "updated_at": datetime.now(),
+                "updated_at": datetime.now(UTC),
             }
         ).where(Job.job_id == job_id).run_sync()
 
     def mark_failed(self, job_id: str, error: str, metrics: dict[str, Any] | None = None) -> None:
-        Job.update({"status": "failed", "last_error": error, "updated_at": datetime.now()}).where(
-            Job.job_id == job_id
-        ).run_sync()
+        Job.update(
+            {"status": "failed", "last_error": error, "updated_at": datetime.now(UTC)}
+        ).where(Job.job_id == job_id).run_sync()
 
     def cancel(self, job_id: str) -> None:
-        Job.update({"status": "canceled", "updated_at": datetime.now()}).where(
+        Job.update({"status": "canceled", "updated_at": datetime.now(UTC)}).where(
             Job.job_id == job_id
         ).run_sync()
 
@@ -667,7 +1021,7 @@ class PiccoloJobQueue(ports.JobQueue):
                     "status": "queued",
                     "last_error": error,
                     "run_after": None,
-                    "updated_at": datetime.now(),
+                    "updated_at": datetime.now(UTC),
                 }
             )
             .where(Job.job_id.is_in(job_ids))
@@ -681,6 +1035,36 @@ class PiccoloJobQueue(ports.JobQueue):
             query = query.where(Job.status == status)
         rows = query.order_by(Job.created_at).limit(limit).run_sync()
         return [dict(row) for row in rows]
+
+    def delete_job(self, job_id: str) -> None:
+        Job.delete().where(Job.job_id == job_id).run_sync()
+
+    def bulk_delete_jobs(self, job_ids: list[str]) -> int:
+        if not job_ids:
+            return 0
+        existing = Job.select(Job.job_id).where(Job.job_id.is_in(job_ids)).run_sync()
+        existing_ids = [row["job_id"] for row in existing]
+        if existing_ids:
+            Job.delete().where(Job.job_id.is_in(existing_ids)).run_sync()
+        return len(existing_ids)
+
+    def bulk_cancel_jobs(self, job_ids: list[str]) -> int:
+        if not job_ids:
+            return 0
+        cancellable = (
+            Job.select(Job.job_id)
+            .where(Job.job_id.is_in(job_ids))
+            .where(Job.status.is_in(["queued", "running"]))
+            .run_sync()
+        )
+        cancellable_ids = [row["job_id"] for row in cancellable]
+        if cancellable_ids:
+            (
+                Job.update({Job.status: "canceled", Job.updated_at: datetime.now(UTC)})
+                .where(Job.job_id.is_in(cancellable_ids))
+                .run_sync()
+            )
+        return len(cancellable_ids)
 
 
 class PiccoloPromptStore(ports.PromptStore):
@@ -700,7 +1084,7 @@ class PiccoloPromptStore(ports.PromptStore):
                 Prompt.description: description,
                 Prompt.domain: domain,
                 Prompt.tags_json: json.dumps(tags) if tags is not None else None,
-                Prompt.created_at: created_at or datetime.now(),
+                Prompt.created_at: created_at or datetime.now(UTC),
             }
         ).save().run_sync()
 
@@ -806,7 +1190,7 @@ class PiccoloAnalysisRunStore(ports.AnalysisRunStore):
         ).run_sync()
 
     def mark_started(self, run_id: str) -> None:
-        AnalysisRun.update({"started_at": datetime.now()}).where(
+        AnalysisRun.update({"started_at": datetime.now(UTC)}).where(
             AnalysisRun.run_id == run_id
         ).run_sync()
 
@@ -831,7 +1215,7 @@ class PiccoloAnalysisRunStore(ports.AnalysisRunStore):
                 "tokens_in": tokens_in,
                 "tokens_out": tokens_out,
                 "cost_usd": cost_usd,
-                "finished_at": datetime.now(),
+                "finished_at": datetime.now(UTC),
             }
         ).where(AnalysisRun.run_id == run_id).run_sync()
 
@@ -897,8 +1281,8 @@ class PiccoloTagStore(ports.TagStore):
                 Tag.tag_id: tag_id,
                 Tag.name: name,
                 Tag.type: tag_type,
-                Tag.created_at: created_at or datetime.now(),
-                Tag.updated_at: datetime.now(),
+                Tag.created_at: created_at or datetime.now(UTC),
+                Tag.updated_at: datetime.now(UTC),
             }
         ).save().run_sync()
 
@@ -945,8 +1329,8 @@ class PiccoloProjectStore(ports.ProjectStore):
                 Project.project_id: project_id,
                 Project.name: name,
                 Project.description: description,
-                Project.created_at: created_at or datetime.now(),
-                Project.updated_at: datetime.now(),
+                Project.created_at: created_at or datetime.now(UTC),
+                Project.updated_at: datetime.now(UTC),
             }
         ).save().run_sync()
 

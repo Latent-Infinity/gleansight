@@ -46,9 +46,7 @@ class TestPiccoloPaperExternalIdStore:
 
         assert result == {}
 
-    def test_create_external_ids_with_empty_dict(
-        self, store: PiccoloPaperExternalIdStore
-    ) -> None:
+    def test_create_external_ids_with_empty_dict(self, store: PiccoloPaperExternalIdStore) -> None:
         """Should handle empty external IDs dict gracefully."""
         paper_id = str(uuid.uuid4())
 
