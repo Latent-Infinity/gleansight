@@ -208,6 +208,8 @@ __marimo__/
 
 # Project data/artifacts
 data/
+!tests/fixtures/approved/
+!tests/fixtures/approved/**
 *.db
 *.sqlite
 *.sqlite3
@@ -222,3 +224,10 @@ data/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local agent/session state
+.serena/
+.mdcrdt/
+
+# Local document backups
+/docs/project-design_backup.md
