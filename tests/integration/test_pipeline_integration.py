@@ -34,7 +34,12 @@ class _Converter:
         return type(
             "Result",
             (),
-            {"ok": True, "markdown": "content", "error_code": None, "error_message": None},
+            {
+                "ok": True,
+                "markdown": "This is converted markdown content. " * 6,
+                "error_code": None,
+                "error_message": None,
+            },
         )()
 
     def version(self) -> str:
@@ -54,7 +59,7 @@ class _Embedder:
 
 class _LLM:
     def complete(self, *, prompt: str, profile: dict, model: str, timeout_s: int | None = None):
-        return LLMResponse(text="analysis", tokens_in=1, tokens_out=1, cost_usd=0.0)
+        return LLMResponse(text='{"result": "ok"}', tokens_in=1, tokens_out=1, cost_usd=0.0)
 
 
 def _context(tmp_path: Path, db: PiccoloDatabase) -> HandlerContext:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from papers.app import ports
@@ -79,6 +80,8 @@ class RunAnalysisUseCase:
         force: bool = False,
     ) -> str:
         version = self._resolve_prompt_version(prompt_id, prompt_version_id)
+        if self.profile_store.get(profile_id) is None:
+            raise NotFoundError("profile not found")
         existing = None
         if not force:
             existing = self.analysis_store.get_latest_successful_run(
@@ -96,6 +99,7 @@ class RunAnalysisUseCase:
                 prompt_version_id=version["prompt_version_id"],
                 profile_id=profile_id,
                 model_name=model_name,
+                status_from="succeeded",
                 status_to="reuse",
             )
             return existing["run_id"]
@@ -135,6 +139,8 @@ class RunAnalysisUseCase:
             version = self.prompt_store.get_latest_version(prompt_id)
         if version is None:
             raise NotFoundError("prompt version not found")
+        if version["prompt_id"] != prompt_id:
+            raise NotFoundError("prompt version not found for prompt")
         return version
 
 
@@ -147,16 +153,19 @@ def _log_enqueue(
     prompt_version_id: str | None = None,
     profile_id: str | None = None,
     model_name: str | None = None,
+    status_from: str = "new",
     status_to: str = "queued",
 ) -> None:
     logger = logging.getLogger("papers.use_cases")
     logger.info(
         "enqueue_job",
         extra={
+            "timestamp": datetime.now(UTC).isoformat(),
             "job_id": job_id,
             "job_type": job_type,
             "paper_id": paper_id,
             "run_id": run_id,
+            "status_from": status_from,
             "prompt_version_id": prompt_version_id,
             "profile_id": profile_id,
             "model_name": model_name,
