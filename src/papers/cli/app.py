@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import typer
 from rich.console import Console
@@ -11,7 +12,12 @@ from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import Settings, load_settings
 from papers.infra.piccolo.search import PiccoloPaperFTS
-from papers.infra.piccolo.stores import PiccoloCandidateStore, PiccoloExtractionStore
+from papers.infra.piccolo.stores import (
+    PiccoloCandidateImporter,
+    PiccoloCandidateStore,
+    PiccoloExtractionStore,
+    PiccoloPaperProjectStore,
+)
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -22,6 +28,7 @@ class CLIContainer:
     settings: Settings
     discover: use_cases.DiscoverCandidatesUseCase
     import_candidate: use_cases.ImportCandidateUseCase
+    get_candidate: Callable[[str], dict[str, Any] | None] | None
     run_analysis: use_cases.RunAnalysisUseCase
     job_runner: Any
     job_queue: Any
@@ -30,6 +37,7 @@ class CLIContainer:
     aggregate_extractions: use_cases.AggregateExtractionsUseCase
     recover_jobs: use_cases.RecoverStuckJobsUseCase
     rebuild_index: use_cases.RebuildVectorIndexUseCase
+    synthesize_from_corpus: use_cases.SynthesizeFromCorpusUseCase
 
 
 _cli_options: dict[str, Any] = {
@@ -42,11 +50,13 @@ _container: CLIContainer | None = None
 
 @app.callback()
 def main(
-    config: Path | None = typer.Option(None, "--config", "-c", help="Settings override TOML"),
-    llm_base_url: str = typer.Option(
-        "http://localhost:8000", help="Base URL for OpenAI-compatible LLM"
-    ),
-    llm_api_key: str | None = typer.Option(None, help="LLM API key"),
+    config: Annotated[
+        Path | None, typer.Option("--config", "-c", help="Settings override TOML")
+    ] = None,
+    llm_base_url: Annotated[
+        str, typer.Option(help="Base URL for OpenAI-compatible LLM")
+    ] = "http://localhost:8000",
+    llm_api_key: Annotated[str | None, typer.Option(help="LLM API key")] = None,
 ) -> None:
     _cli_options["config"] = config
     _cli_options["llm_base_url"] = llm_base_url
@@ -65,7 +75,7 @@ def get_container() -> CLIContainer:
         llm_api_key=_cli_options["llm_api_key"],
     )
 
-    candidate_store = PiccoloCandidateStore()
+    candidate_store = getattr(base, "candidate_store", PiccoloCandidateStore())
     extraction_store = PiccoloExtractionStore()
     papers_fts = PiccoloPaperFTS()
 
@@ -80,7 +90,9 @@ def get_container() -> CLIContainer:
             paper_store=base.paper_store,
             job_queue=base.job_queue,
             external_id_store=base.external_id_store,
+            atomic_importer=PiccoloCandidateImporter(),
         ),
+        get_candidate=getattr(candidate_store, "get_candidate", None),
         run_analysis=use_cases.RunAnalysisUseCase(
             job_queue=base.job_queue,
             prompt_store=base.prompt_store,
@@ -94,9 +106,7 @@ def get_container() -> CLIContainer:
             vector_index=base.vector_index,
             embedder=base.embedder,
         ),
-        filter_extractions=use_cases.FilterByExtractionsUseCase(
-            extraction_store=extraction_store
-        ),
+        filter_extractions=use_cases.FilterByExtractionsUseCase(extraction_store=extraction_store),
         aggregate_extractions=use_cases.AggregateExtractionsUseCase(
             extraction_store=extraction_store
         ),
@@ -107,16 +117,27 @@ def get_container() -> CLIContainer:
             embedder=base.embedder,
             vector_index=base.vector_index,
         ),
+        synthesize_from_corpus=use_cases.SynthesizeFromCorpusUseCase(
+            embedder=base.embedder,
+            vector_index=base.vector_index,
+            paper_store=base.paper_store,
+            blob_store=base.blob_store,
+            llm_client=base.llm_client,
+            paper_project_store=PiccoloPaperProjectStore(),
+        ),
     )
     return _container
 
 
-from papers.cli.commands import admin as admin_commands
-from papers.cli.commands import discovery as discovery_commands
-from papers.cli.commands import pipeline as pipeline_commands
-from papers.cli.commands import query as query_commands
+# Command modules import this file; load them after `app` exists.
+from papers.cli.commands import admin as admin_commands  # noqa: E402
+from papers.cli.commands import discovery as discovery_commands  # noqa: E402
+from papers.cli.commands import pipeline as pipeline_commands  # noqa: E402
+from papers.cli.commands import query as query_commands  # noqa: E402
+from papers.cli.commands import synthesis as synthesis_commands  # noqa: E402
 
 app.add_typer(discovery_commands.app)
 app.add_typer(pipeline_commands.app)
 app.add_typer(query_commands.app)
 app.add_typer(admin_commands.app)
+app.add_typer(synthesis_commands.app)

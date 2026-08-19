@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import importlib
+from dataclasses import dataclass
 
 
 @dataclass
@@ -13,10 +12,12 @@ class FakeBase:
     prompt_store: object
     profile_store: object
     analysis_store: object
+    external_id_store: object
     vector_index: object
     embedder: object
     blob_store: object
     job_runner: object
+    llm_client: object
 
 
 def test_get_container_builds_cli_container(monkeypatch) -> None:
@@ -28,10 +29,12 @@ def test_get_container_builds_cli_container(monkeypatch) -> None:
         prompt_store=object(),
         profile_store=object(),
         analysis_store=object(),
+        external_id_store=object(),
         vector_index=object(),
         embedder=object(),
         blob_store=object(),
         job_runner=object(),
+        llm_client=object(),
     )
 
     def fake_build_container(settings, *, llm_base_url: str, llm_api_key=None):
@@ -49,6 +52,7 @@ def test_get_container_builds_cli_container(monkeypatch) -> None:
 
     assert container.job_runner is fake_base.job_runner
     assert container.job_queue is fake_base.job_queue
+    assert container.synthesize_from_corpus.paper_project_store is not None
 
 
 def test_get_container_caches_instance(monkeypatch) -> None:
@@ -60,10 +64,12 @@ def test_get_container_caches_instance(monkeypatch) -> None:
         prompt_store=object(),
         profile_store=object(),
         analysis_store=object(),
+        external_id_store=object(),
         vector_index=object(),
         embedder=object(),
         blob_store=object(),
         job_runner=object(),
+        llm_client=object(),
     )
 
     build_calls = {"count": 0}
