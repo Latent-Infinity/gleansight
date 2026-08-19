@@ -29,7 +29,13 @@ class FakeVectorIndex:
     def __init__(self, results: list[tuple[str, float]] | None = None) -> None:
         self.results = results or []
 
-    def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]:
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         """Return paper IDs with similarity scores."""
         return self.results[:limit]
 
@@ -160,25 +166,25 @@ class TestComputeRRFScores:
         rankings = [["p1", "p2", "p3"]]
         scores = compute_rrf_scores(rankings, k=60)
 
-        # Scores: p1=1/(60+0), p2=1/(60+1), p3=1/(60+2)
-        assert scores["p1"] == pytest.approx(1 / 60)
-        assert scores["p2"] == pytest.approx(1 / 61)
-        assert scores["p3"] == pytest.approx(1 / 62)
+        # RRF ranks are one-based: p1=1/(60+1), p2=1/(60+2), p3=1/(60+3)
+        assert scores["p1"] == pytest.approx(1 / 61)
+        assert scores["p2"] == pytest.approx(1 / 62)
+        assert scores["p3"] == pytest.approx(1 / 63)
 
     def test_rrf_with_multiple_lists_overlapping(self) -> None:
         """RRF should combine scores from multiple lists."""
-        # p1 appears in both lists at rank 0 and 1
-        # p2 appears only in first list at rank 1
-        # p3 appears only in second list at rank 0
+        # p1 appears in both lists at ranks 1 and 2.
+        # p2 appears only in the first list at rank 2.
+        # p3 appears only in the second list at rank 1.
         rankings = [
             ["p1", "p2"],
             ["p3", "p1"],
         ]
         scores = compute_rrf_scores(rankings, k=60)
 
-        # p1: 1/60 + 1/61 = 0.0333...
-        # p2: 1/61 = 0.0163...
-        # p3: 1/60 = 0.0166...
+        # p1: 1/61 + 1/62
+        # p2: 1/62
+        # p3: 1/61
         assert scores["p1"] > scores["p3"]
         assert scores["p3"] > scores["p2"]
 
@@ -186,7 +192,7 @@ class TestComputeRRFScores:
         """RRF should use k=60 as specified in design doc."""
         rankings = [["p1"]]
         scores = compute_rrf_scores(rankings, k=60)
-        assert scores["p1"] == pytest.approx(1 / 60)
+        assert scores["p1"] == pytest.approx(1 / 61)
 
     def test_rrf_with_empty_lists(self) -> None:
         """RRF with empty lists should return empty dict."""
@@ -199,11 +205,11 @@ class TestComputeRRFScores:
         scores = compute_rrf_scores(rankings, k=60)
 
         assert len(scores) == 4
-        # All from rank 0 or 1 in their respective lists
-        assert scores["p1"] == pytest.approx(1 / 60)
-        assert scores["p2"] == pytest.approx(1 / 61)
-        assert scores["p3"] == pytest.approx(1 / 60)
-        assert scores["p4"] == pytest.approx(1 / 61)
+        # All are first or second in their respective lists.
+        assert scores["p1"] == pytest.approx(1 / 61)
+        assert scores["p2"] == pytest.approx(1 / 62)
+        assert scores["p3"] == pytest.approx(1 / 61)
+        assert scores["p4"] == pytest.approx(1 / 62)
 
 
 class TestSearchPapersUseCase:

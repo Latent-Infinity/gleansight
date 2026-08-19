@@ -17,7 +17,13 @@ class PapersFTS(Protocol):
 class VectorIndex(Protocol):
     """Protocol for vector index."""
 
-    def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]: ...
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]: ...
 
 
 class Embedder(Protocol):
@@ -35,6 +41,7 @@ class ExtractionStore(Protocol):
         *,
         prompt_version_id: str,
         constraints: dict[str, Any],
+        latest_only: bool = True,
     ) -> list[str]: ...
 
 
@@ -51,7 +58,7 @@ def compute_rrf_scores(rankings: list[list[str]], k: int = 60) -> dict[str, floa
     scores: dict[str, float] = {}
 
     for ranking in rankings:
-        for rank, paper_id in enumerate(ranking):
+        for rank, paper_id in enumerate(ranking, start=1):
             score = 1.0 / (k + rank)
             scores[paper_id] = scores.get(paper_id, 0.0) + score
 
