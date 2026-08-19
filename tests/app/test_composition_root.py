@@ -139,6 +139,8 @@ def test_build_container_wires_dependencies(
     assert container.handler_context.embedder is container.embedder
     assert container.handler_context.vector_index is container.vector_index
     assert container.handler_context.llm_client is container.llm_client
+    assert container.handler_context.scholar_client is container.scholar_client
+    assert container.handler_context.candidate_store is container.candidate_store
     assert container.job_runner.job_queue is container.job_queue
     assert container.job_runner.context is container.handler_context
     assert isinstance(container.blob_store, _FakeBlobStore)

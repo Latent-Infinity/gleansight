@@ -13,15 +13,21 @@ from papers.infra.converter_docling.adapter import build_docling_converter
 from papers.infra.embedder_st.adapter import build_sentence_transformer_embedder
 from papers.infra.lancedb.index import LanceDBConfig, LanceDBVectorIndex
 from papers.infra.llm_openai_compat.client import build_openai_compat_client
-from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.pdf_resolver import (
+    ArxivExportPdfResolver,
     ArxivPdfResolver,
     ChainedPdfResolver,
+    MdpiPdfResolver,
+    OpenAccessPdfResolver,
     PdfDownloader,
+    SemanticScholarPdfResolver,
     UnpaywallPdfResolver,
 )
+from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import (
     PiccoloAnalysisRunStore,
+    PiccoloCandidateStore,
+    PiccoloExtractionStore,
     PiccoloJobQueue,
     PiccoloPaperExternalIdStore,
     PiccoloPaperStore,
@@ -35,11 +41,13 @@ from papers.infra.scholar_s2.adapter import build_s2_client
 class AppContainer:
     settings: Settings
     db: PiccoloDatabase
+    candidate_store: PiccoloCandidateStore
     paper_store: PiccoloPaperStore
     job_queue: PiccoloJobQueue
     prompt_store: PiccoloPromptStore
     profile_store: PiccoloProfileStore
     analysis_store: PiccoloAnalysisRunStore
+    extraction_store: PiccoloExtractionStore
     external_id_store: PiccoloPaperExternalIdStore
     blob_store: FileSystemBlobStore
     vector_index: LanceDBVectorIndex
@@ -63,11 +71,13 @@ def build_container(
     db = PiccoloDatabase(settings.data.db_path)
     db.initialize_schema()
 
+    candidate_store = PiccoloCandidateStore()
     paper_store = PiccoloPaperStore()
     job_queue = PiccoloJobQueue()
     prompt_store = PiccoloPromptStore()
     profile_store = PiccoloProfileStore()
     analysis_store = PiccoloAnalysisRunStore()
+    extraction_store = PiccoloExtractionStore()
     external_id_store = PiccoloPaperExternalIdStore()
 
     blob_store = FileSystemBlobStore(settings.data.blobs_dir)
@@ -80,8 +90,20 @@ def build_container(
         rate_limit_per_second=settings.scholar.rate_limit_per_second,
     )
 
-    # Build PDF resolver chain (ArXiv first, then Unpaywall)
-    resolvers: list[ports.PdfResolver] = [ArxivPdfResolver()]
+    # Build PDF resolver chain:
+    # 1. ArXiv Export (export.arxiv.org, designed for programmatic access)
+    # 2. ArXiv (arxiv.org fallback, stricter rate limit)
+    # 3. OpenAccess (cached URL from S2 search results)
+    # 4. MDPI CDN (bypasses Akamai bot protection on mdpi.com)
+    # 5. S2 API lookup (queries S2 by DOI/CorpusId at download time)
+    # 6. Unpaywall (queries Unpaywall by DOI, if email configured)
+    resolvers: list[ports.PdfResolver] = [
+        ArxivExportPdfResolver(),
+        ArxivPdfResolver(),
+        OpenAccessPdfResolver(),
+        MdpiPdfResolver(),
+        SemanticScholarPdfResolver(api_key=settings.scholar.api_key or None),
+    ]
     unpaywall_email = settings.pdf.unpaywall_email
     if unpaywall_email:
         resolvers.append(UnpaywallPdfResolver(email=unpaywall_email))
@@ -90,6 +112,10 @@ def build_container(
         rate_limit_per_second=settings.pdf.download_rate_limit_per_second,
         max_retries=settings.pdf.download_max_retries,
         timeout_s=settings.pdf.download_timeout_s,
+        source_rate_limits={
+            "arxiv_export": settings.pdf.arxiv_export_rate_limit_per_second,
+            "arxiv": settings.pdf.arxiv_rate_limit_per_second,
+        },
     )
 
     handler_context = HandlerContext(
@@ -103,20 +129,25 @@ def build_container(
         prompt_store=prompt_store,
         profile_store=profile_store,
         analysis_store=analysis_store,
+        extraction_store=extraction_store,
         pdf_resolver=pdf_resolver,
         pdf_downloader=pdf_downloader,
         external_id_store=external_id_store,
+        scholar_client=scholar_client,
+        candidate_store=candidate_store,
     )
     job_runner = JobRunner(job_queue=job_queue, context=handler_context)
 
     return AppContainer(
         settings=settings,
         db=db,
+        candidate_store=candidate_store,
         paper_store=paper_store,
         job_queue=job_queue,
         prompt_store=prompt_store,
         profile_store=profile_store,
         analysis_store=analysis_store,
+        extraction_store=extraction_store,
         external_id_store=external_id_store,
         blob_store=blob_store,
         vector_index=vector_index,
@@ -151,9 +182,7 @@ def _ensure_dir_exists(path: Path, label: str) -> None:
     try:
         path.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
-        raise ConfigurationError(
-            f"Unable to create required directory: {label} ({path})"
-        ) from exc
+        raise ConfigurationError(f"Unable to create required directory: {label} ({path})") from exc
 
 
 def _require_dependency(module_name: str) -> None:
