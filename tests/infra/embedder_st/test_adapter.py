@@ -36,6 +36,26 @@ def test_embedder_propagates_embed_errors() -> None:
         embedder.embed("text")
 
 
+def test_build_embedder_missing_dimension(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_st = types.ModuleType("sentence_transformers")
+
+    class FakeModel:
+        def __init__(self, model_name: str) -> None:
+            self.model_name = model_name
+
+        def get_sentence_embedding_dimension(self) -> None:
+            return None
+
+    fake_st.SentenceTransformer = FakeModel  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "sentence_transformers", fake_st)
+
+    with pytest.raises(PipelineError) as excinfo:
+        build_sentence_transformer_embedder("model")
+
+    assert excinfo.value.code is ErrorCode.EMBEDDING_FAILED
+    assert "dimension" in str(excinfo.value).lower()
+
+
 def test_build_embedder_success_with_fake() -> None:
     """Test successful build with fake SentenceTransformer."""
     from typing import Any, cast

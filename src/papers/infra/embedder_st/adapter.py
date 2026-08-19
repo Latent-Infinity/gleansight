@@ -25,7 +25,7 @@ class SentenceTransformerEmbedder(ports.Embedder):
 
 def build_sentence_transformer_embedder(model_name: str) -> SentenceTransformerEmbedder:
     try:
-        from sentence_transformers import SentenceTransformer  # type: ignore
+        from sentence_transformers import SentenceTransformer
     except Exception as exc:  # pragma: no cover - optional dependency
         raise PipelineError(
             ErrorCode.EMBEDDING_FAILED,
@@ -34,6 +34,11 @@ def build_sentence_transformer_embedder(model_name: str) -> SentenceTransformerE
 
     model = SentenceTransformer(model_name)
     dimension = model.get_sentence_embedding_dimension()
+    if dimension is None:
+        raise PipelineError(
+            ErrorCode.EMBEDDING_FAILED,
+            "sentence-transformers model did not report an embedding dimension",
+        )
 
     def _embed(text: str) -> list[float]:
         return model.encode(text, normalize_embeddings=False).tolist()
