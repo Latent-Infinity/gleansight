@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from typing import Any
 
 import flet as ft
+
+
+def _pick_icon(*names: str) -> str:
+    for name in names:
+        icon = getattr(ft.Icons, name, None)
+        if icon is not None:
+            return icon
+    return getattr(ft.Icons, "HELP_OUTLINE", ft.Icons.ABC)
 
 
 @dataclass
@@ -13,18 +21,20 @@ class SearchScreen:
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
-            "Discover new papers from Semantic Scholar. Use this search to find candidates "
+            value="Discover new papers from Semantic Scholar. Use this search to find candidates "
             "to import and index. Imported papers are processed by the job runner.",
             color=ft.Colors.GREY_700,
             size=12,
         )
-        status_text = ft.Text("", color=ft.Colors.RED_600, visible=False)
+        status_text = ft.Text(value="", color=ft.Colors.RED_600)
         query_input = ft.TextField(label="Search", expand=True)
         year_min_input = ft.TextField(label="Year from", width=140, hint_text="e.g. 2019")
         year_max_input = ft.TextField(label="Year to", width=140, hint_text="e.g. 2024")
         pub_date_from = ft.TextField(label="Pub date from", width=160, hint_text="YYYY-MM-DD")
         pub_date_to = ft.TextField(label="Pub date to", width=160, hint_text="YYYY-MM-DD")
-        fields_input = ft.TextField(label="Fields of study", width=240, hint_text="e.g. Computer Science")
+        fields_input = ft.TextField(
+            label="Fields of study", width=240, hint_text="e.g. Computer Science"
+        )
         venue_input = ft.TextField(label="Venue", width=200, hint_text="e.g. NeurIPS")
         pub_types_input = ft.TextField(
             label="Publication types",
@@ -48,6 +58,7 @@ class SearchScreen:
         selected_ids: set[str] = set()
         checkbox_by_id: dict[str, ft.Checkbox] = {}
         current_candidates: list[dict[str, Any]] = []
+        job_index: dict[str, dict[str, Any]] = {}
 
         # Pagination state
         pagination_state: dict[str, Any] = {
@@ -57,12 +68,12 @@ class SearchScreen:
             "page_size": default_max_results,
             "has_more": False,
         }
-        load_more_button = ft.ElevatedButton(
+        load_more_button = ft.Button(
             "Load more results",
             visible=False,
             on_click=lambda _: _load_more(),
         )
-        results_summary = ft.Text("", size=12, color=ft.Colors.GREY_600)
+        results_summary = ft.Text(value="", size=12, color=ft.Colors.GREY_600)
 
         def _parse_int(value: str | None) -> int | None:
             if not value:
@@ -85,7 +96,7 @@ class SearchScreen:
 
         def _build_chip(label: str) -> ft.Control:
             return ft.Container(
-                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                 bgcolor=ft.Colors.GREY_200,
                 border_radius=12,
                 content=ft.Text(label, size=11),
@@ -97,6 +108,20 @@ class SearchScreen:
             venue = candidate.get("venue") or "n/a"
             authors = _format_authors(candidate.get("authors_json"))
             abstract = candidate.get("abstract") or "No abstract available."
+            # Parse external IDs for PDF availability check
+            external_ids: dict[str, str] = {}
+            ext_json = candidate.get("external_ids_json")
+            if ext_json:
+                try:
+                    external_ids = json.loads(ext_json) if isinstance(ext_json, str) else ext_json
+                except (TypeError, json.JSONDecodeError):
+                    pass
+
+            has_open_access_pdf = bool(external_ids.get("OpenAccessPdf"))
+            has_arxiv = any(k.lower() == "arxiv" for k in external_ids)
+            has_doi = any(k.lower() == "doi" for k in external_ids)
+            pdf_likely = has_open_access_pdf or has_arxiv or has_doi
+
             imported_at = candidate.get("imported_at")
             imported_paper_id = candidate.get("imported_paper_id")
             rejected_at = candidate.get("rejected_at")
@@ -106,12 +131,16 @@ class SearchScreen:
             # Get pipeline stage for imported papers
             pipeline_stage = None
             has_markdown = False
+            pipeline_health = None
+            last_error_message = None
             if is_imported and imported_paper_id:
                 list_paper = getattr(self.services, "list_paper", None)
                 if list_paper:
                     paper = list_paper(imported_paper_id)
                     if paper:
                         pipeline_stage = paper.get("pipeline_stage")
+                        pipeline_health = paper.get("pipeline_health")
+                        last_error_message = paper.get("last_error_message")
                         has_markdown = pipeline_stage in ("converted", "embedded", "analyzed")
 
             # Build status text based on pipeline stage
@@ -119,6 +148,8 @@ class SearchScreen:
                 status = "Rejected"
             elif not is_imported:
                 status = "New"
+            elif pipeline_health == "error":
+                status = "⚠ Error"
             elif pipeline_stage == "analyzed":
                 status = "✓ Analyzed"
             elif pipeline_stage == "embedded":
@@ -130,18 +161,38 @@ class SearchScreen:
             else:
                 status = "⏳ Downloading"
 
+            if imported_paper_id in job_index:
+                active_type = job_index[imported_paper_id].get("type")
+                if active_type == "download":
+                    status = "⏳ Downloading"
+                elif active_type == "convert":
+                    status = "⏳ Converting"
+                elif active_type == "embed":
+                    status = "⏳ Embedding"
+                elif active_type == "analyze":
+                    status = "⏳ Analyzing"
+            elif (
+                is_imported
+                and pipeline_health != "error"
+                and pipeline_stage in ("imported", "downloaded", "converted", "embedded")
+            ):
+                status = "⏸ Waiting (no jobs)"
+
             # Visual styling based on status
             card_border = None
             status_color = ft.Colors.BLUE_400
             if is_imported:
                 if has_markdown:
-                    card_border = ft.border.all(2, ft.Colors.GREEN_600)
+                    card_border = ft.Border.all(2, ft.Colors.GREEN_600)
                     status_color = ft.Colors.GREEN_700
+                elif pipeline_health == "error":
+                    card_border = ft.Border.all(2, ft.Colors.RED_400)
+                    status_color = ft.Colors.RED_600
                 else:
-                    card_border = ft.border.all(2, ft.Colors.AMBER_400)
+                    card_border = ft.Border.all(2, ft.Colors.AMBER_400)
                     status_color = ft.Colors.AMBER_700
             elif is_rejected:
-                card_border = ft.border.all(1, ft.Colors.GREY_400)
+                card_border = ft.Border.all(1, ft.Colors.GREY_400)
                 status_color = ft.Colors.GREY_600
 
             abstract_preview = abstract
@@ -151,8 +202,9 @@ class SearchScreen:
                 abstract_preview,
                 max_lines=3,
                 overflow=ft.TextOverflow.ELLIPSIS,
+                selectable=True,
             )
-            abstract_full_text = ft.Text(abstract, visible=False)
+            abstract_full_text = ft.Text(abstract, visible=False, selectable=True)
             toggle_button = ft.TextButton("Show more")
 
             def on_details(e: ft.ControlEvent) -> None:
@@ -160,14 +212,14 @@ class SearchScreen:
                 if page is None:
                     return
                 dialog = ft.AlertDialog(
-                    title=ft.Text(title),
+                    title=ft.Text(title, selectable=True),
                     content=ft.Column(
                         [
-                            ft.Text(f"Authors: {authors}"),
-                            ft.Text(f"Venue: {venue}"),
-                            ft.Text(f"Year: {year}"),
+                            ft.Text(value=f"Authors: {authors}", selectable=True),
+                            ft.Text(value=f"Venue: {venue}", selectable=True),
+                            ft.Text(value=f"Year: {year}", selectable=True),
                             ft.Divider(),
-                            ft.Text(abstract),
+                            ft.Text(abstract, selectable=True),
                         ],
                         tight=True,
                         scroll=ft.ScrollMode.AUTO,
@@ -188,60 +240,50 @@ class SearchScreen:
                     page.dialog.open = False
                     page.update()
 
-            def on_import(e: ft.ControlEvent) -> None:
-                import_use_case = getattr(self.services, "import_candidate")
+            def on_import(_: ft.ControlEvent) -> None:
+                import_use_case = self.services.import_candidate
                 try:
                     import_use_case.import_candidate(candidate_id=candidate["candidate_id"])
-                    # Update card appearance
+                    # Update card appearance — modify existing controls in-place
+                    status_chip_text.value = "Imported"
                     status_chip.bgcolor = ft.Colors.GREEN_600
-                    status_chip.content = ft.Text("Imported", size=11, color=ft.Colors.WHITE)
-                    # Replace import button with "In library" text
-                    action_buttons.clear()
-                    action_buttons.append(
-                        ft.Text("✓ In library", color=ft.Colors.GREEN_600, size=12)
-                    )
-                    # Show success message
+                    import_button.visible = False
+                    reject_button.visible = False
+                    in_library_label.visible = True
+                    card.update()
+                    # Show success message (status_text is always-visible, no layout shift)
                     status_text.value = f"Imported: {candidate.get('title', 'Unknown')[:50]}"
                     status_text.color = ft.Colors.GREEN_700
-                    status_text.visible = True
-                    page = getattr(e, "page", None) or getattr(e.control, "page", None)
-                    if page:
-                        page.update()
+                    status_text.update()
                 except Exception as exc:
                     status_text.value = f"Import failed: {exc}"
                     status_text.color = ft.Colors.RED_600
-                    status_text.visible = True
                     status_text.update()
 
-            def on_reject(e: ft.ControlEvent) -> None:
-                reject_use_case = getattr(self.services, "reject_candidate")
+            def on_reject(_: ft.ControlEvent) -> None:
+                reject_use_case = self.services.reject_candidate
                 try:
                     reject_use_case.reject(candidate_id=candidate["candidate_id"])
-                    # Update card appearance
+                    # Update card appearance — modify existing controls in-place
+                    status_chip_text.value = "Rejected"
                     status_chip.bgcolor = ft.Colors.GREY_600
-                    status_chip.content = ft.Text("Rejected", size=11, color=ft.Colors.WHITE)
-                    # Remove action buttons
-                    action_buttons.clear()
-                    # Show success message
+                    import_button.visible = False
+                    reject_button.visible = False
+                    card.update()
+                    # Show success message (status_text is always-visible, no layout shift)
                     status_text.value = f"Rejected: {candidate.get('title', 'Unknown')[:50]}"
                     status_text.color = ft.Colors.GREEN_700
-                    status_text.visible = True
-                    page = getattr(e, "page", None) or getattr(e.control, "page", None)
-                    if page:
-                        page.update()
+                    status_text.update()
                 except Exception as exc:
                     status_text.value = f"Reject failed: {exc}"
                     status_text.color = ft.Colors.RED_600
-                    status_text.visible = True
                     status_text.update()
 
-            def on_toggle(e: ft.ControlEvent) -> None:
+            def on_toggle(_: ft.ControlEvent) -> None:
                 abstract_full_text.visible = not abstract_full_text.visible
                 abstract_preview_text.visible = not abstract_full_text.visible
                 toggle_button.text = "Show less" if abstract_full_text.visible else "Show more"
-                page = getattr(e, "page", None) or getattr(e.control, "page", None)
-                if page:
-                    page.update()
+                card.update()
 
             toggle_button.on_click = on_toggle
             if abstract == "No abstract available.":
@@ -259,38 +301,79 @@ class SearchScreen:
 
             checkbox.on_change = on_select_change
 
-            # Build status chip with appropriate color
+            # Build status chip — use named Text so we can modify .value in-place
+            status_chip_text = ft.Text(status, size=11, color=ft.Colors.WHITE)
             status_chip = ft.Container(
-                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                 bgcolor=status_color,
                 border_radius=12,
-                content=ft.Text(status, size=11, color=ft.Colors.WHITE),
+                content=status_chip_text,
             )
 
-            # Action buttons - disable import if already imported
-            action_buttons = []
-            if not is_imported:
-                action_buttons.append(
-                    ft.ElevatedButton(
-                        "Import",
-                        on_click=on_import,
-                        tooltip="Import this candidate to your local database.",
-                    )
-                )
-            if not is_rejected and not is_imported:
-                action_buttons.append(
-                    ft.OutlinedButton(
-                        "Reject",
-                        on_click=on_reject,
-                        tooltip="Remove this candidate from the queue.",
-                    )
-                )
-            if is_imported:
-                action_buttons.append(
-                    ft.Text("✓ In library", color=ft.Colors.GREEN_600, size=12)
-                )
+            retry_button = None
+            if is_imported and (pipeline_health == "error" or status.startswith("⏸")):
+                enqueue_job = getattr(self.services, "enqueue_job", None)
 
-            return ft.Card(
+                def _next_job_type(stage: str | None) -> str | None:
+                    if stage in (None, "imported"):
+                        return "download"
+                    if stage == "downloaded":
+                        return "convert"
+                    if stage == "converted":
+                        return "embed"
+                    return None
+
+                def on_retry(_: ft.ControlEvent) -> None:
+                    if enqueue_job is None or not imported_paper_id:
+                        return
+                    job_type = _next_job_type(pipeline_stage)
+                    if job_type is None:
+                        return
+                    enqueue_job(job_type, imported_paper_id, None, {})
+                    status_text.value = f"Requeued {job_type} for {title[:50]}"
+                    status_text.color = ft.Colors.GREEN_700
+                    status_text.update()
+
+                if enqueue_job is not None:
+                    retry_button = ft.TextButton("Retry step", on_click=on_retry)
+
+            # Action buttons — pre-create all controls, toggle visibility in handlers
+            # (avoids creating unmounted controls at click-time which can reset scroll)
+            import_button = ft.Button(
+                "Import",
+                on_click=on_import,
+                tooltip="Import this candidate to your local database.",
+                visible=not is_imported and pdf_likely,
+                disabled=not pdf_likely,
+            )
+            reject_button = ft.OutlinedButton(
+                "Reject",
+                on_click=on_reject,
+                tooltip="Remove this candidate from the queue.",
+                visible=not is_rejected and not is_imported,
+            )
+            in_library_label = ft.Text(
+                value="✓ In library",
+                color=ft.Colors.GREEN_600,
+                size=12,
+                visible=is_imported and pipeline_health != "error",
+            )
+            error_library_label = ft.Text(
+                value="⚠ In library",
+                color=ft.Colors.RED_600,
+                size=12,
+                visible=is_imported and pipeline_health == "error",
+            )
+            action_row = ft.Row(
+                [
+                    import_button,
+                    reject_button,
+                    in_library_label,
+                    error_library_label,
+                ]
+            )
+
+            card = ft.Card(
                 content=ft.Container(
                     padding=10,
                     border=card_border,
@@ -300,19 +383,59 @@ class SearchScreen:
                             ft.Row(
                                 [
                                     checkbox,
-                                    ft.Text(title, size=16, weight=ft.FontWeight.BOLD, expand=True),
-                                    ft.Row(action_buttons),
+                                    ft.Text(
+                                        title,
+                                        size=16,
+                                        weight=ft.FontWeight.BOLD,
+                                        expand=True,
+                                        selectable=True,
+                                    ),
+                                    action_row,
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
-                            ft.Text(authors, size=12, color=ft.Colors.GREY_700),
+                            ft.Text(authors, size=12, color=ft.Colors.GREY_700, selectable=True),
                             ft.Row(
                                 [
                                     _build_chip(f"Venue: {venue}"),
                                     _build_chip(f"Year: {year}"),
+                                    ft.Container(
+                                        padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                                        bgcolor=ft.Colors.GREEN_200
+                                        if pdf_likely
+                                        else ft.Colors.RED_100,
+                                        border_radius=12,
+                                        content=ft.Text(
+                                            value="PDF available"
+                                            if has_open_access_pdf or has_arxiv
+                                            else "PDF via DOI"
+                                            if has_doi
+                                            else "No PDF route",
+                                            size=11,
+                                            color=ft.Colors.GREEN_900
+                                            if pdf_likely
+                                            else ft.Colors.RED_900,
+                                        ),
+                                        tooltip=(
+                                            "Open access PDF URL known"
+                                            if has_open_access_pdf
+                                            else "ArXiv PDF available"
+                                            if has_arxiv
+                                            else "Will attempt lookup via DOI"
+                                            if has_doi
+                                            else "No known route to download PDF"
+                                        ),
+                                    ),
                                     status_chip,
                                 ],
                                 spacing=8,
+                            ),
+                            ft.Text(
+                                value=f"Last error: {last_error_message}",
+                                size=11,
+                                color=ft.Colors.RED_700,
+                                visible=bool(pipeline_health == "error" and last_error_message),
+                                selectable=True,
                             ),
                             abstract_preview_text,
                             abstract_full_text,
@@ -320,6 +443,7 @@ class SearchScreen:
                                 [
                                     toggle_button,
                                     ft.TextButton("Details", on_click=on_details),
+                                    retry_button if retry_button else ft.Container(),
                                 ]
                             ),
                         ],
@@ -327,14 +451,15 @@ class SearchScreen:
                     ),
                 )
             )
+            return card
 
         def _update_selection_bar() -> None:
             count = len(selected_ids)
             selection_bar.controls = [
-                ft.Text(f"Selected: {count}"),
+                ft.Text(value=f"Selected: {count}"),
                 ft.TextButton("Select all", on_click=lambda _: _select_all()),
                 ft.TextButton("Clear", on_click=lambda _: _clear_selection()),
-                ft.ElevatedButton("Import selected", on_click=lambda _: _import_selected()),
+                ft.Button("Import selected", on_click=lambda _: _import_selected()),
                 ft.OutlinedButton("Reject selected", on_click=lambda _: _reject_selected()),
             ]
             selection_bar.update()
@@ -360,11 +485,10 @@ class SearchScreen:
         def _show_notice(message: str, is_error: bool = False) -> None:
             status_text.value = message
             status_text.color = ft.Colors.RED_600 if is_error else ft.Colors.GREEN_700
-            status_text.visible = True
             status_text.update()
 
         def _import_selected() -> None:
-            import_candidate = getattr(self.services, "import_candidate")
+            import_candidate = self.services.import_candidate
             try:
                 for cid in list(selected_ids):
                     import_candidate.import_candidate(candidate_id=cid)
@@ -374,7 +498,7 @@ class SearchScreen:
                 _show_notice(str(exc), is_error=True)
 
         def _reject_selected() -> None:
-            reject_candidate = getattr(self.services, "reject_candidate")
+            reject_candidate = self.services.reject_candidate
             try:
                 for cid in list(selected_ids):
                     reject_candidate.reject(candidate_id=cid)
@@ -408,19 +532,34 @@ class SearchScreen:
                 filters["open_access_pdf"] = True
             return filters
 
-        def _fetch_and_display(query: str, filters: dict[str, Any], page_size: int, append: bool = False) -> None:
+        def _fetch_and_display(
+            query: str, filters: dict[str, Any], page_size: int, append: bool = False
+        ) -> None:
             """Fetch results and update display."""
-            discover = getattr(self.services, "discover")
-            get_candidate = getattr(self.services, "get_candidate")
+            discover = self.services.discover
+            get_candidate = self.services.get_candidate
+            list_jobs = getattr(self.services, "list_jobs", None)
 
             try:
                 candidate_ids = discover.discover(
                     query=query,
                     filters=filters,
                     max_results=page_size,
+                    offset=pagination_state["current_offset"] if append else 0,
                 )
                 candidates = [get_candidate(cid) for cid in candidate_ids]
                 new_candidates = [cand for cand in candidates if cand is not None]
+
+                job_index.clear()
+                if list_jobs is not None:
+                    jobs = list_jobs(None, 1000)
+                    for job in jobs:
+                        paper_id = job.get("paper_id")
+                        status = job.get("status")
+                        if not paper_id or status not in {"queued", "running"}:
+                            continue
+                        if paper_id not in job_index:
+                            job_index[paper_id] = job
 
                 if append:
                     current_candidates.extend(new_candidates)
@@ -459,7 +598,6 @@ class SearchScreen:
                 if "rate limit" in message.lower() or "429" in message:
                     message = "Rate limited by Semantic Scholar. Please wait a bit and try again."
                 status_text.value = message
-                status_text.visible = True
                 status_text.update()
 
         def _load_more() -> None:
@@ -492,7 +630,6 @@ class SearchScreen:
             pagination_state["has_more"] = False
 
             status_text.value = ""
-            status_text.visible = False
             load_more_button.visible = False
             results_summary.visible = False
 
@@ -507,7 +644,7 @@ class SearchScreen:
                 ft.Row(
                     [
                         query_input,
-                        ft.ElevatedButton(
+                        ft.Button(
                             "Search",
                             on_click=on_search,
                             tooltip="Find candidate papers on Semantic Scholar.",
@@ -517,7 +654,7 @@ class SearchScreen:
                 ft.ExpansionPanelList(
                     controls=[
                         ft.ExpansionPanel(
-                            header=ft.ListTile(title=ft.Text("Filters")),
+                            header=ft.ListTile(title=ft.Text(value="Filters")),
                             content=ft.Column(
                                 [
                                     ft.Row([year_min_input, year_max_input, max_results_input]),
@@ -541,17 +678,26 @@ class SearchScreen:
                 ft.Row(
                     [
                         ft.Icon(
-                            ft.Icons.CHECK_CIRCLE if api_key_set else ft.Icons.ERROR_OUTLINE,
+                            (
+                                _pick_icon("CHECK_CIRCLE", "CHECK")
+                                if api_key_set
+                                else _pick_icon("ERROR_OUTLINE", "ERROR")
+                            ),
                             size=14,
                             color=ft.Colors.GREEN_600 if api_key_set else ft.Colors.RED_600,
                             tooltip=(
                                 "Semantic Scholar API key detected."
                                 if api_key_set
-                                else "Semantic Scholar API key not set. Set SEMANTIC_SCHOLAR_API_KEY or config."
+                                else (
+                                    "Semantic Scholar API key not set. "
+                                    "Set SEMANTIC_SCHOLAR_API_KEY or config."
+                                )
                             ),
                         ),
                         ft.Text(
-                            f"S2 key {'set' if api_key_set else 'missing'} · RPS {rate_limit}",
+                            value=(
+                                f"S2 key {'set' if api_key_set else 'missing'} · RPS {rate_limit}"
+                            ),
                             size=11,
                             color=ft.Colors.GREY_700,
                         ),
