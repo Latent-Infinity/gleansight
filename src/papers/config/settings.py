@@ -76,6 +76,8 @@ class PdfSettings(BaseModel):
     download_rate_limit_per_second: float = Field(default=2.0, ge=0.1, le=10.0)
     download_max_retries: int = Field(default=3, ge=1, le=10)
     download_timeout_s: float = Field(default=120.0, ge=10.0, le=600.0)
+    arxiv_export_rate_limit_per_second: float = Field(default=0.33, ge=0.01, le=2.0)
+    arxiv_rate_limit_per_second: float = Field(default=0.067, ge=0.01, le=1.0)
 
     @field_validator("unpaywall_email", mode="before")
     @classmethod

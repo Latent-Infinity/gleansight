@@ -48,6 +48,17 @@ def test_load_settings_resolves_paths(tmp_path: Path) -> None:
     assert settings.data.db_path == (tmp_path / "data/db/app.sqlite").resolve()
 
 
+def test_packaged_defaults_toml_loads() -> None:
+    defaults_path = (
+        Path(__file__).resolve().parents[2] / "src" / "papers" / "config" / "defaults.toml"
+    )
+    settings = load_settings(defaults_path=defaults_path)
+
+    assert settings.embeddings.model
+    assert settings.data.db_path.name == "app.sqlite"
+    assert settings.scholar.rate_limit_per_second == 1
+
+
 def test_load_settings_missing_file_raises(tmp_path: Path) -> None:
     missing_path = tmp_path / "missing.toml"
     with pytest.raises(ConfigurationError):
@@ -74,8 +85,9 @@ model = "sentence-transformers/all-mpnet-base-v2"
     assert settings.embeddings.model == "sentence-transformers/all-mpnet-base-v2"
 
 
-def test_load_settings_scholar_config(tmp_path: Path) -> None:
+def test_load_settings_scholar_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test that scholar config is loaded correctly."""
+    monkeypatch.delenv("SEMANTIC_SCHOLAR_API_KEY", raising=False)
     defaults_path = tmp_path / "defaults.toml"
     _write_defaults(defaults_path)
 
