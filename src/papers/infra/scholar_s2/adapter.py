@@ -45,6 +45,7 @@ class SemanticScholarClient:
         filters: dict[str, Any],
         max_results: int,
         page_size: int,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         """Search for papers via Semantic Scholar API.
 
@@ -61,7 +62,7 @@ class SemanticScholarClient:
             PipelineError: On network errors, rate limiting, or invalid responses
         """
         results: list[dict[str, Any]] = []
-        offset = 0
+        offset = max(0, offset)
         url = "https://api.semanticscholar.org/graph/v1/paper/search"
 
         # Build query parameters
@@ -69,7 +70,7 @@ class SemanticScholarClient:
             "query": query,
             "limit": min(page_size, 100),  # API max is 100
             "offset": offset,
-            "fields": "paperId,title,year,venue,authors,abstract,externalIds",
+            "fields": "paperId,title,year,venue,authors,abstract,externalIds,openAccessPdf",
         }
 
         def _as_csv(value: Any) -> str | None:
@@ -233,7 +234,14 @@ class SemanticScholarClient:
         # Extract external IDs
         external_ids = None
         if item.get("externalIds"):
-            external_ids = item["externalIds"]
+            external_ids = dict(item["externalIds"])
+
+        # Store open access PDF URL in external_ids for the resolver chain
+        oa_pdf = item.get("openAccessPdf")
+        if oa_pdf and oa_pdf.get("url"):
+            if external_ids is None:
+                external_ids = {}
+            external_ids["OpenAccessPdf"] = oa_pdf["url"]
 
         return {
             "source_paper_id": item.get("paperId", ""),
@@ -261,7 +269,7 @@ def build_s2_client(
         SemanticScholarClient instance
     """
     try:
-        import httpx  # type: ignore
+        import httpx
     except Exception as exc:  # pragma: no cover
         raise PipelineError(ErrorCode.NETWORK_ERROR, "httpx not installed") from exc
 

@@ -156,6 +156,29 @@ class TestSemanticScholarClient:
         assert results[100]["source_paper_id"] == "page2_0"
         assert results[200]["source_paper_id"] == "page3_0"
 
+    def test_search_starts_from_requested_offset(self) -> None:
+        observed_offsets: list[int] = []
+
+        def send_func(url: str, params: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+            observed_offsets.append(params["offset"])
+            return {
+                "total": 11,
+                "offset": params["offset"],
+                "data": [{"paperId": "p10", "title": "Paper 10"}],
+            }
+
+        client = SemanticScholarClient(send_func=send_func)
+        results = client.search(
+            query="test",
+            filters={},
+            max_results=1,
+            page_size=1,
+            offset=10,
+        )
+
+        assert observed_offsets == [10]
+        assert [result["source_paper_id"] for result in results] == ["p10"]
+
     def test_search_respects_max_results(self) -> None:
         """Search should stop when max_results is reached."""
         page1 = {
@@ -434,3 +457,61 @@ class TestBuildS2Client:
         client = build_s2_client(api_key=None)
         assert isinstance(client, SemanticScholarClient)
         assert client.rate_limiter.rate_per_second == 10.0
+
+
+class TestTransformToCandidate:
+    """Tests for _transform_to_candidate."""
+
+    def _make_client(self) -> SemanticScholarClient:
+        return SemanticScholarClient(send_func=lambda *a: {})
+
+    def test_open_access_pdf_stored_in_external_ids(self) -> None:
+        client = self._make_client()
+        item = {
+            "paperId": "abc",
+            "title": "Test",
+            "externalIds": {"DOI": "10.1234/abc"},
+            "openAccessPdf": {"url": "https://example.com/paper.pdf", "status": "GREEN"},
+        }
+
+        result = client._transform_to_candidate(item)
+
+        assert result["external_ids"]["OpenAccessPdf"] == "https://example.com/paper.pdf"
+        assert result["external_ids"]["DOI"] == "10.1234/abc"
+
+    def test_no_open_access_pdf_leaves_external_ids_unchanged(self) -> None:
+        client = self._make_client()
+        item = {
+            "paperId": "abc",
+            "title": "Test",
+            "externalIds": {"DOI": "10.1234/abc"},
+        }
+
+        result = client._transform_to_candidate(item)
+
+        assert "OpenAccessPdf" not in result["external_ids"]
+
+    def test_open_access_pdf_without_url_ignored(self) -> None:
+        client = self._make_client()
+        item = {
+            "paperId": "abc",
+            "title": "Test",
+            "externalIds": {"DOI": "10.1234/abc"},
+            "openAccessPdf": {"status": "CLOSED"},
+        }
+
+        result = client._transform_to_candidate(item)
+
+        assert "OpenAccessPdf" not in result["external_ids"]
+
+    def test_open_access_pdf_creates_external_ids_when_none(self) -> None:
+        client = self._make_client()
+        item = {
+            "paperId": "abc",
+            "title": "Test",
+            "openAccessPdf": {"url": "https://example.com/paper.pdf"},
+        }
+
+        result = client._transform_to_candidate(item)
+
+        assert result["external_ids"]["OpenAccessPdf"] == "https://example.com/paper.pdf"
