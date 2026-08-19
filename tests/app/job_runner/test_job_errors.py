@@ -102,7 +102,7 @@ def test_retryable_converter_error_sets_pipeline_health(tmp_path: Path) -> None:
 
     blob_store = FileSystemBlobStore(tmp_path / "blobs")
     pdf_path = tmp_path / "source.pdf"
-    pdf_path.write_bytes(b"fake pdf")
+    pdf_path.write_bytes(b"%PDF-1.4 fake pdf")
     pdf_fingerprint, _ = blob_store.put_pdf(pdf_path)
     paper_store.set_pdf_fingerprint("paper", pdf_fingerprint)
 
