@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
 from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import load_settings
+from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import (
+    PiccoloCandidateImporter,
     PiccoloCandidateStore,
     PiccoloExtractionStore,
     PiccoloPaperExternalIdStore,
+    PiccoloPaperProjectStore,
 )
-from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.ui.app import UIServices, run_app
 
 
@@ -53,6 +56,7 @@ def build_ui_services(
             paper_store=base.paper_store,
             job_queue=base.job_queue,
             external_id_store=external_id_store,
+            atomic_importer=PiccoloCandidateImporter(),
         ),
         reject_candidate=use_cases.RejectCandidateUseCase(
             candidate_store=candidate_store,
@@ -62,17 +66,34 @@ def build_ui_services(
             vector_index=base.vector_index,
             embedder=base.embedder,
         ),
-        filter_extractions=use_cases.FilterByExtractionsUseCase(
-            extraction_store=extraction_store
-        ),
+        filter_extractions=use_cases.FilterByExtractionsUseCase(extraction_store=extraction_store),
         aggregate_extractions=use_cases.AggregateExtractionsUseCase(
             extraction_store=extraction_store
         ),
         get_candidate=candidate_store.get_candidate,
         list_paper=base.paper_store.get,
         list_runs=base.analysis_store.list_runs,
-        list_jobs=base.job_queue.list_jobs,
+        list_jobs=lambda status, limit: base.job_queue.list_jobs(status=status, limit=limit),
+        run_next_job=lambda: base.job_runner.run_next(datetime.now(UTC)),
+        enqueue_job=lambda job_type, paper_id, run_id, payload: base.job_queue.enqueue(
+            job_type, paper_id, run_id, payload
+        ),
+        cancel_job=base.job_queue.cancel,
+        delete_job=base.job_queue.delete_job,
+        bulk_delete_jobs=base.job_queue.bulk_delete_jobs,
+        bulk_cancel_jobs=base.job_queue.bulk_cancel_jobs,
         get_paper_markdown=get_paper_markdown,
+        list_extractions=extraction_store.list_by_paper,
+        delete_paper=base.paper_store.delete_paper,
+        reset_pipeline_stage=base.paper_store.reset_pipeline_stage,
+        synthesize_from_corpus=use_cases.SynthesizeFromCorpusUseCase(
+            embedder=base.embedder,
+            vector_index=base.vector_index,
+            paper_store=base.paper_store,
+            blob_store=base.blob_store,
+            llm_client=base.llm_client,
+            paper_project_store=PiccoloPaperProjectStore(),
+        ),
         ui_settings={
             "search_max_results": settings.ui.search_max_results,
             "scholar_api_key_set": bool(settings.scholar.api_key),

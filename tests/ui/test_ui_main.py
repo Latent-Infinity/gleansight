@@ -24,8 +24,6 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     mock_container.paper_store.get = MagicMock(return_value=None)
     mock_container.job_queue = MagicMock()
     mock_container.job_queue.list_jobs = MagicMock(return_value=[])
-    mock_container.vector_index = MagicMock()
-    mock_container.embedder = MagicMock()
     mock_container.analysis_store = MagicMock()
     mock_container.analysis_store.list_runs = MagicMock(return_value=[])
     mock_container.blob_store = MagicMock()
@@ -37,6 +35,7 @@ def test_build_ui_services_returns_ui_services(tmp_path):
         patch.object(main_module, "PiccoloCandidateStore"),
         patch.object(main_module, "PiccoloExtractionStore"),
         patch.object(main_module, "PiccoloPaperExternalIdStore"),
+        patch.object(main_module, "PiccoloPaperProjectStore"),
         patch.object(main_module, "PiccoloPaperFTS"),
     ):
         services = main_module.build_ui_services()
@@ -44,7 +43,14 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     assert isinstance(services, UIServices)
     assert services.list_paper is mock_container.paper_store.get
     assert services.list_runs is mock_container.analysis_store.list_runs
-    assert services.list_jobs is mock_container.job_queue.list_jobs
+    # list_jobs is a lambda wrapper that delegates to job_queue.list_jobs
+    services.list_jobs("pending", 50)
+    mock_container.job_queue.list_jobs.assert_called_with(status="pending", limit=50)
+    # cancel_job, delete_job, and bulk ops are direct references
+    assert services.cancel_job is mock_container.job_queue.cancel
+    assert services.delete_job is mock_container.job_queue.delete_job
+    assert services.bulk_delete_jobs is mock_container.job_queue.bulk_delete_jobs
+    assert services.bulk_cancel_jobs is mock_container.job_queue.bulk_cancel_jobs
 
 
 def test_main_calls_run_app_with_services(tmp_path):
@@ -52,9 +58,7 @@ def test_main_calls_run_app_with_services(tmp_path):
     mock_services = MagicMock(spec=UIServices)
 
     with (
-        patch.object(
-            main_module, "build_ui_services", return_value=mock_services
-        ) as mock_build,
+        patch.object(main_module, "build_ui_services", return_value=mock_services) as mock_build,
         patch.object(main_module, "run_app") as mock_run_app,
     ):
         main_module.main(
