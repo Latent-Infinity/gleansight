@@ -1,0 +1,33 @@
+# Approved NS/QD-inspired fixtures.
+# DATA-NSQD-01/02 are requirement-card fixtures, never corpus records.
+# DATA-NSQD-03 harvest seed is still pending.
+# DATA-NSQD-04 paper+human-paraphrase is still pending (blocks N2b, not N1).
+
+schema_version = 1
+
+[fixture.DATA-NSQD-01]
+id = "DATA-NSQD-01"
+path = "gamma-flow.yaml"
+kind = "candidate-requirement-card"
+role = "smoke_positive"
+snapshot_state_allowed = ["smoke_only"]
+content_sha256 = "b77b62f82cd9bf7d474e19a1b448f4a9595393ede0c070972753984b1bc4b348"
+reviewer = "product"
+approval_revision = "prd-v1.0"
+approved_at = "2026-08-18T00:00:00+00:00"
+never_corpus_record = true
+
+[fixture.DATA-NSQD-02]
+id = "DATA-NSQD-02"
+path = "mechanism-free.yaml"
+kind = "candidate-requirement-card"
+role = "smoke_negative"
+snapshot_state_allowed = ["smoke_only"]
+content_sha256 = "516994c44d85ae297e132471cc4033850180f15692d72f547f9149c2a554a172"
+reviewer = "product"
+approval_revision = "prd-v1.0"
+approved_at = "2026-08-18T00:00:00+00:00"
+never_corpus_record = true
+
+# DATA-NSQD-03 harvest-seed.toml — not approved yet (real enumerated citations required).
+# DATA-NSQD-04 paper-a.* — not approved yet (real paper + human paraphrase; do not invent).

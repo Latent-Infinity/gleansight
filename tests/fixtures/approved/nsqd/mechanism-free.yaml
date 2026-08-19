@@ -1,0 +1,45 @@
+# DATA-NSQD-02 — requirement-card fixture. Mechanism-free transfer control.
+# Approval: product / PRD v1.0 calibration pair. Must be killed (mechanism term = 0).
+# Not a corpus record. Policy lives in docs/algorithm-contract-nsqd.md.
+schema_version: 1
+kind: candidate-requirement-card
+id: apply-diffusion-to-intraday
+domain_pack: finance/1
+title: Apply diffusion models to intraday return prediction
+one_sentence_claim: Use a diffusion generative model to predict intraday returns.
+conventional_core: Deep generative models
+atypical_injection: Apply the same architecture to intraday prices
+mechanism: ""
+inefficiency: ""
+counterparty: ""
+persistence: ""
+capacity: ""
+regime_dependence: ""
+differential_prediction: Better backtest Sharpe on a convenience sample
+cheapest_falsifier: ""
+kill_criteria: Any leakage-controlled test underperforms a linear baseline
+research_descriptor:
+  mechanism: behavioral
+  target: returns
+  horizon: intraday
+paraphrase: Apply a diffusion model to intraday return prediction without a market mechanism.
+fixture_role: smoke_negative
+approval: prd-v1.0
+dval:
+  value: 0
+  assigned_by: product
+  assigned_at: "2026-08-18T00:00:00+00:00"
+  rubric_id: finance/dval/1
+expected_outcomes:
+  snapshot_state: smoke_only
+  snapshot_empty: true
+  evidence: null
+  nov: 0
+  mech: 0
+  fals: 0
+  dpred: 5
+  dval: 0
+  viability: 0
+  archive_eligible: false
+  card_decision: rejected
+  production_archive_empty: true
