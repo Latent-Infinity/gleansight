@@ -28,7 +28,7 @@ class FakePaperProjectStore:
 
 @dataclass
 class FakeRunAnalysis:
-    calls: list[dict[str, str | bool]] = field(default_factory=list)
+    calls: list[dict[str, str | bool | None]] = field(default_factory=list)
 
     def __call__(
         self,
