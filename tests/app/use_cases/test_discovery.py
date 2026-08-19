@@ -29,9 +29,7 @@ class FakeCandidateStore:
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         return self.candidates.get(candidate_id)
 
-    def get_candidate_by_source(
-        self, source: str, source_paper_id: str
-    ) -> dict[str, Any] | None:
+    def get_candidate_by_source(self, source: str, source_paper_id: str) -> dict[str, Any] | None:
         for candidate in self.candidates.values():
             if (
                 candidate.get("source") == source
@@ -99,6 +97,7 @@ class FakeScholarClient:
     def __init__(self, results: list[dict[str, Any]] | None = None) -> None:
         self.results = results or []
         self.call_count = 0
+        self.last_call: dict[str, Any] | None = None
 
     def search(
         self,
@@ -106,8 +105,16 @@ class FakeScholarClient:
         filters: dict[str, Any],
         max_results: int,
         page_size: int,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         self.call_count += 1
+        self.last_call = {
+            "query": query,
+            "filters": filters,
+            "max_results": max_results,
+            "page_size": page_size,
+            "offset": offset,
+        }
         return self.results[:max_results]
 
 
@@ -262,6 +269,39 @@ class TestDiscoverCandidatesUseCase:
         )
 
         assert candidate_ids == [existing_id]
+
+    def test_discover_honors_explicit_page_size(self) -> None:
+        scholar_results = [
+            {
+                "source_paper_id": "s2_abc123",
+                "title": "Deep Learning Paper",
+                "year": 2020,
+                "venue": "NeurIPS",
+                "authors": ["Alice Smith", "Bob Jones"],
+                "abstract": "This paper presents...",
+                "external_ids": {"ArXiv": "2001.12345"},
+            }
+        ]
+
+        scholar_client = FakeScholarClient(results=scholar_results)
+        candidate_store = FakeCandidateStore()
+        use_case = DiscoverCandidatesUseCase(
+            scholar_client=scholar_client,
+            candidate_store=candidate_store,
+        )
+
+        candidate_ids = use_case.discover(
+            query="deep learning",
+            filters={},
+            max_results=25,
+            page_size=10,
+            offset=20,
+        )
+
+        assert len(candidate_ids) == 1
+        assert scholar_client.last_call is not None
+        assert scholar_client.last_call["page_size"] == 10
+        assert scholar_client.last_call["offset"] == 20
 
 
 class TestImportCandidateUseCase:
@@ -439,9 +479,7 @@ class TestImportCandidateUseCase:
             def __init__(self) -> None:
                 self.external_ids: dict[str, dict[str, str]] = {}
 
-            def create_external_ids(
-                self, paper_id: str, external_ids: dict[str, str]
-            ) -> None:
+            def create_external_ids(self, paper_id: str, external_ids: dict[str, str]) -> None:
                 self.external_ids[paper_id] = external_ids
 
             def get_external_ids(self, paper_id: str) -> dict[str, str]:
@@ -570,10 +608,14 @@ class TestRejectCandidateUseCase:
 
         use_case = RejectCandidateUseCase(candidate_store=candidate_store)
         use_case.reject(candidate_id)
-        first_rejected_at = candidate_store.get_candidate(candidate_id)["rejected_at"]
+        first = candidate_store.get_candidate(candidate_id)
+        assert first is not None
+        first_rejected_at = first["rejected_at"]
 
         use_case.reject(candidate_id)
-        second_rejected_at = candidate_store.get_candidate(candidate_id)["rejected_at"]
+        second = candidate_store.get_candidate(candidate_id)
+        assert second is not None
+        second_rejected_at = second["rejected_at"]
 
         assert first_rejected_at is not None
         assert second_rejected_at is not None

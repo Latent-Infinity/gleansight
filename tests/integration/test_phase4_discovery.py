@@ -58,6 +58,7 @@ class FakeScholarClient:
         filters: dict[str, Any],
         max_results: int,
         page_size: int,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         return self.search_results[:max_results]
 
@@ -76,9 +77,7 @@ class FakeCandidateStore:
     def get_candidate(self, candidate_id: str) -> dict[str, Any] | None:
         return self.candidates.get(candidate_id)
 
-    def get_candidate_by_source(
-        self, source: str, source_paper_id: str
-    ) -> dict[str, Any] | None:
+    def get_candidate_by_source(self, source: str, source_paper_id: str) -> dict[str, Any] | None:
         for candidate in self.candidates.values():
             if (
                 candidate.get("source") == source
@@ -170,7 +169,13 @@ class FakeVectorIndex:
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         self.embeddings[paper_id] = embedding
 
-    def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]:
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         # Return all papers with dummy similarity scores
         results = [(paper_id, 0.9 - i * 0.1) for i, paper_id in enumerate(self.embeddings.keys())]
         return results[:limit]
@@ -247,6 +252,7 @@ class TestPhase4DiscoveryFlow:
 
         # Verify candidates were marked imported
         cand1 = candidate_store.get_candidate(candidate_ids[0])
+        assert cand1 is not None
         assert cand1["imported_paper_id"] == paper_id1
 
         # Step 3: Reject third candidate
@@ -254,6 +260,7 @@ class TestPhase4DiscoveryFlow:
         reject_uc.reject(candidate_ids[2])
 
         cand3 = candidate_store.get_candidate(candidate_ids[2])
+        assert cand3 is not None
         assert cand3["rejected_at"] is not None
 
         # Step 4: Index papers for search (simulating pipeline completion)

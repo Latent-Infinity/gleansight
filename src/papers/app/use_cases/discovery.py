@@ -21,6 +21,7 @@ class ScholarClient(Protocol):
         filters: dict[str, Any],
         max_results: int,
         page_size: int,
+        offset: int = 0,
     ) -> list[dict[str, Any]]: ...
 
 
@@ -64,6 +65,12 @@ class PaperExternalIdStore(Protocol):
     def get_external_ids(self, paper_id: str) -> dict[str, str]: ...
 
 
+class CandidateImporter(Protocol):
+    """Atomic boundary for importing a candidate into the paper corpus."""
+
+    def import_candidate(self, candidate_id: str) -> str: ...
+
+
 @dataclass(frozen=True)
 class DiscoverCandidatesUseCase:
     """Discover papers from external sources and store as candidates."""
@@ -76,6 +83,8 @@ class DiscoverCandidatesUseCase:
         query: str,
         filters: dict[str, Any],
         max_results: int,
+        page_size: int | None = None,
+        offset: int = 0,
     ) -> list[str]:
         """Search for papers and store as candidates.
 
@@ -88,11 +97,15 @@ class DiscoverCandidatesUseCase:
             List of created candidate IDs
         """
         # Search via scholar client
+        effective_page_size = (
+            min(100, max_results) if page_size is None else max(1, min(100, page_size))
+        )
         results = self.scholar_client.search(
             query=query,
             filters=filters,
             max_results=max_results,
-            page_size=min(100, max_results),
+            page_size=effective_page_size,
+            offset=max(0, offset),
         )
 
         # Store each result as a candidate
@@ -130,8 +143,8 @@ class DiscoverCandidatesUseCase:
             }
 
             # Store candidate
-            self.candidate_store.create_candidate(fields)
-            candidate_ids.append(candidate_id)
+            created_candidate_id = self.candidate_store.create_candidate(fields)
+            candidate_ids.append(created_candidate_id)
 
         return candidate_ids
 
@@ -144,6 +157,7 @@ class ImportCandidateUseCase:
     paper_store: PaperStore
     job_queue: JobQueue
     external_id_store: PaperExternalIdStore | None = None
+    atomic_importer: CandidateImporter | None = None
 
     def import_candidate(self, candidate_id: str) -> str:
         """Import candidate as a paper and enqueue download job.
@@ -170,6 +184,9 @@ class ImportCandidateUseCase:
         # Check if already imported (idempotency)
         if candidate.get("imported_paper_id"):
             return candidate["imported_paper_id"]
+
+        if self.atomic_importer is not None:
+            return self.atomic_importer.import_candidate(candidate_id)
 
         # Create paper
         paper_id = str(uuid.uuid4())
