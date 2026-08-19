@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from papers.app.use_cases.admin import RecoverStuckJobsUseCase, RebuildVectorIndexUseCase
+from papers.app.use_cases.admin import RebuildVectorIndexUseCase, RecoverStuckJobsUseCase
 from papers.app.use_cases.analysis import AnalyzeProjectUseCase, ReanalyzeWithPromptVersionUseCase
 from papers.app.use_cases.discovery import (
     DiscoverCandidatesUseCase,
@@ -19,6 +19,7 @@ from papers.app.use_cases.search import (
     FilterByExtractionsUseCase,
     SearchPapersUseCase,
 )
+from papers.app.use_cases.synthesis import SynthesizeFromCorpusUseCase
 from papers.app.use_cases.taxonomy import (
     AttachPaperToProjectUseCase,
     AttachTagToPaperUseCase,
@@ -47,4 +48,5 @@ __all__ = [
     "AttachPaperToProjectUseCase",
     "RecoverStuckJobsUseCase",
     "RebuildVectorIndexUseCase",
+    "SynthesizeFromCorpusUseCase",
 ]
