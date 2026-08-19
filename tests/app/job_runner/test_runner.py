@@ -29,7 +29,12 @@ class _Converter:
         return type(
             "Result",
             (),
-            {"ok": True, "markdown": "content", "error_code": None, "error_message": None},
+            {
+                "ok": True,
+                "markdown": "This is converted markdown content. " * 6,
+                "error_code": None,
+                "error_message": None,
+            },
         )()
 
     def version(self) -> str:
@@ -80,14 +85,13 @@ def test_unknown_job_type_is_failed(tmp_path: Path) -> None:
 
 
 def test_cancelled_job_returns_false(tmp_path: Path) -> None:
-    """Test that cancelled jobs return False and are not processed."""
+    """Cancelled jobs are not claimable, so run_next returns False."""
     db = PiccoloDatabase(tmp_path / "db.sqlite")
     db.initialize_schema()
     queue = PiccoloJobQueue()
     job_id = queue.enqueue("download", "paper", None, {"source_path": "/tmp/test.pdf"})
     queue.cancel(job_id)
     runner = JobRunner(job_queue=queue, context=_context(tmp_path, db))
-    # Run next should claim the job but then see it's cancelled and return False
     assert runner.run_next(datetime.now(UTC)) is False
 
 

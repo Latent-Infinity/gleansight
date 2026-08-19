@@ -42,7 +42,7 @@ class _Embedder:
 
 class _LLM:
     def complete(self, *, prompt: str, profile: dict, model: str, timeout_s: int | None = None):
-        return LLMResponse(text="analysis", tokens_in=4, tokens_out=7, cost_usd=0.12)
+        return LLMResponse(text='{"result": "ok"}', tokens_in=4, tokens_out=7, cost_usd=0.12)
 
 
 class _FailingConverter:
@@ -110,7 +110,7 @@ def test_metrics_emitted_for_retryable_failure(tmp_path: Path) -> None:
 
     blob_store = FileSystemBlobStore(tmp_path / "blobs")
     pdf_path = tmp_path / "source.pdf"
-    pdf_path.write_bytes(b"fake pdf")
+    pdf_path.write_bytes(b"%PDF-1.4 fake pdf")
     pdf_fingerprint, _ = blob_store.put_pdf(pdf_path)
     paper_store.set_pdf_fingerprint("paper", pdf_fingerprint)
 
@@ -202,3 +202,85 @@ def test_metrics_emitted_for_llm_usage(tmp_path: Path) -> None:
     assert "llm_tokens_in" in metric_names
     assert "llm_tokens_out" in metric_names
     assert "llm_cost_usd" in metric_names
+
+
+class _SuccessConverter:
+    def pdf_to_markdown(self, pdf_path: Path):
+        return type(
+            "Result",
+            (),
+            {
+                "ok": True,
+                "markdown": "This is converted markdown content. " * 6,
+                "error_code": None,
+                "error_message": None,
+            },
+        )()
+
+    def version(self) -> str:
+        return "1.0"
+
+
+def test_metrics_emitted_for_successful_job(tmp_path: Path) -> None:
+    """A successful job emits job_succeeded_total and job_duration_ms."""
+    db = PiccoloDatabase(tmp_path / "db.sqlite")
+    db.initialize_schema()
+
+    paper_store = PiccoloPaperStore()
+    now = datetime.now(UTC).isoformat()
+    paper_store.create_paper(
+        {
+            "paper_id": "paper",
+            "title": "Title",
+            "pipeline_stage": PipelineStage.imported,
+            "pipeline_health": PipelineHealth.ok,
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
+
+    # Provide a valid local PDF so download succeeds
+    pdf_path = tmp_path / "source.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 fake pdf")
+
+    metrics = InMemoryMetrics()
+    ctx = HandlerContext(
+        paper_store=paper_store,
+        job_queue=PiccoloJobQueue(),
+        blob_store=FileSystemBlobStore(tmp_path / "blobs"),
+        converter=_SuccessConverter(),
+        embedder=_Embedder(),
+        vector_index=_VectorIndex(),
+        llm_client=_LLM(),
+        prompt_store=PiccoloPromptStore(),
+        profile_store=PiccoloProfileStore(),
+        analysis_store=PiccoloAnalysisRunStore(),
+        metrics=metrics,
+    )
+
+    queue = PiccoloJobQueue()
+    queue.enqueue("download", "paper", None, {"source_path": str(pdf_path)})
+    runner = JobRunner(job_queue=queue, context=ctx)
+    assert runner.run_next(datetime.now(UTC)) is True
+
+    # Verify success metrics were emitted
+    succeeded_increments = [
+        (name, tags) for name, _, tags in metrics.increments if name == "job_succeeded_total"
+    ]
+    assert succeeded_increments, "Expected job_succeeded_total increment"
+    assert succeeded_increments[0][1]["job_type"] == "download"
+
+    duration_observations = [
+        (name, tags) for name, _, tags in metrics.observations if name == "job_duration_ms"
+    ]
+    assert duration_observations, "Expected job_duration_ms observation"
+    assert duration_observations[0][1]["job_type"] == "download"
+
+    transition_increments = [
+        (name, tags) for name, _, tags in metrics.increments if name == "job_transitions_total"
+    ]
+    assert transition_increments, "Expected job_transitions_total increments"
+    assert any(
+        tags.get("status_from") == "queued" and tags.get("status_to") == "running"
+        for _, tags in transition_increments
+    )

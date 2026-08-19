@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from papers.app.job_runner.handlers import HANDLERS, HandlerContext, HandlerResult
@@ -18,8 +18,6 @@ class JobRunner:
         job = self.job_queue.claim_next(now)
         if job is None:
             return False
-        if self.job_queue.is_cancelled(job.job_id):
-            return False
         started_at = now
         _log_event(
             logging.INFO,
@@ -29,16 +27,39 @@ class JobRunner:
             attempts=job.attempts,
             max_attempts=job.max_attempts,
         )
+        self._record_transition_metric(job, status_from="queued", status_to="running")
+        if self.job_queue.is_cancelled(job.job_id):
+            _log_event(
+                logging.INFO,
+                job=job,
+                status_from="running",
+                status_to="canceled",
+            )
+            self._record_transition_metric(job, status_from="running", status_to="canceled")
+            return True
         handler = HANDLERS.get(job.type)
         if handler is None:
             self.job_queue.mark_failed(job.job_id, f"unknown job type: {job.type}")
+            duration_ms = _duration_ms(started_at, datetime.now(UTC))
+            self.context.metrics.increment(
+                "job_failures_total",
+                tags={"job_type": job.type, "error_code": "unknown_job_type"},
+            )
+            self.context.metrics.observe(
+                "job_duration_ms",
+                duration_ms,
+                tags={"job_type": job.type},
+            )
             _log_event(
                 logging.ERROR,
                 job=job,
                 status_from="running",
                 status_to="failed",
+                error_code="unknown_job_type",
                 error_message=f"unknown job type: {job.type}",
+                duration_ms=duration_ms,
             )
+            self._record_transition_metric(job, status_from="running", status_to="failed")
             return True
         try:
             result = handler(job, self.context)
@@ -64,6 +85,7 @@ class JobRunner:
                 status_from="running",
                 status_to="canceled",
             )
+            self._record_transition_metric(job, status_from="running", status_to="canceled")
             return
         duration_ms = _duration_ms(started_at, datetime.now(UTC))
         if result.status == "succeeded":
@@ -84,6 +106,9 @@ class JobRunner:
                 status_to="succeeded",
                 duration_ms=duration_ms,
             )
+            self._record_transition_metric(job, status_from="running", status_to="succeeded")
+            # Auto-chain: enqueue next pipeline step
+            self._enqueue_next_step(job)
         elif result.status == "retryable" and result.retry_after is not None:
             self.job_queue.mark_retryable(
                 job.job_id,
@@ -108,6 +133,7 @@ class JobRunner:
                 error_message=result.error,
                 duration_ms=duration_ms,
             )
+            self._record_transition_metric(job, status_from="running", status_to="queued")
         else:
             self.job_queue.mark_failed(job.job_id, result.error or "failed")
             self.context.metrics.increment(
@@ -128,6 +154,7 @@ class JobRunner:
                 error_message=result.error,
                 duration_ms=duration_ms,
             )
+            self._record_transition_metric(job, status_from="running", status_to="failed")
         if (
             result.status in {"retryable", "failed"}
             and job.paper_id is not None
@@ -140,6 +167,62 @@ class JobRunner:
                 result.error or "error",
                 job.job_id,
             )
+
+    def _record_transition_metric(self, job: Job, *, status_from: str, status_to: str) -> None:
+        self.context.metrics.increment(
+            "job_transitions_total",
+            tags={
+                "job_type": job.type,
+                "status_from": status_from,
+                "status_to": status_to,
+            },
+        )
+
+    def _enqueue_next_step(self, job: Job) -> None:
+        """Auto-chain: enqueue the next pipeline step after a successful job."""
+        next_type = _NEXT_STEP.get(job.type)
+        if next_type is None or job.paper_id is None:
+            return
+        next_job_id = self.job_queue.enqueue(
+            type=next_type,
+            paper_id=job.paper_id,
+            run_id=None,
+            payload={},
+        )
+        next_job = _SyntheticJob(
+            job_id=next_job_id,
+            type=next_type,
+            paper_id=job.paper_id,
+            run_id=None,
+        )
+        _log_event(
+            logging.INFO,
+            job=next_job,
+            status_from="new",
+            status_to="queued",
+        )
+        self._record_transition_metric(next_job, status_from="new", status_to="queued")
+
+
+# Pipeline auto-chain: download → convert → embed
+# Analyze is NOT auto-chained (requires prompt/profile configuration).
+_NEXT_STEP: dict[str, str] = {
+    "download": "convert",
+    "convert": "embed",
+}
+
+
+@dataclass(frozen=True)
+class _SyntheticJob:
+    job_id: str
+    type: str
+    paper_id: str | None
+    run_id: str | None
+    status: str = "queued"
+    payload: dict[str, object] = field(default_factory=dict)
+    attempts: int = 0
+    max_attempts: int = 0
+    run_after: datetime | None = None
 
 
 def _retry_delay_s(attempts: int) -> int:
