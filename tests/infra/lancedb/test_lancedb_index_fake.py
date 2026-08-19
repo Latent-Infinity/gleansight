@@ -21,12 +21,34 @@ class _FakeSearch:
         return self._rows[: self._limit]
 
 
+class _FakeMergeInsert:
+    def __init__(self, table: _FakeTable, key: str) -> None:
+        self._table = table
+        self._key = key
+
+    def when_matched_update_all(self) -> _FakeMergeInsert:
+        return self
+
+    def when_not_matched_insert_all(self) -> _FakeMergeInsert:
+        return self
+
+    def execute(self, rows: list[dict[str, object]]) -> None:
+        for incoming in rows:
+            self._table._rows = [
+                row for row in self._table._rows if row[self._key] != incoming[self._key]
+            ]
+            self._table._rows.append(incoming)
+
+
 class _FakeTable:
     def __init__(self) -> None:
         self._rows: list[dict[str, object]] = []
 
     def add(self, rows: list[dict[str, object]]) -> None:
         self._rows.extend(rows)
+
+    def merge_insert(self, key: str) -> _FakeMergeInsert:
+        return _FakeMergeInsert(self, key)
 
     def search(self, _embedding: list[float], *, vector_column_name: str) -> _FakeSearch:
         rows = [

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from papers.app import ports
@@ -53,22 +53,40 @@ class LanceDBVectorIndex(ports.VectorIndex):
         import numpy as np
 
         table = self._get_table(len(embedding))
-        table.add(
-            [
-                {
-                    "paper_id": paper_id,
-                    "embedding": np.array(embedding, dtype=float),
-                    "updated_at": datetime.now().isoformat(),
-                }
-            ]
+        rows = [
+            {
+                "paper_id": paper_id,
+                "embedding": np.array(embedding, dtype=float),
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        ]
+        (
+            table.merge_insert("paper_id")
+            .when_matched_update_all()
+            .when_not_matched_insert_all()
+            .execute(rows)
         )
 
-    def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]:
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
+        if allowed_ids == set():
+            return []
         try:
             table = self._get_table()
         except Exception:
             return []
-        results = table.search(embedding, vector_column_name="embedding").limit(limit).to_list()
+        search = table.search(embedding, vector_column_name="embedding")
+        if allowed_ids is not None:
+            quoted_ids = ", ".join(
+                f"'{paper_id.replace(chr(39), chr(39) * 2)}'" for paper_id in sorted(allowed_ids)
+            )
+            search = search.where(f"paper_id IN ({quoted_ids})")
+        results = search.limit(limit).to_list()
         output: list[tuple[str, float]] = []
         for row in results:
             score = float(row.get("_distance", row.get("score", 0.0)))
