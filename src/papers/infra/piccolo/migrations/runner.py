@@ -32,7 +32,17 @@ def _run_sync[T](coroutine: Coroutine[Any, Any, T]) -> T:
 MIGRATION_001 = "001_baseline"
 MIGRATION_002 = "002_job_integrity_check"
 MIGRATION_003 = "003_nsqd_tables"
-KNOWN_MIGRATIONS = frozenset({MIGRATION_001, MIGRATION_002, MIGRATION_003})
+MIGRATION_004 = "004_nsqd_snapshot_versions"
+KNOWN_MIGRATIONS = frozenset({MIGRATION_001, MIGRATION_002, MIGRATION_003, MIGRATION_004})
+
+NSQD_SNAPSHOT_VERSIONED_DDL = """
+CREATE TABLE new_nsqd_corpus_snapshots (
+    snapshot_id VARCHAR PRIMARY KEY NOT NULL,
+    schema_version INTEGER NOT NULL,
+    record_ids_json TEXT NOT NULL,
+    corpus_version INTEGER UNIQUE NOT NULL
+)
+"""
 
 EXPECTED_JOB_INDEXES = frozenset(
     {
@@ -75,6 +85,7 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _apply_001(database)
     _apply_002(database)
     _apply_003(database)
+    _apply_004(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -195,6 +206,70 @@ def _apply_003(database: PiccoloDatabase) -> None:
             )
 
     _run_sync(create_nsqd_tables())
+
+
+def _apply_004(database: PiccoloDatabase) -> None:
+    if MIGRATION_004 in _applied_versions(database):
+        _validate_snapshot_version_schema(database)
+        return
+
+    columns = {
+        str(row["name"]) for row in database.fetchall("PRAGMA table_info(nsqd_corpus_snapshots)")
+    }
+    if "corpus_version" in columns:
+        _validate_snapshot_version_schema(database)
+        _record(database, MIGRATION_004)
+        return
+
+    async def rebuild_snapshots() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            await database.engine.run_querystring(QueryString(NSQD_SNAPSHOT_VERSIONED_DDL))
+            await database.engine.run_querystring(
+                QueryString(
+                    """
+                    INSERT INTO new_nsqd_corpus_snapshots (
+                        snapshot_id, schema_version, record_ids_json, corpus_version
+                    )
+                    SELECT snapshot_id, schema_version, record_ids_json,
+                           ROW_NUMBER() OVER (ORDER BY rowid)
+                    FROM nsqd_corpus_snapshots
+                    """
+                )
+            )
+            await database.engine.run_querystring(QueryString("DROP TABLE nsqd_corpus_snapshots"))
+            await database.engine.run_querystring(
+                QueryString("ALTER TABLE new_nsqd_corpus_snapshots RENAME TO nsqd_corpus_snapshots")
+            )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_004,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(rebuild_snapshots())
+    _validate_snapshot_version_schema(database)
+
+
+def _validate_snapshot_version_schema(database: PiccoloDatabase) -> None:
+    rows = database.fetchall("PRAGMA table_info(nsqd_corpus_snapshots)")
+    columns = {str(row["name"]): row for row in rows}
+    expected = {"snapshot_id", "schema_version", "record_ids_json", "corpus_version"}
+    if set(columns) != expected or int(columns["corpus_version"]["notnull"]) != 1:
+        raise ConfigurationError("existing NSQD snapshot version schema mismatch")
+
+    unique_version = False
+    for index in database.fetchall("PRAGMA index_list(nsqd_corpus_snapshots)"):
+        if int(index["unique"]) != 1:
+            continue
+        name = str(index["name"])
+        indexed = database.fetchall(f"PRAGMA index_info({name})")
+        if [str(row["name"]) for row in indexed] == ["corpus_version"]:
+            unique_version = True
+            break
+    if not unique_version:
+        raise ConfigurationError("existing NSQD snapshot version schema mismatch")
 
 
 def _new_jobs_ddl(database: PiccoloDatabase) -> str:

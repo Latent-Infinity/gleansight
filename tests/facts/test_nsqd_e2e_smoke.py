@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from nsqd.app.use_cases import empty_smoke_snapshot_id
+from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloFrontierCardStore, PiccoloNsqdJobQueue
 from nsqd.skeleton import run_skeleton
 from papers.infra.piccolo.database import PiccoloDatabase
@@ -103,3 +104,31 @@ def test_smoke_loop_leaves_preseeded_stale_job_queued(tmp_path: Path) -> None:
     assert stale_row["status"] == "queued"
     assert stale_row["attempts"] == 0
     assert set(result["job_types"]) == {"diverge", "ground", "score"}
+
+
+def test_smoke_loop_uses_authoritative_snapshot_version_on_reused_database(tmp_path: Path) -> None:
+    db_path = tmp_path / "reused.sqlite"
+    index_path = tmp_path / "corpus.lancedb"
+    harvest_path = tmp_path / "records.yaml"
+    harvest_path.write_text(
+        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        encoding="utf-8",
+    )
+    harvested = run_harvest(
+        file_path=harvest_path,
+        db_path=db_path,
+        index_path=index_path,
+        as_of=AS_OF,
+    )
+    assert harvested["corpus_version"] == 1
+
+    result = run_skeleton(
+        fixture_path=FIXTURES / "gamma-flow.yaml",
+        axiom=AXIOM,
+        db_path=db_path,
+        index_path=index_path,
+        as_of=AS_OF,
+    )
+
+    assert result["card"]["corpus_version"] == 2
+    assert result["grounding"]["corpus_version"] == 2

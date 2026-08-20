@@ -29,6 +29,7 @@ def test_skeleton_help_lists_command() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "skeleton" in result.output
+    assert "harvest" in result.output
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:

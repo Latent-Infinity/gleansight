@@ -5,11 +5,13 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
+from piccolo.engine.sqlite import TransactionType
 from piccolo.querystring import QueryString
 from piccolo.utils.sync import run_sync
 
-from nsqd.domain.snapshot import is_utc_datetime
-from nsqd.ports import NSQD_JOB_TYPES, NsqdJob, NsqdJobType
+from nsqd.domain.harvest import HarvestRejected, immutable_record_conflict
+from nsqd.domain.snapshot import is_utc_datetime, snapshot_id
+from nsqd.ports import NSQD_JOB_TYPES, HarvestCommit, NsqdJob, NsqdJobType
 from papers.infra.piccolo.database import PiccoloDatabase
 
 
@@ -42,12 +44,16 @@ class PiccoloCorpusRecordStore:
         payload = _dumps(record)
         self._db.execute(
             """
-            INSERT INTO nsqd_corpus_records (record_id, payload_json)
+            INSERT OR IGNORE INTO nsqd_corpus_records (record_id, payload_json)
             VALUES (?, ?)
-            ON CONFLICT(record_id) DO UPDATE SET payload_json = excluded.payload_json
             """,
             [record_id, payload],
         )
+        existing = self.get(record_id)
+        if existing is None:
+            raise RuntimeError("record commit did not persist")
+        if existing != record:
+            raise ValueError("record_id already committed with different content")
 
     def get(self, record_id: str) -> dict[str, Any] | None:
         row = self._db.fetchone(
@@ -67,35 +73,39 @@ class PiccoloCorpusSnapshotStore:
     def __init__(self, database: PiccoloDatabase) -> None:
         self._db = database
 
-    def commit(self, snapshot_id: str, record_ids: list[str], schema_version: int) -> None:
+    def commit(self, snapshot_id: str, record_ids: list[str], schema_version: int) -> int:
         payload = json.dumps(list(record_ids))
+        self._db.execute(
+            """
+            INSERT OR IGNORE INTO nsqd_corpus_snapshots (
+                snapshot_id, schema_version, record_ids_json, corpus_version
+            )
+            SELECT ?, ?, ?, COALESCE(MAX(corpus_version), 0) + 1
+            FROM nsqd_corpus_snapshots
+            """,
+            [snapshot_id, schema_version, payload],
+        )
         existing = self._db.fetchone(
             """
-            SELECT schema_version, record_ids_json
+            SELECT corpus_version, schema_version, record_ids_json
             FROM nsqd_corpus_snapshots
             WHERE snapshot_id = ?
             """,
             [snapshot_id],
         )
-        if existing is not None:
-            if (
-                int(existing["schema_version"]) == schema_version
-                and str(existing["record_ids_json"]) == payload
-            ):
-                return
+        if existing is None:
+            raise RuntimeError("snapshot commit did not persist")
+        if (
+            int(existing["schema_version"]) != schema_version
+            or str(existing["record_ids_json"]) != payload
+        ):
             raise ValueError("snapshot_id already committed with different content")
-        self._db.execute(
-            """
-            INSERT INTO nsqd_corpus_snapshots (snapshot_id, schema_version, record_ids_json)
-            VALUES (?, ?, ?)
-            """,
-            [snapshot_id, schema_version, payload],
-        )
+        return int(existing["corpus_version"])
 
     def get(self, snapshot_id: str) -> dict[str, Any] | None:
         row = self._db.fetchone(
             """
-            SELECT snapshot_id, schema_version, record_ids_json
+            SELECT corpus_version, snapshot_id, schema_version, record_ids_json
             FROM nsqd_corpus_snapshots
             WHERE snapshot_id = ?
             """,
@@ -107,6 +117,7 @@ class PiccoloCorpusSnapshotStore:
             "snapshot_id": str(row["snapshot_id"]),
             "record_ids": json.loads(str(row["record_ids_json"])),
             "schema_version": int(row["schema_version"]),
+            "corpus_version": int(row["corpus_version"]),
         }
 
     def record_ids(self, snapshot_id: str) -> list[str]:
@@ -116,6 +127,113 @@ class PiccoloCorpusSnapshotStore:
         ids = row["record_ids"]
         assert isinstance(ids, list)
         return [str(item) for item in ids]
+
+
+class PiccoloHarvestStore:
+    def __init__(self, database: PiccoloDatabase) -> None:
+        self._db = database
+
+    def commit(self, records: list[dict[str, Any]], schema_version: int) -> HarvestCommit:
+        async def commit_in_transaction() -> HarvestCommit:
+            async with self._db.engine.transaction(transaction_type=TransactionType.immediate):
+                committed_ids: list[str] = []
+                for record in records:
+                    record_id = str(record["record_id"])
+                    rows = await self._db.engine.run_querystring(
+                        QueryString(
+                            "SELECT payload_json FROM nsqd_corpus_records WHERE record_id = {}",
+                            record_id,
+                        )
+                    )
+                    if rows:
+                        existing = _loads(str(rows[0]["payload_json"]))
+                        conflict = immutable_record_conflict(existing, record)
+                        if conflict is not None:
+                            raise HarvestRejected(conflict)
+                    else:
+                        await self._db.engine.run_querystring(
+                            QueryString(
+                                """
+                                INSERT INTO nsqd_corpus_records (record_id, payload_json)
+                                VALUES ({}, {})
+                                """,
+                                record_id,
+                                _dumps(record),
+                            )
+                        )
+                    if record_id not in committed_ids:
+                        committed_ids.append(record_id)
+
+                all_rows = await self._db.engine.run_querystring(
+                    QueryString(
+                        "SELECT record_id, payload_json FROM nsqd_corpus_records ORDER BY record_id"
+                    )
+                )
+                snapshot_rows = [
+                    {
+                        "record_id": str(row["record_id"]),
+                        "content_hash": str(_loads(str(row["payload_json"]))["content_hash"]),
+                    }
+                    for row in all_rows
+                ]
+                committed_snapshot_id = snapshot_id(
+                    records=snapshot_rows, schema_version=schema_version
+                )
+                snapshot_record_ids = [row["record_id"] for row in snapshot_rows]
+                record_ids_json = json.dumps(snapshot_record_ids)
+                existing_snapshots = await self._db.engine.run_querystring(
+                    QueryString(
+                        """
+                        SELECT corpus_version, schema_version, record_ids_json
+                        FROM nsqd_corpus_snapshots WHERE snapshot_id = {}
+                        """,
+                        committed_snapshot_id,
+                    )
+                )
+                if existing_snapshots:
+                    existing_snapshot = existing_snapshots[0]
+                    if (
+                        int(existing_snapshot["schema_version"]) != schema_version
+                        or str(existing_snapshot["record_ids_json"]) != record_ids_json
+                    ):
+                        raise ValueError("snapshot_id already committed with different content")
+                    corpus_version = int(existing_snapshot["corpus_version"])
+                else:
+                    await self._db.engine.run_querystring(
+                        QueryString(
+                            """
+                            INSERT INTO nsqd_corpus_snapshots (
+                                snapshot_id, schema_version, record_ids_json, corpus_version
+                            )
+                            SELECT {}, {}, {}, COALESCE(MAX(corpus_version), 0) + 1
+                            FROM nsqd_corpus_snapshots
+                            """,
+                            committed_snapshot_id,
+                            schema_version,
+                            record_ids_json,
+                        )
+                    )
+                    version_rows = await self._db.engine.run_querystring(
+                        QueryString(
+                            """
+                            SELECT corpus_version FROM nsqd_corpus_snapshots
+                            WHERE snapshot_id = {}
+                            """,
+                            committed_snapshot_id,
+                        )
+                    )
+                    if not version_rows:
+                        raise RuntimeError("snapshot commit did not persist")
+                    corpus_version = int(version_rows[0]["corpus_version"])
+
+                return HarvestCommit(
+                    record_ids=tuple(committed_ids),
+                    snapshot_id=committed_snapshot_id,
+                    corpus_version=corpus_version,
+                )
+            raise RuntimeError("harvest transaction did not complete")
+
+        return run_sync(commit_in_transaction())
 
 
 class PiccoloNsqdCandidateStore:

@@ -7,6 +7,7 @@ from nsqd.app.use_cases import (
     ArchiveInsertUseCase,
     DivergeUseCase,
     GroundUseCase,
+    HarvestUseCase,
     ScoreUseCase,
 )
 from nsqd.ports import (
@@ -15,6 +16,7 @@ from nsqd.ports import (
     CorpusRecordStore,
     CorpusSnapshotStore,
     FrontierCardStore,
+    HarvestStore,
     MorphospaceStore,
     NsqdCandidateStore,
     NsqdJob,
@@ -29,6 +31,7 @@ class NsqdHandlerContext:
     cards: FrontierCardStore
     snapshots: CorpusSnapshotStore
     records: CorpusRecordStore
+    harvest: HarvestStore
     index: CorpusIndex
     morph: MorphospaceStore
     scholar_client: Any = None
@@ -38,6 +41,15 @@ class NsqdHandlerContext:
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
     if job.type != expected_type:
         raise ValueError(f"expected job.type={expected_type}, got {job.type}")
+
+
+def handle_harvest(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
+    _require_job_type(job, "harvest")
+    result = HarvestUseCase(
+        harvest=ctx.harvest,
+        clock=ctx.clock,
+    ).run(job.payload["payload"])
+    return {"status": "succeeded", **result}
 
 
 def handle_diverge(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:

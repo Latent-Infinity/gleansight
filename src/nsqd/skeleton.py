@@ -28,7 +28,7 @@ def run_skeleton(
     if not isinstance(payload, dict):
         raise ValueError("candidate fixture must be a mapping")
     snapshot = empty_smoke_snapshot_id()
-    container.ctx.snapshots.commit(snapshot, [], schema_version=1)
+    corpus_version = container.ctx.snapshots.commit(snapshot, [], schema_version=1)
     generator_run_id = str(uuid.uuid4())
     evaluator_run_id = str(uuid.uuid4())
     now = container.clock.now()
@@ -50,7 +50,7 @@ def run_skeleton(
         {
             "candidate_artifact_hash": artifact_hash,
             "snapshot_id": snapshot,
-            "corpus_version": 1,
+            "corpus_version": corpus_version,
         },
         now,
     )
@@ -60,7 +60,7 @@ def run_skeleton(
         {
             "candidate_artifact_hash": artifact_hash,
             "snapshot_id": snapshot,
-            "corpus_version": 1,
+            "corpus_version": corpus_version,
             "evaluator_run_id": evaluator_run_id,
             "snapshot_state": "smoke_only",
         },

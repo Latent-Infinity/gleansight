@@ -76,6 +76,7 @@ def test_corpus_and_snapshot_missing_rows_and_list_ids() -> None:
         "snapshot_id": "snap",
         "record_ids": ["r1"],
         "schema_version": 1,
+        "corpus_version": 1,
     }
     morph = NullMorphospaceStore()
     assert morph.get_cell("missing") is None
@@ -112,6 +113,21 @@ def test_job_retry_fail_and_attempt_cap() -> None:
     assert claimed.job_id == fail_id
     queue.mark_failed(fail_id, "boom")
     assert queue.claim_next(later) is None
+
+
+def test_null_queue_claims_specific_job_without_touching_older_work() -> None:
+    queue: NsqdJobQueue = NullNsqdJobQueue()
+    now = datetime(2024, 1, 1, tzinfo=UTC)
+    older = queue.enqueue("harvest", {"older": True})
+    target = queue.enqueue("diverge", {"target": True})
+
+    claimed = queue.claim_job(target, now)
+
+    assert claimed is not None
+    assert claimed.job_id == target
+    next_job = queue.claim_next(now)
+    assert next_job is not None
+    assert next_job.job_id == older
 
 
 def test_index_zero_vector_distance_is_one() -> None:
@@ -163,6 +179,7 @@ def test_null_adapters_deep_copy_nested_mutables_on_put_and_get() -> None:
         "snapshot_id": "snap",
         "record_ids": ["r1"],
         "schema_version": 1,
+        "corpus_version": 1,
     }
     got_snapshot = snapshots.get("snap")
     assert got_snapshot is not None

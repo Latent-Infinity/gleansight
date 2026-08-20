@@ -27,6 +27,11 @@ def _require_utc_as_of(as_of: datetime) -> None:
 
 
 def _is_current_harvest(*, harvested: object, as_of: datetime, window: timedelta) -> bool:
+    if isinstance(harvested, str):
+        try:
+            harvested = datetime.fromisoformat(harvested.replace("Z", "+00:00"))
+        except ValueError:
+            return False
     if not isinstance(harvested, datetime):
         return False
     return is_utc_datetime(harvested) and harvested >= as_of - window

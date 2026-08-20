@@ -6,6 +6,8 @@ from typing import Annotated
 import typer
 import yaml
 
+from nsqd.domain.harvest import HarvestRejected
+from nsqd.harvest import run_harvest
 from nsqd.skeleton import run_skeleton
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -40,6 +42,24 @@ def skeleton(
     viability = result["viability"]
     archive_state = "archive_empty" if result["archive_empty"] else "archive_has_elite"
     typer.echo(f"{decision} viability={viability} {archive_state} snapshot={result['snapshot_id']}")
+
+
+@app.command()
+def harvest(
+    file: Annotated[Path, typer.Option("--file", exists=True, readable=True)],
+    db: Annotated[Path, typer.Option("--db")] = Path("data/nsqd/nsqd.sqlite"),
+    index: Annotated[Path, typer.Option("--index")] = Path("data/nsqd/corpus.lancedb"),
+) -> None:
+    try:
+        result = run_harvest(file_path=file, db_path=db, index_path=index)
+    except HarvestRejected as exc:
+        typer.echo(f"rejected: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    count = len(result["record_ids"])
+    typer.echo(f"accepted {count} records")
 
 
 def main() -> None:

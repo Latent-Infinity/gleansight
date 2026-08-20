@@ -8,8 +8,15 @@ from nsqd.domain.card import card_decision, missing_card_fields
 from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
 from nsqd.domain.grounding import classify_local
+from nsqd.domain.harvest import OPTIONAL_RECORD_FIELDS, harvest_records_from_payload
 from nsqd.domain.novelty import SnapshotState, mean_cosine_distance, novelty_term
-from nsqd.domain.snapshot import canonical_json, normalize_source, sha256_hex, snapshot_id
+from nsqd.domain.snapshot import (
+    canonical_json,
+    normalize_source,
+    record_content_hash,
+    sha256_hex,
+    snapshot_id,
+)
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 from nsqd.ports import (
     Clock,
@@ -17,6 +24,7 @@ from nsqd.ports import (
     CorpusRecordStore,
     CorpusSnapshotStore,
     FrontierCardStore,
+    HarvestStore,
     NsqdCandidateStore,
 )
 
@@ -43,6 +51,48 @@ def _require_snapshot_state(snapshot_state: str) -> SnapshotState:
     raise ValueError(
         "invalid snapshot_state: expected one of smoke_only, calibration, production_valid"
     )
+
+
+@dataclass(frozen=True)
+class HarvestUseCase:
+    harvest: HarvestStore
+    clock: Clock
+
+    def run(self, payload: Any) -> dict[str, Any]:
+        items = harvest_records_from_payload(payload)
+        harvested_at = self.clock.now().isoformat()
+        records: list[dict[str, Any]] = []
+        for item in items:
+            rec_type = item["type"]
+            paraphrase = item["paraphrase"]
+            source = item["source"]
+            assert isinstance(rec_type, str)
+            assert isinstance(paraphrase, str)
+            assert isinstance(source, str)
+            digest = record_content_hash(
+                type=rec_type,
+                paraphrase=paraphrase,
+                source=source,
+            )
+            record = {
+                "record_id": digest,
+                "content_hash": digest,
+                "type": rec_type,
+                "paraphrase": paraphrase,
+                "source": source,
+                "harvested_at": harvested_at,
+            }
+            record.update(
+                {key: deepcopy(item[key]) for key in OPTIONAL_RECORD_FIELDS if key in item}
+            )
+            records.append(record)
+
+        committed = self.harvest.commit(records, schema_version=1)
+        return {
+            "record_ids": list(committed.record_ids),
+            "snapshot_id": committed.snapshot_id,
+            "corpus_version": committed.corpus_version,
+        }
 
 
 @dataclass(frozen=True)

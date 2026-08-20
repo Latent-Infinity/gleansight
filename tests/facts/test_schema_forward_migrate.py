@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from nsqd.infra.piccolo.schema import NSQD_TABLE_DDL
 from papers.domain.errors import ConfigurationError
 from papers.infra.piccolo.database import _TABLES, PiccoloDatabase
 
@@ -146,11 +147,54 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
     db = PiccoloDatabase(tmp_path / "fresh.sqlite")
     db.initialize_schema()
     versions = {row["version"] for row in db.fetchall("SELECT version FROM schema_migrations")}
-    assert versions == {"001_baseline", "002_job_integrity_check", "003_nsqd_tables"}
+    assert versions == {
+        "001_baseline",
+        "002_job_integrity_check",
+        "003_nsqd_tables",
+        "004_nsqd_snapshot_versions",
+    }
     assert "CHECK" in _jobs_sql(db).upper()
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 3
+    assert len(again) == 4
+
+
+def test_snapshot_version_migration_preserves_existing_snapshots(tmp_path: Path) -> None:
+    db = _build_previous_baseline(tmp_path / "snapshot-version.sqlite")
+    db.execute(
+        """
+        CREATE TABLE schema_migrations (
+            version VARCHAR(255) PRIMARY KEY NOT NULL,
+            applied_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    )
+    for version in ("001_baseline", "002_job_integrity_check", "003_nsqd_tables"):
+        db.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+            [version, _NOW],
+        )
+    for statement in NSQD_TABLE_DDL:
+        db.execute(statement)
+    db.execute(
+        """
+        INSERT INTO nsqd_corpus_snapshots (snapshot_id, schema_version, record_ids_json)
+        VALUES (?, ?, ?), (?, ?, ?)
+        """,
+        ["snap-a", 1, "[]", "snap-b", 1, "[]"],
+    )
+
+    db.initialize_schema()
+
+    rows = db.fetchall(
+        "SELECT snapshot_id, corpus_version FROM nsqd_corpus_snapshots ORDER BY corpus_version"
+    )
+    assert rows == [
+        {"snapshot_id": "snap-a", "corpus_version": 1},
+        {"snapshot_id": "snap-b", "corpus_version": 2},
+    ]
+    versions = {row["version"] for row in db.fetchall("SELECT version FROM schema_migrations")}
+    assert "004_nsqd_snapshot_versions" in versions
 
 
 def test_nsqd_migration_is_atomic_when_ddl_fails(tmp_path: Path) -> None:

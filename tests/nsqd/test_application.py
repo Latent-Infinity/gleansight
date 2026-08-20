@@ -23,6 +23,7 @@ from nsqd.null_adapters import (
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
     NullFrontierCardStore,
+    NullHarvestStore,
     NullMorphospaceStore,
     NullNsqdCandidateStore,
 )
@@ -47,12 +48,15 @@ def _load_card(name: str) -> dict[str, Any]:
 
 
 def _ctx() -> NsqdHandlerContext:
+    records = NullCorpusRecordStore()
+    snapshots = NullCorpusSnapshotStore()
     return NsqdHandlerContext(
         clock=FixedClock(AS_OF),
         candidates=NullNsqdCandidateStore(),
         cards=NullFrontierCardStore(),
-        snapshots=NullCorpusSnapshotStore(),
-        records=NullCorpusRecordStore(),
+        snapshots=snapshots,
+        records=records,
+        harvest=NullHarvestStore(records, snapshots),
         index=NullCorpusIndex(),
         morph=NullMorphospaceStore(),
         scholar_client=_ForbiddenSearch(),

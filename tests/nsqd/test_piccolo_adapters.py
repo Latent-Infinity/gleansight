@@ -174,14 +174,17 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
     records = PiccoloCorpusRecordStore(db)
     records.put({"record_id": "r2", "paraphrase": "b"})
     records.put({"record_id": "r1", "paraphrase": "a"})
-    records.put({"record_id": "r1", "paraphrase": "a2"})
+    records.put({"record_id": "r1", "paraphrase": "a"})
+    with pytest.raises(ValueError, match="already committed"):
+        records.put({"record_id": "r1", "paraphrase": "a2"})
     assert records.list_ids() == ["r1", "r2"]
-    assert records.get("r1") == {"record_id": "r1", "paraphrase": "a2"}
+    assert records.get("r1") == {"record_id": "r1", "paraphrase": "a"}
     assert records.get("missing") is None
 
     snapshots = PiccoloCorpusSnapshotStore(db)
-    snapshots.commit("snap", ["r1", "r2"], schema_version=1)
-    snapshots.commit("snap", ["r1", "r2"], schema_version=1)
+    assert snapshots.commit("snap", ["r1", "r2"], schema_version=1) == 1
+    assert snapshots.commit("snap", ["r1", "r2"], schema_version=1) == 1
+    assert snapshots.commit("snap-2", ["r2"], schema_version=1) == 2
     with pytest.raises(
         ValueError,
         match="snapshot_id already committed with different content",
@@ -191,6 +194,7 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
     snap = snapshots.get("snap")
     assert snap is not None
     assert snap["schema_version"] == 1
+    assert snap["corpus_version"] == 1
     assert snapshots.get("missing") is None
     assert snapshots.record_ids("missing") == []
 

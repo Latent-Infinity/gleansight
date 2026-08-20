@@ -12,6 +12,13 @@ class CorpusHit:
     rank: int
 
 
+@dataclass(frozen=True)
+class HarvestCommit:
+    record_ids: tuple[str, ...]
+    snapshot_id: str
+    corpus_version: int
+
+
 NsqdJobType = Literal["harvest", "project", "diverge", "ground", "score", "rescore"]
 NSQD_JOB_TYPES: frozenset[str] = frozenset(
     {"harvest", "project", "diverge", "ground", "score", "rescore"}
@@ -45,11 +52,16 @@ class CorpusRecordStore(Protocol):
 
 @runtime_checkable
 class CorpusSnapshotStore(Protocol):
-    def commit(self, snapshot_id: str, record_ids: list[str], schema_version: int) -> None: ...
+    def commit(self, snapshot_id: str, record_ids: list[str], schema_version: int) -> int: ...
 
     def get(self, snapshot_id: str) -> dict[str, Any] | None: ...
 
     def record_ids(self, snapshot_id: str) -> list[str]: ...
+
+
+@runtime_checkable
+class HarvestStore(Protocol):
+    def commit(self, records: list[dict[str, Any]], schema_version: int) -> HarvestCommit: ...
 
 
 @runtime_checkable
@@ -94,6 +106,8 @@ class NsqdJobQueue(Protocol):
     ) -> str: ...
 
     def claim_next(self, now: datetime) -> NsqdJob | None: ...
+
+    def claim_job(self, job_id: str, now: datetime) -> NsqdJob | None: ...
 
     def mark_succeeded(self, job_id: str) -> None: ...
 

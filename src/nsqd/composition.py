@@ -10,6 +10,7 @@ from nsqd.infra.piccolo.stores import (
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
+    PiccoloHarvestStore,
     PiccoloMorphospaceStore,
     PiccoloNsqdCandidateStore,
     PiccoloNsqdJobQueue,
@@ -38,12 +39,15 @@ def build_container(
     database = PiccoloDatabase(db_path)
     database.initialize_schema()
     resolved_clock = clock if clock is not None else SystemClock()
+    records = PiccoloCorpusRecordStore(database)
+    snapshots = PiccoloCorpusSnapshotStore(database)
     ctx = NsqdHandlerContext(
         clock=resolved_clock,
         candidates=PiccoloNsqdCandidateStore(database),
         cards=PiccoloFrontierCardStore(database),
-        snapshots=PiccoloCorpusSnapshotStore(database),
-        records=PiccoloCorpusRecordStore(database),
+        snapshots=snapshots,
+        records=records,
+        harvest=PiccoloHarvestStore(database),
         index=LanceDBCorpusIndex(index_path),
         morph=PiccoloMorphospaceStore(database),
     )
