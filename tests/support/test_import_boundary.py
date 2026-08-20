@@ -15,6 +15,17 @@ def test_scanner_fails_on_isolated_domain_importing_lancedb(tmp_path: Path) -> N
     assert any("lancedb" in item for item in leaks)
 
 
+def test_scanner_rejects_papers_infra_import_from_nsqd_tree(tmp_path: Path) -> None:
+    package = tmp_path / "nsqd" / "app"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "leaky.py").write_text("from papers.infra.piccolo import stores\n", encoding="utf-8")
+
+    leaks = scan_tree(package)
+
+    assert any("papers.infra.piccolo" in item for item in leaks)
+
+
 def test_real_domain_and_use_cases_have_no_provider_imports() -> None:
     assert DEFAULT_TREES[0].is_dir()
     assert DEFAULT_TREES[1].is_dir()
