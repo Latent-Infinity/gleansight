@@ -26,20 +26,20 @@
 
 Do not treat smoke fixtures as `calibration`. Smoke E2E (EV-N00) uses an empty snapshot (`evidence=null`), asserts a rejected card, and leaves the production archive empty. N1 also waits on EW-V0.3.
 
-| Evidence ID | Facts | Available From | Lifecycle |
-|-------------|----------------|----------------|-----------|
-| EV-N00 | NSQD.E2E.SMOKE_LOOP.v1 | N1 | Pending: N1 |
-| EV-N01 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | N1 | Pending: N1 |
-| EV-N02 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | N1 | Pending: N1 |
-| EV-N03 | NSQD.HARVEST.ENUMERATION.v1 | N2 | Pending: N2 |
-| EV-N04 | NSQD.GATE.SMOKE_PAIR.v1 | N1 | Pending: N1 |
-| EV-N05 | NSQD.SEP.AUDIT_RECORD.v1 | N1 | Pending: N1 |
-| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | N1 | Pending: N1 |
-| EV-N07 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | N1 | Pending: N1 |
-| EV-N08 | NSQD.CARD.SCHEMA.v1 | N1 | Pending: N1 |
-| EV-N09 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | N2b | Pending: N2b |
-| EV-N10 | NSQD.GROUND.CASCADE.v1 | N1 | Pending: N1 |
-| EV-N11 | NSQD.NOVELTY.METRIC.v1 | N1 | Pending: N1 |
-| EV-N12 | NSQD.JOBS.OWNED.v1 | N1 | Pending: N1 |
-| EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Pending: N6 |
-| EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Pending: N7 |
+| Evidence ID | Facts | Path / Command | Available From | Lifecycle |
+|-------------|-------|----------------|----------------|-----------|
+| EV-N00 | NSQD.E2E.SMOKE_LOOP.v1 | `uv run pytest tests/facts/test_nsqd_e2e_smoke.py -q --no-cov` | N1 | Required |
+| EV-N01 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N02 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | `uv run pytest tests/nsqd/test_domain_policies.py tests/nsqd/test_application.py -q --no-cov` | N1 | Required |
+| EV-N03 | NSQD.HARVEST.ENUMERATION.v1 | `uv run pytest tests/facts/test_nsqd_harvest_reject_essay.py -q --no-cov` | N2 | Pending: N2 |
+| EV-N04 | NSQD.GATE.SMOKE_PAIR.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N05 | NSQD.SEP.AUDIT_RECORD.v1 | `uv run pytest tests/nsqd/test_application.py -q --no-cov` | N1 | Required |
+| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N07 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N08 | NSQD.CARD.SCHEMA.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N09 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | `uv run pytest tests/facts/test_nsqd_paper_project.py -q --no-cov` | N2b | Pending: N2b |
+| EV-N10 | NSQD.GROUND.CASCADE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py tests/nsqd/test_application.py -q --no-cov` | N1 | Required |
+| EV-N11 | NSQD.NOVELTY.METRIC.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
+| EV-N12 | NSQD.JOBS.OWNED.v1 | `uv run pytest tests/facts/test_nsqd_jobs.py -q --no-cov` | N1 | Required |
+| EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | `uv run pytest tests/facts/test_nsqd_sufficiency.py -q --no-cov` | N6 | Pending: N6 |
+| EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Pending: N7 |
