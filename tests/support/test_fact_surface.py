@@ -133,6 +133,8 @@ def test_real_ledgers_parse_and_satisfy_current_rules() -> None:
     evidence = load_evidence_rows()
     assert facts, "fact-ledger.md main table must parse"
     assert evidence, "evidence-index.md main table must parse"
-    assert all(row.lifecycle == "Proposed" for row in facts)
-    assert all(row.lifecycle.startswith("Pending:") for row in evidence)
+    assert {row.lifecycle for row in facts} <= {"Proposed", "Active"}
+    assert all(
+        row.lifecycle == "Required" or row.lifecycle.startswith("Pending:") for row in evidence
+    )
     assert check_fact_surface() == []
