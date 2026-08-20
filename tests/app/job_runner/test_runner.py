@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import patch
 
 from papers.app.job_runner import HandlerContext, JobRunner
 from papers.app.ports import LLMResponse
@@ -72,14 +73,15 @@ def _context(tmp_path: Path, db: PiccoloDatabase) -> HandlerContext:
     )
 
 
-def test_unknown_job_type_is_failed(tmp_path: Path) -> None:
+def test_job_without_registered_handler_is_failed(tmp_path: Path) -> None:
     db = PiccoloDatabase(tmp_path / "db.sqlite")
     db.initialize_schema()
     queue = PiccoloJobQueue()
-    queue.enqueue("unknown", "paper", None, {})
+    job_id = queue.enqueue("download", "paper", None, {})
     runner = JobRunner(job_queue=queue, context=_context(tmp_path, db))
-    assert runner.run_next(datetime.now(UTC)) is True
-    row = db.fetchone("SELECT status FROM jobs WHERE type = 'unknown'")
+    with patch("papers.app.job_runner.runner.HANDLERS", {}):
+        assert runner.run_next(datetime.now(UTC)) is True
+    row = db.fetchone("SELECT status FROM jobs WHERE job_id = ?", [job_id])
     assert row is not None
     assert row["status"] == "failed"
 

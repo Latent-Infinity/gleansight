@@ -4,6 +4,7 @@ import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
+from unittest.mock import patch
 
 import pytest
 
@@ -211,18 +212,19 @@ def test_job_logging_warns_on_retryable_failure(
     assert getattr(retry_record, "error_code") == str(ErrorCode.CONVERTER_TIMEOUT)
 
 
-def test_job_logging_errors_on_unknown_job_type(
+def test_job_logging_errors_when_handler_is_unregistered(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     db = PiccoloDatabase(tmp_path / "db.sqlite")
     db.initialize_schema()
     queue = PiccoloJobQueue()
-    queue.enqueue("unknown", "paper", None, {})
+    queue.enqueue("download", "paper", None, {})
     runner = JobRunner(job_queue=queue, context=_context(tmp_path, db))
 
     caplog.set_level(logging.INFO, logger="papers.job_runner")
-    runner.run_next(datetime.now(UTC))
+    with patch("papers.app.job_runner.runner.HANDLERS", {}):
+        runner.run_next(datetime.now(UTC))
 
     error_record = next(
         (

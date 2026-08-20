@@ -227,7 +227,7 @@ def test_average_numeric_grouped_with_latest_only(tmp_path: Path) -> None:
         prompt_version_id="pv1",
         extractions=[_Extraction("rigor_rating", value_text="transformer", value_numeric=4.0)],
     )
-    job_id1 = queue.enqueue("analyze", None, "run1", {})
+    job_id1 = queue.enqueue("analyze", "p1", "run1", {})
     queue.mark_succeeded(job_id1)
 
     # Paper 1: newer run with rigor_rating=5.0, algorithm=transformer (should override)
@@ -239,7 +239,7 @@ def test_average_numeric_grouped_with_latest_only(tmp_path: Path) -> None:
         prompt_version_id="pv1",
         extractions=[_Extraction("rigor_rating", value_text="transformer", value_numeric=5.0)],
     )
-    job_id2 = queue.enqueue("analyze", None, "run2", {})
+    job_id2 = queue.enqueue("analyze", "p1", "run2", {})
     queue.mark_succeeded(job_id2)
 
     # Paper 2: single run with rigor_rating=3.0, algorithm=cnn
@@ -251,7 +251,7 @@ def test_average_numeric_grouped_with_latest_only(tmp_path: Path) -> None:
         prompt_version_id="pv1",
         extractions=[_Extraction("rigor_rating", value_text="cnn", value_numeric=3.0)],
     )
-    job_id3 = queue.enqueue("analyze", None, "run3", {})
+    job_id3 = queue.enqueue("analyze", "p2", "run3", {})
     queue.mark_succeeded(job_id3)
 
     # Average grouped by value_text with latest_only=True
@@ -287,7 +287,7 @@ def test_query_with_latest_only(tmp_path: Path) -> None:
         extractions=[_Extraction("algorithm_family", value_text="old_value")],
     )
     # Mark job as succeeded
-    job_id = queue.enqueue("analyze", None, "run1", {})
+    job_id = queue.enqueue("analyze", "p1", "run1", {})
     queue.mark_succeeded(job_id)
 
     # Create second run (newer, successful) - this should be the latest
@@ -300,7 +300,7 @@ def test_query_with_latest_only(tmp_path: Path) -> None:
         extractions=[_Extraction("algorithm_family", value_text="new_value")],
     )
     # Mark job as succeeded
-    job_id2 = queue.enqueue("analyze", None, "run2", {})
+    job_id2 = queue.enqueue("analyze", "p1", "run2", {})
     queue.mark_succeeded(job_id2)
 
     # Query with latest_only=True should only return papers with new_value
@@ -350,7 +350,7 @@ def test_count_by_value_with_latest_only(tmp_path: Path) -> None:
         prompt_version_id="pv1",
         extractions=[_Extraction("algorithm_family", value_text="transformer")],
     )
-    job_id = queue.enqueue("analyze", None, "run1", {})
+    job_id = queue.enqueue("analyze", "p1", "run1", {})
     queue.mark_succeeded(job_id)
 
     # Create second run (newer) - paper changes value
@@ -361,7 +361,7 @@ def test_count_by_value_with_latest_only(tmp_path: Path) -> None:
         prompt_version_id="pv1",
         extractions=[_Extraction("algorithm_family", value_text="cnn")],
     )
-    job_id2 = queue.enqueue("analyze", None, "run2", {})
+    job_id2 = queue.enqueue("analyze", "p1", "run2", {})
     queue.mark_succeeded(job_id2)
 
     # Count with latest_only=True should show cnn=1, not transformer
