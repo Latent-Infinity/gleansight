@@ -416,7 +416,7 @@ At review time `ruff check` (79) and `ty check` (526) fail. Pytest passes.
 
 ## Required N1 test matrix
 
-Named in `docs/development-plan-ns-qd.md` (not yet implemented — N1 has not started).
+Named in `docs/development-plan-ns-qd.md`. Domain and application increments are in tree on null adapters; Piccolo adapters, CLI, and EV-N00 E2E are not.
 
 ### Pure unit tests
 
@@ -438,14 +438,14 @@ Named in `docs/development-plan-ns-qd.md` (not yet implemented — N1 has not st
 
 ### Adapter/integration tests
 
-- [x] Piccolo migration creates NS-QD tables only through the EW-V0B runner. (N1.7)
-- [x] `nsqd_jobs` cannot write discovery types to paper `jobs`. (EV-N12)
-- [x] CorpusIndex filters by snapshot and returns deterministic distances/ties. (N1.7 / `ALG-IDX`)
-- [x] One final E2E test composes the approved fixture path and asserts the corrected smoke/archive outcome. (EV-N00)
+- [ ] Piccolo migration creates NS-QD tables only through the EW-V0B runner. (N1.7)
+- [ ] `nsqd_jobs` cannot write discovery types to paper `jobs`. (EV-N12)
+- [x] Null `CorpusIndex` contract filters by snapshot and returns deterministic distances/ties; real LanceDB adapter coverage remains N1.7. (`ALG-IDX`)
+- [ ] One final E2E test composes the approved fixture path and asserts the corrected smoke/archive outcome. (EV-N00)
 
 ## Exit criteria for this review
 
-- [x] All P0 **documentation** items are checked. P0-07 still has two implementation checkboxes open (gate not green today).
+- [x] All P0 documentation and implementation prerequisites are checked; the four-command gate is green.
 - [x] Every P1 item is checked.
 - [x] P2 documentation corrections are checked.
 - [x] The dependency matrix and N1 task order agree with the revised contracts.
