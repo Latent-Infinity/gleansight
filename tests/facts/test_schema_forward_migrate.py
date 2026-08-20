@@ -146,11 +146,111 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
     db = PiccoloDatabase(tmp_path / "fresh.sqlite")
     db.initialize_schema()
     versions = {row["version"] for row in db.fetchall("SELECT version FROM schema_migrations")}
-    assert versions == {"001_baseline", "002_job_integrity_check"}
+    assert versions == {"001_baseline", "002_job_integrity_check", "003_nsqd_tables"}
     assert "CHECK" in _jobs_sql(db).upper()
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 2
+    assert len(again) == 3
+
+
+def test_nsqd_migration_is_atomic_when_ddl_fails(tmp_path: Path) -> None:
+    db = _build_previous_baseline(tmp_path / "nsqd-atomic.sqlite")
+    with (
+        patch(
+            "nsqd.infra.piccolo.schema.NSQD_TABLE_DDL",
+            (
+                "CREATE TABLE nsqd_jobs (job_id VARCHAR PRIMARY KEY NOT NULL)",
+                "CREATE TABLE nsqd_jobs (job_id VARCHAR PRIMARY KEY NOT NULL)",
+            ),
+        ),
+        pytest.raises(sqlite3.OperationalError),
+    ):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'")
+        is None
+    )
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = '003_nsqd_tables'")
+        is None
+    )
+
+
+def test_nsqd_migration_recovers_when_tables_exist_without_ledger_row(tmp_path: Path) -> None:
+    db = _build_previous_baseline(tmp_path / "nsqd-recover.sqlite")
+    db.execute(
+        """
+        CREATE TABLE nsqd_jobs (
+            job_id VARCHAR PRIMARY KEY NOT NULL,
+            type VARCHAR NOT NULL,
+            status VARCHAR NOT NULL,
+            payload_json TEXT NOT NULL,
+            attempts INTEGER NOT NULL,
+            max_attempts INTEGER NOT NULL,
+            run_after TIMESTAMPTZ,
+            last_error TEXT,
+            created_at TIMESTAMPTZ NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL,
+            CHECK (type IN ('harvest','project','diverge','ground','score','rescore')),
+            CHECK (status IN ('queued','running','succeeded','failed','canceled'))
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE nsqd_corpus_records (
+            record_id VARCHAR PRIMARY KEY NOT NULL,
+            payload_json TEXT NOT NULL
+        )
+        """
+    )
+
+    db.initialize_schema()
+
+    versions = {row["version"] for row in db.fetchall("SELECT version FROM schema_migrations")}
+    assert "003_nsqd_tables" in versions
+    names = {
+        str(row["name"])
+        for row in db.fetchall("SELECT name FROM sqlite_schema WHERE type = 'table'")
+    }
+    assert {
+        "nsqd_jobs",
+        "nsqd_corpus_records",
+        "nsqd_corpus_snapshots",
+        "nsqd_candidates",
+        "nsqd_frontier_cards",
+        "nsqd_elites",
+        "nsqd_morphospace",
+    } <= names
+
+
+def test_nsqd_migration_rejects_malformed_existing_nsqd_table(tmp_path: Path) -> None:
+    db = _build_previous_baseline(tmp_path / "nsqd-malformed.sqlite")
+    db.execute(
+        """
+        CREATE TABLE nsqd_jobs (
+            job_id VARCHAR PRIMARY KEY NOT NULL,
+            type VARCHAR NOT NULL,
+            status VARCHAR NOT NULL,
+            payload_json TEXT NOT NULL,
+            attempts INTEGER NOT NULL,
+            max_attempts INTEGER NOT NULL,
+            run_after TIMESTAMPTZ,
+            last_error TEXT,
+            created_at TIMESTAMPTZ NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL
+        )
+        """
+    )
+
+    with pytest.raises(ConfigurationError, match="nsqd_jobs"):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = '003_nsqd_tables'")
+        is None
+    )
 
 
 def test_invalid_existing_row_aborts_and_leaves_old_table(tmp_path: Path) -> None:

@@ -31,7 +31,8 @@ def _run_sync[T](coroutine: Coroutine[Any, Any, T]) -> T:
 
 MIGRATION_001 = "001_baseline"
 MIGRATION_002 = "002_job_integrity_check"
-KNOWN_MIGRATIONS = frozenset({MIGRATION_001, MIGRATION_002})
+MIGRATION_003 = "003_nsqd_tables"
+KNOWN_MIGRATIONS = frozenset({MIGRATION_001, MIGRATION_002, MIGRATION_003})
 
 EXPECTED_JOB_INDEXES = frozenset(
     {
@@ -73,6 +74,7 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _validate_applied_versions(database)
     _apply_001(database)
     _apply_002(database)
+    _apply_003(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -144,6 +146,55 @@ def _apply_002(database: PiccoloDatabase) -> None:
             )
 
     _run_sync(rebuild())
+
+
+def _apply_003(database: PiccoloDatabase) -> None:
+    if MIGRATION_003 in _applied_versions(database):
+        return
+    from nsqd.infra.piccolo.schema import (
+        NSQD_TABLE_DDL,
+        NSQD_TABLE_DDL_BY_NAME,
+        normalize_create_table_sql,
+    )
+
+    existing_rows = database.fetchall(
+        """
+        SELECT name, sql FROM sqlite_schema
+        WHERE type = 'table' AND name IN (?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            "nsqd_jobs",
+            "nsqd_corpus_records",
+            "nsqd_corpus_snapshots",
+            "nsqd_candidates",
+            "nsqd_frontier_cards",
+            "nsqd_elites",
+            "nsqd_morphospace",
+        ],
+    )
+    expected_sql = {
+        name: normalize_create_table_sql(statement)
+        for name, statement in NSQD_TABLE_DDL_BY_NAME.items()
+    }
+    for row in existing_rows:
+        name = str(row["name"])
+        sql = row["sql"]
+        if not isinstance(sql, str) or normalize_create_table_sql(sql) != expected_sql[name]:
+            raise ConfigurationError(f"existing NSQD table schema mismatch: {name}")
+
+    async def create_nsqd_tables() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            for statement in NSQD_TABLE_DDL:
+                await database.engine.run_querystring(QueryString(statement))
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_003,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(create_nsqd_tables())
 
 
 def _new_jobs_ddl(database: PiccoloDatabase) -> str:
