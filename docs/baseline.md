@@ -41,6 +41,6 @@ uv run python -m papers.cli --help
 
 `PiccoloDatabase.initialize_schema` still `create_table`s, then runs a forward-only `schema_migrations` runner (`001_baseline`, `002_job_integrity_check`). Opening an existing user database applies the jobs CHECK with no down-migration. Restore from a file backup to roll back.
 
-## Discovery-layer dependencies (recorded, not started)
+## Discovery-layer dependencies
 
-See `docs/development-plan-ns-qd.md`. NSQD-N0 waits on EW-V0.11 (this gate). N1 waits on EW-V0.3 + EW-V0B. HD-NSQD-01 is LanceDB. Discovery jobs use `nsqd_jobs`.
+See `docs/development-plan-ns-qd.md`. **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1 are done.** HD-NSQD-01 is LanceDB. Discovery jobs use `nsqd_jobs` (not paper `jobs`). Boundary ports, null adapters, domain policies, and application use-cases/handlers live in `src/nsqd/`. Persistent `nsqd_*` tables are not created until an N1 adapter slice. Paper projection waits on DATA-NSQD-04 (N2b).

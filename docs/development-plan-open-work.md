@@ -16,7 +16,7 @@
 **Data & Provider Readiness Summary**: Convert-path markdown exists under gitignored `data/blobs/md/`. No approved committed fixtures yet (V0A). Three minimized papers are required before V1. EV-01 asserts the full fused order and scores, not a single winner.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 is unblocked.** Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N0/N1 persist are unblocked (`docs/development-plan-ns-qd.md`).
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 is done.** V2 atomic import is next. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N1 adapters/E2E remain (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -70,6 +70,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.1 | 2026-08-18 | Close V0: four-command gate green; `fail_under` 91.90; fact/support/fixture scaffolding; import-boundary scanner. |
 | 1.3.2 | 2026-08-19 | Close V0B: forward-only `schema_migrations` runner; jobs CHECK; EV-11/EV-12 Required. |
 | 1.3.3 | 2026-08-19 | Close V0A: three convert-path papers + manifest; secret-scan gate. FTS query `optimization algorithm`. |
+| 1.3.4 | 2026-08-19 | Close V1: EV-01 hybrid FTS+vector one-based RRF on DATA-01a/b/c. |
 
 ---
 
@@ -97,7 +98,7 @@ Project register: `docs/fact-ledger.md`. This plan introduces:
 
 | Fact ID | Statement (Given / When / Then) | Applies When | Kind | Requirement | Owner | Lifecycle | Evidence |
 |---------|--------------------------------|--------------|------|-------------|-------|-----------|----------|
-| SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | Given a non-empty query and the three approved paper records, when the user searches papers, then FTS runs on title+abstract, vectors on markdown, and the fused order and one-based scores match A=0.03252247, B=0.03226646, C=0.03200205 | Default paper search | Behavior | LOCAL-AC-HYBRID-SEARCH (`project-design.md` §3.1, §10.2.1) | product | Proposed | EV-01 |
+| SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | Given a non-empty query and the three approved paper records, when the user searches papers, then FTS runs on title+abstract, vectors on markdown, and the fused order and one-based scores match A=0.03252247, B=0.03226646, C=0.03200205 | Default paper search | Behavior | LOCAL-AC-HYBRID-SEARCH (`project-design.md` §3.1, §10.2.1) | product | Active | EV-01 |
 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import (paper, attachments, download job, candidate mark) commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY (`project-design.md` §15) | product | Proposed | EV-02, EV-02b |
 | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import of an imported candidate | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Proposed | EV-02c |
 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS (`project-design.md` §15, §10.4) | product | Proposed | EV-03 |
@@ -119,7 +120,7 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 
 | Evidence ID | Facts | Type | Path / Command | Available From | Lifecycle | Oracle & Fixture Deps | Data Version | Environment | Last Result |
 |-------------|-------|------|----------------|----------------|-----------|-----------------------|--------------|-------------|-------------|
-| EV-01 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | test | `uv run pytest tests/facts/test_hybrid_search.py -q` | V1 | Pending: V1 | title+abstract FTS; markdown embed; scores 0.03252247/0.03226646/0.03200205 | DATA-01@pending-V0A | hermetic | Unknown |
+| EV-01 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | test | `uv run pytest tests/facts/test_hybrid_search.py -q --no-cov` | V1 | Required | title+abstract FTS; markdown embed; scores 0.03252247/0.03226646/0.03200205 | DATA-01a/b/c | hermetic | pass 2026-08-19 |
 | EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q` | V2 | Pending: V2 | **real Piccolo** stores; injected in-transaction failure | none | hermetic | Unknown |
 | EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q` | V2 | Pending: V2 | CLI ID strings | none | hermetic | Unknown |
 | EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q` | V2 | Pending: V2 | prior import via use-case + Piccolo | none | hermetic | Unknown |
@@ -904,8 +905,8 @@ uv run pytest -q
 Run the four-command quality gate.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -929,11 +930,11 @@ Run the four-command quality gate.
 Create three papers with `PaperStore.create_paper` using each fixture’s `paper_id`, `title`, and `abstract`. Run FTS through `PapersFTS.search` on those rows (not on markdown). Embed **markdown** only. A fake embedder may realize vector order B,A,C. Assert fused order of those `paper_id`s is A,B,C (roles) and scores match 0.03252247 / 0.03226646 / 0.03200205. Also assert `compute_rrf_scores` on the role lists with k=60. Assert sorted(`paper_id`s) ≠ fused `paper_id` order.
 
 **Acceptance Criteria:**
-- [ ] Check lives at `tests/facts/test_hybrid_search.py`
-- [ ] Asserts complete fused order and scores, not the winner alone
-- [ ] Explicitly would fail FTS-only, vector-only, zero-based RRF, and `paper_id` sort
-- [ ] New check fails with the stated signature; rest of suite green
-- [ ] Coverage policy satisfied
+- [x] Check lives at `tests/facts/test_hybrid_search.py`
+- [x] Asserts complete fused order and scores, not the winner alone
+- [x] Explicitly would fail FTS-only, vector-only, zero-based RRF, and `paper_id` sort
+- [x] New check fails with the stated signature; rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_hybrid_search.py` (create)
@@ -960,11 +961,11 @@ Create three papers with `PaperStore.create_paper` using each fixture’s `paper
 Change `compute_rrf_scores` to `enumerate(ranking, start=1)`. Do not preserve zero-based scoring. Update any unit test that encoded the old formula.
 
 **Acceptance Criteria:**
-- [ ] EV-01 green
-- [ ] `enumerate(..., start=1)` is the only rank source
-- [ ] Existing `tests/app/use_cases/test_search.py` updated if it asserted 0-based scores — that is Evidence Maintenance of a supporting test, not a Fact Change
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-01 green
+- [x] `enumerate(..., start=1)` is the only rank source
+- [x] Existing `tests/app/use_cases/test_search.py` updated if it asserted 0-based scores — that is Evidence Maintenance of a supporting test, not a Fact Change
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/app/use_cases/search.py` (modify)
@@ -990,19 +991,21 @@ Change `compute_rrf_scores` to `enumerate(ranking, start=1)`. Do not preserve ze
 Confirm EV-01 rejects FTS-only (A,C,B), vector-only (B,A,C), zero-based RRF scores, and `paper_id` sort. Winner-alone is not an acceptable sufficiency argument.
 
 **Acceptance Criteria:**
-- [ ] Phase close lists those four incorrect implementations and cites the full-order oracle
-- [ ] Coverage policy satisfied (N/A — review)
+- [x] Phase close lists those four incorrect implementations and cites the full-order oracle
+- [x] Coverage policy satisfied (N/A — review)
 
 ---
 
 **Phase V1 Exit Criteria:**
-- [ ] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 green
-- [ ] Full fused order and one-based scores bound
-- [ ] Rebuild Property spot-check recorded
-- [ ] EV-01 Lifecycle set to Required
-- [ ] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 Lifecycle set to Active
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 green
+- [x] Full fused order and one-based scores bound
+- [x] Rebuild Property spot-check recorded
+- [x] EV-01 Lifecycle set to Required
+- [x] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 Lifecycle set to Active
+- [x] Quality gate green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-19):** EV-01 uses `PaperStore.create_paper` (title+abstract FTS) plus markdown embeddings into a test index. Query `optimization algorithm`. Incorrect implementations rejected by the same test: FTS-only A,C,B; vector-only B,A,C; zero-based RRF; lexicographic `paper_id` sort. Rebuild property: FTS rows are written by `create_paper` / `_upsert_paper_fts`, not by indexing markdown. `compute_rrf_scores` already used `enumerate(..., start=1)`.
 
 ---
 
