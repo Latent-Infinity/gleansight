@@ -57,9 +57,12 @@ class PiccoloDatabase:
         return self._engine
 
     def initialize_schema(self) -> None:
+        from papers.infra.piccolo.migrations.runner import apply_forward_migrations
+
         for table in _TABLES:
             table.create_table(if_not_exists=True).run_sync()
         self._create_indexes_and_fts()
+        apply_forward_migrations(self)
 
     def execute(self, sql: str, params: list[Any] | None = None) -> None:
         query = self._to_query(sql, params)
