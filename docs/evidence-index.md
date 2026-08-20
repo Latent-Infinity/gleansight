@@ -18,8 +18,8 @@
 | EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q` | V6 | Pending: V6 | invalid PDF header | none | hermetic | Unknown |
 | EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q` | V6 | Pending: V6 | log capture | none | hermetic | Unknown |
 | EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q` | V6 | Pending: V6 | fail-fast rebind | none | hermetic | Unknown |
-| EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q` | V0B | Pending: V0B | SQLite | none | hermetic | Unknown |
-| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q` | V0B | Pending: V0B | previous-baseline DB | none | hermetic | Unknown |
+| EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
+| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline DB | none | hermetic | pass 2026-08-19 |
 | EV-13 | docs integrity | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q` | V7 | Pending: V7 | workflows + src/ | none | hermetic | Unknown |
 
 ### NS/QD-inspired (see `docs/development-plan-ns-qd.md` evidence table)
