@@ -16,7 +16,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
 **Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, and **EW-V0B** done; **EW-V0A**, **EW-V2**, and **EW-V1** not done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B done.** DATA-NSQD-03; **EW-V0A** + **EW-V2** + DATA-NSQD-04 before N2b; **EW-V1** before N5 paper hybrid search. NSQD-N0 and N1 persist are unblocked.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A done.** DATA-NSQD-03; **EW-V2** + DATA-NSQD-04 before N2b; **EW-V1** before N5 paper hybrid search. NSQD-N0 and N1 persist are unblocked. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
 
 ```bash
 uv run ruff format --check .

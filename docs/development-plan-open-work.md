@@ -16,7 +16,7 @@
 **Data & Provider Readiness Summary**: Convert-path markdown exists under gitignored `data/blobs/md/`. No approved committed fixtures yet (V0A). Three minimized papers are required before V1. EV-01 asserts the full fused order and scores, not a single winner.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: **Blocked: V1+** until V0A commits three approved paper records (title, abstract, markdown, provenance). This machine has unapproved convert-path sources under gitignored `data/db/app.sqlite` and `data/blobs/md/`; those are **not** the approved fixture set and must not be cited as DATA-01. Product decisions V0.4/0.5/0.6 remain recorded below. **NSQD-N0 is blocked on V0.11**; **NSQD-N1 is blocked on V0.3 + V0B** (`docs/development-plan-ns-qd.md`). Discovery code must not start while `ruff check` / `ty check` are red.
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 is unblocked.** Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N0/N1 persist are unblocked (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -69,6 +69,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.0 | 2026-08-18 | Correct RRF 8-decimal scores and V1 first-hit; FTS uses title/abstract records; fact Proposed→Active on phase close; immediate transactions + in-txn CAS; jobs rebuild order + sqlite_schema; combined coverage; V3.0 EV-02b; V6.1 characterization; V0A blocker. |
 | 1.3.1 | 2026-08-18 | Close V0: four-command gate green; `fail_under` 91.90; fact/support/fixture scaffolding; import-boundary scanner. |
 | 1.3.2 | 2026-08-19 | Close V0B: forward-only `schema_migrations` runner; jobs CHECK; EV-11/EV-12 Required. |
+| 1.3.3 | 2026-08-19 | Close V0A: three convert-path papers + manifest; secret-scan gate. FTS query `optimization algorithm`. |
 
 ---
 
@@ -138,9 +139,9 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 
 | Data ID | Source / System of Record | Owner | Access Path | Approval Status | Sensitivity | Fixture/Capture Path | Refresh Rule | Used By |
 |---------|---------------------------|-------|-------------|-----------------|-------------|----------------------|--------------|---------|
-| DATA-01a | Real paper row + convert-path markdown (role A) | product | gitignored `data/db` + `data/blobs/md/` | **Not approved** — V0A | copyrighted scholarly text | `tests/fixtures/approved/` after V0A (title, abstract, markdown, paper_id) | converter or metadata change | EV-01 |
-| DATA-01b | Real paper row + convert-path markdown (role B) | product | same | **Not approved** — V0A | copyrighted scholarly text | same | same | EV-01 |
-| DATA-01c | Real paper row + convert-path markdown (role C) | product | same | **Not approved** — V0A | copyrighted scholarly text | same | same | EV-01 |
+| DATA-01a | Real paper row + convert-path markdown (role A) | product | gitignored `data/db` + `data/blobs/md/` | **Approved** | copyrighted scholarly text | `tests/fixtures/approved/papers/a.md` + `manifest.toml` (`paper-30`) | converter or metadata change | EV-01 |
+| DATA-01b | Real paper row + convert-path markdown (role B) | product | same | **Approved** | copyrighted scholarly text | `tests/fixtures/approved/papers/b.md` + `manifest.toml` (`paper-10`) | converter or metadata change | EV-01 |
+| DATA-01c | Real paper row + convert-path markdown (role C) | product | same | **Approved** | copyrighted scholarly text | `tests/fixtures/approved/papers/c.md` + `manifest.toml` (`paper-20`) | converter or metadata change | EV-01 |
 | INH-01 | Inline fake embedder/LLM/S2 payloads in existing unit tests | engineering | `tests/**` | Unapproved — inherited | n/a | inline; do not copy | n/a | must not bind new facts |
 
 ---
@@ -736,8 +737,8 @@ FTS order A,C,B must come from **title+abstract** via `PaperStore.create_paper` 
 Run the four-command quality gate.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -759,11 +760,11 @@ Run the four-command quality gate.
 From the local convert path, take three real papers that have title, abstract, and markdown. Redact emails and personal identifiers. Do not invent titles, abstracts, or scholarly claims. Prefer records whose titles/abstracts can realize FTS order A,C,B for one query.
 
 **Acceptance Criteria:**
-- [ ] Each role has markdown at `tests/fixtures/approved/papers/{a,b,c}.md` and title/abstract/paper_id in the manifest
-- [ ] Title and abstract are taken from the real paper row, not derived by summarizing the markdown
-- [ ] Markdown is a subset or redaction of real convert output
-- [ ] The three `paper_id` values sort lexicographically in an order other than role A,B,C
-- [ ] Coverage policy satisfied (N/A — data)
+- [x] Each role has markdown at `tests/fixtures/approved/papers/{a,b,c}.md` and title/abstract/paper_id in the manifest
+- [x] Title and abstract are taken from the real paper row, not derived by summarizing the markdown
+- [x] Markdown is a subset or redaction of real convert output
+- [x] The three `paper_id` values sort lexicographically in an order other than role A,B,C
+- [x] Coverage policy satisfied (N/A — data)
 
 ---
 
@@ -785,10 +786,10 @@ From the local convert path, take three real papers that have title, abstract, a
 Write `tests/fixtures/approved/manifest.toml` per the schema above, including `paper_id`, `title`, `abstract`, and `markdown_path`.
 
 **Acceptance Criteria:**
-- [ ] Manifest validates against the schema table
-- [ ] Markdown paths resolve
-- [ ] The three `paper_id` values do not sort as role order A,B,C
-- [ ] Coverage policy satisfied (N/A — documentation)
+- [x] Manifest validates against the schema table
+- [x] Markdown paths resolve
+- [x] The three `paper_id` values do not sort as role order A,B,C
+- [x] Coverage policy satisfied (N/A — documentation)
 
 **Files Affected (optional):**
 - `tests/fixtures/approved/manifest.toml` (create)
@@ -815,11 +816,11 @@ Write `tests/fixtures/approved/manifest.toml` per the schema above, including `p
 Assert three fixtures + valid manifest. Run the same regexes as the `rg` command in this phase's Verification Command; fail on any match.
 
 **Acceptance Criteria:**
-- [ ] `uv run pytest tests/support/test_fixture_manifest.py -q` covers schema and presence
-- [ ] `uv run pytest tests/support/test_fixture_secret_scan.py -q` is the authoritative secret-scan gate (same patterns as the optional `! rg` check)
-- [ ] That pytest exits 0 on the approved fixtures
-- [ ] Rest of suite green
-- [ ] Coverage policy satisfied
+- [x] `uv run pytest tests/support/test_fixture_manifest.py -q` covers schema and presence
+- [x] `uv run pytest tests/support/test_fixture_secret_scan.py -q` is the authoritative secret-scan gate (same patterns as the optional `! rg` check)
+- [x] That pytest exits 0 on the approved fixtures
+- [x] Rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/support/test_fixture_manifest.py` (create)
@@ -845,18 +846,20 @@ Assert three fixtures + valid manifest. Run the same regexes as the `rg` command
 Product required three approved papers (2026-08-18). Two documents can tie under RRF. Approval is this recorded decision plus a green V0A.4.
 
 **Acceptance Criteria:**
-- [ ] Three fixtures approved via V0A.4
-- [ ] Header records V0A.5 = three papers
-- [ ] Coverage policy satisfied (N/A — documentation)
+- [x] Three fixtures approved via V0A.4
+- [x] Header records V0A.5 = three papers
+- [x] Coverage policy satisfied (N/A — documentation)
 
 ---
 
 **Phase V0A Exit Criteria:**
-- [ ] Three approved papers + valid manifest
-- [ ] Secret-scan command clean
-- [ ] No synthetic substitute
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] Three approved papers + valid manifest
+- [x] Secret-scan command clean
+- [x] No synthetic substitute
+- [x] Quality gate green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-19):** Roles A/C/B are Frank-Wolfe / sequential-quadratic / photovoltaic convert-path papers. Fixture ids `paper-30` / `paper-10` / `paper-20`. FTS query `optimization algorithm` ranks A, C, B on title+abstract.
 
 ---
 

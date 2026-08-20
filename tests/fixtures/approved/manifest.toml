@@ -1,0 +1,47 @@
+# Approved convert-path paper records for hybrid search.
+# FTS query that realizes role order A, C, B on title+abstract: optimization algorithm
+# Vector order B, A, C is realized later with a fake embedder over markdown.
+
+schema_version = 1
+
+[fixture.DATA-01a]
+id = "DATA-01a"
+paper_id = "paper-30"
+title = "Distributed Momentum-Based Frank-Wolfe Algorithm for Stochastic Optimization"
+abstract = """
+This paper considers distributed stochastic optimization, in which a number of agents cooperate to optimize a global objective function through local computations and information exchanges with neighbors over a network. Stochastic optimization problems are usually tackled by variants of projected stochastic gradient descent. However, projecting a point onto a feasible set is often expensive. The Frank-Wolfe (FW) method has well-documented merits in handling convex constraints, but existing stochastic FW algorithms are basically developed for centralized settings. In this context, the present work puts forth a distributed stochastic Frank-Wolfe solver, by judiciously combining Nesterov's momentum and gradient tracking techniques for stochastic convex and nonconvex optimization over networks. It is shown that the convergence rate of the proposed algorithm is $\\mathcal{O}(k^{-\\frac{1}{2}})$ for convex optimization, and $\\mathcal{O}(1/\\log_{2}(k))$ for nonconvex optimization. The efficacy of the algorithm is demonstrated by numerical simulations against a number of competing alternatives.
+"""
+markdown_path = "papers/a.md"
+source_paper_id = "ebd81b51-736f-43e9-8338-2ee5cc287565"
+source_kind = "convert-path-paper"
+redaction = "emails replaced with [redacted-email]; markdown truncated to an early excerpt of convert output"
+owner = "product"
+refresh_when = "converter version change"
+
+[fixture.DATA-01b]
+id = "DATA-01b"
+paper_id = "paper-10"
+title = "A Stochastic Optimization Algorithm to Enhance Controllers of Photovoltaic Systems"
+abstract = """
+Increasing energy needs, pollution of nature, and eventual depletion of resources have prompted humanity to obtain new technologies and produce energy using clean sources and renewables. In this paper, we design an advanced method to improve the performance of a sliding mode controller combined with control theory for a photovoltaic system. Specifically, we decouple the controlled output of the system from any perturbation source and assess the effectiveness of the results in terms of solution quality, closed-loop control stability, and dynamical convergence of the state variables. This study focuses on the climatic conditions that may affect the behavior of a solar energy plant to supply a motor with the highest possible efficiency and nominal operating conditions. The designed method enables us to obtain an optimal performance by means of advanced control techniques and a slime mould stochastic optimization algorithm. The efficiency and performance of this method are examined based on a benchmark model of a photovoltaic system via numerical analysis and simulation.
+"""
+markdown_path = "papers/b.md"
+source_paper_id = "9f041775-38bf-4c96-bc46-37e12e0c4db2"
+source_kind = "convert-path-paper"
+redaction = "emails replaced with [redacted-email]; markdown truncated to an early excerpt of convert output"
+owner = "product"
+refresh_when = "converter version change"
+
+[fixture.DATA-01c]
+id = "DATA-01c"
+paper_id = "paper-20"
+title = "A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians"
+abstract = """
+A sequential quadratic optimization algorithm is proposed for solving smooth nonlinear-equality-constrained optimization problems in which the objective function is defined by an expectation. The algorithmic structure of the proposed method is based on a step decomposition strategy that is known in the literature to be widely effective in practice, wherein each search direction is computed as the sum of a normal step (toward linearized feasibility) and a tangential step (toward objective decrease in the null space of the constraint Jacobian). However, the proposed method is unique from others in the literature in that it both allows the use of stochastic objective gradient estimates and possesses convergence guarantees even in the setting in which the constraint Jacobians may be rank-deficient. The results of numerical experiments demonstrate that the algorithm offers superior performance when compared with popular alternatives. Funding: This material is based upon work supported by the U.S. National Science Foundation’s Division of Computing and Communication Foundations under award [CF-1740796], by the Office of Naval Research under award [N00014-21-1-2532], and by the National Science Foundation under award [2030859] to the Computing Research Association for the CIFellows Project.
+"""
+markdown_path = "papers/c.md"
+source_paper_id = "7dbcef75-2d52-49a6-86a3-471be71f0fd7"
+source_kind = "convert-path-paper"
+redaction = "emails replaced with [redacted-email]; markdown truncated to an early excerpt of convert output"
+owner = "product"
+refresh_when = "converter version change"
