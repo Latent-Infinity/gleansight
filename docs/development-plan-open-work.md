@@ -68,6 +68,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.2.0 | 2026-08-18 | Fix EV-01 oracle; atomic import port; drop quality ratchet; pytest-owned secret scan; evidence Available From; migration rebuild completeness; coverage enforcement split; V3 filter prompt-version + `_parse_constraints`; ledger attach wording; V7 command checks. |
 | 1.3.0 | 2026-08-18 | Correct RRF 8-decimal scores and V1 first-hit; FTS uses title/abstract records; fact Proposed→Active on phase close; immediate transactions + in-txn CAS; jobs rebuild order + sqlite_schema; combined coverage; V3.0 EV-02b; V6.1 characterization; V0A blocker. |
 | 1.3.1 | 2026-08-18 | Close V0: four-command gate green; `fail_under` 91.90; fact/support/fixture scaffolding; import-boundary scanner. |
+| 1.3.2 | 2026-08-19 | Close V0B: forward-only `schema_migrations` runner; jobs CHECK; EV-11/EV-12 Required. |
 
 ---
 
@@ -100,8 +101,8 @@ Project register: `docs/fact-ledger.md`. This plan introduces:
 | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import of an imported candidate | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Proposed | EV-02c |
 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS (`project-design.md` §15, §10.4) | product | Proposed | EV-03 |
 | ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE (`project-design.md` §9.2) | product | Proposed | EV-04 |
-| SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Any schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK (`project-design.md` §5.2 L) | product | Proposed | EV-11 |
-| SCHEMA.MIGRATE.FORWARD.v1 | Given a database created at the previous baseline, when the app starts, then forward-only migrations apply and the job CHECK is present | Existing user DB | Data Contract | LOCAL-AC-MIGRATIONS | product | Proposed | EV-12 |
+| SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Any schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK (`project-design.md` §5.2 L) | product | Active | EV-11 |
+| SCHEMA.MIGRATE.FORWARD.v1 | Given a database created at the previous baseline, when the app starts, then forward-only migrations apply and the job CHECK is present | Existing user DB | Data Contract | LOCAL-AC-MIGRATIONS | product | Active | EV-12 |
 | ADAPTER.CONVERT.RESULT_CODES.v1 | Given a convert attempt that yields empty markdown or a converter exception, when `Converter.pdf_to_markdown` returns, then the value is a `ConverterResult` with `ok=False` and `error_code` of `EMPTY_OUTPUT` or `CONVERSION_FAILED` respectively | Converter adapter | Behavior | LOCAL-AC-CONVERT-RESULT (`project-design.md` §9.4, port `ConverterResult`) | product | Proposed | EV-08 |
 | HANDLER.CONVERT.CORRUPT_PDF.v1 | Given a PDF that fails the handler's validity check, when convert runs, then the job fails with `CORRUPT_PDF` and a re-download is enqueued | Convert handler, before the adapter | Behavior | LOCAL-AC-CONVERT-CORRUPT (`project-design.md` §9.4) | product | Proposed | EV-08b |
 | OBS.LOG.JOB_CONTEXT.v1 | Given a job state transition, when the runner logs the event, then the record includes timestamp, job_id, job_type, status_from, status_to, paper_id, and run_id | Job runner | Operational/SLO | LOCAL-NFR-LOGGING (`project-design.md` §12.2) | product | Proposed | EV-09 |
@@ -127,8 +128,8 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 | EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q` | V6 | Pending: V6 | invalid PDF header mutation | none | hermetic | Unknown |
 | EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q` | V6 | Pending: V6 | log capture | none | hermetic | Unknown |
 | EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q` | V6 | Pending: V6 | may rebind fail-fast tests | none | hermetic | Unknown |
-| EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q` | V0B | Pending: V0B | SQLite | none | hermetic | Unknown |
-| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q` | V0B | Pending: V0B | previous-baseline fixture DB | none | hermetic | Unknown |
+| EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
+| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline fixture DB | none | hermetic | pass 2026-08-19 |
 | EV-13 | (docs integrity) | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q` | V7 | Pending: V7 | workflow markdown; `src/` | none | hermetic | Unknown |
 
 ---
@@ -535,8 +536,8 @@ uv run pytest -q
 Run the four-command quality gate before changing persistence.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -562,9 +563,9 @@ Build a previous-baseline fixture the way the app does today (`create_table` + `
 Also assert: (1) if the copy is aborted mid-rebuild, the original `jobs` table and indexes remain; (2) if the old table contains a row that would fail the CHECK, migration fails, reports the row, and leaves the old table in place.
 
 **Acceptance Criteria:**
-- [ ] Checks live at `tests/facts/test_job_integrity_check.py` and `tests/facts/test_schema_forward_migrate.py`
-- [ ] New checks fail with the stated signatures; rest of suite green
-- [ ] Coverage policy satisfied
+- [x] Checks live at `tests/facts/test_job_integrity_check.py` and `tests/facts/test_schema_forward_migrate.py`
+- [x] New checks fail with the stated signatures; rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_job_integrity_check.py` (create)
@@ -613,12 +614,12 @@ Safe order inside the transaction:
 A failed copy must not drop the old table. Do not rewrite store classes. No down-migration.
 
 **Acceptance Criteria:**
-- [ ] EV-11 and EV-12 green
-- [ ] Tests cover index preservation, row preservation, mid-rebuild abort, and invalid-row abort
-- [ ] Fresh databases and previous-baseline databases both end with 002 applied
-- [ ] Store method signatures unchanged
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-11 and EV-12 green
+- [x] Tests cover index preservation, row preservation, mid-rebuild abort, and invalid-row abort
+- [x] Fresh databases and previous-baseline databases both end with 002 applied
+- [x] Store method signatures unchanged
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/infra/piccolo/migrations/` (create)
@@ -627,14 +628,14 @@ A failed copy must not drop the old table. Do not rewrite store classes. No down
 ---
 
 **Phase V0B Exit Criteria:**
-- [ ] Forward-only runner exists
-- [ ] Job integrity CHECK matches design §5.2
-- [ ] Upgrade from previous baseline is tested (rows, both job unique indexes, atomicity, invalid-row abort)
-- [ ] EV-11 and EV-12 Lifecycle set to Required
-- [ ] SCHEMA.JOB.INTEGRITY_CHECK.v1 and SCHEMA.MIGRATE.FORWARD.v1 set to Active
-- [ ] Persistence layer otherwise unchanged
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] Forward-only runner exists
+- [x] Job integrity CHECK matches design §5.2
+- [x] Upgrade from previous baseline is tested (rows, both job unique indexes, atomicity, invalid-row abort)
+- [x] EV-11 and EV-12 Lifecycle set to Required
+- [x] SCHEMA.JOB.INTEGRITY_CHECK.v1 and SCHEMA.MIGRATE.FORWARD.v1 set to Active
+- [x] Persistence layer otherwise unchanged
+- [x] Quality gate green
+- [x] **Stage changes for human review**
 
 ---
 
