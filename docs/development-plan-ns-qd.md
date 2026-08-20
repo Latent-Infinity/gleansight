@@ -14,9 +14,9 @@
 **Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
 **Provider Policy**: `src/nsqd/` + `src/papers/`. **HD-NSQD-01 closed: LanceDB** corpus collection. Durable NS-QD work in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
-**Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V2**, **EW-V1** **not done**.
+**Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, and **EW-V0B** done; **EW-V0A**, **EW-V2**, and **EW-V1** not done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11 and EW-V0.3 done** (2026-08-18). **EW-V0B** before N1 persist; DATA-NSQD-03; **EW-V0A** + **EW-V2** + DATA-NSQD-04 before N2b; **EW-V1** before N5 paper hybrid search.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B done.** DATA-NSQD-03; **EW-V0A** + **EW-V2** + DATA-NSQD-04 before N2b; **EW-V1** before N5 paper hybrid search. NSQD-N0 and N1 persist are unblocked.
 
 ```bash
 uv run ruff format --check .
@@ -40,6 +40,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.3.1 | 2026-08-18 | Frame remaining review items as scope/dependency changes, not workarounds: N2b waits on EW-V0A + DATA-NSQD-04 + EW-V2; N0 waits on EW-V0.11; no invented paper or provisional archive. |
 | 1.3.2 | 2026-08-18 | Decision-signoff audit: EV-N00 uses an empty snapshot with `evidence=null`; synthetic neighbors stay unit-only; N1 depends on EW-V0.3 fact infrastructure as well as EW-V0B. |
 | 1.3.3 | 2026-08-18 | Close leftover contradictions: header blockers name EW-V0.3; N1 smoke oracles say `evidence=null` (not numeric); empty-snapshot digest vector recorded. |
+| 1.3.4 | 2026-08-19 | Align data/provider readiness with completed EW-V0.11, EW-V0.3, and EW-V0B prerequisites. |
 
 ---
 
@@ -50,7 +51,7 @@ Closeout phases (`docs/development-plan-open-work.md`) are prefixed **EW-**.
 | Discovery need | Depends on | Why | If skipped |
 |----------------|------------|-----|------------|
 | Any NSQD-N0 code task | **EW-V0.11** (done 2026-08-18) | Four-command gate must stay green | Do not start N0 from a red tree |
-| Any Piccolo `nsqd_*` table | **EW-V0B** forward-only migrator | Shared schema runner; no second ad-hoc `create_table` | Rework when migrator lands |
+| Any Piccolo `nsqd_*` table | **EW-V0B** (done 2026-08-19) | Shared schema runner; no second ad-hoc `create_table` | — |
 | `PaperToCorpusProjector` on imported papers | **EW-V0A** approved real paper fixtures, **EW-V2** atomic import, and DATA-NSQD-04 | Stable paper_id + membership; real approved paper + human paraphrase | Duplicate/orphan corpus rows; invented paper |
 | Grounding that calls paper hybrid search | **EW-V1** one-based RRF | Wrong ranks → wrong prior-art neighbors | False grounding |
 | Fact surface / approved-path checker | **EW-V0.3** | `tests/facts`, Lifecycle checker | Parallel checker forks |
@@ -79,7 +80,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 | Real data | 01/02 committed; 03/04 pending | Blocked: harvest-from-seed; projector | N2, N2b, N6 | N0A.3 / N0A.4 |
 | Four-command gate | EW-V0.11 | Pass (2026-08-18) | — | 536 passed, 1 skipped, 91.91% |
 | EW fact surface | EW-V0.3 | Pass (2026-08-18) | — | `tests/support/test_fact_surface.py` |
-| EW migrator | EW-V0B | Blocked: N1 persist | N1 | EW-V0B |
+| EW migrator | EW-V0B | Pass (2026-08-19) | — | `schema_migrations` + jobs CHECK |
 | EW approved papers | EW-V0A | Blocked: N2b / N0A.3 | N2b | EW-V0A |
 | EW atomic import | EW-V2 | Blocked: N2b live import | N2b | EW-V2 |
 | EW RRF | EW-V1 | Blocked: N5 if using paper search | N5 | EW-V1 |

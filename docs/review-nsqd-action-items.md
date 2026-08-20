@@ -1,7 +1,7 @@
 # NS/QD documentation review — action checklist
 
 **Review date:** 2026-08-18
-**Status:** Documentation checklist and expensive decisions signed off 2026-08-18. **EW-V0.11 and EW-V0.3 are done.** NSQD-N0 may start. N1 remains blocked on EW-V0B.
+**Status:** Documentation checklist and expensive decisions signed off 2026-08-18. **EW-V0.11, EW-V0.3, and EW-V0B are done.** NSQD-N0 and N1 persist may start. N1 still needs N0 + N0A.2.
 **Scope:**
 
 1. `docs/glossary-nsqd.md`
