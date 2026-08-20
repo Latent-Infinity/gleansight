@@ -16,7 +16,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
 **Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, and **EW-V1** done; **EW-V2** not done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1 done.** DATA-NSQD-03; **EW-V2** + DATA-NSQD-04 before N2b. N1 adapters/E2E persist remain. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1 done.** DATA-NSQD-03; **EW-V2** + DATA-NSQD-04 before N2b. N1 walking skeleton is done. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
 
 ```bash
 uv run ruff format --check .
@@ -44,6 +44,8 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.3.5 | 2026-08-19 | N0 ports + null adapters. Domain policies started (snapshot digest, novelty, viability, status, elite, card, grounding). |
 | 1.3.6 | 2026-08-19 | N0A 01/02 confirmed; N1 domain table tests + policies; N1 application use-cases and handlers on null adapters. Adapters/CLI/E2E not started. |
 | 1.3.7 | 2026-08-20 | Correct focused evidence and NSQD coverage commands; distinguish completed EW-V0A from pending DATA-NSQD-04; keep N1 adapters and E2E pending. |
+| 1.3.8 | 2026-08-20 | N1 adapters: forward migration `003_nsqd_tables`, Piccolo stores, `nsqd_jobs`, LanceDB `CorpusIndex`. E2E/CLI still pending. |
+| 1.3.9 | 2026-08-20 | N1 composition: smoke E2E + `python -m nsqd skeleton`. N1 facts Active. |
 
 ---
 
@@ -96,9 +98,9 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 
 | Fact ID | Statement | Applies When | Kind | Req | Evidence |
 |---------|-----------|--------------|------|-----|----------|
-| NSQD.E2E.SMOKE_LOOP.v1 | Given the approved requirement-card fixtures and an axiom, when the N1 pipeline runs on an **empty** `smoke_only` snapshot, then a novelty evidence row is stored with `evidence=null`, novelty term is 0, viability is 0, one complete Frontier Card is persisted with `card_decision=rejected`, archive insertion is rejected, and the production archive is empty | N1 | Behavior | LOCAL-NSQD-CAL | EV-N00 |
+| NSQD.E2E.SMOKE_LOOP.v1 | Given the approved requirement-card fixtures and an axiom, when the N1 pipeline runs on an **empty** `smoke_only` snapshot, then the candidate artifact stores a novelty evidence record with `evidence=null` and the required measurement stamp, novelty term is 0, viability is 0, one complete Frontier Card is persisted with `card_decision=rejected`, archive insertion is rejected, and the production archive is empty | N1 | Behavior | LOCAL-NSQD-CAL | EV-N00 |
 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | Given records, when a snapshot is created, then `snapshot_id` matches `ALG-SNAP` known vectors (order-invariant; changes with content or schema version) | Any snapshot | Data Contract | LOCAL-NSQD-H | EV-N01 |
-| NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | Given N1’s empty `smoke_only` snapshot, when the gate runs, then a novelty row is stored with `evidence=null`, novelty **term** is 0, and the card is not archive-eligible. Numeric evidence is computed only in unit tests that inject neighbors | Smoke | Behavior | LOCAL-NSQD-H | EV-N02 |
+| NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | Given N1’s empty `smoke_only` snapshot, when the gate runs, then the candidate artifact stores a novelty evidence record with `evidence=null` and the required measurement stamp, novelty **term** is 0, and the card is not archive-eligible. Numeric evidence is computed only in unit tests that inject neighbors | Smoke | Behavior | LOCAL-NSQD-H | EV-N02 |
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected | Harvest | Behavior | LOCAL-NSQD-H | EV-N03 |
 | NSQD.GATE.SMOKE_PAIR.v1 | On a smoke snapshot, mechanism-free has `mech=0`; gamma-flow has `mech=5` and `nov=0`; both `viability=0` and `archive_eligible=false`. Expected values come from fixture `expected_outcomes`, not filenames | Smoke fixtures | Behavior | LOCAL-NSQD-CAL | EV-N04 |
 | NSQD.SEP.AUDIT_RECORD.v1 | Evaluator loads candidate by `candidate_artifact_hash` under a new `evaluator_run_id`; same-run generate+evaluate without persist/reload is rejected | Diverge/value | Architecture Contract | LOCAL-NSQD-SEP | EV-N05 |
@@ -120,19 +122,19 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 
 | ID | Facts | Command | Available From | Lifecycle |
 |----|-------|---------|----------------|-----------|
-| EV-N00 | NSQD.E2E.SMOKE_LOOP.v1 | `uv run pytest tests/facts/test_nsqd_e2e_smoke.py -q --no-cov` | N1 | Pending: N1 |
-| EV-N01 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_snapshot_digest_known_vectors_and_order_invariance -q --no-cov` | N1 | Pending: N1 |
-| EV-N02 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_smoke_forces_novelty_and_viability_zero tests/nsqd/test_application.py::test_score_and_archive_reject_smoke_fixtures -q --no-cov` | N1 | Pending: N1 |
+| EV-N00 | NSQD.E2E.SMOKE_LOOP.v1 | `uv run pytest tests/facts/test_nsqd_e2e_smoke.py -q --no-cov` | N1 | Required |
+| EV-N01 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_snapshot_digest_known_vectors_and_order_invariance -q --no-cov` | N1 | Required |
+| EV-N02 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_smoke_forces_novelty_and_viability_zero tests/nsqd/test_application.py::test_score_and_archive_reject_smoke_fixtures -q --no-cov` | N1 | Required |
 | EV-N03 | NSQD.HARVEST.ENUMERATION.v1 | `uv run pytest tests/facts/test_nsqd_harvest_reject_essay.py -q --no-cov` | N2 | Pending: N2 |
-| EV-N04 | NSQD.GATE.SMOKE_PAIR.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_fixture_expected_outcomes_match_gate_oracles -q --no-cov` | N1 | Pending: N1 |
-| EV-N05 | NSQD.SEP.AUDIT_RECORD.v1 | `uv run pytest tests/nsqd/test_application.py::test_diverge_persists_artifact_and_evaluate_reloads_by_hash -q --no-cov` | N1 | Pending: N1 |
-| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_status_table_and_overlaps -q --no-cov` | N1 | Pending: N1 |
-| EV-N07 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_elite_replacement_and_hash_tie_and_rejection tests/nsqd/test_domain_policies.py::test_elite_replay_is_order_independent -q --no-cov` | N1 | Pending: N1 |
-| EV-N08 | NSQD.CARD.SCHEMA.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_card_schema_rejects_each_required_field -q --no-cov` | N1 | Pending: N1 |
+| EV-N04 | NSQD.GATE.SMOKE_PAIR.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_fixture_expected_outcomes_match_gate_oracles -q --no-cov` | N1 | Required |
+| EV-N05 | NSQD.SEP.AUDIT_RECORD.v1 | `uv run pytest tests/nsqd/test_application.py::test_diverge_persists_artifact_and_evaluate_reloads_by_hash -q --no-cov` | N1 | Required |
+| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_status_table_and_overlaps -q --no-cov` | N1 | Required |
+| EV-N07 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_elite_replacement_and_hash_tie_and_rejection tests/nsqd/test_domain_policies.py::test_elite_replay_is_order_independent -q --no-cov` | N1 | Required |
+| EV-N08 | NSQD.CARD.SCHEMA.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_card_schema_rejects_each_required_field -q --no-cov` | N1 | Required |
 | EV-N09 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | `uv run pytest tests/facts/test_nsqd_paper_project.py -q --no-cov` | N2b | Pending: N2b |
-| EV-N10 | NSQD.GROUND.CASCADE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_grounding_classes_are_deterministic tests/nsqd/test_application.py::test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search -q --no-cov` | N1 | Pending: N1 |
-| EV-N11 | NSQD.NOVELTY.METRIC.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_novelty_evidence_mean_and_k_sizes tests/nsqd/test_domain_policies.py::test_novelty_term_bins -q --no-cov` | N1 | Pending: N1 |
-| EV-N12 | NSQD.JOBS.OWNED.v1 | `uv run pytest tests/facts/test_nsqd_jobs.py -q --no-cov` | N1 | Pending: N1 |
+| EV-N10 | NSQD.GROUND.CASCADE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_grounding_classes_are_deterministic tests/nsqd/test_application.py::test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search -q --no-cov` | N1 | Required |
+| EV-N11 | NSQD.NOVELTY.METRIC.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_novelty_evidence_mean_and_k_sizes tests/nsqd/test_domain_policies.py::test_novelty_term_bins -q --no-cov` | N1 | Required |
+| EV-N12 | NSQD.JOBS.OWNED.v1 | `uv run pytest tests/facts/test_nsqd_jobs.py -q --no-cov` | N1 | Required |
 | EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | `uv run pytest tests/facts/test_nsqd_sufficiency.py -q --no-cov` | N6 | Pending: N6 |
 | EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Pending: N7 |
 
@@ -462,7 +464,7 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Provider Boundary:** Piccolo, LanceDB local dir, `nsqd_jobs`
 **Description:** Migration creates NS-QD tables only through the EW-V0B runner. `nsqd_jobs` claim exclusivity, retries, cancel, terminal states, UTC timestamps. `CorpusIndex` snapshot filter + tie order. No model download.
 **Acceptance Criteria:**
-- [ ] Adapter tests red until N1.8
+- [x] Adapter tests red until N1.8
 
 ### NSQD-N1.8 Implement adapters
 
@@ -475,8 +477,8 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Facts Protected:** application facts already green
 **Description:** Piccolo stores + `nsqd_jobs` + LanceDB `CorpusIndex`. Own `NsqdJobType`.
 **Acceptance Criteria:**
-- [ ] EV-N12 green
-- [ ] Four-command gate green
+- [x] EV-N12 green
+- [x] Four-command gate green
 
 ### NSQD-N1.9 Refactor adapters
 
@@ -489,7 +491,9 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Facts Protected:** EV-N12
 **Description:** Deduplicate SQL/index helpers. No new behavior.
 **Acceptance Criteria:**
-- [ ] Same tests green; gate green
+- [x] Same tests green; gate green
+
+**Adapter increment close note (2026-08-20):** `003_nsqd_tables` is applied only by the shared forward runner. `src/nsqd/infra/piccolo` stores persist records, snapshots, candidates, cards, elites, morphospace, and `nsqd_jobs`. Paper `jobs` still rejects discovery types. `LanceDBCorpusIndex` is snapshot-scoped with record_id ties; no model download. NSQD facts stay Proposed until EV-N00.
 
 ---
 
@@ -506,8 +510,8 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Provider Boundary:** all nsqd ports (real local adapters)
 **Description:** **Final** composition test. Asserts the corrected smoke/archive outcome. Does not drive internals that earlier tests already cover.
 **Acceptance Criteria:**
-- [ ] Red until N1.11
-- [ ] Rest of suite green
+- [x] Red until N1.11
+- [x] Rest of suite green
 
 ### NSQD-N1.11 Implement thin CLI orchestration
 
@@ -520,10 +524,10 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Facts Protected:** all N1 facts already green
 **Description:** `python -m nsqd skeleton` wires existing use-cases. No duplicated business logic. FR-U1 unified `gleansight` remains N10.
 **Acceptance Criteria:**
-- [ ] EV-N00 green
-- [ ] Demo command exists and is tested
-- [ ] `src/nsqd/` coverage ≥ 90%
-- [ ] Four-command gate green
+- [x] EV-N00 green
+- [x] Demo command exists and is tested
+- [x] `src/nsqd/` coverage ≥ 90%
+- [x] Four-command gate green
 
 ### NSQD-N1.12 Fact sufficiency — smoke vs calibration
 
@@ -534,10 +538,12 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Provider Boundary:** N/A
 **Description:** Confirm we did **not** activate a production novelty-term fact or a smoke-elite fact. Gamma-flow/control is smoke, not calibration.
 **Acceptance Criteria:**
-- [ ] Ledger has no Active fact that requires novelty term > 0 on `smoke_only`
-- [ ] Ledger has no Active fact that a smoke card became a production elite
+- [x] Ledger has no Active fact that requires novelty term > 0 on `smoke_only`
+- [x] Ledger has no Active fact that a smoke card became a production elite
 
 **N1 Exit:** E2E green; smoke_only; empty production archive; **Stage**
+
+**Close note (2026-08-20):** `python -m nsqd skeleton` runs diverge → empty smoke snapshot → ground → score on Piccolo + LanceDB adapters. Gamma-flow and mechanism-free both reject (`nov=0`, `viability=0`); production archive stays empty. EV-N00–EV-N12 (except N03/N09) are Required; corresponding N1 facts are Active. No production-novelty or smoke-elite fact was activated.
 
 ---
 
