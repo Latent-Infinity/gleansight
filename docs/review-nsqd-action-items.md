@@ -41,7 +41,7 @@ The revision closes the earlier issues and the P0 logic bugs by changing scope a
 
 | # | Decision | Technical recommendation | Human sign-off |
 |---:|----------|--------------------------|----------------|
-| 1 | N1 smoke produces a rejected card and empty production archive | **Accept.** EV-N00 uses an empty `smoke_only` snapshot, stores a novelty row with `evidence=null`, and never creates an elite or provisional archive. | [x] |
+| 1 | N1 smoke produces a rejected card and empty production archive | **Accept.** EV-N00 uses an empty `smoke_only` snapshot, stores a novelty evidence record on the candidate artifact with `evidence=null`, and never creates an elite or provisional archive. | [x] |
 | 2 | Projector out of N1; N2b waits on EW-V0A + DATA-NSQD-04 + EW-V2 | **Accept.** Do not invent a paper. | [x] |
 | 3 | Viability stubs | **Accept for smoke/N1.** Numeric novelty evidence is computed only when neighbors exist; on N1’s empty snapshot it is `null` and the `nov` term is 0. `mech`/`fals`/`dpred` remain honest 0-or-5 presence checks; `dval` is human-assigned with provenance. No production/calibration claim may rely on these as graded prose-quality scores before `ALG.VIABILITY`. | [x] |
 | 4 | Gap statuses preempt Mature/Active | **Accept.** Code-gap wins when papers exist but code does not. Benchmark-gap wins over Mature only when code/paper work claims evaluation but has no benchmark. | [x] |
@@ -54,7 +54,7 @@ The revision closes the earlier issues and the P0 logic bugs by changing scope a
 ```text
 DATA-NSQD-01/02 requirement-cards (never corpus records)
   → Operator A + pack axiom → immutable candidate artifact
-  → empty smoke_only snapshot → novelty evidence row with evidence=null
+→ empty smoke_only snapshot → persisted candidate novelty evidence with evidence=null
   → map cell Unknown
   → local grounding layers 1–4; fail if paper hybrid/live search is called
   → nov=0 → viability=0
@@ -124,7 +124,7 @@ No implementation can satisfy all four rules.
 
 - [x] The algorithm contract (`ALG-ELITE`, `ALG-STATE`), N1 observable outcome, EV-N00, EV-N04, EV-N07, and smoke fixture `expected_outcomes` agree: smoke cards are **not** archive-eligible.
 - [x] No Active fact can imply a smoke card passed Tier-1 or became a production elite (`NSQD.E2E.SMOKE_LOOP.v1` states rejection; N1.12 forbids those facts).
-- [x] A test is named that proves a novelty row is stored with `evidence=null`, novelty term is zero, viability is zero, and archive insertion is rejected (EV-N00, EV-N02, EV-N04).
+- [x] A test proves the candidate artifact stores novelty evidence with `evidence=null` and the required measurement stamp, novelty term is zero, viability is zero, and archive insertion is rejected (EV-N00, EV-N02, EV-N04).
 - [x] A separate pure unit test is named for empty-cell insertion, higher-quality replacement, tie handling, and rejected-card behavior (EV-N07, non-smoke inputs).
 
 ### [x] REV-P0-02 — Keep DATA-NSQD-04 out of N1; defer projector to N2b
@@ -422,7 +422,7 @@ Named in `docs/development-plan-ns-qd.md`. Domain and application increments are
 
 - [x] Snapshot digest is order-independent and changes with record content/schema version. (EV-N01 / N1.1)
 - [x] Novelty handles zero records, fewer than `k`, exact `k`, ties, and known cosine vectors. (EV-N11)
-- [x] Smoke E2E stores a novelty row with `evidence=null` and forces novelty term and viability to zero. Numeric k-NN evidence is a unit test with injected neighbors, never persisted by EV-N00. (EV-N02 / EV-N11)
+- [x] Smoke E2E stores a novelty evidence record on the candidate artifact with `evidence=null` and the required measurement stamp, and forces novelty term and viability to zero. Numeric k-NN evidence is a unit test with injected neighbors, never persisted by EV-N00. (EV-N02 / EV-N11)
 - [x] Every status rule and overlap boundary is table-tested with a fixed clock. (EV-N06)
 - [x] Every viability factor zero rejects; non-zero boundary values use the declared rubric. (EV-N04 / `ALG-VIA`)
 - [x] Card schema rejects each missing required field independently. (EV-N08)
@@ -438,10 +438,10 @@ Named in `docs/development-plan-ns-qd.md`. Domain and application increments are
 
 ### Adapter/integration tests
 
-- [ ] Piccolo migration creates NS-QD tables only through the EW-V0B runner. (N1.7)
-- [ ] `nsqd_jobs` cannot write discovery types to paper `jobs`. (EV-N12)
-- [x] Null `CorpusIndex` contract filters by snapshot and returns deterministic distances/ties; real LanceDB adapter coverage remains N1.7. (`ALG-IDX`)
-- [ ] One final E2E test composes the approved fixture path and asserts the corrected smoke/archive outcome. (EV-N00)
+- [x] Piccolo migration creates NS-QD tables only through the EW-V0B runner. (N1.7)
+- [x] `nsqd_jobs` cannot write discovery types to paper `jobs`. (EV-N12)
+- [x] Null `CorpusIndex` and LanceDB adapter filter by snapshot and return deterministic distances/ties. (`ALG-IDX`)
+- [x] One final E2E test composes the approved fixture path and asserts the corrected smoke/archive outcome. (EV-N00)
 
 ## Exit criteria for this review
 
