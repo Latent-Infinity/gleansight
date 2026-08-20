@@ -126,7 +126,7 @@ evidence(q, snapshot) =
 | 4 | 0.45 ≤ evidence < 0.60 |
 | 5 | evidence ≥ 0.60 |
 
-On `smoke_only`: persist a novelty row and stamp model/metric/contract versions; **novelty term forced to 0**. N1’s snapshot is **empty**, so `evidence` is **`null`** (undefined). Numeric `evidence` is computed only when neighbors exist (unit tests may inject synthetic neighbors; they are not persisted by EV-N00). Smoke **must not** activate a production novelty-term fact and **must not** produce a production archive elite (ALG-ELITE).
+On `smoke_only`: persist a novelty evidence record on the candidate artifact and stamp model/metric/contract versions; **novelty term forced to 0**. N1’s snapshot is **empty**, so `evidence` is **`null`** (undefined). Numeric `evidence` is computed only when neighbors exist (unit tests may inject synthetic neighbors; they are not persisted by EV-N00). Smoke **must not** activate a production novelty-term fact and **must not** produce a production archive elite (ALG-ELITE).
 
 ---
 
@@ -423,7 +423,7 @@ Independent from the paper `VectorIndex` (which is keyed by `paper_id` and has n
 
 **Each hit:** `record_id`, `distance`, `rank` (1-based). Order: distance ascending, then `record_id` ascending.
 
-**Measurement stamp** (required on every novelty evidence row): embedding model id, embedding model version, normalization policy (`l2` or `none`), distance metric (`cosine_distance`), `algorithm_contract_version`.
+**Measurement stamp** (required on every persisted novelty evidence record): embedding model id, embedding model version, normalization policy (`l2` or `none`), distance metric (`cosine_distance`), `algorithm_contract_version`.
 
 Unit tests use deterministic hand-built vectors. Adapter tests use a local LanceDB directory and do not download models.
 

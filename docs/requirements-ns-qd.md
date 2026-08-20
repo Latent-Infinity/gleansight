@@ -82,7 +82,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-H2** Embed the mechanism paraphrase, not the abstract.
 - **FR-H3** Each commit increments store-local monotonic `corpus_version` and produces a content-addressed `snapshot_id` (`ALG-SNAP`).
 - **FR-H4** Sufficiency report uses the domain expected-cell / recall-probe manifest (`ALG-SUF`), not cell statuses that already imply records.
-- **FR-H5** Novelty **term** is 0 unless snapshot state is `calibration` or `production_valid`. N1 `smoke_only` persists a novelty row with `evidence=null` plus version stamps (`ALG-NOV`, `ALG-STATE`). Numeric evidence is computed only when neighbors exist.
+- **FR-H5** Novelty **term** is 0 unless snapshot state is `calibration` or `production_valid`. N1 `smoke_only` persists a novelty evidence record on the candidate artifact with `evidence=null` plus version stamps (`ALG-NOV`, `ALG-STATE`). Numeric evidence is computed only when neighbors exist.
 - **FR-H7** Snapshot id from the canonical JSON preimage (`ALG-SNAP`). Duplicates/retractions per that contract.
 - **FR-H8** Sufficiency failure reasons are the closed set in `ALG-SUF` and are all tested.
 - **FR-H6** `type=paper` records may originate from FR-E2 (N2b).

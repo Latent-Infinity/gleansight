@@ -199,6 +199,22 @@ class ScoreUseCase:
         card["missing_fields"] = missing
         if missing:
             raise ValueError(f"card missing required fields: {missing}")
+        evaluated = dict(artifact)
+        evaluated["novelty"] = {
+            "evidence": evidence,
+            "term": nov,
+            "snapshot_id": snapshot_id,
+            "snapshot_state": validated_snapshot_state,
+            "corpus_version": corpus_version,
+            "measurement_stamp": {
+                "embedding_model_id": "none",
+                "embedding_model_version": "none",
+                "normalization_policy": "none",
+                "distance_metric": "cosine_distance",
+                "algorithm_contract_version": "1.1",
+            },
+        }
+        self.candidates.put_artifact(candidate_artifact_hash, evaluated)
         self.cards.put_card(card)
         return {
             "evidence": evidence,

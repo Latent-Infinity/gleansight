@@ -1,0 +1,59 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+from nsqd.app.handlers import NsqdHandlerContext
+from nsqd.infra.lancedb.index import LanceDBCorpusIndex
+from nsqd.infra.piccolo.stores import (
+    PiccoloCorpusRecordStore,
+    PiccoloCorpusSnapshotStore,
+    PiccoloFrontierCardStore,
+    PiccoloMorphospaceStore,
+    PiccoloNsqdCandidateStore,
+    PiccoloNsqdJobQueue,
+)
+from nsqd.null_adapters import FixedClock, SystemClock
+from nsqd.ports import Clock
+from papers.infra.piccolo.database import PiccoloDatabase
+
+
+@dataclass(frozen=True)
+class NsqdContainer:
+    clock: Clock
+    database: PiccoloDatabase
+    queue: PiccoloNsqdJobQueue
+    ctx: NsqdHandlerContext
+
+
+def build_container(
+    *,
+    db_path: Path,
+    index_path: Path,
+    clock: Clock | None = None,
+) -> NsqdContainer:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    database = PiccoloDatabase(db_path)
+    database.initialize_schema()
+    resolved_clock = clock if clock is not None else SystemClock()
+    ctx = NsqdHandlerContext(
+        clock=resolved_clock,
+        candidates=PiccoloNsqdCandidateStore(database),
+        cards=PiccoloFrontierCardStore(database),
+        snapshots=PiccoloCorpusSnapshotStore(database),
+        records=PiccoloCorpusRecordStore(database),
+        index=LanceDBCorpusIndex(index_path),
+        morph=PiccoloMorphospaceStore(database),
+    )
+    return NsqdContainer(
+        clock=resolved_clock,
+        database=database,
+        queue=PiccoloNsqdJobQueue(database),
+        ctx=ctx,
+    )
+
+
+def fixed_clock(as_of: datetime) -> FixedClock:
+    return FixedClock(as_of)
