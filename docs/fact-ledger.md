@@ -30,10 +30,11 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist layer records; live and paper hybrid search are not called on the N1 path | Ground | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases; covers 0, <k, exact k, ties, and known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | product | Active | EV-N11 |
 | NSQD.JOBS.OWNED.v1 | Harvest/diverge/ground/score persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
+| NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.3)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.12)
 
-See that plan’s ledger for full statements. N1 facts are **Active** with Required evidence. N2/N2b/N6/N7 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite.
+See that plan’s ledger for full statements. N1 and N2 harvest-reject facts are **Active** with Required evidence. N2b/N6/N7 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-03 is still not invented.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|

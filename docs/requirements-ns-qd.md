@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. Discovery layer **planned** (`src/nsqd/` does not exist yet). Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**, not the first slice. N1 ships only `python -m nsqd skeleton`.
+**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`; calibration data, live projection, and later map/archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
 
 **Document roles**
 
@@ -42,7 +42,7 @@ One local-first app with two layers:
 
 **Must not (this increment):** trading/`liq-validation` product, Qdrant, 12-process agents, rewrite of `src/papers`.
 
-Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `gleansight` is the **N10** target. Until then: `papers` (evidence) and `python -m nsqd skeleton` (N1).
+Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `gleansight` is the **N10** target. Until then: `papers` (evidence), `python -m nsqd skeleton` (N1), and `python -m nsqd harvest` (N2).
 
 ---
 
@@ -53,7 +53,7 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | Product name | gleansight | User direction: evolve this product |
 | Evidence package | keep `src/papers/` | Behavior-preserving; rename is a later refactor |
 | Discovery package | `src/nsqd/` | New bounded context; not `liq-ideation` |
-| CLI (N1) | `python -m nsqd skeleton` | Thin walking skeleton |
+| Discovery CLI (N1/N2) | `python -m nsqd skeleton`, `python -m nsqd harvest` | Thin vertical slices |
 | CLI (N10 target) | `gleansight` + existing `papers` | One product; no break of current scripts |
 | UI (N10 target) | One Flet app: evidence screens stay; add Map, Archive, Card | Same desktop; not N1 |
 | Vector store | LanceDB: existing paper table **and** a corpus-paraphrase collection | **HD-NSQD-01 closed: LanceDB.** Qdrant is out of scope |
@@ -126,7 +126,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 
 ### Product surfaces
 
-- **FR-U1** Unified `gleansight` CLI — **deferred to NSQD-N10**. Until then: `papers` (evidence) and `python -m nsqd skeleton` (N1).
+- **FR-U1** Unified `gleansight` CLI — **deferred to NSQD-N10**. Until then: `papers` (evidence), `python -m nsqd skeleton` (N1), and `python -m nsqd harvest` (N2).
 - **FR-U2** Map/Archive/Card UI — **deferred to NSQD-N10**.
 - **FR-U3** Thin clients only; use-cases own orchestration.
 

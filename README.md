@@ -1,8 +1,8 @@
 # gleansight
 
-Local-first **NS/QD-inspired discovery platform** (planned) plus an **executable paper evidence pipeline** (discover, import, convert, extract, search).
+Local-first **NS/QD-inspired discovery platform** with an **executable paper evidence pipeline** (discover, import, convert, extract, search).
 
-**Maturity:** The paper evidence pipeline is currently executable (`papers` CLI/UI). The NS/QD-inspired discovery layer is specified and **not yet available** (no `src/nsqd/` yet).
+**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton` and `python -m nsqd harvest`); calibration data, live paper projection, and later map/archive phases remain pending.
 
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
