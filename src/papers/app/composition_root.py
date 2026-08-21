@@ -26,13 +26,18 @@ from papers.infra.pdf_resolver import (
 from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import (
     PiccoloAnalysisRunStore,
+    PiccoloAtomicCandidateImport,
     PiccoloCandidateStore,
     PiccoloExtractionStore,
     PiccoloJobQueue,
     PiccoloPaperExternalIdStore,
+    PiccoloPaperProjectStore,
     PiccoloPaperStore,
+    PiccoloPaperTagStore,
     PiccoloProfileStore,
+    PiccoloProjectStore,
     PiccoloPromptStore,
+    PiccoloTagStore,
 )
 from papers.infra.scholar_s2.adapter import build_s2_client
 
@@ -59,6 +64,11 @@ class AppContainer:
     pdf_downloader: ports.PdfDownloader
     handler_context: HandlerContext
     job_runner: JobRunner
+    project_store: PiccoloProjectStore
+    tag_store: PiccoloTagStore
+    paper_project_store: PiccoloPaperProjectStore
+    paper_tag_store: PiccoloPaperTagStore
+    atomic_candidate_import: PiccoloAtomicCandidateImport
 
 
 def build_container(
@@ -79,6 +89,11 @@ def build_container(
     analysis_store = PiccoloAnalysisRunStore()
     extraction_store = PiccoloExtractionStore()
     external_id_store = PiccoloPaperExternalIdStore()
+    project_store = PiccoloProjectStore()
+    tag_store = PiccoloTagStore()
+    paper_project_store = PiccoloPaperProjectStore()
+    paper_tag_store = PiccoloPaperTagStore()
+    atomic_candidate_import = PiccoloAtomicCandidateImport()
 
     blob_store = FileSystemBlobStore(settings.data.blobs_dir)
     vector_index = LanceDBVectorIndex(LanceDBConfig(path=settings.data.lancedb_dir))
@@ -159,6 +174,11 @@ def build_container(
         pdf_downloader=pdf_downloader,
         handler_context=handler_context,
         job_runner=job_runner,
+        project_store=project_store,
+        tag_store=tag_store,
+        paper_project_store=paper_project_store,
+        paper_tag_store=paper_tag_store,
+        atomic_candidate_import=atomic_candidate_import,
     )
 
 
