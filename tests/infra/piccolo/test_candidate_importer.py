@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-from papers.domain.errors import NotFoundError
+from papers.domain.errors import ConflictError, NotFoundError
 from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import (
     PiccoloCandidateImporter,
@@ -83,7 +82,7 @@ def test_candidate_import_rolls_back_every_write_on_failure(tmp_path: Path) -> N
     candidates = PiccoloCandidateStore()
     candidates.create_candidate(_candidate_fields("candidate", '{"DOI": "10.1/conflict"}'))
 
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(ConflictError, match="external identifier"):
         PiccoloCandidateImporter().import_candidate("candidate")
 
     candidate = Candidate.select().where(Candidate.candidate_id == "candidate").first().run_sync()

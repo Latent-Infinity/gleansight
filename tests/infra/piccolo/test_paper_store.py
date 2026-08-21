@@ -7,6 +7,7 @@ from papers.domain.models import PipelineHealth, PipelineStage
 from papers.infra.piccolo.database import PiccoloDatabase
 from papers.infra.piccolo.stores import (
     PiccoloAnalysisRunStore,
+    PiccoloCandidateStore,
     PiccoloJobQueue,
     PiccoloPaperExternalIdStore,
     PiccoloPaperProjectStore,
@@ -114,6 +115,19 @@ def test_delete_paper_removes_paper_and_related_records(tmp_path: Path) -> None:
     profile_store.create_profile("profile1", "Local", "http://localhost")
     analysis_store = PiccoloAnalysisRunStore()
     analysis_store.create_run("run1", "p1", "pv1", "profile1", "model")
+    candidates = PiccoloCandidateStore()
+    candidates.create_candidate(
+        {
+            "candidate_id": "candidate-1",
+            "source": "semantic_scholar",
+            "source_paper_id": "s2-1",
+            "title": "Candidate",
+            "authors_json": "[]",
+            "rejected_at": None,
+            "imported_paper_id": "p1",
+            "imported_at": datetime.now(UTC),
+        }
+    )
 
     # Delete paper
     store.delete_paper("p1")
@@ -139,6 +153,10 @@ def test_delete_paper_removes_paper_and_related_records(tmp_path: Path) -> None:
     # Analysis run gone
     run_rows = AnalysisRun.select().where(AnalysisRun.paper_id == "p1").run_sync()
     assert run_rows == []
+    candidate = candidates.get_candidate("candidate-1")
+    assert candidate is not None
+    assert candidate["imported_paper_id"] is None
+    assert candidate["imported_at"] is None
 
 
 def test_delete_paper_nonexistent_is_noop(tmp_path: Path) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -11,7 +12,7 @@ from piccolo.querystring import QueryString
 from piccolo.utils.sync import run_sync
 
 from papers.app import ports
-from papers.domain.errors import NotFoundError
+from papers.domain.errors import ConflictError, NotFoundError
 from papers.domain.models import PipelineHealth, PipelineStage
 from papers.infra.piccolo.fts import literal_fts_query
 from papers.infra.piccolo.tables import (
@@ -209,13 +210,23 @@ class PiccoloCandidateStore:
         )
 
 
-class PiccoloCandidateImporter:
-    """Atomically import a candidate, its identifiers, and its download job."""
+class PiccoloAtomicCandidateImport:
+    def __init__(self, *, fail_after_paper_insert: bool = False) -> None:
+        self._fail_after_paper_insert = fail_after_paper_insert
 
-    def import_candidate(self, candidate_id: str) -> str:
+    def import_new(
+        self,
+        *,
+        candidate_id: str,
+        paper_fields: dict[str, Any],
+        external_ids: dict[str, str],
+        project_ids: list[str],
+        tag_ids: list[str],
+    ) -> str:
         async def import_in_transaction() -> str:
             database = Candidate._meta.db
             async with database.transaction(transaction_type=TransactionType.immediate):
+                await _require_taxonomy_ids(project_ids, tag_ids)
                 candidate = await (
                     Candidate.select().where(Candidate.candidate_id == candidate_id).first().run()
                 )
@@ -224,32 +235,23 @@ class PiccoloCandidateImporter:
                 if candidate["rejected_at"] is not None:
                     raise ValueError("cannot import candidate that was already rejected")
                 if imported_paper_id := candidate["imported_paper_id"]:
+                    await _require_paper(imported_paper_id)
+                    await _attach_memberships(imported_paper_id, project_ids, tag_ids)
                     return imported_paper_id
 
-                try:
-                    authors = json.loads(candidate["authors_json"] or "[]")
-                except (json.JSONDecodeError, TypeError):
-                    authors = []
-                try:
-                    parsed_external_ids = json.loads(candidate["external_ids_json"] or "{}")
-                except (json.JSONDecodeError, TypeError):
-                    parsed_external_ids = {}
-                external_ids = {
-                    str(kind): str(value)
-                    for kind, value in parsed_external_ids.items()
-                    if value is not None
-                }
-
+                title, year, venue, abstract, authors_json, resolved_external_ids = (
+                    _paper_insert_values(candidate, paper_fields, external_ids)
+                )
                 paper_id = str(uuid.uuid4())
                 await (
                     Paper(
                         _data={
                             Paper.paper_id: paper_id,
-                            Paper.title: candidate["title"],
-                            Paper.year: candidate["year"],
-                            Paper.venue: candidate["venue"],
-                            Paper.authors_json: json.dumps(authors),
-                            Paper.abstract: candidate["abstract"],
+                            Paper.title: title,
+                            Paper.year: year,
+                            Paper.venue: venue,
+                            Paper.authors_json: authors_json,
+                            Paper.abstract: abstract,
                             Paper.pipeline_stage: str(PipelineStage.imported),
                             Paper.pipeline_health: str(PipelineHealth.ok),
                         }
@@ -257,16 +259,17 @@ class PiccoloCandidateImporter:
                     .save()
                     .run()
                 )
+                if self._fail_after_paper_insert:
+                    raise ValueError("injected failure")
                 await database.run_querystring(
                     QueryString(
                         "INSERT INTO papers_fts(title, abstract, paper_id) VALUES({}, {}, {})",
-                        candidate["title"],
-                        candidate["abstract"] or "",
+                        title,
+                        abstract or "",
                         paper_id,
                     )
                 )
-
-                for kind, value in external_ids.items():
+                for kind, value in resolved_external_ids.items():
                     await (
                         PaperExternalId(
                             _data={
@@ -279,7 +282,6 @@ class PiccoloCandidateImporter:
                         .save()
                         .run()
                     )
-
                 await (
                     Job(
                         _data={
@@ -289,7 +291,9 @@ class PiccoloCandidateImporter:
                             Job.paper_id: paper_id,
                             Job.run_id: None,
                             Job.payload_json: json.dumps(
-                                {"external_ids": external_ids} if external_ids else {}
+                                {"external_ids": resolved_external_ids}
+                                if resolved_external_ids
+                                else {}
                             ),
                             Job.attempts: 0,
                             Job.max_attempts: 3,
@@ -311,9 +315,142 @@ class PiccoloCandidateImporter:
                     .where(Candidate.candidate_id == candidate_id)
                     .run()
                 )
+                await _attach_memberships(paper_id, project_ids, tag_ids)
                 return paper_id
 
-        return run_sync(import_in_transaction())
+        try:
+            return run_sync(import_in_transaction())
+        except sqlite3.IntegrityError as exc:
+            raise ConflictError("external identifier already belongs to another paper") from exc
+
+    def attach_to_imported(
+        self,
+        *,
+        paper_id: str,
+        project_ids: list[str],
+        tag_ids: list[str],
+    ) -> None:
+        async def attach_in_transaction() -> None:
+            database = Candidate._meta.db
+            async with database.transaction(transaction_type=TransactionType.immediate):
+                await _require_paper(paper_id)
+                await _require_taxonomy_ids(project_ids, tag_ids)
+                await _attach_memberships(paper_id, project_ids, tag_ids)
+
+        try:
+            run_sync(attach_in_transaction())
+        except sqlite3.IntegrityError as exc:
+            raise ConflictError("paper membership conflicts with existing data") from exc
+
+
+async def _require_paper(paper_id: str) -> None:
+    paper = await Paper.select(Paper.paper_id).where(Paper.paper_id == paper_id).first().run()
+    if paper is None:
+        raise NotFoundError(f"paper not found: {paper_id}")
+
+
+async def _require_taxonomy_ids(project_ids: list[str], tag_ids: list[str]) -> None:
+    for project_id in project_ids:
+        project = await (
+            Project.select(Project.project_id).where(Project.project_id == project_id).first().run()
+        )
+        if project is None:
+            raise NotFoundError(f"project not found: {project_id}")
+    for tag_id in tag_ids:
+        tag = await Tag.select(Tag.tag_id).where(Tag.tag_id == tag_id).first().run()
+        if tag is None:
+            raise NotFoundError(f"tag not found: {tag_id}")
+
+
+async def _attach_memberships(paper_id: str, project_ids: list[str], tag_ids: list[str]) -> None:
+    for project_id in project_ids:
+        existing = await (
+            PaperProject.select()
+            .where(PaperProject.paper_id == paper_id)
+            .where(PaperProject.project_id == project_id)
+            .first()
+            .run()
+        )
+        if existing is None:
+            await (
+                PaperProject(
+                    _data={
+                        PaperProject.paper_id: paper_id,
+                        PaperProject.project_id: project_id,
+                        PaperProject.label: None,
+                    }
+                )
+                .save()
+                .run()
+            )
+    for tag_id in tag_ids:
+        existing = await (
+            PaperTag.select()
+            .where(PaperTag.paper_id == paper_id)
+            .where(PaperTag.tag_id == tag_id)
+            .first()
+            .run()
+        )
+        if existing is None:
+            await (
+                PaperTag(
+                    _data={
+                        PaperTag.paper_id: paper_id,
+                        PaperTag.tag_id: tag_id,
+                        PaperTag.confidence: None,
+                    }
+                )
+                .save()
+                .run()
+            )
+
+
+def _paper_insert_values(
+    candidate: dict[str, Any],
+    paper_fields: dict[str, Any],
+    external_ids: dict[str, str],
+) -> tuple[str, Any, Any, Any, str, dict[str, str]]:
+    if paper_fields.get("title"):
+        title = str(paper_fields["title"])
+        year = paper_fields.get("year")
+        venue = paper_fields.get("venue")
+        abstract = paper_fields.get("abstract")
+        authors = paper_fields.get("authors") or []
+        authors_json = json.dumps(authors if isinstance(authors, list) else [])
+        resolved = {str(kind): str(value) for kind, value in external_ids.items()}
+        return title, year, venue, abstract, authors_json, resolved
+    try:
+        authors = json.loads(candidate["authors_json"] or "[]")
+    except (json.JSONDecodeError, TypeError):
+        authors = []
+    try:
+        parsed_external_ids = json.loads(candidate["external_ids_json"] or "{}")
+    except (json.JSONDecodeError, TypeError):
+        parsed_external_ids = {}
+    resolved = {
+        str(kind): str(value) for kind, value in parsed_external_ids.items() if value is not None
+    }
+    return (
+        candidate["title"],
+        candidate["year"],
+        candidate["venue"],
+        candidate["abstract"],
+        json.dumps(authors),
+        resolved,
+    )
+
+
+class PiccoloCandidateImporter:
+    """Atomically import a candidate, its identifiers, and its download job."""
+
+    def import_candidate(self, candidate_id: str) -> str:
+        return PiccoloAtomicCandidateImport().import_new(
+            candidate_id=candidate_id,
+            paper_fields={},
+            external_ids={},
+            project_ids=[],
+            tag_ids=[],
+        )
 
 
 class PiccoloPaperStore(ports.PaperStore):
@@ -457,23 +594,37 @@ class PiccoloPaperStore(ports.PaperStore):
         return [row["paper_id"] for row in rows]
 
     def delete_paper(self, paper_id: str) -> None:
-        run_sync(
-            Paper._meta.db.run_querystring(
-                QueryString("DELETE FROM papers_fts WHERE paper_id = {}", paper_id)
-            )
-        )
-        run_sync(
-            Paper._meta.db.run_querystring(
-                QueryString("DELETE FROM extractions_fts WHERE paper_id = {}", paper_id)
-            )
-        )
-        Job.delete().where(Job.paper_id == paper_id).run_sync()
-        PaperExternalId.delete().where(PaperExternalId.paper_id == paper_id).run_sync()
-        PaperTag.delete().where(PaperTag.paper_id == paper_id).run_sync()
-        PaperProject.delete().where(PaperProject.paper_id == paper_id).run_sync()
-        AnalysisExtraction.delete().where(AnalysisExtraction.paper_id == paper_id).run_sync()
-        AnalysisRun.delete().where(AnalysisRun.paper_id == paper_id).run_sync()
-        Paper.delete().where(Paper.paper_id == paper_id).run_sync()
+        async def delete_in_transaction() -> None:
+            database = Paper._meta.db
+            async with database.transaction(transaction_type=TransactionType.immediate):
+                await database.run_querystring(
+                    QueryString("DELETE FROM papers_fts WHERE paper_id = {}", paper_id)
+                )
+                await database.run_querystring(
+                    QueryString("DELETE FROM extractions_fts WHERE paper_id = {}", paper_id)
+                )
+                await Job.delete().where(Job.paper_id == paper_id).run()
+                await PaperExternalId.delete().where(PaperExternalId.paper_id == paper_id).run()
+                await PaperTag.delete().where(PaperTag.paper_id == paper_id).run()
+                await PaperProject.delete().where(PaperProject.paper_id == paper_id).run()
+                await (
+                    AnalysisExtraction.delete().where(AnalysisExtraction.paper_id == paper_id).run()
+                )
+                await AnalysisRun.delete().where(AnalysisRun.paper_id == paper_id).run()
+                await (
+                    Candidate.update(
+                        {
+                            Candidate.imported_paper_id: None,
+                            Candidate.imported_at: None,
+                            Candidate.updated_at: datetime.now(UTC),
+                        }
+                    )
+                    .where(Candidate.imported_paper_id == paper_id)
+                    .run()
+                )
+                await Paper.delete().where(Paper.paper_id == paper_id).run()
+
+        run_sync(delete_in_transaction())
 
     def reset_pipeline_stage(self, paper_id: str, stage: str) -> None:
         Paper.update(
