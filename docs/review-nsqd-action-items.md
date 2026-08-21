@@ -97,7 +97,7 @@ Synthetic vectors/neighbors are allowed only as deterministic unit-test inputs f
 - [x] **PASS-06 — Evidence-layer dependencies are named explicitly.**
   - EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, and EW-V2 dependencies and the `NSQD-N*` namespace are clear.
 - [x] **PASS-07 — Paper projection does not equate an abstract with a mechanism paraphrase.**
-  - The normative projector requires human-authored, approved text in v1.
+  - The normative projector requires human-approved text in v1; model-assisted drafting requires recorded human review.
 - [x] **PASS-08 — Durable NS-QD work has an ownership decision.**
   - Discovery work uses `nsqd_jobs` rather than violating the paper-jobs CHECK constraint.
 
@@ -135,12 +135,12 @@ The earlier N1 path incorrectly began with an approved paper fixture and claimed
 
 **Resolution**
 
-**Alternative accepted:** do not invent a paper. Remove projector behavior and EV-N09 from N1. DATA-NSQD-04 is a blocked future data prerequisite, not work required in this documentation-review pass. First projector delivery is **N2b**, after EW-V0A has approved real paper fixtures, DATA-NSQD-04 has a real approved paper plus human paraphrase, and EW-V2 is available for live import. N1 uses DATA-NSQD-01/02 as candidate-requirement-cards only.
+**Alternative accepted:** do not invent a paper. Remove projector behavior and EV-N09 from N1. DATA-NSQD-04 was a blocked future data prerequisite during this review and has since been acquired as a real approved paper plus model-assisted, human-approved paraphrase. First projector delivery remains **N2b**; N1 uses DATA-NSQD-01/02 as candidate-requirement-cards only.
 
 **Acceptance criteria**
 
-- [x] DATA-NSQD-04 is **not** claimed. Manifest records it as pending. (Creating the paper is still a human task.)
-- [x] Manifest lists 01/02 with integrity/approval metadata; 04 is explicitly not approved.
+- [x] DATA-NSQD-04 was not claimed during this review; its later acquisition is recorded separately with integrity and approval metadata.
+- [x] Manifest lists 01/02 and the later approved 04 fixture with integrity/approval metadata.
 - [x] NSQD-N1 depends on N0A.2 (01/02), not on N0A.3.
 - [x] The “else 01 paraphrase only” fallback is removed.
 - [x] DATA-NSQD-01 and DATA-NSQD-02 are typed `candidate-requirement-card` and `never_corpus_record = true`.
@@ -385,10 +385,10 @@ At review time `ruff check` (79) and `ty check` (526) fail. Pytest passes.
 - [x] B–G are `FR-D1-FUTURE` (deferred), not current acceptance criteria.
 - [x] Product language says “Operator A in the baseline; B–G later.”
 
-### [x] REV-P2-04 — Align paper projection defaults with the human-only v1 contract
+### [x] REV-P2-04 — Align paper projection defaults with the human-approved v1 contract
 
-- [x] Defaults table: v1 consumes an approved human-authored paraphrase.
-- [x] Model-assisted extraction is a later reviewed slice.
+- [x] Defaults table: v1 consumes an approved human-reviewed paraphrase.
+- [x] Model-assisted drafting is allowed only with recorded human approval.
 
 ### [x] REV-P2-05 — Mark unified CLI/UI text as target-state N10
 
@@ -449,7 +449,7 @@ Named in `docs/development-plan-ns-qd.md`. Domain and application increments are
 - [x] Every P1 item is checked.
 - [x] P2 documentation corrections are checked.
 - [x] The dependency matrix and N1 task order agree with the revised contracts.
-- [x] DATA-NSQD-04 is not approved; all paper-projector claims are removed from N1.
+- [x] DATA-NSQD-04 is now approved; all paper-projector claims remain removed from N1 and EV-N09 remains pending N2b.
 - [x] A plan-only consistency pass finds no requirement simultaneously mandatory and out of scope (FR-D1 vs B–G resolved).
 - [x] Pre-existing Ruff/`ty` failures are explicitly assigned to EW-V0.11 and are not required to be fixed by this documentation-review pass. This review does not weaken, bypass, or redefine the four-command gate.
 

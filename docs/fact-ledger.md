@@ -34,9 +34,9 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Given elite counts and the eligible archive-cell universe excluding Invalid, when global rank is requested, then it fails with rank_guard_blocked unless \|elites\| ≥ 50 or coverage ≥ 0.20 | Archive rank | Behavior | LOCAL-NSQD-A | product | Active | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.14)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.16)
 
-See that plan’s ledger for full statements. N1, N2 harvest-reject, and N7 rank-guard facts are **Active** with Required evidence. N2b/N6 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-03/04 are still not invented.
+See that plan’s ledger for full statements. N1, N2 harvest-reject, N7 rank-guard, and N8 re-score facts are **Active** with Required evidence. N2b/N6 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -49,7 +49,7 @@ See that plan’s ledger for full statements. N1, N2 harvest-reject, and N7 rank
 | NSQD.MAP.STATUS_RULES.v1 | N1 | |
 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | N1 | Non-smoke unit inputs |
 | NSQD.CARD.SCHEMA.v1 | N1 | |
-| NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | **N2b** | Not N1; needs EW-V0A + DATA-NSQD-04 + EW-V2 |
+| NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | **N2b** | Not N1; data prerequisites EW-V0A + DATA-NSQD-04 + EW-V2 are satisfied, but projector implementation and EV-N09 remain pending |
 | NSQD.GROUND.CASCADE.v1 | N1 | |
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |

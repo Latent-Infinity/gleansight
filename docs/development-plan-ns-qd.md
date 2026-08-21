@@ -10,13 +10,13 @@
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
 **Supersedes**: `docs/development-plan-ns-qd.md` v1.2.0 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
-**Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. Harvest seed and paper-04 still pending.
+**Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is an approved paper+paraphrase fixture; the DATA-NSQD-03 harvest seed is still pending.
 **Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
 **Provider Policy**: `src/nsqd/` + `src/papers/`. **HD-NSQD-01 closed: LanceDB** corpus collection. Durable NS-QD work in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
-**Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
+**Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing**. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, EW-V2, EW-V7 done.** DATA-NSQD-03; DATA-NSQD-04 before N2b. N1, N2 harvest reject, and N7 rank guard are done. N2b still needs a human paraphrase of one V0A paper (DATA-NSQD-04). N3 ablation waits on N6. N6 waits on DATA-NSQD-03.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, EW-V2, EW-V7 done.** DATA-NSQD-03. N1, N2 harvest reject, N7 rank guard, and DATA-NSQD-04 acquisition are done. N2b still needs projector implementation and EV-N09. N3 ablation waits on N6. N6 waits on DATA-NSQD-03.
 **N8 Status**: Re-score is done; stale cards re-ground, re-score, and replay archive insertion against the current snapshot.
 
 ```bash
@@ -53,6 +53,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.3.13 | 2026-08-20 | Reconcile completed N1 E2E and persistence status after EW-V2 closeout. |
 | 1.3.14 | 2026-08-21 | N7 rank guard: global rank fails unless 50 elites or 20% coverage of U excluding Invalid. N2b still blocked on DATA-NSQD-04. |
 | 1.3.15 | 2026-08-21 | N8 re-score: stale card snapshot_id triggers ground+score+elite replay; rejected elites are cleared. |
+| 1.3.16 | 2026-08-21 | DATA-NSQD-04 acquired from DATA-01c with a model-assisted, human-approved paraphrase and integrity metadata. N2b implementation and EV-N09 remain pending. |
 
 ---
 
@@ -89,11 +90,11 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 | PRD / algorithm contract | glossary + algorithm-contract | Pass | — | — |
 | Terminology | NS/QD-inspired; corpus-relative novelty | Pass | — | — |
 | Vertical E2E | NSQD-N1 path (rejected smoke card) | Pass (implemented) | — | EV-N00 green; N1 closed |
-| Real data | 01/02 committed; 03/04 pending | Blocked: harvest-from-seed; projector | N2, N2b, N6 | N0A.3 / N0A.4 |
+| Real data | 01/02/04 committed; 03 pending | Blocked: production-valid harvest calibration | N6 | N0A.4; N2b data-ready, implementation pending |
 | Four-command gate | EW-V0.11 | Pass (2026-08-18) | — | 536 passed, 1 skipped, 91.91% |
 | EW fact surface | EW-V0.3 | Pass (2026-08-18) | — | `tests/support/test_fact_surface.py` |
 | EW migrator | EW-V0B | Pass (2026-08-19) | — | `schema_migrations` + jobs CHECK |
-| EW approved papers | EW-V0A | Pass (2026-08-19) | — | DATA-01a/b/c approved; DATA-NSQD-04 remains separate |
+| EW approved papers | EW-V0A | Pass (2026-08-19) | — | DATA-01a/b/c approved; DATA-NSQD-04 approved separately |
 | EW atomic import | EW-V2 | Pass | — | done 2026-08-20 |
 | EW RRF | EW-V1 | Pass | — | done 2026-08-19 |
 | Operators B–G | explicitly deferred | N/A (deferred) | — | later revision |
@@ -158,9 +159,9 @@ Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 | DATA-NSQD-01 | **Committed** | `candidate-requirement-card` — **not** a corpus record | `tests/fixtures/approved/nsqd/gamma-flow.yaml` |
 | DATA-NSQD-02 | **Committed** | `candidate-requirement-card` — **not** a corpus record | `tests/fixtures/approved/nsqd/mechanism-free.yaml` |
 | DATA-NSQD-03 | **Pending** | harvest enumeration | `tests/fixtures/approved/nsqd/harvest-seed.toml` |
-| DATA-NSQD-04 | **Pending** | approved paper + human paraphrase | `tests/fixtures/approved/nsqd/paper-a.*` |
+| DATA-NSQD-04 | **Committed** | approved paper + model-assisted, human-approved mechanism paraphrase | `tests/fixtures/approved/nsqd/paper-a.*` |
 
-N1 uses 01+02 as **candidate inputs** only. N1 must reject either file if offered as a corpus record. DATA-NSQD-04 is **not** an N1 prerequisite and remains pending after EW-V0A approved DATA-01a/b/c. If DATA-NSQD-04 remains pending, the projector stays out of N1 and N2b remains blocked.
+N1 uses 01+02 as **candidate inputs** only. N1 must reject either file if offered as a corpus record. DATA-NSQD-04 is **not** an N1 prerequisite. Its data acquisition is complete, but the projector stays out of N1 and EV-N09/N2b remain pending until projector implementation.
 
 ---
 
@@ -294,18 +295,18 @@ N1 uses 01+02 as **candidate inputs** only. N1 must reject either file if offere
 - [x] Manifest lists them with reviewer, approval revision, UTC date, `never_corpus_record = true`
 - [x] A loader test fails if either file is offered as a corpus record
 
-### NSQD-N0A.3 Acquire paper-04 (human paraphrase)
+### NSQD-N0A.3 Acquire paper-04 (human-approved paraphrase)
 
 **Type:** Data Acquisition
 **Depends On:** NSQD-N0A.2, EW-V0A
 **PRD Trace:** LOCAL-NSQD-E
 **Real Data Dependency:** DATA-NSQD-04
 **Provider Boundary:** PaperStore (source)
-**Description:** Blocked future data acquisition. Select one EW-V0A-approved real paper fixture and add its title, abstract, markdown excerpt, **human-written mechanism paraphrase**, and a `paper_id` not lexicographically “first.” **Do not invent.** Not required for N1 or for this documentation-review pass.
+**Description:** Completed data acquisition. DATA-01c (`paper-20`) supplies the real title, abstract identity, and markdown excerpt. The mechanism paraphrase was model-assisted through four writer/reviewer rounds and approved by product; it is not the abstract. Not required for N1.
 **Acceptance Criteria:**
-- [x] Sidecar + markdown under `tests/fixtures/approved/nsqd/` **or** explicitly still pending in the manifest
-- [ ] Paraphrase ≠ abstract
-- [x] N2b stays blocked while pending
+- [x] Sidecar + markdown under `tests/fixtures/approved/nsqd/`
+- [x] Paraphrase ≠ abstract; maximum contiguous source overlap is 7 tokens against an 8-token limit
+- [x] DATA-NSQD-04 no longer blocks N2b data readiness; N2b remains unimplemented until projector code/tests close EV-N09
 
 ### NSQD-N0A.4 Harvest seed 03
 
@@ -575,6 +576,7 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Depends On:** N1 **and EW-V0A** **and EW-V2** **and DATA-NSQD-04**
 **Facts:** NSQD.PROJECT.HUMAN_PARAPHRASE.v1 → EV-N09
 **Acceptance:** Projector over an approved paper fixture (and, when EW-V2 is Active, atomically imported papers); rejects abstract substitution; idempotent on hashes. Requirement-cards 01/02 are rejected as corpus input.
+**Current state:** Data prerequisites are satisfied. Projector implementation has not started and EV-N09 remains Pending: N2b.
 
 ### NSQD-N3 Map harden
 
@@ -614,9 +616,9 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Close note (2026-08-21):** `RankArchiveUseCase` implements ALG-COV: allow iff elite count ≥ 50 or coverage ≥ 0.20 of `finance/1` universe minus Invalid. The use case derives Invalid cells from its injected authoritative status table; callers cannot submit denominator exclusions per rank request. Rank inputs are bounded built-in collections. Unknown/uninspected cells stay in the denominator, while Invalid cells are excluded from both numerator and denominator. N2b projector was not started. Four-command gate: 787 passed, 1 skipped, 92.88% repository coverage.
 
 ### NSQD-N8 Re-score
-**Facts:** NSQD.RESCORE.REPLAY.v1 → EV-N15
 
 **Depends On:** N7
+**Facts:** NSQD.RESCORE.REPLAY.v1 → EV-N15
 **Acceptance:** `card.snapshot_id != current snapshot_id` → `needs_re_score` → elite replay.
 
 - [x] Equal snapshot ids skip ground/score
