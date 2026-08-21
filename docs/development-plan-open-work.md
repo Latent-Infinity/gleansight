@@ -13,10 +13,10 @@
 **Generated Data Authorization**: `None`
 **Provider Policy**: External services stay behind existing ports in `src/papers/app/ports.py`. Domain and use-case modules must not import provider SDKs.
 **Fact Policy**: Tier-1 facts live in `docs/fact-ledger.md`. Semantics change only via Fact Change tasks.
-**Data & Provider Readiness Summary**: Convert-path markdown exists under gitignored `data/blobs/md/`. No approved committed fixtures yet (V0A). Three minimized papers are required before V1. EV-01 asserts the full fused order and scores, not a single winner.
+**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, and V2 atomic import is complete. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 is done.** V2 atomic import is next. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N1 walking skeleton is done (`docs/development-plan-ns-qd.md`).
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 and V2 are done.** V3 project-analysis filters are next. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -71,6 +71,9 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.2 | 2026-08-19 | Close V0B: forward-only `schema_migrations` runner; jobs CHECK; EV-11/EV-12 Required. |
 | 1.3.3 | 2026-08-19 | Close V0A: three convert-path papers + manifest; secret-scan gate. FTS query `optimization algorithm`. |
 | 1.3.4 | 2026-08-19 | Close V1: EV-01 hybrid FTS+vector one-based RRF on DATA-01a/b/c. |
+| 1.3.5 | 2026-08-20 | Close V2: atomic candidate import with project/tag attachments; idempotent re-import; CLI `--project`/`--tag`. |
+| 1.3.6 | 2026-08-20 | Reconcile V2 task acceptance boxes, readiness summary, validation ownership, and project-register metadata after review. |
+| 1.3.7 | 2026-08-20 | Harden V2: in-transaction target validation, atomic stale-reference cleanup on paper deletion, stable import conflicts, bounded CLI errors, and explicit fallback rejection. |
 
 ---
 
@@ -99,8 +102,8 @@ Project register: `docs/fact-ledger.md`. This plan introduces:
 | Fact ID | Statement (Given / When / Then) | Applies When | Kind | Requirement | Owner | Lifecycle | Evidence |
 |---------|--------------------------------|--------------|------|-------------|-------|-----------|----------|
 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | Given a non-empty query and the three approved paper records, when the user searches papers, then FTS runs on title+abstract, vectors on markdown, and the fused order and one-based scores match A=0.03252247, B=0.03226646, C=0.03200205 | Default paper search | Behavior | LOCAL-AC-HYBRID-SEARCH (`project-design.md` §3.1, §10.2.1) | product | Active | EV-01 |
-| DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import (paper, attachments, download job, candidate mark) commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY (`project-design.md` §15) | product | Proposed | EV-02, EV-02b |
-| DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import of an imported candidate | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Proposed | EV-02c |
+| DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import (paper, attachments, download job, candidate mark) commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY (`project-design.md` §15) | product | Active | EV-02, EV-02b |
+| DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import of an imported candidate | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Active | EV-02c |
 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS (`project-design.md` §15, §10.4) | product | Proposed | EV-03 |
 | ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE (`project-design.md` §9.2) | product | Proposed | EV-04 |
 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Any schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK (`project-design.md` §5.2 L) | product | Active | EV-11 |
@@ -121,9 +124,9 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 | Evidence ID | Facts | Type | Path / Command | Available From | Lifecycle | Oracle & Fixture Deps | Data Version | Environment | Last Result |
 |-------------|-------|------|----------------|----------------|-----------|-----------------------|--------------|-------------|-------------|
 | EV-01 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | test | `uv run pytest tests/facts/test_hybrid_search.py -q --no-cov` | V1 | Required | title+abstract FTS; markdown embed; scores 0.03252247/0.03226646/0.03200205 | DATA-01a/b/c | hermetic | pass 2026-08-19 |
-| EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q` | V2 | Pending: V2 | **real Piccolo** stores; injected in-transaction failure | none | hermetic | Unknown |
-| EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q` | V2 | Pending: V2 | CLI ID strings | none | hermetic | Unknown |
-| EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q` | V2 | Pending: V2 | prior import via use-case + Piccolo | none | hermetic | Unknown |
+| EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q --no-cov` | V2 | Required | **real Piccolo** stores; injected in-transaction failure | none | hermetic | pass 2026-08-20 |
+| EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q --no-cov` | V2 | Required | CLI ID strings | none | hermetic | pass 2026-08-20 |
+| EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q --no-cov` | V2 | Required | prior import via use-case + Piccolo | none | hermetic | pass 2026-08-20 |
 | EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q` | V3 | Pending: V3 | members + extractions via use-cases | none | hermetic | Unknown |
 | EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q` | V3 | Pending: V3 | existing `RunAnalysisUseCase` | none | hermetic | Unknown |
 | EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q` | V6 | Pending: V6 | empty-output mutation; converter exception | none | hermetic | Unknown |
@@ -1095,9 +1098,9 @@ Use-case sequence:
 Run the four-command quality gate including EV-01.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] EV-01 still green
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] EV-01 still green
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -1121,9 +1124,9 @@ Run the four-command quality gate including EV-01.
 Against **real Piccolo** stores: happy path with one project and one tag; unknown project ID creates nothing; failure injected inside the Piccolo transaction after paper insert rolls back completely.
 
 **Acceptance Criteria:**
-- [ ] `tests/facts/test_import_taxonomy.py` exists
-- [ ] New check fails with the stated signature; rest of suite green
-- [ ] Coverage policy satisfied
+- [x] `tests/facts/test_import_taxonomy.py` exists
+- [x] New check fails with the stated signature; rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_import_taxonomy.py` (create)
@@ -1150,11 +1153,11 @@ Against **real Piccolo** stores: happy path with one project and one tag; unknow
 Add `AtomicCandidateImport` to `ports.py`. Implement `PiccoloAtomicCandidateImport` with one transactional async write path. Wire stores + port in `composition_root`, CLI container, and UI services. Extend `import_candidate(..., project_ids=..., tag_ids=...)`.
 
 **Acceptance Criteria:**
-- [ ] EV-02 green against real Piccolo
-- [ ] No new `run_sync()` per insert inside `import_new`
-- [ ] Import without IDs still creates a paper and enqueues download inside `import_new`
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-02 green against real Piccolo
+- [x] No new `run_sync()` per insert inside `import_new`
+- [x] Import without IDs still creates a paper and enqueues download inside `import_new`
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/app/ports.py` (modify)
@@ -1186,9 +1189,9 @@ Add `AtomicCandidateImport` to `ports.py`. Implement `PiccoloAtomicCandidateImpo
 Import once with no IDs, then again with project/tag IDs. Assert same paper_id, attachments present, single download job.
 
 **Acceptance Criteria:**
-- [ ] `tests/facts/test_import_idempotent_attach.py` fails with the stated signature
-- [ ] Rest of suite green
-- [ ] Coverage policy satisfied
+- [x] `tests/facts/test_import_idempotent_attach.py` fails with the stated signature
+- [x] Rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_import_idempotent_attach.py` (create)
@@ -1215,9 +1218,9 @@ Import once with no IDs, then again with project/tag IDs. Assert same paper_id, 
 On already-imported candidates, attach missing memberships only; never enqueue download.
 
 **Acceptance Criteria:**
-- [ ] EV-02c green
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-02c green
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/app/use_cases/discovery.py` (modify)
@@ -1244,9 +1247,9 @@ On already-imported candidates, attach missing memberships only; never enqueue d
 CLI forwards repeatable `--project` and `--tag`.
 
 **Acceptance Criteria:**
-- [ ] Check fails with the stated signature
-- [ ] Rest of suite green
-- [ ] Coverage policy satisfied
+- [x] Check fails with the stated signature
+- [x] Rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_import_taxonomy_cli.py` (create)
@@ -1273,10 +1276,10 @@ CLI forwards repeatable `--project` and `--tag`.
 Add repeatable `--project` and `--tag` on `papers import`.
 
 **Acceptance Criteria:**
-- [ ] EV-02b green
-- [ ] `uv run python -m papers.cli import --help` shows the flags
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-02b green
+- [x] `uv run python -m papers.cli import --help` shows the flags
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/cli/commands/discovery.py` (modify)
@@ -1284,15 +1287,17 @@ Add repeatable `--project` and `--tag` on `papers import`.
 ---
 
 **Phase V2 Exit Criteria:**
-- [ ] EV-02, EV-02b, EV-02c green
-- [ ] ID validation precedes writes
-- [ ] First import goes through `AtomicCandidateImport.import_new` (one Piccolo transaction)
-- [ ] Re-import attaches only; already-present attachments are no-ops
-- [ ] EV-02/02b/02c Lifecycle set to Required
-- [ ] DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 and DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 set to Active
-- [ ] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 still green
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] EV-02, EV-02b, EV-02c green
+- [x] ID validation precedes writes
+- [x] First import goes through `AtomicCandidateImport.import_new` (one Piccolo transaction)
+- [x] Re-import attaches only; already-present attachments are no-ops
+- [x] EV-02/02b/02c Lifecycle set to Required
+- [x] DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 and DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 set to Active
+- [x] SEARCH.HYBRID.FTS_VECTOR_RRF.v1 still green
+- [x] Quality gate green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-20):** `ImportCandidateUseCase` validates, deduplicates, and caps project/tag IDs before invoking the adapter and rejects attachment requests when `AtomicCandidateImport` is not configured. `PiccoloAtomicCandidateImport` revalidates paper/project/tag targets inside the immediate transaction, which writes paper, FTS, external IDs, download job, import mark, and memberships atomically. Re-import uses `attach_to_imported` and does not enqueue a second download. Paper deletion clears candidate import references in the same transaction. Integrity collisions become stable domain conflicts, and CLI errors use fixed output without resource IDs or raw database details. CLI forwards repeatable `--project` and `--tag`. Final four-command gate: 749 passed, 1 skipped, 92.83% repository coverage.
 
 ---
 

@@ -1,17 +1,17 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` v1.3.0
-**As of:** 2026-08-18
+**Authority:** `docs/development-plan-open-work.md` v1.3.7
+**As of:** 2026-08-20
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
 
 | Evidence ID | Facts | Type | Path / Command | Available From | Lifecycle | Oracle & Fixture Deps | Data Version | Environment | Last Result |
 |-------------|-------|------|----------------|----------------|-----------|-----------------------|--------------|-------------|-------------|
 | EV-01 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | test | `uv run pytest tests/facts/test_hybrid_search.py -q --no-cov` | V1 | Required | title+abstract FTS; markdown embed; 0.03252247/0.03226646/0.03200205 | DATA-01a/b/c | hermetic | pass 2026-08-19 |
-| EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q` | V2 | Pending: V2 | real Piccolo; in-transaction fault | none | hermetic | Unknown |
-| EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q` | V2 | Pending: V2 | CLI ID strings | none | hermetic | Unknown |
-| EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q` | V2 | Pending: V2 | prior import + Piccolo | none | hermetic | Unknown |
+| EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q --no-cov` | V2 | Required | real Piccolo; in-transaction fault | none | hermetic | pass 2026-08-20 |
+| EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q --no-cov` | V2 | Required | CLI ID strings | none | hermetic | pass 2026-08-20 |
+| EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q --no-cov` | V2 | Required | prior import + Piccolo | none | hermetic | pass 2026-08-20 |
 | EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q` | V3 | Pending: V3 | use-case-created data | none | hermetic | Unknown |
 | EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q` | V3 | Pending: V3 | existing RunAnalysisUseCase | none | hermetic | Unknown |
 | EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q` | V6 | Pending: V6 | empty / exception | none | hermetic | Unknown |

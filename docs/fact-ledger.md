@@ -2,15 +2,15 @@
 
 **Plan Set:** gleansight
 **Authority:** project register. Closeout: `docs/development-plan-open-work.md`. NS-QD: `docs/development-plan-ns-qd.md`.
-**As of:** 2026-08-18
+**As of:** 2026-08-20
 
 Facts are append-only. Lifecycle is not a test result. Evidence results live in `docs/evidence-index.md`.
 
 | Fact ID | Statement (Given / When / Then) | Applies When | Kind | Requirement | Owner | Lifecycle | Evidence |
 |---------|--------------------------------|--------------|------|-------------|-------|-----------|----------|
 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | Given a non-empty query and the three approved paper records, when the user searches papers, then FTS runs on title+abstract, vectors on markdown, and the fused order and one-based RRF scores match the V0A table (A=0.03252247, B=0.03226646, C=0.03200205) | Default paper search | Behavior | LOCAL-AC-HYBRID-SEARCH | product | Active | EV-01 |
-| DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Proposed | EV-02, EV-02b |
-| DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Proposed | EV-02c |
+| DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Active | EV-02, EV-02b |
+| DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Active | EV-02c |
 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS | product | Proposed | EV-03 |
 | ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE | product | Proposed | EV-04 |
 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK | product | Active | EV-11 |
