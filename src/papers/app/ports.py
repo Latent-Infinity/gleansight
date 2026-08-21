@@ -391,6 +391,27 @@ class PaperProjectStore(Protocol):
     def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]: ...
 
 
+@runtime_checkable
+class AtomicCandidateImport(Protocol):
+    def import_new(
+        self,
+        *,
+        candidate_id: str,
+        paper_fields: dict[str, Any],
+        external_ids: dict[str, str],
+        project_ids: list[str],
+        tag_ids: list[str],
+    ) -> str: ...
+
+    def attach_to_imported(
+        self,
+        *,
+        paper_id: str,
+        project_ids: list[str],
+        tag_ids: list[str],
+    ) -> None: ...
+
+
 @dataclass(frozen=True)
 class ResolvedPdf:
     """Result of resolving a PDF URL from external IDs."""
