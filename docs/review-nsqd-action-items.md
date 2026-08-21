@@ -351,7 +351,7 @@ At review time `ruff check` (79) and `ty check` (526) fail. Pytest passes.
 **Acceptance criteria**
 
 - [x] EV-N13 / NSQD.SNAPSHOT.PROMOTION.v1 — Pending: N6.
-- [x] EV-N14 / NSQD.ARCHIVE.RANK_GUARD.v1 — Pending: N7.
+- [x] EV-N14 / NSQD.ARCHIVE.RANK_GUARD.v1 — Active / Required (N7).
 - [x] Deferred evidence is clearly Pending with its first available phase.
 
 ### [x] REV-P1-15 — Make ablation studies executable
