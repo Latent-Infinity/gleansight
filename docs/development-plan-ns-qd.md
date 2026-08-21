@@ -14,9 +14,9 @@
 **Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
 **Provider Policy**: `src/nsqd/` + `src/papers/`. **HD-NSQD-01 closed: LanceDB** corpus collection. Durable NS-QD work in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
-**Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, and **EW-V1** done; **EW-V2** not done.
+**Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1 done.** DATA-NSQD-03; **EW-V2** + DATA-NSQD-04 before N2b. N1 walking skeleton is done. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, EW-V2 done.** DATA-NSQD-03; DATA-NSQD-04 before N2b. N1 walking skeleton and N2 harvest reject are done. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
 
 ```bash
 uv run ruff format --check .
@@ -49,6 +49,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.3.10 | 2026-08-20 | N2 harvest: essay-only and sourceless ingest rejected; synthetic ALG-SNAP hash vector accepted. DATA-NSQD-03 still pending. |
 | 1.3.11 | 2026-08-20 | N2 review: TOML parsing, specific job claims, terminal failures, metadata retention, UTC lifecycle, and versioned snapshot commits. Clarify that the hash vector is synthetic test evidence, not approved corpus data. |
 | 1.3.12 | 2026-08-20 | N2 hardening: atomic harvest commits, immutable record metadata, bounded input/schema validation, queue-port parity, and authoritative skeleton version stamps. |
+| 1.3.13 | 2026-08-20 | Reconcile completed N1 E2E and persistence status after EW-V2 closeout. |
 
 ---
 
@@ -66,7 +67,7 @@ Closeout phases (`docs/development-plan-open-work.md`) are prefixed **EW-**.
 | UTC timestamps in nsqd | `ALG-CLOCK` from N1; do not copy evidence-layer naive `now()` | Evidence-layer naive `now()` is EW debt | Mixed timestamps |
 | Durable harvest/ground/diverge/score | **`nsqd_jobs`** after EW-V0B | Paper `jobs` CHECK allows only discover/download/convert/embed/analyze | Inserts fail or untracked sync work |
 
-**Rule:** N0 ports and N1 domain/application on null adapters are in tree. **N1 persistence and N1 E2E against real Piccolo wait for the adapter increment (EW-V0B runner is already present).** EW-V0.3 fact/evidence infrastructure is in place. N1 does **not** project papers. Live projection waits for N2b (EW-V0A + EW-V2 + DATA-NSQD-04).
+**Rule:** N0 ports and N1 domain/application, persistence, and E2E against real Piccolo are in tree; the completed adapter prerequisite was EW-V0B. EW-V0.3 fact/evidence infrastructure is in place. N1 does **not** project papers. Live projection waits for N2b (EW-V0A + EW-V2 + DATA-NSQD-04).
 
 ---
 
@@ -84,13 +85,13 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 |-----------|----------|--------|----------------|------------|
 | PRD / algorithm contract | glossary + algorithm-contract | Pass | — | — |
 | Terminology | NS/QD-inspired; corpus-relative novelty | Pass | — | — |
-| Vertical E2E | NSQD-N1 path (rejected smoke card) | Specified; not implemented | N1.7-N1.11 | Complete adapters, composition, and EV-N00 |
+| Vertical E2E | NSQD-N1 path (rejected smoke card) | Pass (implemented) | — | EV-N00 green; N1 closed |
 | Real data | 01/02 committed; 03/04 pending | Blocked: harvest-from-seed; projector | N2, N2b, N6 | N0A.3 / N0A.4 |
 | Four-command gate | EW-V0.11 | Pass (2026-08-18) | — | 536 passed, 1 skipped, 91.91% |
 | EW fact surface | EW-V0.3 | Pass (2026-08-18) | — | `tests/support/test_fact_surface.py` |
 | EW migrator | EW-V0B | Pass (2026-08-19) | — | `schema_migrations` + jobs CHECK |
 | EW approved papers | EW-V0A | Pass (2026-08-19) | — | DATA-01a/b/c approved; DATA-NSQD-04 remains separate |
-| EW atomic import | EW-V2 | Blocked: N2b live import | N2b | EW-V2 |
+| EW atomic import | EW-V2 | Pass | — | done 2026-08-20 |
 | EW RRF | EW-V1 | Pass | — | done 2026-08-19 |
 | Operators B–G | explicitly deferred | N/A (deferred) | — | later revision |
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
