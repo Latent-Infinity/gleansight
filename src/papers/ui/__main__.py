@@ -5,7 +5,11 @@ from pathlib import Path
 
 from papers.app import use_cases
 from papers.app.composition_root import build_container
-from papers.config.settings import load_settings
+from papers.config.settings import (
+    ConfigurationError,
+    load_settings,
+    public_configuration_error_message,
+)
 from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import (
     PiccoloCandidateImporter,
@@ -113,11 +117,14 @@ def main(
 ) -> None:
     """Launch the Gleansight UI application."""
     config_path = Path(config) if config else None
-    services = build_ui_services(
-        config_path=config_path,
-        llm_base_url=llm_base_url,
-        llm_api_key=llm_api_key,
-    )
+    try:
+        services = build_ui_services(
+            config_path=config_path,
+            llm_base_url=llm_base_url,
+            llm_api_key=llm_api_key,
+        )
+    except ConfigurationError as exc:
+        raise SystemExit(public_configuration_error_message(exc)) from None
     run_app(services)
 
 

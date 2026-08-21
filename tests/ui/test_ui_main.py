@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 import papers.ui.__main__ as main_module
+from papers.config.settings import ConfigurationError
 from papers.ui.app import UIServices
 
 
@@ -69,3 +72,18 @@ def test_main_calls_run_app_with_services(tmp_path):
 
     mock_build.assert_called_once()
     mock_run_app.assert_called_once_with(mock_services)
+
+
+def test_main_sanitizes_configuration_failure() -> None:
+    with patch.object(
+        main_module,
+        "build_ui_services",
+        side_effect=ConfigurationError(
+            "Unable to create required directory: data.root (/secret/path)"
+        ),
+    ):
+        with pytest.raises(SystemExit, match="Startup configuration failed") as exc_info:
+            main_module.main(llm_api_key="SECRET_TOKEN_123")
+
+    assert "/secret/path" not in str(exc_info.value)
+    assert "SECRET_TOKEN_123" not in str(exc_info.value)
