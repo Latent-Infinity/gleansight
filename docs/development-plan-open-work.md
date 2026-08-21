@@ -13,10 +13,10 @@
 **Generated Data Authorization**: `None`
 **Provider Policy**: External services stay behind existing ports in `src/papers/app/ports.py`. Domain and use-case modules must not import provider SDKs.
 **Fact Policy**: Tier-1 facts live in `docs/fact-ledger.md`. Semantics change only via Fact Change tasks.
-**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, and V2 atomic import is complete. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set.
+**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, V2 atomic import is complete, and V3 project-analysis filters plus force characterization are complete. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1 and V2 are done.** V3 project-analysis filters are next. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1, V2, and V3 are done.** Next closeout slice is V6. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -74,6 +74,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.5 | 2026-08-20 | Close V2: atomic candidate import with project/tag attachments; idempotent re-import; CLI `--project`/`--tag`. |
 | 1.3.6 | 2026-08-20 | Reconcile V2 task acceptance boxes, readiness summary, validation ownership, and project-register metadata after review. |
 | 1.3.7 | 2026-08-20 | Harden V2: in-transaction target validation, atomic stale-reference cleanup on paper deletion, stable import conflicts, bounded CLI errors, and explicit fallback rejection. |
+| 1.3.8 | 2026-08-20 | Close V3: AnalyzeProject extraction-filter algebra, force-new-run characterization, and `analyze-project` CLI. |
 
 ---
 
@@ -104,8 +105,8 @@ Project register: `docs/fact-ledger.md`. This plan introduces:
 | SEARCH.HYBRID.FTS_VECTOR_RRF.v1 | Given a non-empty query and the three approved paper records, when the user searches papers, then FTS runs on title+abstract, vectors on markdown, and the fused order and one-based scores match A=0.03252247, B=0.03226646, C=0.03200205 | Default paper search | Behavior | LOCAL-AC-HYBRID-SEARCH (`project-design.md` §3.1, §10.2.1) | product | Active | EV-01 |
 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | Given an unimported candidate and existing project/tag IDs, when import is requested with those IDs, then either the whole import (paper, attachments, download job, candidate mark) commits or nothing is written | Import from discovery | Behavior | LOCAL-AC-IMPORT-TAXONOMY (`project-design.md` §15) | product | Active | EV-02, EV-02b |
 | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | Given a candidate already imported to paper P, when import is requested again with project/tag IDs, then P is reused, missing attachments are added, already-present attachments are no-ops, and no second download job is enqueued | Re-import of an imported candidate | Behavior | LOCAL-AC-IMPORT-TAXONOMY | product | Active | EV-02c |
-| ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS (`project-design.md` §15, §10.4) | product | Proposed | EV-03 |
-| ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE (`project-design.md` §9.2) | product | Proposed | EV-04 |
+| ANALYSIS.PROJECT.APPLY_FILTERS.v1 | Given a project and extraction filters, when project analysis is requested, then only members that survive label membership and the filter algebra receive new analysis runs | Analyze-project path | Behavior | LOCAL-AC-ANALYZE-PROJECT-FILTERS (`project-design.md` §15, §10.4) | product | Active | EV-03 |
+| ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE (`project-design.md` §9.2) | product | Active | EV-04 |
 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Any schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK (`project-design.md` §5.2 L) | product | Active | EV-11 |
 | SCHEMA.MIGRATE.FORWARD.v1 | Given a database created at the previous baseline, when the app starts, then forward-only migrations apply and the job CHECK is present | Existing user DB | Data Contract | LOCAL-AC-MIGRATIONS | product | Active | EV-12 |
 | ADAPTER.CONVERT.RESULT_CODES.v1 | Given a convert attempt that yields empty markdown or a converter exception, when `Converter.pdf_to_markdown` returns, then the value is a `ConverterResult` with `ok=False` and `error_code` of `EMPTY_OUTPUT` or `CONVERSION_FAILED` respectively | Converter adapter | Behavior | LOCAL-AC-CONVERT-RESULT (`project-design.md` §9.4, port `ConverterResult`) | product | Proposed | EV-08 |
@@ -127,8 +128,8 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 | EV-02 | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy.py -q --no-cov` | V2 | Required | **real Piccolo** stores; injected in-transaction failure | none | hermetic | pass 2026-08-20 |
 | EV-02b | DISCOVERY.IMPORT.ATTACH_TAXONOMY.v1 | test | `uv run pytest tests/facts/test_import_taxonomy_cli.py -q --no-cov` | V2 | Required | CLI ID strings | none | hermetic | pass 2026-08-20 |
 | EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q --no-cov` | V2 | Required | prior import via use-case + Piccolo | none | hermetic | pass 2026-08-20 |
-| EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q` | V3 | Pending: V3 | members + extractions via use-cases | none | hermetic | Unknown |
-| EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q` | V3 | Pending: V3 | existing `RunAnalysisUseCase` | none | hermetic | Unknown |
+| EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q --no-cov` | V3 | Required | members + extractions via use-cases | none | hermetic | pass 2026-08-20 |
+| EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q --no-cov` | V3 | Required | existing `RunAnalysisUseCase` | none | hermetic | pass 2026-08-20 |
 | EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q` | V6 | Pending: V6 | empty-output mutation; converter exception | none | hermetic | Unknown |
 | EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q` | V6 | Pending: V6 | invalid PDF header mutation | none | hermetic | Unknown |
 | EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q` | V6 | Pending: V6 | log capture | none | hermetic | Unknown |
@@ -1374,9 +1375,9 @@ class ExtractionFilter:
 Run the four-command quality gate.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] EV-01, EV-02, EV-02b, EV-02c still green
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] EV-01, EV-02, EV-02b, EV-02c still green
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -1400,9 +1401,9 @@ Run the four-command quality gate.
 Cases: empty filters analyze all labeled members; one filter drops a non-matching member; two filters AND; `latest_only=True` ignores an older run; label then filter intersection order; a filter whose `prompt_version_id` differs from the analyze target still matches on that older version’s extractions.
 
 **Acceptance Criteria:**
-- [ ] `tests/facts/test_analyze_project_filters.py` fails with the stated signature
-- [ ] Rest of suite green
-- [ ] Coverage policy satisfied
+- [x] `tests/facts/test_analyze_project_filters.py` fails with the stated signature
+- [x] Rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_analyze_project_filters.py` (create)
@@ -1429,10 +1430,10 @@ Cases: empty filters analyze all labeled members; one filter drops a non-matchin
 Implement the algebra. Reuse `FilterByExtractionsUseCase` / store `query`. Do not reimplement SQL.
 
 **Acceptance Criteria:**
-- [ ] EV-03 green
-- [ ] `label=None, filters=None` preserves today's “all members” behavior
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-03 green
+- [x] `label=None, filters=None` preserves today's “all members” behavior
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/app/use_cases/analysis.py` (modify)
@@ -1459,9 +1460,9 @@ Implement the algebra. Reuse `FilterByExtractionsUseCase` / store `query`. Do no
 Pin existing force behavior: first call stores run R1; second call `force=False` returns R1; third call `force=True` returns R2 ≠ R1; R1 still exists.
 
 **Acceptance Criteria:**
-- [ ] `tests/facts/test_analyze_force.py` is green against current `RunAnalysisUseCase`
-- [ ] Kind remains characterization of a requirement that already exists in design §9.2
-- [ ] Coverage policy satisfied
+- [x] `tests/facts/test_analyze_force.py` is green against current `RunAnalysisUseCase`
+- [x] Kind remains characterization of a requirement that already exists in design §9.2
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_analyze_force.py` (create)
@@ -1488,9 +1489,9 @@ Pin existing force behavior: first call stores run R1; second call `force=False`
 `papers analyze-project` accepts project id, target `--prompt-version-id`, profile, model, optional `--label`, optional `--field-path` + repeatable `--constraint` parsed by `_parse_constraints`, optional `--filter-prompt-version-id` (defaults to the target prompt version), and `--force`.
 
 **Acceptance Criteria:**
-- [ ] CLI test fails with the stated signature
-- [ ] Rest of suite green
-- [ ] Coverage policy satisfied
+- [x] CLI test fails with the stated signature
+- [x] Rest of suite green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/cli/test_pipeline_commands.py` (modify) or `tests/facts/test_analyze_project_cli.py` (create)
@@ -1517,10 +1518,10 @@ Pin existing force behavior: first call stores run R1; second call `force=False`
 Register `analyze-project`. Import and call `_parse_constraints` from `src/papers/cli/commands/query.py` (do not fork coercion). One CLI filter is enough; the use-case still accepts a list. `--filter-prompt-version-id` defaults to `--prompt-version-id`.
 
 **Acceptance Criteria:**
-- [ ] V3.4 tests pass
-- [ ] `uv run python -m papers.cli analyze-project --help` works
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] V3.4 tests pass
+- [x] `uv run python -m papers.cli analyze-project --help` works
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `src/papers/cli/commands/pipeline.py` (modify)
@@ -1529,15 +1530,17 @@ Register `analyze-project`. Import and call `_parse_constraints` from `src/paper
 ---
 
 **Phase V3 Exit Criteria:**
-- [ ] EV-03 green with the published algebra
-- [ ] Filters may use a prompt version other than the analyze target
-- [ ] EV-04 characterization green
-- [ ] EV-03 and EV-04 Lifecycle set to Required
-- [ ] ANALYSIS.PROJECT.APPLY_FILTERS.v1 and ANALYSIS.RUN.FORCE_NEW.v1 set to Active
-- [ ] CLI demo command works
-- [ ] Prior facts still green
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] EV-03 green with the published algebra
+- [x] Filters may use a prompt version other than the analyze target
+- [x] EV-04 characterization green
+- [x] EV-03 and EV-04 Lifecycle set to Required
+- [x] ANALYSIS.PROJECT.APPLY_FILTERS.v1 and ANALYSIS.RUN.FORCE_NEW.v1 set to Active
+- [x] CLI demo command works
+- [x] Prior facts still green
+- [x] Quality gate green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-20):** `AnalyzeProjectUseCase` applies label membership first, then AND-intersects `ExtractionFilter` matches via `FilterByExtractionsUseCase` / `ExtractionStore.query`. Empty filters still analyze all labeled members. Filter `prompt_version_id` may differ from the analyze target. Unknown constraint keys raise `ValueError` before enqueue. `RunAnalysisUseCase` force reuse/new-run is pinned by EV-04. CLI `analyze-project` forwards one filter through `_parse_constraints`. Final four-command gate: 765 passed, 1 skipped, 92.86% repository coverage.
 
 ---
 
