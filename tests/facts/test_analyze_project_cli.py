@@ -4,6 +4,8 @@ import importlib
 from dataclasses import dataclass, field
 from typing import Any
 
+from click import Group
+from typer.main import get_command
 from typer.testing import CliRunner
 
 from papers.app.use_cases.analysis import ExtractionFilter
@@ -51,21 +53,30 @@ class RejectingAnalyzeProject:
 
 def test_analyze_project_help_lists_flags() -> None:
     cli_app = importlib.import_module("papers.cli.app")
+    width = 200
     result = CliRunner().invoke(
         cli_app.app,
         ["analyze-project", "--help"],
-        env={"COLUMNS": "200"},
+        terminal_width=width,
+        env={"COLUMNS": str(width), "TERMINAL_WIDTH": str(width)},
     )
     assert result.exit_code == 0, result.output
-    output = result.output
-    assert "--prompt-version-id" in output
-    assert "--profile-id" in output
-    assert "--model-name" in output
-    assert "--label" in output
-    assert "--field-path" in output
-    assert "--constraint" in output
-    assert "--filter-prompt-version-id" in output
-    assert "--force" in output
+    click_app = get_command(cli_app.app)
+    assert isinstance(click_app, Group)
+    command = click_app.commands["analyze-project"]
+    opts = {opt for param in command.params for opt in param.opts}
+    for flag in (
+        "--prompt-version-id",
+        "--profile-id",
+        "--model-name",
+        "--label",
+        "--field-path",
+        "--constraint",
+        "--filter-prompt-version-id",
+        "--force",
+    ):
+        assert flag in opts, flag
+        assert flag in result.output, flag
 
 
 def test_analyze_project_forwards_extraction_filter(monkeypatch) -> None:
