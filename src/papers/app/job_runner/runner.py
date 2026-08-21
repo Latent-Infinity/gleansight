@@ -183,11 +183,18 @@ class JobRunner:
         next_type = _NEXT_STEP.get(job.type)
         if next_type is None or job.paper_id is None:
             return
+        payload = {}
+        if job.type == "download":
+            payload = {
+                key: job.payload[key]
+                for key in ("source_path", "external_ids")
+                if key in job.payload
+            }
         next_job_id = self.job_queue.enqueue(
             type=next_type,
             paper_id=job.paper_id,
             run_id=None,
-            payload={},
+            payload=payload,
         )
         next_job = _SyntheticJob(
             job_id=next_job_id,

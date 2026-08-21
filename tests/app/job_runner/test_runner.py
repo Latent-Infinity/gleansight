@@ -163,3 +163,28 @@ def test_failed_job_marked_correctly(tmp_path: Path) -> None:
     assert row["status"] == "failed"
     assert row["last_error"] is not None
     assert "permanent error" in row["last_error"]
+
+
+def test_download_provenance_is_forwarded_to_convert(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "db.sqlite")
+    db.initialize_schema()
+    queue = PiccoloJobQueue()
+    queue.enqueue(
+        "download",
+        "paper",
+        None,
+        {"source_path": "/tmp/source.pdf", "external_ids": {"ArXiv": "2401.00001"}},
+    )
+    download = queue.claim_next(datetime.now(UTC))
+    assert download is not None
+
+    runner = JobRunner(job_queue=queue, context=_context(tmp_path, db))
+    runner._enqueue_next_step(download)
+
+    convert = queue.claim_next(datetime.now(UTC))
+    assert convert is not None
+    assert convert.type == "convert"
+    assert convert.payload == {
+        "source_path": "/tmp/source.pdf",
+        "external_ids": {"ArXiv": "2401.00001"},
+    }
