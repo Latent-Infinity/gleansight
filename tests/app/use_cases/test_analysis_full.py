@@ -4,7 +4,11 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from papers.app.use_cases.analysis import AnalyzeProjectUseCase, ReanalyzeWithPromptVersionUseCase
+from papers.app.use_cases.analysis import (
+    AnalyzeProjectUseCase,
+    ExtractionFilter,
+    ReanalyzeWithPromptVersionUseCase,
+)
 from papers.domain.errors import NotFoundError
 
 
@@ -24,6 +28,18 @@ class FakePaperProjectStore:
     def list_paper_ids(self, project_id: str, label: str | None = None) -> list[str]:
         self.calls.append((project_id, label))
         return self.project_papers.get(project_id, [])
+
+
+@dataclass
+class FakeFilterExtractions:
+    def filter(
+        self,
+        field_path: str,
+        prompt_version_id: str,
+        constraints: dict[str, object],
+        latest_only: bool = True,
+    ) -> list[str]:
+        raise AssertionError("empty filters must not query extractions")
 
 
 @dataclass
@@ -110,6 +126,7 @@ def test_analyze_project_uses_project_scope() -> None:
         paper_project_store=project_store,
         prompt_store=prompt_store,
         run_analysis=runner,
+        filter_extractions=FakeFilterExtractions(),
     )
 
     runs = use_case(
@@ -134,6 +151,7 @@ def test_analyze_project_returns_empty_when_no_papers() -> None:
         paper_project_store=project_store,
         prompt_store=prompt_store,
         run_analysis=runner,
+        filter_extractions=FakeFilterExtractions(),
     )
 
     runs = use_case(
@@ -144,4 +162,33 @@ def test_analyze_project_returns_empty_when_no_papers() -> None:
     )
 
     assert runs == []
+    assert runner.calls == []
+
+
+def test_analyze_project_rejects_non_value_constraint_before_filtering() -> None:
+    prompt_store = FakePromptStore({"pv1": {"prompt_id": "prompt", "prompt_version_id": "pv1"}})
+    project_store = FakePaperProjectStore({"project-1": ["paper-1"]})
+    runner = FakeRunAnalysis()
+    use_case = AnalyzeProjectUseCase(
+        paper_project_store=project_store,
+        prompt_store=prompt_store,
+        run_analysis=runner,
+        filter_extractions=FakeFilterExtractions(),
+    )
+
+    with pytest.raises(ValueError, match="unsupported extraction constraint field: entity_type"):
+        use_case(
+            project_id="project-1",
+            prompt_version_id="pv1",
+            profile_id="profile",
+            model_name="model",
+            filters=[
+                ExtractionFilter(
+                    field_path="algorithm_family",
+                    prompt_version_id="pv1",
+                    constraints={"entity_type": "paper"},
+                )
+            ],
+        )
+
     assert runner.calls == []

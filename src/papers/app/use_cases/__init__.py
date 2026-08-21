@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from papers.app.use_cases.admin import RebuildVectorIndexUseCase, RecoverStuckJobsUseCase
-from papers.app.use_cases.analysis import AnalyzeProjectUseCase, ReanalyzeWithPromptVersionUseCase
+from papers.app.use_cases.analysis import (
+    AnalyzeProjectUseCase,
+    ExtractionFilter,
+    ReanalyzeWithPromptVersionUseCase,
+)
 from papers.app.use_cases.discovery import (
     DiscoverCandidatesUseCase,
     ImportCandidateUseCase,
@@ -37,6 +41,7 @@ __all__ = [
     "RejectCandidateUseCase",
     "ReanalyzeWithPromptVersionUseCase",
     "AnalyzeProjectUseCase",
+    "ExtractionFilter",
     "CreatePromptUseCase",
     "CreatePromptVersionUseCase",
     "SearchPapersUseCase",
