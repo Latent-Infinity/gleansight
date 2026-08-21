@@ -13,10 +13,10 @@
 **Generated Data Authorization**: `None`
 **Provider Policy**: External services stay behind existing ports in `src/papers/app/ports.py`. Domain and use-case modules must not import provider SDKs.
 **Fact Policy**: Tier-1 facts live in `docs/fact-ledger.md`. Semantics change only via Fact Change tasks.
-**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, V2 atomic import is complete, and V3 project-analysis filters plus force characterization are complete. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set.
+**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, V2 atomic import is complete, V3 project-analysis filters plus force characterization are complete, and V6 converter/log/startup evidence is bound. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set. Protected/timeout/OOM convert classes remain unclaimed.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1, V2, and V3 are done.** Next closeout slice is V6. Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1–V3 and V6 are done.** Next closeout slice is V7 (docs). Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -50,7 +50,7 @@ Every Migration, Capability, Hardening, and Documentation phase that introduces 
 1. Run each new or rebound evidence command; it must exit 0.
 2. Set those Evidence Index rows `Lifecycle` to `Required`.
 3. Set the corresponding Fact Ledger rows `Lifecycle` from `Proposed` to `Active`.
-4. `uv run pytest tests/support/test_fact_surface.py -q` must fail if:
+4. `uv run pytest tests/support/test_fact_surface.py -q --no-cov` must fail if:
    - a `Required` evidence path is missing, or
    - a fact whose listed evidence is all `Required` is still `Proposed`, or
    - an `Active` fact has no `Required` evidence.
@@ -75,6 +75,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.6 | 2026-08-20 | Reconcile V2 task acceptance boxes, readiness summary, validation ownership, and project-register metadata after review. |
 | 1.3.7 | 2026-08-20 | Harden V2: in-transaction target validation, atomic stale-reference cleanup on paper deletion, stable import conflicts, bounded CLI errors, and explicit fallback rejection. |
 | 1.3.8 | 2026-08-20 | Close V3: AnalyzeProject extraction-filter algebra, force-new-run characterization, and `analyze-project` CLI. |
+| 1.3.9 | 2026-08-20 | Close V6: bind converter result codes, provenance-safe corrupt-PDF recovery, job log context, and secret-safe missing-dep startup. |
 
 ---
 
@@ -109,10 +110,10 @@ Project register: `docs/fact-ledger.md`. This plan introduces:
 | ANALYSIS.RUN.FORCE_NEW.v1 | Given a successful analysis run for the idempotency key, when analysis is requested with force, then a new run and job are created and the prior run is left unchanged | `force=true` | Behavior | LOCAL-AC-ANALYZE-FORCE (`project-design.md` §9.2) | product | Active | EV-04 |
 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | Given a jobs row, when it is inserted, then SQLite rejects it unless it satisfies the design §5.2 job integrity CHECK | Any schema after migration 002 | Data Contract | LOCAL-AC-JOB-CHECK (`project-design.md` §5.2 L) | product | Active | EV-11 |
 | SCHEMA.MIGRATE.FORWARD.v1 | Given a database created at the previous baseline, when the app starts, then forward-only migrations apply and the job CHECK is present | Existing user DB | Data Contract | LOCAL-AC-MIGRATIONS | product | Active | EV-12 |
-| ADAPTER.CONVERT.RESULT_CODES.v1 | Given a convert attempt that yields empty markdown or a converter exception, when `Converter.pdf_to_markdown` returns, then the value is a `ConverterResult` with `ok=False` and `error_code` of `EMPTY_OUTPUT` or `CONVERSION_FAILED` respectively | Converter adapter | Behavior | LOCAL-AC-CONVERT-RESULT (`project-design.md` §9.4, port `ConverterResult`) | product | Proposed | EV-08 |
-| HANDLER.CONVERT.CORRUPT_PDF.v1 | Given a PDF that fails the handler's validity check, when convert runs, then the job fails with `CORRUPT_PDF` and a re-download is enqueued | Convert handler, before the adapter | Behavior | LOCAL-AC-CONVERT-CORRUPT (`project-design.md` §9.4) | product | Proposed | EV-08b |
-| OBS.LOG.JOB_CONTEXT.v1 | Given a job state transition, when the runner logs the event, then the record includes timestamp, job_id, job_type, status_from, status_to, paper_id, and run_id | Job runner | Operational/SLO | LOCAL-NFR-LOGGING (`project-design.md` §12.2) | product | Proposed | EV-09 |
-| CFG.STARTUP.MISSING_DEP.v1 | Given a required optional dependency is not importable, when the composition root starts, then startup fails with `ConfigurationError` naming the module | Process start | Operational/SLO | LOCAL-NFR-FAILFAST (`project-design.md` §13) | product | Proposed | EV-10 |
+| ADAPTER.CONVERT.RESULT_CODES.v1 | Given a convert attempt that yields empty markdown or a converter exception, when `Converter.pdf_to_markdown` returns, then the value is a `ConverterResult` with `ok=False` and `error_code` of `EMPTY_OUTPUT` or `CONVERSION_FAILED` respectively | Converter adapter | Behavior | LOCAL-AC-CONVERT-RESULT (`project-design.md` §9.4, port `ConverterResult`) | product | Active | EV-08 |
+| HANDLER.CONVERT.CORRUPT_PDF.v1 | Given a PDF that fails the handler validity check, when convert runs with recoverable source provenance, then the blob is removed, the job fails with `CORRUPT_PDF`, and one re-download is enqueued with that provenance; without provenance, the blob is retained and no doomed download is queued | Convert handler, before the adapter | Behavior | LOCAL-AC-CONVERT-CORRUPT (`project-design.md` §9.4) | product | Active | EV-08b |
+| OBS.LOG.JOB_CONTEXT.v1 | Given a job state transition, when the runner logs the event, then the record includes timestamp, job_id, job_type, status_from, status_to, paper_id, and run_id | Job runner | Operational/SLO | LOCAL-NFR-LOGGING (`project-design.md` §12.2) | product | Active | EV-09 |
+| CFG.STARTUP.MISSING_DEP.v1 | Given a required optional dependency is not importable, when the composition root starts, then startup fails with `ConfigurationError` naming the module | Process start | Operational/SLO | LOCAL-NFR-FAILFAST (`project-design.md` §13) | product | Active | EV-10 |
 
 Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experimental.
 
@@ -130,10 +131,10 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 | EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q --no-cov` | V2 | Required | prior import via use-case + Piccolo | none | hermetic | pass 2026-08-20 |
 | EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q --no-cov` | V3 | Required | members + extractions via use-cases | none | hermetic | pass 2026-08-20 |
 | EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q --no-cov` | V3 | Required | existing `RunAnalysisUseCase` | none | hermetic | pass 2026-08-20 |
-| EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q` | V6 | Pending: V6 | empty-output mutation; converter exception | none | hermetic | Unknown |
-| EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q` | V6 | Pending: V6 | invalid PDF header mutation | none | hermetic | Unknown |
-| EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q` | V6 | Pending: V6 | log capture | none | hermetic | Unknown |
-| EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q` | V6 | Pending: V6 | may rebind fail-fast tests | none | hermetic | Unknown |
+| EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q --no-cov` | V6 | Required | empty-output mutation; converter exception | none | hermetic | pass 2026-08-20 |
+| EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q --no-cov` | V6 | Required | invalid PDF header mutation; recovery provenance | none | hermetic | pass 2026-08-20 |
+| EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q --no-cov` | V6 | Required | log capture | none | hermetic | pass 2026-08-20 |
+| EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q --no-cov` | V6 | Required | standalone fail-fast + bounded CLI startup | none | hermetic | pass 2026-08-20 |
 | EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
 | EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline fixture DB | none | hermetic | pass 2026-08-19 |
 | EV-13 | (docs integrity) | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q` | V7 | Pending: V7 | workflow markdown; `src/` | none | hermetic | Unknown |
@@ -1562,7 +1563,7 @@ uv run pytest -q
 
 This command must exit 0. Remaining lint is not acceptable.
 
-**Demo/Validation Command:** `uv run pytest tests/facts/test_convert_result_codes.py tests/facts/test_convert_corrupt_pdf.py tests/facts/test_job_log_context.py tests/facts/test_startup_missing_dep.py -q`
+**Demo/Validation Command:** `uv run pytest tests/facts/test_convert_result_codes.py tests/facts/test_convert_corrupt_pdf.py tests/facts/test_job_log_context.py tests/facts/test_startup_missing_dep.py -q --no-cov`
 **Observable Outcome:** Converter adapter codes, corrupt-PDF handler path, job log fields, and missing-dep startup are bound. Protected/timeout/OOM convert classes are **not** claimed.
 **Rollback Notes:** Revert the phase commit.
 **Executed By:**
@@ -1590,8 +1591,8 @@ This command must exit 0. Remaining lint is not acceptable.
 Run the four-command quality gate.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
-- [ ] Coverage policy satisfied (no regression)
+- [x] Quality gate exits 0
+- [x] Coverage policy satisfied (no regression)
 
 ---
 
@@ -1615,9 +1616,9 @@ Run the four-command quality gate.
 Rebind the existing adapter behavior into `tests/facts/`. Do not require `PipelineError` from `pdf_to_markdown`. (`build_docling_converter` may still raise if Docling is missing — install-time only.)
 
 **Acceptance Criteria:**
-- [ ] `tests/facts/test_convert_result_codes.py` is green against current `DoclingConverter`
-- [ ] Assertions check `ConverterResult.error_code` only
-- [ ] Coverage policy satisfied
+- [x] `tests/facts/test_convert_result_codes.py` is green against current `DoclingConverter`
+- [x] Assertions check `ConverterResult`, `ok=False`, `markdown=None`, and the exact `error_code`
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_convert_result_codes.py` (create)
@@ -1644,10 +1645,10 @@ Rebind the existing adapter behavior into `tests/facts/`. Do not require `Pipeli
 Do not change the adapter unless V6.1 failed. If it failed, restore `ConverterResult` mapping — do not switch the port to raise `PipelineError`.
 
 **Acceptance Criteria:**
-- [ ] EV-08 green
-- [ ] `pdf_to_markdown` still returns `ConverterResult`
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-08 green
+- [x] `pdf_to_markdown` still returns `ConverterResult`
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 ---
 
@@ -1671,9 +1672,9 @@ Do not change the adapter unless V6.1 failed. If it failed, restore `ConverterRe
 Rebind or add a fact test around `handle_convert` + `_is_valid_pdf`. This is handler-level, matching production.
 
 **Acceptance Criteria:**
-- [ ] EV-08b green
-- [ ] Test does not require the adapter to return `CORRUPT_PDF`
-- [ ] Coverage policy satisfied
+- [x] EV-08b green
+- [x] Test does not require the adapter to return `CORRUPT_PDF`
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_convert_corrupt_pdf.py` (create)
@@ -1700,8 +1701,8 @@ Rebind or add a fact test around `handle_convert` + `_is_valid_pdf`. This is han
 May rebind `tests/observability/test_logging.py` into `tests/facts/`.
 
 **Acceptance Criteria:**
-- [ ] EV-09 green
-- [ ] Coverage policy satisfied
+- [x] EV-09 green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_job_log_context.py` (create)
@@ -1728,22 +1729,50 @@ May rebind `tests/observability/test_logging.py` into `tests/facts/`.
 Rebind the existing fail-fast test as EV-10.
 
 **Acceptance Criteria:**
-- [ ] EV-10 command is green
-- [ ] Quality gate green
-- [ ] Coverage policy satisfied
+- [x] EV-10 command is green
+- [x] Quality gate green
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/facts/test_startup_missing_dep.py` (create or thin wrapper)
 
 ---
 
+### Task V6.6: Narrow corrupt-PDF recovery to viable provenance
+
+**Type:** Fact Change
+
+**PRD Trace:** LOCAL-AC-CONVERT-CORRUPT
+
+**Fact / Evidence (Test tasks):** HANDLER.CONVERT.CORRUPT_PDF.v1 → EV-08b
+
+**Real Data Dependency:** None
+
+**Provider Boundary:** convert handler and job runner
+
+**Depends On:** V6.5
+
+**Description:**
+Require `source_path` or external IDs before deleting a corrupt blob and enqueuing a replacement download. Carry download provenance into the chained convert job. If no recovery source exists, retain the blob and do not enqueue a job that can only fail.
+
+**Acceptance Criteria:**
+- [x] Recoverable corrupt PDFs enqueue exactly one download with the original provenance
+- [x] Unrecoverable corrupt PDFs retain the only blob and enqueue nothing
+- [x] Raw converter exception text is not logged or persisted as pipeline health
+- [x] CLI and UI startup configuration failures do not expose secrets, tracebacks, or absolute paths
+- [x] Quality gate green
+
+---
+
 **Phase V6 Exit Criteria:**
-- [ ] EV-08, EV-08b, EV-09, EV-10 green
-- [ ] Those four rows Lifecycle set to Required
-- [ ] ADAPTER.CONVERT.RESULT_CODES.v1, HANDLER.CONVERT.CORRUPT_PDF.v1, OBS.LOG.JOB_CONTEXT.v1, CFG.STARTUP.MISSING_DEP.v1 set to Active
-- [ ] Phase does **not** claim protected/timeout/OOM convert coverage
-- [ ] Verification command is the full gate and is green
-- [ ] **Stage changes for human review**
+- [x] EV-08, EV-08b, EV-09, EV-10 green
+- [x] Those four rows Lifecycle set to Required
+- [x] ADAPTER.CONVERT.RESULT_CODES.v1, HANDLER.CONVERT.CORRUPT_PDF.v1, OBS.LOG.JOB_CONTEXT.v1, CFG.STARTUP.MISSING_DEP.v1 set to Active
+- [x] Phase does **not** claim protected/timeout/OOM convert coverage
+- [x] Verification command is the full gate and is green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-20):** Bound adapter `ConverterResult` mapping (`EMPTY_OUTPUT` / `CONVERSION_FAILED`), provenance-safe handler `CORRUPT_PDF` recovery, exact job-runner transition log fields, and composition-root fail-fast when a required optional module is missing. CLI/UI startup errors and converter failures use bounded public text without traceback locals, paths, secrets, or provider exception details. `PROTECTED_PDF`, `CONVERTER_TIMEOUT`, and `CONVERTER_OOM` remain unclaimed. Final four-command gate: 774 passed, 1 skipped, 92.82% repository coverage.
 
 ---
 

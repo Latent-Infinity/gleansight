@@ -1,7 +1,7 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` v1.3.8
+**Authority:** `docs/development-plan-open-work.md` v1.3.9
 **As of:** 2026-08-20
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
@@ -14,10 +14,10 @@
 | EV-02c | DISCOVERY.IMPORT.IDEMPOTENT_ATTACH.v1 | test | `uv run pytest tests/facts/test_import_idempotent_attach.py -q --no-cov` | V2 | Required | prior import + Piccolo | none | hermetic | pass 2026-08-20 |
 | EV-03 | ANALYSIS.PROJECT.APPLY_FILTERS.v1 | test | `uv run pytest tests/facts/test_analyze_project_filters.py -q --no-cov` | V3 | Required | use-case-created data | none | hermetic | pass 2026-08-20 |
 | EV-04 | ANALYSIS.RUN.FORCE_NEW.v1 | characterization test | `uv run pytest tests/facts/test_analyze_force.py -q --no-cov` | V3 | Required | existing RunAnalysisUseCase | none | hermetic | pass 2026-08-20 |
-| EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q` | V6 | Pending: V6 | empty / exception | none | hermetic | Unknown |
-| EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q` | V6 | Pending: V6 | invalid PDF header | none | hermetic | Unknown |
-| EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q` | V6 | Pending: V6 | log capture | none | hermetic | Unknown |
-| EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q` | V6 | Pending: V6 | fail-fast rebind | none | hermetic | Unknown |
+| EV-08 | ADAPTER.CONVERT.RESULT_CODES.v1 | test | `uv run pytest tests/facts/test_convert_result_codes.py -q --no-cov` | V6 | Required | empty / exception | none | hermetic | pass 2026-08-20 |
+| EV-08b | HANDLER.CONVERT.CORRUPT_PDF.v1 | test | `uv run pytest tests/facts/test_convert_corrupt_pdf.py -q --no-cov` | V6 | Required | invalid PDF header + recovery provenance | none | hermetic | pass 2026-08-20 |
+| EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q --no-cov` | V6 | Required | exact transition log capture | none | hermetic | pass 2026-08-20 |
+| EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q --no-cov` | V6 | Required | standalone fail-fast + bounded CLI startup | none | hermetic | pass 2026-08-20 |
 | EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
 | EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline DB | none | hermetic | pass 2026-08-19 |
 | EV-13 | docs integrity | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q` | V7 | Pending: V7 | workflows + src/ | none | hermetic | Unknown |
