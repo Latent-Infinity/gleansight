@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from nsqd.domain.card import card_decision, missing_card_fields
+from nsqd.domain.coverage import evaluate_rank_guard
 from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
 from nsqd.domain.grounding import classify_local
@@ -17,6 +18,7 @@ from nsqd.domain.snapshot import (
     sha256_hex,
     snapshot_id,
 )
+from nsqd.domain.status import CellStatus
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 from nsqd.ports import (
     Clock,
@@ -297,3 +299,18 @@ class ArchiveInsertUseCase:
             "reason": None,
             "elite": chosen,
         }
+
+
+@dataclass(frozen=True)
+class RankArchiveUseCase:
+    cell_statuses: dict[str, CellStatus]
+
+    def run(
+        self,
+        *,
+        elite_cell_ids: set[str],
+    ) -> dict[str, float | int | bool]:
+        return evaluate_rank_guard(
+            elite_cell_ids=elite_cell_ids,
+            cell_statuses=self.cell_statuses,
+        )

@@ -48,3 +48,12 @@ def cell_id_from_descriptor(descriptor: dict[str, Any]) -> str:
     ):
         raise ValueError("unlisted research descriptor value")
     return f"mechanism={mechanism}|target={target}|horizon={horizon}"
+
+
+def finance_pack_universe() -> frozenset[str]:
+    return frozenset(
+        f"mechanism={mechanism}|target={target}|horizon={horizon}"
+        for mechanism in MECHANISM_VALUES
+        for target in TARGET_VALUES
+        for horizon in HORIZON_VALUES
+    )
