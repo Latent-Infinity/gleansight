@@ -13,10 +13,13 @@ from papers.app.composition_root import build_container
 from papers.config.settings import Settings, load_settings
 from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import (
+    PiccoloAtomicCandidateImport,
     PiccoloCandidateImporter,
     PiccoloCandidateStore,
     PiccoloExtractionStore,
     PiccoloPaperProjectStore,
+    PiccoloProjectStore,
+    PiccoloTagStore,
 )
 
 app = typer.Typer(add_completion=False)
@@ -91,6 +94,9 @@ def get_container() -> CLIContainer:
             job_queue=base.job_queue,
             external_id_store=base.external_id_store,
             atomic_importer=PiccoloCandidateImporter(),
+            project_store=PiccoloProjectStore(),
+            tag_store=PiccoloTagStore(),
+            atomic_candidate_import=PiccoloAtomicCandidateImport(),
         ),
         get_candidate=getattr(candidate_store, "get_candidate", None),
         run_analysis=use_cases.RunAnalysisUseCase(

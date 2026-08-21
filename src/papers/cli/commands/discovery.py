@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 import typer
 from rich.table import Table
@@ -101,11 +101,23 @@ def discover(
 
 
 @app.command("import")
-def import_candidate(candidate_id: str = typer.Argument(..., help="Candidate ID")) -> None:
+def import_candidate(
+    candidate_id: str = typer.Argument(..., help="Candidate ID"),
+    project: Annotated[
+        list[str] | None, typer.Option("--project", help="Project ID to attach")
+    ] = None,
+    tag: Annotated[list[str] | None, typer.Option("--tag", help="Tag ID to attach")] = None,
+) -> None:
     container = cli_app.get_container()
+    project_ids = list(dict.fromkeys(project or []))
+    tag_ids = list(dict.fromkeys(tag or []))
     try:
-        paper_id = container.import_candidate.import_candidate(candidate_id=candidate_id)
+        paper_id = container.import_candidate.import_candidate(
+            candidate_id=candidate_id,
+            project_ids=project_ids,
+            tag_ids=tag_ids,
+        )
     except Exception as exc:
-        cli_app.console.print(f"Import failed for {candidate_id}: {exc}")
+        cli_app.console.print("Import failed")
         raise typer.Exit(code=1) from exc
     cli_app.console.print(f"Imported candidate {candidate_id} as paper {paper_id}")

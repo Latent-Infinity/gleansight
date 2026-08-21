@@ -4,7 +4,10 @@ import importlib
 from dataclasses import dataclass, field
 from typing import Any
 
+import pytest
 from typer.testing import CliRunner
+
+from papers.domain.errors import ConflictError, NotFoundError, ValidationError
 
 
 @dataclass
@@ -37,10 +40,17 @@ class FakeImport:
     calls: list[str] = field(default_factory=list)
     raise_error: bool = False
 
-    def import_candidate(self, candidate_id: str) -> str:
+    def import_candidate(
+        self,
+        candidate_id: str,
+        *,
+        project_ids: list[str] | None = None,
+        tag_ids: list[str] | None = None,
+    ) -> str:
         if self.raise_error:
             raise RuntimeError("cannot import")
         self.calls.append(candidate_id)
+        self.last_ids = {"project_ids": project_ids or [], "tag_ids": tag_ids or []}
         return "paper-1"
 
 
@@ -191,4 +201,65 @@ def test_import_command_error_handling(monkeypatch) -> None:
     result = runner.invoke(cli_app.app, ["import", "cand-1"])
 
     assert result.exit_code == 1
-    assert "Import failed for cand-1: cannot import" in result.output
+    assert result.output == "Import failed\n"
+    assert "cand-1" not in result.output
+    assert "cannot import" not in result.output
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        NotFoundError("project not found: secret-project"),
+        ConflictError("external identifier belongs to secret-paper"),
+        ValidationError("tag not found: secret-tag"),
+    ],
+)
+def test_import_command_hides_domain_error_details(monkeypatch, error: Exception) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+
+    class FailingImport:
+        def import_candidate(self, candidate_id: str, **_: object) -> str:
+            raise error
+
+    container = FakeContainer(
+        discover=FakeDiscover(), import_candidate=FailingImport(), get_candidate=None
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(cli_app.app, ["import", "secret-candidate"])
+
+    assert result.exit_code == 1
+    assert result.output == "Import failed\n"
+    assert "secret" not in result.output
+
+
+def test_import_command_deduplicates_taxonomy_ids(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    container = FakeContainer(
+        discover=FakeDiscover(), import_candidate=FakeImport(), get_candidate=None
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(
+        cli_app.app,
+        [
+            "import",
+            "cand-1",
+            "--project",
+            "project-1",
+            "--project",
+            "project-1",
+            "--tag",
+            "tag-1",
+            "--tag",
+            "tag-1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert container.import_candidate.last_ids == {
+        "project_ids": ["project-1"],
+        "tag_ids": ["tag-1"],
+    }
