@@ -11,7 +11,7 @@ from papers.app.use_cases.discovery import (
     ImportCandidateUseCase,
     RejectCandidateUseCase,
 )
-from papers.domain.errors import NotFoundError
+from papers.domain.errors import ConfigurationError, NotFoundError, ValidationError
 from papers.domain.models import PipelineStage
 
 
@@ -89,6 +89,11 @@ class FakeJobQueue:
             }
         )
         return job_id
+
+
+class FakeTaxonomyStore:
+    def get(self, item_id: str) -> dict[str, str] | None:
+        return {"id": item_id}
 
 
 class FakeScholarClient:
@@ -554,6 +559,63 @@ class TestImportCandidateUseCase:
         assert paper_id is not None
         assert len(job_queue.jobs) == 1
         assert job_queue.jobs[0]["payload"] == {}
+
+    def test_import_with_taxonomy_ids_requires_atomic_importer(self) -> None:
+        candidate_store = FakeCandidateStore()
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": "candidate-1",
+                "source": "semantic_scholar",
+                "source_paper_id": "s2-1",
+                "title": "Test Paper",
+                "rejected_at": None,
+                "imported_paper_id": None,
+            }
+        )
+        papers = FakePaperStore()
+        jobs = FakeJobQueue()
+        use_case = ImportCandidateUseCase(
+            candidate_store=candidate_store,
+            paper_store=papers,
+            job_queue=jobs,
+            project_store=FakeTaxonomyStore(),
+            tag_store=FakeTaxonomyStore(),
+        )
+
+        with pytest.raises(ConfigurationError, match="AtomicCandidateImport"):
+            use_case.import_candidate(candidate_id, project_ids=["project-1"])
+
+        assert papers.papers == {}
+        assert jobs.jobs == []
+
+    @pytest.mark.parametrize("kind", ["project", "tag"])
+    def test_import_caps_unique_taxonomy_ids(self, kind: str) -> None:
+        candidate_store = FakeCandidateStore()
+        candidate_id = candidate_store.create_candidate(
+            {
+                "candidate_id": "candidate-1",
+                "source": "semantic_scholar",
+                "source_paper_id": "s2-1",
+                "title": "Test Paper",
+                "rejected_at": None,
+                "imported_paper_id": None,
+            }
+        )
+        papers = FakePaperStore()
+        jobs = FakeJobQueue()
+        use_case = ImportCandidateUseCase(
+            candidate_store=candidate_store,
+            paper_store=papers,
+            job_queue=jobs,
+        )
+        ids = [f"{kind}-{index}" for index in range(101)]
+        kwargs = {"project_ids": ids} if kind == "project" else {"tag_ids": ids}
+
+        with pytest.raises(ValidationError, match=f"too many {kind} IDs"):
+            use_case.import_candidate(candidate_id, **kwargs)
+
+        assert papers.papers == {}
+        assert jobs.jobs == []
 
 
 class TestRejectCandidateUseCase:

@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Protocol
 
-from papers.domain.errors import NotFoundError
+from papers.app import ports
+from papers.domain.errors import ConfigurationError, NotFoundError, ValidationError
 from papers.domain.models import PipelineHealth, PipelineStage
 
 
@@ -158,57 +159,57 @@ class ImportCandidateUseCase:
     job_queue: JobQueue
     external_id_store: PaperExternalIdStore | None = None
     atomic_importer: CandidateImporter | None = None
+    project_store: ports.ProjectStore | None = None
+    tag_store: ports.TagStore | None = None
+    atomic_candidate_import: ports.AtomicCandidateImport | None = None
 
-    def import_candidate(self, candidate_id: str) -> str:
-        """Import candidate as a paper and enqueue download job.
-
-        Args:
-            candidate_id: ID of candidate to import
-
-        Returns:
-            paper_id of created/existing paper
-
-        Raises:
-            NotFoundError: If candidate doesn't exist
-            ValueError: If candidate was already rejected
-        """
-        # Get candidate
+    def import_candidate(
+        self,
+        candidate_id: str,
+        *,
+        project_ids: list[str] | None = None,
+        tag_ids: list[str] | None = None,
+    ) -> str:
         candidate = self.candidate_store.get_candidate(candidate_id)
         if candidate is None:
             raise NotFoundError(f"candidate not found: {candidate_id}")
-
-        # Check if already rejected
         if candidate.get("rejected_at") is not None:
             raise ValueError("cannot import candidate that was already rejected")
 
-        # Check if already imported (idempotency)
+        resolved_projects = _deduplicate_membership_ids(project_ids, "project")
+        resolved_tags = _deduplicate_membership_ids(tag_ids, "tag")
+        self._require_membership_ids(resolved_projects, resolved_tags)
+        if (resolved_projects or resolved_tags) and self.atomic_candidate_import is None:
+            raise ConfigurationError("taxonomy attachments require AtomicCandidateImport")
+
         if candidate.get("imported_paper_id"):
-            return candidate["imported_paper_id"]
+            paper_id = str(candidate["imported_paper_id"])
+            if self.atomic_candidate_import is not None:
+                self.atomic_candidate_import.attach_to_imported(
+                    paper_id=paper_id,
+                    project_ids=resolved_projects,
+                    tag_ids=resolved_tags,
+                )
+            return paper_id
 
-        if self.atomic_importer is not None:
-            return self.atomic_importer.import_candidate(candidate_id)
-
-        # Create paper
-        paper_id = str(uuid.uuid4())
-
-        # Parse authors JSON if it exists
-        authors = []
+        authors: list[Any] = []
         if candidate.get("authors_json"):
             try:
                 authors = json.loads(candidate["authors_json"])
             except (json.JSONDecodeError, TypeError):
                 authors = []
-
-        # Parse external IDs JSON if it exists
         external_ids: dict[str, str] = {}
         if candidate.get("external_ids_json"):
             try:
-                external_ids = json.loads(candidate["external_ids_json"])
+                parsed = json.loads(candidate["external_ids_json"])
             except (json.JSONDecodeError, TypeError):
-                external_ids = {}
+                parsed = {}
+            if isinstance(parsed, dict):
+                external_ids = {
+                    str(kind): str(value) for kind, value in parsed.items() if value is not None
+                }
 
         paper_fields = {
-            "paper_id": paper_id,
             "title": candidate["title"],
             "year": candidate.get("year"),
             "venue": candidate.get("venue"),
@@ -218,24 +219,50 @@ class ImportCandidateUseCase:
             "pipeline_health": PipelineHealth.ok,
         }
 
-        self.paper_store.create_paper(paper_fields)
+        if self.atomic_candidate_import is not None:
+            return self.atomic_candidate_import.import_new(
+                candidate_id=candidate_id,
+                paper_fields=paper_fields,
+                external_ids=external_ids,
+                project_ids=resolved_projects,
+                tag_ids=resolved_tags,
+            )
 
-        # Store external IDs if store is available
+        if self.atomic_importer is not None:
+            return self.atomic_importer.import_candidate(candidate_id)
+
+        paper_id = str(uuid.uuid4())
+        self.paper_store.create_paper(
+            {
+                "paper_id": paper_id,
+                **paper_fields,
+            }
+        )
         if self.external_id_store and external_ids:
             self.external_id_store.create_external_ids(paper_id, external_ids)
-
-        # Enqueue download job with external IDs in payload
         self.job_queue.enqueue(
             type="download",
             paper_id=paper_id,
             run_id=None,
             payload={"external_ids": external_ids} if external_ids else {},
         )
-
-        # Mark candidate as imported
         self.candidate_store.mark_imported(candidate_id, paper_id)
-
         return paper_id
+
+    def _require_membership_ids(self, project_ids: list[str], tag_ids: list[str]) -> None:
+        for project_id in project_ids:
+            if self.project_store is None or self.project_store.get(project_id) is None:
+                raise NotFoundError(f"project not found: {project_id}")
+        for tag_id in tag_ids:
+            if self.tag_store is None or self.tag_store.get(tag_id) is None:
+                raise NotFoundError(f"tag not found: {tag_id}")
+
+
+def _deduplicate_membership_ids(values: list[str] | None, kind: str) -> list[str]:
+    resolved = list(dict.fromkeys(values or []))
+    if len(resolved) > 100:
+        raise ValidationError(f"too many {kind} IDs: maximum is 100")
+    return resolved
 
 
 @dataclass(frozen=True)
