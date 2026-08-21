@@ -336,7 +336,8 @@ def test_handle_convert_conversion_failed(tmp_path: Path) -> None:
     )
     result = handle_convert(job, ctx)
     assert result.status == "failed"
-    assert result.error == "boom"
+    assert result.error == "conversion failed"
+    assert "boom" not in result.error
 
 
 def test_handle_convert_treats_short_markdown_as_empty_output(tmp_path: Path) -> None:
@@ -400,8 +401,8 @@ def test_handle_convert_treats_short_markdown_as_empty_output(tmp_path: Path) ->
     assert result.error_code == str(ErrorCode.EMPTY_OUTPUT)
 
 
-def test_convert_enqueues_redownload_on_corrupt_pdf(tmp_path: Path) -> None:
-    """Convert should detect corrupt PDF, delete it, and enqueue a re-download."""
+def test_convert_preserves_corrupt_pdf_without_recovery_source(tmp_path: Path) -> None:
+    """Convert shouldn't delete the only copy when re-download is impossible."""
     db = PiccoloDatabase(tmp_path / "db.sqlite")
     db.initialize_schema()
     paper_store = PiccoloPaperStore()
@@ -451,13 +452,9 @@ def test_convert_enqueues_redownload_on_corrupt_pdf(tmp_path: Path) -> None:
 
     assert result.status == "failed"
     assert result.error_code == str(ErrorCode.CORRUPT_PDF)
-    # Corrupt blob should be deleted
-    assert not blob_path.exists()
-    # A download job should be enqueued
-    download_job = job_queue.claim_next(datetime.now(UTC))
-    assert download_job is not None
-    assert download_job.type == "download"
-    assert download_job.paper_id == "paper"
+    assert result.error == "Corrupt PDF detected; no recovery source available"
+    assert blob_path.exists()
+    assert job_queue.claim_next(datetime.now(UTC)) is None
 
 
 def test_convert_proceeds_with_valid_pdf(tmp_path: Path) -> None:

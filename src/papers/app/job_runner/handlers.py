@@ -155,11 +155,32 @@ def _as_json_float(value: Any) -> float | None:
 
 
 def _conversion_failure_result(error_code: str | None, error_message: str | None) -> HandlerResult:
-    message = error_message or "conversion failed"
+    raw_message = error_message or "conversion failed"
     if error_code in {ErrorCode.CONVERTER_TIMEOUT, ErrorCode.CONVERTER_OOM}:
-        return HandlerResult.retryable(message, error_code=str(error_code))
-    if error_code == ErrorCode.CONVERSION_FAILED and _is_transient_error(message):
-        return HandlerResult.retryable(message, error_code=str(error_code))
+        message = (
+            "conversion timeout"
+            if error_code == ErrorCode.CONVERTER_TIMEOUT
+            else "conversion out of memory"
+        )
+        return HandlerResult.retryable(
+            message,
+            error_code=str(error_code),
+        )
+    if error_code == ErrorCode.CONVERSION_FAILED and _is_transient_error(raw_message):
+        message = (
+            "conversion timeout"
+            if "timeout" in raw_message.lower()
+            else "conversion temporarily unavailable"
+        )
+        return HandlerResult.retryable(
+            message,
+            error_code=str(error_code),
+        )
+    message = (
+        "converter returned empty output"
+        if error_code == ErrorCode.EMPTY_OUTPUT
+        else "conversion failed"
+    )
     return HandlerResult.failed(message, error_code=str(error_code) if error_code else None)
 
 
@@ -333,9 +354,20 @@ def handle_convert(job: ports.Job, ctx: HandlerContext) -> HandlerResult:
         return HandlerResult.succeeded()
 
     if not _is_valid_pdf(pdf_path):
-        logger.warning("Corrupt PDF detected for paper %s, enqueuing re-download", job.paper_id)
+        logger.warning("Corrupt PDF detected for paper %s", job.paper_id)
+        recovery_payload = _download_recovery_payload(job, ctx)
+        if not recovery_payload:
+            return HandlerResult.failed(
+                "Corrupt PDF detected; no recovery source available",
+                error_code=str(ErrorCode.CORRUPT_PDF),
+            )
         pdf_path.unlink(missing_ok=True)
-        ctx.job_queue.enqueue("download", paper_id=job.paper_id, run_id=None, payload={})
+        ctx.job_queue.enqueue(
+            "download",
+            paper_id=job.paper_id,
+            run_id=None,
+            payload=recovery_payload,
+        )
         return HandlerResult.failed(
             "Corrupt PDF detected, re-download enqueued",
             error_code=str(ErrorCode.CORRUPT_PDF),
@@ -363,6 +395,18 @@ def handle_convert(job: ports.Job, ctx: HandlerContext) -> HandlerResult:
     ctx.paper_store.advance_pipeline_stage_monotonic(job.paper_id, PipelineStage.converted)
     ctx.paper_store.clear_pipeline_health_if_recovered(job.paper_id, job.type)
     return HandlerResult.succeeded()
+
+
+def _download_recovery_payload(job: ports.Job, ctx: HandlerContext) -> dict[str, Any]:
+    payload = {
+        key: job.payload[key] for key in ("source_path", "external_ids") if key in job.payload
+    }
+    if payload.get("external_ids") or payload.get("source_path"):
+        return payload
+    if ctx.external_id_store is None or job.paper_id is None:
+        return {}
+    external_ids = ctx.external_id_store.get_external_ids(job.paper_id)
+    return {"external_ids": external_ids} if external_ids else {}
 
 
 def handle_embed(job: ports.Job, ctx: HandlerContext) -> HandlerResult:
