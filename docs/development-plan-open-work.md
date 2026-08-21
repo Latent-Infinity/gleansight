@@ -13,10 +13,10 @@
 **Generated Data Authorization**: `None`
 **Provider Policy**: External services stay behind existing ports in `src/papers/app/ports.py`. Domain and use-case modules must not import provider SDKs.
 **Fact Policy**: Tier-1 facts live in `docs/fact-ledger.md`. Semantics change only via Fact Change tasks.
-**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, V2 atomic import is complete, V3 project-analysis filters plus force characterization are complete, and V6 converter/log/startup evidence is bound. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set. Protected/timeout/OOM convert classes remain unclaimed.
+**Data & Provider Readiness Summary**: V0A approved DATA-01a/b/c, V1 hybrid search is complete, V2 atomic import is complete, V3 project-analysis filters plus force characterization are complete, V6 converter/log/startup evidence is bound, and V7 publishes ADRs, workflows, and ledger links. EV-01 asserts the full fused order and scores, not a single winner. Gitignored `data/blobs/md/` is not the approved fixture set. Protected/timeout/OOM convert classes remain unclaimed.
 **Slice Ordering Rationale**: data/provider readiness → architectural risk → user value. V0 makes the four-command quality gate green with no ratchet. V0B adds forward-only migrations and a job CHECK, including table-rebuild data/index preservation. V0A acquires three approved papers. V1 binds hybrid search with a non-symmetric one-based RRF oracle. V2 adds an atomic import **port** (not a wrapper around `run_sync()`). V3 adds project-analysis filters (filters may use a different prompt version) and characterizes force. V6 and V7 close operability and docs. Corpus synthesis is out of this plan.
 **Repos in Scope**: this repository only.
-**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **V1–V3 and V6 are done.** Next closeout slice is V7 (docs). Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
+**Outstanding Blockers / Human Decisions**: V0A approved DATA-01a/b/c. **This closeout plan (V0–V3, V6–V7) is complete.** Product decisions V0.4/0.5/0.6 and V0A.5 (three papers) remain recorded below. Gitignored `data/db` / `data/blobs/md` are still not the approved fixture set. NSQD-N2 harvest reject is done; N2b still needs DATA-NSQD-04 (`docs/development-plan-ns-qd.md`).
 
 **Coverage baseline (legacy)**: 91.90% **combined** coverage on `src` excluding `src/papers/ui/*` (`525 passed, 1 skipped`, 2026-08-17). That is the pytest-cov `Cover` column (lines+branches mixed), not a branch-only percentage. No overall regression. Changed/new-code floors below are the same combined metric.
 
@@ -76,6 +76,7 @@ Later phases that protect “all Active facts” mean rows in this `Active` stat
 | 1.3.7 | 2026-08-20 | Harden V2: in-transaction target validation, atomic stale-reference cleanup on paper deletion, stable import conflicts, bounded CLI errors, and explicit fallback rejection. |
 | 1.3.8 | 2026-08-20 | Close V3: AnalyzeProject extraction-filter algebra, force-new-run characterization, and `analyze-project` CLI. |
 | 1.3.9 | 2026-08-20 | Close V6: bind converter result codes, provenance-safe corrupt-PDF recovery, job log context, and secret-safe missing-dep startup. |
+| 1.3.10 | 2026-08-21 | Close V7: ADRs, operator workflows, README ledger links, and EV-13 docs/CLI integrity tests. |
 
 ---
 
@@ -137,7 +138,7 @@ Not in this plan (do not bind): `SYNTH.*`. Landed synthesis UI/CLI remain experi
 | EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q --no-cov` | V6 | Required | standalone fail-fast + bounded CLI startup | none | hermetic | pass 2026-08-20 |
 | EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
 | EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline fixture DB | none | hermetic | pass 2026-08-19 |
-| EV-13 | (docs integrity) | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q` | V7 | Pending: V7 | workflow markdown; `src/` | none | hermetic | Unknown |
+| EV-13 | (docs integrity) | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q --no-cov` | V7 | Required | workflow markdown; `src/` | none | hermetic | pass 2026-08-21 |
 
 ---
 
@@ -1820,7 +1821,7 @@ uv run pytest -q
 Run the four-command quality gate.
 
 **Acceptance Criteria:**
-- [ ] Quality gate exits 0
+- [x] Quality gate exits 0
 
 ---
 
@@ -1842,10 +1843,10 @@ Run the four-command quality gate.
 ADRs for LanceDB, Docling, Piccolo + forward-only migrations, prompt system, and hybrid search **including one-based RRF**.
 
 **Acceptance Criteria:**
-- [ ] `docs/adr/001-lancedb-vector-store.md` through `docs/adr/005-hybrid-search.md` exist
-- [ ] 003 mentions V0B migrations
-- [ ] 005 states rank starts at 1
-- [ ] Coverage policy satisfied (N/A — documentation)
+- [x] `docs/adr/001-lancedb-vector-store.md` through `docs/adr/005-hybrid-search.md` exist
+- [x] 003 mentions V0B migrations
+- [x] 005 states rank starts at 1
+- [x] Coverage policy satisfied (N/A — documentation)
 
 ---
 
@@ -1867,9 +1868,9 @@ ADRs for LanceDB, Docling, Piccolo + forward-only migrations, prompt system, and
 CLI examples for discover/import (with `--project`/`--tag`), analyze / analyze-project, and query. No fake screenshots.
 
 **Acceptance Criteria:**
-- [ ] `docs/workflows/discovery.md`, `analysis.md`, `querying.md` exist
-- [ ] `uv run pytest tests/support/test_docs_cli_commands.py -q` extracts fenced/`papers ` commands from those files and asserts each is registered on the Typer app
-- [ ] Coverage policy satisfied (N/A — documentation except that test)
+- [x] `docs/workflows/discovery.md`, `analysis.md`, `querying.md` exist
+- [x] `uv run pytest tests/support/test_docs_cli_commands.py -q --no-cov` extracts documented `papers` commands and options from those files and asserts each is registered on the Typer app
+- [x] Coverage policy satisfied (N/A — documentation except that test)
 
 ---
 
@@ -1891,8 +1892,8 @@ CLI examples for discover/import (with `--project`/`--tag`), analyze / analyze-p
 README links `docs/fact-ledger.md` and `docs/evidence-index.md`. Setup commands match the quality gate.
 
 **Acceptance Criteria:**
-- [ ] Links resolve
-- [ ] Coverage snapshot optional; if written, it is a snapshot not a second source of truth
+- [x] Links resolve
+- [x] Coverage snapshot optional; if written, it is a snapshot not a second source of truth
 
 ---
 
@@ -1916,9 +1917,9 @@ README links `docs/fact-ledger.md` and `docs/evidence-index.md`. Setup commands 
 Add `tests/support/test_docs_cli_commands.py` and `tests/support/test_no_src_todo.py`. Flip EV-13 to `Required`.
 
 **Acceptance Criteria:**
-- [ ] Both tests green
-- [ ] EV-13 Lifecycle = Required
-- [ ] Coverage policy satisfied
+- [x] Both tests green
+- [x] EV-13 Lifecycle = Required
+- [x] Coverage policy satisfied
 
 **Files Affected (optional):**
 - `tests/support/test_docs_cli_commands.py` (create)
@@ -1927,11 +1928,13 @@ Add `tests/support/test_docs_cli_commands.py` and `tests/support/test_no_src_tod
 ---
 
 **Phase V7 Exit Criteria:**
-- [ ] ADRs and workflows exist
-- [ ] Ledger linked
-- [ ] EV-13 green (CLI-in-docs + no src TODO/FIXME/XXX)
-- [ ] Quality gate green
-- [ ] **Stage changes for human review**
+- [x] ADRs and workflows exist
+- [x] Ledger linked
+- [x] EV-13 green (CLI-in-docs + no src TODO/FIXME/XXX)
+- [x] Quality gate green
+- [x] **Stage changes for human review**
+
+**Close note (2026-08-21):** Published ADRs for LanceDB, Docling, Piccolo forward-only migrations, versioned prompts, and one-based hybrid RRF. Operator workflows cover discover/import, analyze/analyze-project, and query/filter. README links the fact ledger and evidence index. EV-13 checks documented Typer commands and forbids TODO/FIXME/XXX under `src/`. Final four-command gate: 777 passed, 1 skipped, 92.82% repository coverage.
 
 ---
 

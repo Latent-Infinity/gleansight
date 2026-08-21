@@ -2,7 +2,7 @@
 
 **Plan Set:** gleansight
 **Authority:** project register. Closeout: `docs/development-plan-open-work.md`. NS-QD: `docs/development-plan-ns-qd.md`.
-**As of:** 2026-08-20
+**As of:** 2026-08-21
 
 Facts are append-only. Lifecycle is not a test result. Evidence results live in `docs/evidence-index.md`.
 
