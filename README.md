@@ -7,7 +7,9 @@ Local-first **NS/QD-inspired discovery platform** with an **executable paper evi
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
 Evidence-layer closeout: [`docs/development-plan-open-work.md`](docs/development-plan-open-work.md)
+Fact ledger: [`docs/fact-ledger.md`](docs/fact-ledger.md) · Evidence index: [`docs/evidence-index.md`](docs/evidence-index.md)
 Discovery review tracker: [`docs/review-nsqd-action-items.md`](docs/review-nsqd-action-items.md)
+Workflows: [`docs/workflows/discovery.md`](docs/workflows/discovery.md) · [`docs/workflows/analysis.md`](docs/workflows/analysis.md) · [`docs/workflows/querying.md`](docs/workflows/querying.md)
 
 Core stack highlights:
 - Metadata store: Piccolo ORM (SQLite backend)
