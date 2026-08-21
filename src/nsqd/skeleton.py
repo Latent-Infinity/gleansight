@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from nsqd.app.handlers import handle_diverge, handle_ground, handle_score
+from nsqd.app.handlers import handle_diverge, handle_ground, handle_rescore, handle_score
 from nsqd.app.use_cases import empty_smoke_snapshot_id
 from nsqd.composition import NsqdContainer, build_container, fixed_clock
 from nsqd.domain.status import cell_status
@@ -125,4 +125,6 @@ def _dispatch(container: NsqdContainer, job: NsqdJob) -> dict[str, Any]:
         return handle_ground(container.ctx, job)
     if job.type == "score":
         return handle_score(container.ctx, job)
+    if job.type == "rescore":
+        return handle_rescore(container.ctx, job)
     raise ValueError(f"unsupported skeleton job type: {job.type}")

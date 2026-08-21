@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from nsqd.domain.card import card_decision, missing_card_fields
+from nsqd.domain.card import card_decision, missing_card_fields, needs_re_score
 from nsqd.domain.coverage import evaluate_rank_guard
 from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
@@ -314,3 +314,87 @@ class RankArchiveUseCase:
             elite_cell_ids=elite_cell_ids,
             cell_statuses=self.cell_statuses,
         )
+
+
+def _reconcile_archive(
+    cards: FrontierCardStore,
+    card: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    archived = ArchiveInsertUseCase(cards=cards).run(card)
+    cell_id = str(card["cell_id"])
+    elite = cards.elite_for_cell(cell_id)
+    if int(card.get("viability") or 0) <= 0 and elite is not None:
+        if str(elite.get("card_id")) == str(card["card_id"]):
+            cards.set_elite(cell_id, None)
+            elite = None
+    archived = {**archived, "elite": elite}
+    return archived, elite
+
+
+@dataclass(frozen=True)
+class RescoreUseCase:
+    snapshots: CorpusSnapshotStore
+    records: CorpusRecordStore
+    index: CorpusIndex
+    candidates: NsqdCandidateStore
+    cards: FrontierCardStore
+
+    def run(
+        self,
+        *,
+        card_id: str,
+        current_snapshot_id: str,
+        current_corpus_version: int,
+        snapshot_state: str,
+        evaluator_run_id: str,
+    ) -> dict[str, Any]:
+        card = self.cards.get_card(card_id)
+        if card is None:
+            raise ValueError("unknown card_id")
+        snapshot = self.snapshots.get(current_snapshot_id)
+        if snapshot is None:
+            raise ValueError("unknown current_snapshot_id")
+        if int(snapshot["corpus_version"]) != current_corpus_version:
+            raise ValueError("current_corpus_version does not match snapshot")
+        if not needs_re_score(
+            card_snapshot_id=str(card["snapshot_id"]),
+            current_snapshot_id=current_snapshot_id,
+        ):
+            archived, elite = _reconcile_archive(self.cards, card)
+            return {
+                "needs_re_score": False,
+                "card": card,
+                "archive": archived,
+                "elite": elite,
+            }
+        candidate_artifact_hash = str(card["candidate_artifact_hash"])
+        GroundUseCase(
+            snapshots=self.snapshots,
+            records=self.records,
+            index=self.index,
+            candidates=self.candidates,
+        ).run(
+            candidate_artifact_hash=candidate_artifact_hash,
+            snapshot_id=current_snapshot_id,
+            corpus_version=current_corpus_version,
+        )
+        scored = ScoreUseCase(
+            candidates=self.candidates,
+            cards=self.cards,
+            snapshots=self.snapshots,
+            records=self.records,
+        ).run(
+            candidate_artifact_hash=candidate_artifact_hash,
+            evaluator_run_id=evaluator_run_id,
+            snapshot_id=current_snapshot_id,
+            corpus_version=current_corpus_version,
+            snapshot_state=snapshot_state,
+        )
+        new_card = scored["card"]
+        archived, elite = _reconcile_archive(self.cards, new_card)
+        return {
+            "needs_re_score": True,
+            "card": new_card,
+            "archive": archived,
+            "elite": elite,
+        }

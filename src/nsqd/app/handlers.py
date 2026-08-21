@@ -8,6 +8,7 @@ from nsqd.app.use_cases import (
     DivergeUseCase,
     GroundUseCase,
     HarvestUseCase,
+    RescoreUseCase,
     ScoreUseCase,
 )
 from nsqd.ports import (
@@ -102,3 +103,22 @@ def handle_score(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         "card_decision": scored["card"]["card_decision"],
         "archive": archived,
     }
+
+
+def handle_rescore(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
+    _require_job_type(job, "rescore")
+    payload = job.payload
+    result = RescoreUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+    ).run(
+        card_id=str(payload["card_id"]),
+        current_snapshot_id=str(payload["current_snapshot_id"]),
+        current_corpus_version=int(payload["current_corpus_version"]),
+        snapshot_state="smoke_only",
+        evaluator_run_id=f"rescore:{job.job_id}",
+    )
+    return {"status": "succeeded", **result}

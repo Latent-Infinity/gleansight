@@ -36,3 +36,7 @@ def corpus_ingest_rejection(payload: dict[str, Any]) -> str | None:
 
 def card_decision(viability: int) -> str:
     return "rejected" if viability <= 0 else "accepted"
+
+
+def needs_re_score(*, card_snapshot_id: str, current_snapshot_id: str) -> bool:
+    return card_snapshot_id != current_snapshot_id

@@ -7,7 +7,13 @@ from typing import Any
 import pytest
 import yaml
 
-from nsqd.app.handlers import NsqdHandlerContext, handle_diverge, handle_ground, handle_score
+from nsqd.app.handlers import (
+    NsqdHandlerContext,
+    handle_diverge,
+    handle_ground,
+    handle_rescore,
+    handle_score,
+)
 from nsqd.app.use_cases import (
     ArchiveInsertUseCase,
     DivergeUseCase,
@@ -630,6 +636,7 @@ def test_score_rejects_invalid_snapshot_state_without_persisting_card() -> None:
         (handle_diverge, "diverge"),
         (handle_ground, "ground"),
         (handle_score, "score"),
+        (handle_rescore, "rescore"),
     ],
 )
 def test_handlers_reject_mismatched_job_type_before_reading_payload(
