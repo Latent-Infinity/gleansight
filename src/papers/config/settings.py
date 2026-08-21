@@ -10,6 +10,15 @@ from pydantic import BaseModel, Field, field_validator
 
 from papers.domain.errors import ConfigurationError
 
+_MISSING_DEPENDENCY_PREFIX = "Missing required dependency: "
+
+
+def public_configuration_error_message(error: ConfigurationError) -> str:
+    message = str(error)
+    if message.startswith(_MISSING_DEPENDENCY_PREFIX):
+        return f"Startup failed: {message}"
+    return "Startup configuration failed"
+
 
 class DataPaths(BaseModel):
     root: Path = Field(..., description="Base data directory")

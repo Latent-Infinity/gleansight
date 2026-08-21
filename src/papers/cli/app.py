@@ -10,7 +10,12 @@ from rich.console import Console
 
 from papers.app import use_cases
 from papers.app.composition_root import build_container
-from papers.config.settings import Settings, load_settings
+from papers.config.settings import (
+    ConfigurationError,
+    Settings,
+    load_settings,
+    public_configuration_error_message,
+)
 from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import (
     PiccoloAtomicCandidateImport,
@@ -22,7 +27,7 @@ from papers.infra.piccolo.stores import (
     PiccoloTagStore,
 )
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(add_completion=False, pretty_exceptions_show_locals=False)
 console = Console()
 
 
@@ -72,12 +77,16 @@ def get_container() -> CLIContainer:
     if _container is not None:
         return _container
     defaults_path = Path(__file__).resolve().parents[1] / "config" / "defaults.toml"
-    settings = load_settings(defaults_path=defaults_path, override_path=_cli_options["config"])
-    base = build_container(
-        settings,
-        llm_base_url=_cli_options["llm_base_url"],
-        llm_api_key=_cli_options["llm_api_key"],
-    )
+    try:
+        settings = load_settings(defaults_path=defaults_path, override_path=_cli_options["config"])
+        base = build_container(
+            settings,
+            llm_base_url=_cli_options["llm_base_url"],
+            llm_api_key=_cli_options["llm_api_key"],
+        )
+    except ConfigurationError as exc:
+        console.print(public_configuration_error_message(exc))
+        raise typer.Exit(code=1) from None
 
     candidate_store = getattr(base, "candidate_store", PiccoloCandidateStore())
     extraction_store = PiccoloExtractionStore()
