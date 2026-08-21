@@ -59,7 +59,7 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | Vector store | LanceDB: existing paper table **and** a corpus-paraphrase collection | **HD-NSQD-01 closed: LanceDB.** Qdrant is out of scope |
 | Embeddings | Existing sentence-transformers embedder for paraphrases in V1 | KISS |
 | Card/corpus metadata | Piccolo + `data/blobs/nsqd/` | Rule of Three |
-| Paper → corpus (v1) | Approved **human-authored** paraphrase + hashes (`ALG-PROJ`) | Abstract is not the paraphrase. Model-assisted extraction is a later reviewed slice |
+| Paper → corpus (v1) | Approved **human-reviewed** paraphrase + hashes (`ALG-PROJ`) | Abstract is not the paraphrase. Model-assisted drafting requires recorded human approval |
 | Harvest (non-paper) | Approved enumerated captures first; optional S2 | No invented citations |
 | Domain | Packs; `finance/1` for calibration | General platform |
 | Generate ≠ evaluate | Persist candidate by hash; evaluator reloads under a new run id (`ALG-SEP`) | Session tokens alone are not sufficient |
@@ -74,7 +74,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 ### Evidence layer (existing — protect)
 
 - **FR-E1** Discover, import, pipeline, analysis, hybrid search, projects/tags, CLI, UI keep current behavior.
-- **FR-E2** Projection uses a **human-authored mechanism paraphrase** (not the abstract). Persist source hashes, projector version, review status. Idempotent on `source_paper_id` + content hashes. **N2b**, not N1.
+- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist source hashes, projector version, provenance, and review status. Idempotent on `source_paper_id` + content hashes. **N2b**, not N1.
 
 ### Harvest
 

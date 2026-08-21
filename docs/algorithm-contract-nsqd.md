@@ -382,14 +382,14 @@ The evaluator **loads the artifact by hash**; it does not accept a live object f
 
 ## ALG-PROJ — Paper → corpus paraphrase
 
-v1 projector (**human-authored only**). **Not part of NSQD-N1.** First delivery is NSQD-N2b, after EW-V0A approves real paper fixtures, DATA-NSQD-04 exists (real paper + human paraphrase), and EW-V2 is available for live imports.
+v1 projector (**human-approved only**). Model-assisted drafting is allowed when the fixture records human approval. **Not part of NSQD-N1.** First delivery is NSQD-N2b, after EW-V0A approves real paper fixtures, DATA-NSQD-04 exists (real paper + approved mechanism paraphrase), and EW-V2 is available for live imports.
 
 - Input: approved fixture or reviewed row: `paraphrase`, `source_paper_id`, `title`, `abstract_hash`, `markdown_hash`
 - **Not** “use the abstract as the paraphrase”
-- Persist: `paraphrase_source = human`, `review_status = approved`, hashes, projector version `paper-projector/1`
+- Persist the approved fixture's `paraphrase_source`, `review_status = approved`, human-review metadata, hashes, and projector version `paper-projector/1`
 - Idempotent on `source_paper_id` + content hashes: same hashes → no new record; hash change → new `content_hash`, same logical id, new snapshot
 
-Later: `model` + `review_status=pending` is a new slice, not v1.
+Unapproved model output (`review_status = pending`) is not accepted by v1.
 
 Requirement-card fixtures (DATA-NSQD-01/02) are **not** corpus records and **must not** be accepted by the projector.
 
