@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
+from typing import Annotated
 
 import typer
 from rich.table import Table
 
 import papers.cli.app as cli_app
+from papers.app.use_cases.analysis import ExtractionFilter
+from papers.cli.commands.query import _parse_constraints
 
 app = typer.Typer(add_completion=False)
 
@@ -57,6 +60,54 @@ def analyze(
         force=force,
     )
     cli_app.console.print(f"Analysis run queued: {run_id}")
+
+
+@app.command("analyze-project")
+def analyze_project(
+    project_id: Annotated[str, typer.Argument(help="Project ID")],
+    prompt_version_id: Annotated[str, typer.Option(help="Target prompt version ID")],
+    profile_id: Annotated[str, typer.Option(help="Profile ID")],
+    model_name: Annotated[str, typer.Option(help="Model name")],
+    label: Annotated[str | None, typer.Option(help="Optional membership label")] = None,
+    field_path: Annotated[
+        str | None, typer.Option(help="Extraction field path to filter on")
+    ] = None,
+    constraint: Annotated[
+        list[str] | None, typer.Option(help="Constraint key=value", show_default=False)
+    ] = None,
+    filter_prompt_version_id: Annotated[
+        str | None,
+        typer.Option(help="Prompt version whose extractions are queried"),
+    ] = None,
+    force: Annotated[bool, typer.Option(help="Force new analysis runs")] = False,
+) -> None:
+    if constraint and field_path is None:
+        raise typer.BadParameter("--field-path is required when --constraint is set")
+    filters = None
+    if field_path is not None:
+        filters = [
+            ExtractionFilter(
+                field_path=field_path,
+                prompt_version_id=filter_prompt_version_id or prompt_version_id,
+                constraints=_parse_constraints(constraint or []),
+            )
+        ]
+    container = cli_app.get_container()
+    try:
+        run_ids = container.analyze_project(
+            project_id=project_id,
+            prompt_version_id=prompt_version_id,
+            profile_id=profile_id,
+            model_name=model_name,
+            label=label,
+            filters=filters,
+            force=force,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    cli_app.console.print(f"Queued {len(run_ids)} analysis runs")
+    for run_id in run_ids:
+        cli_app.console.print(run_id)
 
 
 @app.command("status")

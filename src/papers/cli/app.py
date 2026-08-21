@@ -33,6 +33,7 @@ class CLIContainer:
     import_candidate: use_cases.ImportCandidateUseCase
     get_candidate: Callable[[str], dict[str, Any] | None] | None
     run_analysis: use_cases.RunAnalysisUseCase
+    analyze_project: use_cases.AnalyzeProjectUseCase
     job_runner: Any
     job_queue: Any
     search: use_cases.SearchPapersUseCase
@@ -81,6 +82,13 @@ def get_container() -> CLIContainer:
     candidate_store = getattr(base, "candidate_store", PiccoloCandidateStore())
     extraction_store = PiccoloExtractionStore()
     papers_fts = PiccoloPaperFTS()
+    run_analysis = use_cases.RunAnalysisUseCase(
+        job_queue=base.job_queue,
+        prompt_store=base.prompt_store,
+        profile_store=base.profile_store,
+        analysis_store=base.analysis_store,
+    )
+    filter_extractions = use_cases.FilterByExtractionsUseCase(extraction_store=extraction_store)
 
     _container = CLIContainer(
         settings=settings,
@@ -99,11 +107,12 @@ def get_container() -> CLIContainer:
             atomic_candidate_import=PiccoloAtomicCandidateImport(),
         ),
         get_candidate=getattr(candidate_store, "get_candidate", None),
-        run_analysis=use_cases.RunAnalysisUseCase(
-            job_queue=base.job_queue,
+        run_analysis=run_analysis,
+        analyze_project=use_cases.AnalyzeProjectUseCase(
+            paper_project_store=PiccoloPaperProjectStore(),
             prompt_store=base.prompt_store,
-            profile_store=base.profile_store,
-            analysis_store=base.analysis_store,
+            run_analysis=run_analysis,
+            filter_extractions=filter_extractions,
         ),
         job_runner=base.job_runner,
         job_queue=base.job_queue,
@@ -112,7 +121,7 @@ def get_container() -> CLIContainer:
             vector_index=base.vector_index,
             embedder=base.embedder,
         ),
-        filter_extractions=use_cases.FilterByExtractionsUseCase(extraction_store=extraction_store),
+        filter_extractions=filter_extractions,
         aggregate_extractions=use_cases.AggregateExtractionsUseCase(
             extraction_store=extraction_store
         ),
