@@ -1,7 +1,7 @@
 # Approved NS/QD-inspired fixtures.
 # DATA-NSQD-01/02 are requirement-card fixtures, never corpus records.
 # DATA-NSQD-03 harvest seed is still pending.
-# DATA-NSQD-04 paper+human-paraphrase is still pending (blocks N2b, not N1).
+# DATA-NSQD-04 is an approved paper+paraphrase fixture for future N2b projection.
 
 schema_version = 1
 
@@ -29,5 +29,28 @@ approval_revision = "prd-v1.0"
 approved_at = "2026-08-18T00:00:00+00:00"
 never_corpus_record = true
 
+[fixture.DATA-NSQD-04]
+id = "DATA-NSQD-04"
+path = "paper-a.yaml"
+excerpt_path = "paper-a.md"
+kind = "corpus-paper-paraphrase"
+source_fixture_id = "DATA-01c"
+paper_id = "paper-20"
+source_paper_id = "7dbcef75-2d52-49a6-86a3-471be71f0fd7"
+title = "A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians"
+content_sha256 = "800c3b9754640ddc9565ad51d8407da5c8b511cebf333aafeeb715cfd4da8fa2"
+excerpt_sha256 = "3334cf37df429c6362d478b56b70537a995eb254c1f218384551c41d9d977d79"
+source_markdown_sha256 = "3334cf37df429c6362d478b56b70537a995eb254c1f218384551c41d9d977d79"
+source_abstract_sha256 = "1b96d6834629f1b2eb72213169b2758667f931d63c1f3d963840ae6b440a350d"
+paraphrase_sha256 = "cb0b9797dfb6067041c309c9fa2800fc0ab71e4c861c8701245eb238cbabda48"
+paraphrase_source = "model_assisted"
+review_status = "approved"
+review_workflow = "writer-reviewer/1"
+review_rounds = 4
+reviewer = "product"
+approval_revision = "model-assisted-summary-v1"
+approved_at = "2026-08-21T19:03:54+00:00"
+overlap_max = 7
+overlap_limit = 8
+
 # DATA-NSQD-03 harvest-seed.toml — not approved yet (real enumerated citations required).
-# DATA-NSQD-04 paper-a.* — not approved yet (real paper + human paraphrase; do not invent).

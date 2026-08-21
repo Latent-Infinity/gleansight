@@ -1,0 +1,30 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: DATA-NSQD-04
+source_fixture_id: DATA-01c
+paper_id: paper-20
+source_paper_id: 7dbcef75-2d52-49a6-86a3-471be71f0fd7
+title: A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians
+source_excerpt_path: paper-a.md
+source_markdown_sha256: 3334cf37df429c6362d478b56b70537a995eb254c1f218384551c41d9d977d79
+source_abstract_sha256: 1b96d6834629f1b2eb72213169b2758667f931d63c1f3d963840ae6b440a350d
+paraphrase: >-
+  The paper presents a sequential quadratic optimization algorithm for smooth nonlinear
+  equality-constrained problems with an objective expressed as the expectation of a
+  stochastic function. Each search direction is the sum of a normal step for linearized
+  feasibility and a tangential step for objective reduction within the null space of the
+  constraint Jacobian. At the abstract level, the method is described as permitting
+  stochastic objective gradient estimates. The abstract also claims convergence guarantees
+  when constraint Jacobians may be rank deficient. The reported numerical experiments are
+  said to show better performance than popular alternatives.
+paraphrase_sha256: cb0b9797dfb6067041c309c9fa2800fc0ab71e4c861c8701245eb238cbabda48
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-21T19:03:54+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 7
+  limit: 8
