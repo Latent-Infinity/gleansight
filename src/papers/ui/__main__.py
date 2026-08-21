@@ -57,6 +57,9 @@ def build_ui_services(
             job_queue=base.job_queue,
             external_id_store=external_id_store,
             atomic_importer=PiccoloCandidateImporter(),
+            project_store=base.project_store,
+            tag_store=base.tag_store,
+            atomic_candidate_import=base.atomic_candidate_import,
         ),
         reject_candidate=use_cases.RejectCandidateUseCase(
             candidate_store=candidate_store,
