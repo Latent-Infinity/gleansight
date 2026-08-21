@@ -16,7 +16,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite.
 **Data & Provider Readiness**: DATA-NSQD-01/02 committed. DATA-NSQD-03 **missing**. DATA-NSQD-04 **missing** (do not invent). Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Closeout deps first. Domain → application → adapters → final E2E (N1). Then harden stages. Paper projector is **N2b**, not N1.
-**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, EW-V2 done.** DATA-NSQD-03; DATA-NSQD-04 before N2b. N1 walking skeleton and N2 harvest reject are done. DATA-NSQD-04 still needs a human paraphrase of one V0A paper.
+**Outstanding Blockers**: **EW-V0.11, EW-V0.3, EW-V0B, EW-V0A, EW-V1, EW-V2, EW-V7 done.** DATA-NSQD-03; DATA-NSQD-04 before N2b. N1, N2 harvest reject, and N7 rank guard are done. N2b still needs a human paraphrase of one V0A paper (DATA-NSQD-04). N3 ablation waits on N6. N6 waits on DATA-NSQD-03.
 
 ```bash
 uv run ruff format --check .
@@ -50,6 +50,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.3.11 | 2026-08-20 | N2 review: TOML parsing, specific job claims, terminal failures, metadata retention, UTC lifecycle, and versioned snapshot commits. Clarify that the hash vector is synthetic test evidence, not approved corpus data. |
 | 1.3.12 | 2026-08-20 | N2 hardening: atomic harvest commits, immutable record metadata, bounded input/schema validation, queue-port parity, and authoritative skeleton version stamps. |
 | 1.3.13 | 2026-08-20 | Reconcile completed N1 E2E and persistence status after EW-V2 closeout. |
+| 1.3.14 | 2026-08-21 | N7 rank guard: global rank fails unless 50 elites or 20% coverage of U excluding Invalid. N2b still blocked on DATA-NSQD-04. |
 
 ---
 
@@ -140,7 +141,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 | EV-N11 | NSQD.NOVELTY.METRIC.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_novelty_evidence_mean_and_k_sizes tests/nsqd/test_domain_policies.py::test_novelty_term_bins -q --no-cov` | N1 | Required |
 | EV-N12 | NSQD.JOBS.OWNED.v1 | `uv run pytest tests/facts/test_nsqd_jobs.py -q --no-cov` | N1 | Required |
 | EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | `uv run pytest tests/facts/test_nsqd_sufficiency.py -q --no-cov` | N6 | Pending: N6 |
-| EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Pending: N7 |
+| EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Required |
 
 Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 
@@ -597,6 +598,16 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Depends On:** N1
 **Facts:** NSQD.ARCHIVE.RANK_GUARD.v1 → EV-N14
 **Acceptance:** Rank fails below 50 elites and below 20% of `U \ {Invalid}`; both boundaries tested.
+
+- [x] Below-threshold rejection (`rank_guard_blocked`)
+- [x] `|elites| = 49` and coverage < 0.20 blocked
+- [x] `|elites| = 50` allowed
+- [x] coverage = 0.20 with `|elites| < 50` allowed
+- [x] Unknown/uninspected cells remain in the denominator
+- [x] Invalid elite cells are excluded from the numerator
+- [x] An all-Invalid universe remains below both thresholds
+
+**Close note (2026-08-21):** `RankArchiveUseCase` implements ALG-COV: allow iff elite count ≥ 50 or coverage ≥ 0.20 of `finance/1` universe minus Invalid. The use case derives Invalid cells from its injected authoritative status table; callers cannot submit denominator exclusions per rank request. Rank inputs are bounded built-in collections. Unknown/uninspected cells stay in the denominator, while Invalid cells are excluded from both numerator and denominator. N2b projector was not started. Four-command gate: 787 passed, 1 skipped, 92.88% repository coverage.
 
 ### NSQD-N8 Re-score
 

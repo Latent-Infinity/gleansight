@@ -31,10 +31,11 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases; covers 0, <k, exact k, ties, and known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | product | Active | EV-N11 |
 | NSQD.JOBS.OWNED.v1 | Harvest/diverge/ground/score persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
+| NSQD.ARCHIVE.RANK_GUARD.v1 | Given elite counts and the eligible archive-cell universe excluding Invalid, when global rank is requested, then it fails with rank_guard_blocked unless \|elites\| ≥ 50 or coverage ≥ 0.20 | Archive rank | Behavior | LOCAL-NSQD-A | product | Active | EV-N14 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.12)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.14)
 
-See that plan’s ledger for full statements. N1 and N2 harvest-reject facts are **Active** with Required evidence. N2b/N6/N7 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-03 is still not invented.
+See that plan’s ledger for full statements. N1, N2 harvest-reject, and N7 rank-guard facts are **Active** with Required evidence. N2b/N6 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-03/04 are still not invented.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -52,4 +53,4 @@ See that plan’s ledger for full statements. N1 and N2 harvest-reject facts are
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
 | NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Blocked on DATA-NSQD-03 for `production_valid` |
-| NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | |
+| NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
