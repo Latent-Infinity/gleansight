@@ -36,11 +36,12 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor universe and dval compatibility resolve by explicit domain_policy_id; grounding, corpus filtering, cards/elites/rank are policy-scoped; `(snapshot_id, domain_policy_id)` verdict identity/schema is reserved and validated; records from one policy cannot satisfy, ground, rank, or archive under another | Domain policy | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | product | Active | EV-N16 |
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
+| NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to calibration or production_valid is evaluated independently by (snapshot_id, domain_policy_id) under ALG-SUF; every SufficiencyFailure code is tested; honest finance/1 production_valid stays blocked without approved DATA-NSQD-03 | N6 promotion | Behavior | LOCAL-NSQD-H | product | Active | EV-N13 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy ALG-SUF failures trigger a bounded discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures stop and LLM output cannot approve corpus evidence or promotion | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.7)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.9)
 
-See that plan’s ledger for full statements. N1–N5, N7, and N8 facts are **Active** with Required evidence. N6 promotion and acquisition fallback remain **Proposed/Pending**. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
+See that plan’s ledger for full statements. N1–N5, N6 promotion, N7–N9 facts are **Active** with Required evidence. The N6 acquisition fallback remains **Proposed/Pending**, and honest `finance/1 production_valid` remains blocked without approved DATA-NSQD-03. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -59,7 +60,7 @@ See that plan’s ledger for full statements. N1–N5, N7, and N8 facts are **Ac
 | NSQD.GROUND.LIVE_PRIOR_ART.v1 | N5 | Search-only escalation; no acquisition or corpus writes |
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
-| NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Blocked on DATA-NSQD-03 for `production_valid` |
-| NSQD.ACQUISITION.FALLBACK.v1 | N6 | Proposed; EV-N17 pending until N6 orchestration exists |
+| NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Active; honest finance/1 production_valid still requires DATA-NSQD-03 |
+| NSQD.ACQUISITION.FALLBACK.v1 | N6 | Proposed; fail-closed staging foundation exists, approval/projection/recheck remains pending |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
 | NSQD.RESCORE.REPLAY.v1 | N8 | Active; retry-safe archive reconciliation |

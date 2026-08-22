@@ -1,7 +1,7 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.4.6 (NS/QD)
+**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.4.9 (NS/QD)
 **As of:** 2026-08-22
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
@@ -41,8 +41,8 @@ Do not treat smoke fixtures as `calibration`. Smoke E2E (EV-N00) uses an empty s
 | EV-N10 | NSQD.GROUND.CASCADE.v1, NSQD.GROUND.LIVE_PRIOR_ART.v1 | `uv run pytest tests/nsqd/test_domain_policies.py tests/nsqd/test_application.py tests/nsqd/test_live_grounding.py -q --no-cov` | N1 | Required |
 | EV-N11 | NSQD.NOVELTY.METRIC.v1 | `uv run pytest tests/nsqd/test_domain_policies.py -q --no-cov` | N1 | Required |
 | EV-N12 | NSQD.JOBS.OWNED.v1 | `uv run pytest tests/facts/test_nsqd_jobs.py -q --no-cov` | N1 | Required |
-| EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | `uv run pytest tests/facts/test_nsqd_sufficiency.py -q --no-cov` | N6 | Pending: N6 |
+| EV-N13 | NSQD.SNAPSHOT.PROMOTION.v1 | `uv run pytest tests/facts/test_nsqd_sufficiency.py tests/nsqd/test_sufficiency.py -q --no-cov` | N6 | Required |
 | EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Required |
 | EV-N15 | NSQD.RESCORE.REPLAY.v1 | `uv run pytest tests/nsqd/test_rescore.py -q --no-cov` | N8 | Required |
 | EV-N16 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | `uv run pytest tests/facts/test_nsqd_domain_policy_isolation.py -q --no-cov` | N2a | Required |
-| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py -q --no-cov` | N6 | Pending: N6 |
+| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py -q --no-cov` | N6 | Pending: N6 acquisition completion |
