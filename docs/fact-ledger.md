@@ -28,6 +28,7 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | Given non-smoke constructed inputs with viability > 0, elite replacement uses viability then smaller candidate_artifact_hash; rejected cards never insert; replay is order-independent | Archive write | Behavior | LOCAL-NSQD-A | product | Active | EV-N07 |
 | NSQD.CARD.SCHEMA.v1 | A card missing any required schema field is rejected independently | Archive | Data Contract | LOCAL-NSQD-C | product | Active | EV-N08 |
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist layer records; live and paper hybrid search are not called on the N1 path | Ground | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
+| NSQD.GROUND.LIVE_PRIOR_ART.v1 | Given a local unevaluated result on a calibration or production-valid snapshot, grounding makes at most 3 calls through explicitly injected hybrid/scholar search-only interfaces, accepts only backend-contract results, persists the closest normalized prior-art record and hashed query metadata, classifies a valid hit as related_partial, and writes no corpus records | N5 ground escalation | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases; covers 0, <k, exact k, ties, and known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | product | Active | EV-N11 |
 | NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
@@ -37,9 +38,9 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy ALG-SUF failures trigger a bounded discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures stop and LLM output cannot approve corpus evidence or promotion | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.6)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.7)
 
-See that plan’s ledger for full statements. N1, N2 harvest-reject, N2a isolation, N2b projection, N7 rank-guard, and N8 re-score facts are **Active** with Required evidence. N6 promotion and acquisition fallback remain **Proposed/Pending**. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
+See that plan’s ledger for full statements. N1–N5, N7, and N8 facts are **Active** with Required evidence. N6 promotion and acquisition fallback remain **Proposed/Pending**. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -54,7 +55,8 @@ See that plan’s ledger for full statements. N1, N2 harvest-reject, N2a isolati
 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | N1 | Non-smoke unit inputs |
 | NSQD.CARD.SCHEMA.v1 | N1 | |
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | **N2b** | Active; DATA-NSQD-04 projects to optimization/1 only |
-| NSQD.GROUND.CASCADE.v1 | N1 | |
+| NSQD.GROUND.CASCADE.v1 | N1 | Local-only cascade; external search is forbidden on smoke |
+| NSQD.GROUND.LIVE_PRIOR_ART.v1 | N5 | Search-only escalation; no acquisition or corpus writes |
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
 | NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Blocked on DATA-NSQD-03 for `production_valid` |
