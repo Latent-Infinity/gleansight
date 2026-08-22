@@ -237,7 +237,7 @@ At review time `ruff check` (79) and `ty check` (526) fail. Pytest passes.
 
 - [x] Stores, indexes, clocks, external search, model providers, blobs, and job queues are the ports.
 - [x] Novelty, viability, status, elite, schema validation are domain functions.
-- [x] `PaperToCorpusProjector` is an N2b application use case on a minimal `PaperSource` port.
+- [x] `ProjectPaperUseCase` is the N2b application use case over reviewed projection payloads; a typed live NSQD→paper bridge is deferred to N6.
 - [x] NS-QD must not depend on provider SDKs or broad paper infrastructure.
 - [x] Port tests are specified as behavioral contracts.
 
@@ -449,7 +449,7 @@ Named in `docs/development-plan-ns-qd.md`. Domain and application increments are
 - [x] Every P1 item is checked.
 - [x] P2 documentation corrections are checked.
 - [x] The dependency matrix and N1 task order agree with the revised contracts.
-- [x] DATA-NSQD-04 is now approved; all paper-projector claims remain removed from N1 and EV-N09 remains pending N2b.
+- [x] Historical at that review point: DATA-NSQD-04 became approved, all paper-projector claims remained removed from N1, and EV-N09 was still pending until later N2b closeout.
 - [x] A plan-only consistency pass finds no requirement simultaneously mandatory and out of scope (FR-D1 vs B–G resolved).
 - [x] Pre-existing Ruff/`ty` failures are explicitly assigned to EW-V0.11 and are not required to be fixed by this documentation-review pass. This review does not weaken, bypass, or redefine the four-command gate.
 
