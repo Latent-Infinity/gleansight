@@ -5,7 +5,7 @@
 schema_version: 1
 kind: candidate-requirement-card
 id: gamma-flow-dealer-convexity
-domain_pack: finance/1
+domain_policy_id: finance/1
 title: Dealer-convexity state as a TRUST variable for short-horizon allocation
 one_sentence_claim: >
   Condition short-horizon allocation trust/abstention on dealer convexity regime,

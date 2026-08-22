@@ -4,7 +4,7 @@
 schema_version: 1
 kind: candidate-requirement-card
 id: apply-diffusion-to-intraday
-domain_pack: finance/1
+domain_policy_id: finance/1
 title: Apply diffusion models to intraday return prediction
 one_sentence_claim: Use a diffusion generative model to predict intraday returns.
 conventional_core: Deep generative models

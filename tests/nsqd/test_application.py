@@ -11,6 +11,7 @@ from nsqd.app.handlers import (
     NsqdHandlerContext,
     handle_diverge,
     handle_ground,
+    handle_project,
     handle_rescore,
     handle_score,
 )
@@ -176,7 +177,7 @@ def test_score_and_archive_reject_smoke_fixtures() -> None:
         archived = ArchiveInsertUseCase(cards=ctx.cards).run(scored["card"])
         assert archived["inserted"] is False
         assert archived["reason"] == "viability_zero"
-        assert ctx.cards.elite_for_cell(scored["card"]["cell_id"]) is None
+        assert ctx.cards.elite_for_cell(scored["card"]["archive_cell_key"]) is None
 
 
 def test_handlers_are_callable_without_cli() -> None:
@@ -232,7 +233,9 @@ def test_handlers_are_callable_without_cli() -> None:
     scored = handle_score(ctx, score_job)
     assert scored["status"] == "succeeded"
     assert scored["viability"] == 0
-    assert ctx.cards.elite_for_cell(scored["cell_id"]) is None
+    stored_card = ctx.cards.get_card(artifact_hash)
+    assert stored_card is not None
+    assert ctx.cards.elite_for_cell(stored_card["archive_cell_key"]) is None
 
 
 def test_ground_and_score_fail_on_unknown_hash() -> None:
@@ -286,12 +289,20 @@ def test_score_requires_grounding() -> None:
 
 def test_ground_hits_exact_source_on_populated_snapshot() -> None:
     ctx = _ctx()
-    ctx.records.put({"record_id": "r1", "source": "doi:10.1/x", "type": "paper", "tags": []})
+    ctx.records.put(
+        {
+            "record_id": "r1",
+            "source": "doi:10.1/x",
+            "type": "paper",
+            "tags": [],
+            "domain_policy_id": "finance/1",
+        }
+    )
     ctx.snapshots.commit("snap", ["r1"], schema_version=1)
     candidate = {
         "title": "t",
         "source": "doi:10.1/x",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": "drawdown",
@@ -320,13 +331,14 @@ def test_ground_matches_normalized_doi_source_forms() -> None:
             "source": "https://doi.org/10.1/X/",
             "type": "paper",
             "tags": [],
+            "domain_policy_id": "finance/1",
         }
     )
     ctx.snapshots.commit("snap", ["r1"], schema_version=1)
     candidate = {
         "title": "t",
         "source": "doi:10.1/x",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": "drawdown",
@@ -349,13 +361,21 @@ def test_ground_matches_normalized_doi_source_forms() -> None:
 
 def test_ground_uses_index_when_query_vector_present() -> None:
     ctx = _ctx()
-    ctx.records.put({"record_id": "r1", "source": "s", "type": "code", "tags": []})
+    ctx.records.put(
+        {
+            "record_id": "r1",
+            "source": "s",
+            "type": "code",
+            "tags": [],
+            "domain_policy_id": "finance/1",
+        }
+    )
     ctx.index.upsert("snap", "r1", [1.0, 0.0])
     ctx.snapshots.commit("snap", ["r1"], schema_version=1)
     candidate = {
         "title": "t",
         "query_vector": [1.0, 0.0],
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "behavioral",
             "target": "returns",
@@ -381,7 +401,9 @@ def test_archive_inserts_nonzero_viability_card() -> None:
     ctx = _ctx()
     card = {
         "card_id": "c-high",
+        "domain_policy_id": "finance/1",
         "cell_id": "mechanism=flow-driven|target=drawdown|horizon=intraday",
+        "archive_cell_key": "finance/1::mechanism=flow-driven|target=drawdown|horizon=intraday",
         "title": "t",
         "generating_operator": "A",
         "snapshot_id": "snap",
@@ -398,7 +420,7 @@ def test_archive_inserts_nonzero_viability_card() -> None:
     ctx.cards.put_card(card)
     result = ArchiveInsertUseCase(cards=ctx.cards).run(card)
     assert result["inserted"] is True
-    assert ctx.cards.elite_for_cell(card["cell_id"]) == card
+    assert ctx.cards.elite_for_cell(card["archive_cell_key"]) == card
 
 
 def test_score_rejects_incomplete_card() -> None:
@@ -407,7 +429,7 @@ def test_score_rejects_incomplete_card() -> None:
     ctx.snapshots.commit(sid, [], schema_version=1)
     candidate = {
         "title": "",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": "drawdown",
@@ -443,13 +465,19 @@ def test_score_rejects_incomplete_card() -> None:
 def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
     ctx = _ctx()
     ctx.records.put(
-        {"record_id": "r1", "source": "other", "type": "paper", "tags": ["terminology"]}
+        {
+            "record_id": "r1",
+            "source": "other",
+            "type": "paper",
+            "tags": ["terminology"],
+            "domain_policy_id": "finance/1",
+        }
     )
     ctx.snapshots.commit("snap", ["r1", "ghost"], schema_version=1)
     candidate = {
         "title": "t",
         "source": "nope",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "behavioral",
             "target": "returns",
@@ -469,7 +497,15 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
     ).run(candidate_artifact_hash=artifact_hash, snapshot_id="snap", corpus_version=1)
     assert grounding["grounding_class"] == "renamed"
 
-    ctx.records.put({"record_id": "r2", "source": "other", "type": "code", "tags": []})
+    ctx.records.put(
+        {
+            "record_id": "r2",
+            "source": "other",
+            "type": "code",
+            "tags": [],
+            "domain_policy_id": "finance/1",
+        }
+    )
     ctx.snapshots.commit("snap-code", ["r2"], schema_version=1)
     artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
         candidate={**candidate, "title": "t2"},
@@ -490,7 +526,7 @@ def test_candidate_body_and_diverge_artifact_do_not_alias_nested_payloads() -> N
     ctx = _ctx()
     candidate: dict[str, Any] = {
         "title": "t",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": ["drawdown"],
@@ -506,7 +542,7 @@ def test_candidate_body_and_diverge_artifact_do_not_alias_nested_payloads() -> N
 
     assert body == {
         "title": "t",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": ["drawdown"],
@@ -637,6 +673,7 @@ def test_score_rejects_invalid_snapshot_state_without_persisting_card() -> None:
         (handle_ground, "ground"),
         (handle_score, "score"),
         (handle_rescore, "rescore"),
+        (handle_project, "project"),
     ],
 )
 def test_handlers_reject_mismatched_job_type_before_reading_payload(

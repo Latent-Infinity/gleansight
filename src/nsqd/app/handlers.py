@@ -8,6 +8,7 @@ from nsqd.app.use_cases import (
     DivergeUseCase,
     GroundUseCase,
     HarvestUseCase,
+    ProjectPaperUseCase,
     RescoreUseCase,
     ScoreUseCase,
 )
@@ -35,6 +36,7 @@ class NsqdHandlerContext:
     harvest: HarvestStore
     index: CorpusIndex
     morph: MorphospaceStore
+    approved_projection_digests: frozenset[str] = frozenset()
     scholar_client: Any = None
     paper_vector_index: Any = None
 
@@ -50,6 +52,24 @@ def handle_harvest(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         harvest=ctx.harvest,
         clock=ctx.clock,
     ).run(job.payload["payload"])
+    return {"status": "succeeded", **result}
+
+
+def handle_project(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
+    _require_job_type(job, "project")
+    payload = job.payload
+    projection = payload["projection"]
+    if not isinstance(projection, dict):
+        raise ValueError("projection must be a mapping")
+    result = ProjectPaperUseCase(
+        harvest=ctx.harvest,
+        records=ctx.records,
+        clock=ctx.clock,
+        approved_projection_digests=ctx.approved_projection_digests,
+    ).run(
+        domain_policy_id=str(payload.get("domain_policy_id") or ""),
+        projection=projection,
+    )
     return {"status": "succeeded", **result}
 
 

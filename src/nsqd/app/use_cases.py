@@ -2,17 +2,45 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
 
-from nsqd.domain.card import card_decision, missing_card_fields, needs_re_score
+from nsqd.domain.card import (
+    card_decision,
+    corpus_ingest_rejection,
+    missing_card_fields,
+    needs_re_score,
+)
 from nsqd.domain.coverage import evaluate_rank_guard
-from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
 from nsqd.domain.grounding import classify_local
-from nsqd.domain.harvest import OPTIONAL_RECORD_FIELDS, harvest_records_from_payload
+from nsqd.domain.harvest import (
+    OPTIONAL_RECORD_FIELDS,
+    HarvestRejected,
+    harvest_records_from_payload,
+)
 from nsqd.domain.novelty import SnapshotState, mean_cosine_distance, novelty_term
+from nsqd.domain.policy import (
+    FINANCE_POLICY,
+    archive_cell_key,
+    get_policy,
+    records_for_policy,
+    require_compatible_dval_rubric,
+    require_domain_policy_id,
+)
+from nsqd.domain.project import (
+    PROJECTOR_VERSION,
+    canonical_reviewed_projection_bytes,
+    canonical_reviewed_projection_digest,
+    is_abstract_substitution,
+    is_data_nsqd_04,
+    normalize_paraphrase,
+    projection_identity,
+    projection_record_id,
+)
 from nsqd.domain.snapshot import (
     canonical_json,
+    is_utc_datetime,
     normalize_source,
     record_content_hash,
     sha256_hex,
@@ -33,6 +61,9 @@ from nsqd.ports import (
 
 def empty_smoke_snapshot_id() -> str:
     return snapshot_id(records=[], schema_version=1)
+
+
+MAX_REVIEWED_PROJECTION_BYTES = 65_536
 
 
 def candidate_body(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -68,9 +99,14 @@ class HarvestUseCase:
             rec_type = item["type"]
             paraphrase = item["paraphrase"]
             source = item["source"]
+            domain_policy_id = str(item["domain_policy_id"])
             assert isinstance(rec_type, str)
             assert isinstance(paraphrase, str)
             assert isinstance(source, str)
+            try:
+                policy_id = get_policy(domain_policy_id.strip()).policy_id
+            except ValueError as exc:
+                raise HarvestRejected(str(exc)) from exc
             digest = record_content_hash(
                 type=rec_type,
                 paraphrase=paraphrase,
@@ -83,6 +119,7 @@ class HarvestUseCase:
                 "paraphrase": paraphrase,
                 "source": source,
                 "harvested_at": harvested_at,
+                "domain_policy_id": policy_id,
             }
             record.update(
                 {key: deepcopy(item[key]) for key in OPTIONAL_RECORD_FIELDS if key in item}
@@ -95,6 +132,165 @@ class HarvestUseCase:
             "snapshot_id": committed.snapshot_id,
             "corpus_version": committed.corpus_version,
         }
+
+
+@dataclass(frozen=True)
+class ProjectPaperUseCase:
+    harvest: HarvestStore
+    records: CorpusRecordStore
+    clock: Clock
+    approved_projection_digests: frozenset[str]
+
+    def run(self, *, domain_policy_id: str, projection: dict[str, Any]) -> dict[str, Any]:
+        if not domain_policy_id.strip():
+            raise ValueError("domain_policy_id is required")
+        policy = get_policy(domain_policy_id.strip())
+        card_reason = corpus_ingest_rejection(projection)
+        if card_reason is not None:
+            raise ValueError(card_reason)
+        if str(projection.get("review_status") or "") != "approved":
+            raise ValueError("paraphrase must be human-approved")
+        paraphrase = projection.get("paraphrase")
+        if not isinstance(paraphrase, str) or not paraphrase.strip():
+            raise ValueError("empty paraphrase")
+        normalized_paraphrase = normalize_paraphrase(paraphrase)
+        human_reviewer = projection.get("human_reviewer")
+        if not isinstance(human_reviewer, str) or not human_reviewer.strip():
+            raise ValueError("human_reviewer is required")
+        normalized_human_reviewer = human_reviewer.strip()
+        human_approved_at = projection.get("human_approved_at")
+        normalized_human_approved_at = self._normalize_utc_timestamp(human_approved_at)
+        paraphrase_source = projection.get("paraphrase_source")
+        if not isinstance(paraphrase_source, str) or not paraphrase_source.strip():
+            raise ValueError("paraphrase_source is required")
+        normalized_paraphrase_source = paraphrase_source.strip()
+        raw_abstract = projection.get("abstract")
+        abstract = raw_abstract if isinstance(raw_abstract, str) else None
+        source_paper_id = projection.get("source_paper_id")
+        if not isinstance(source_paper_id, str) or not source_paper_id.strip():
+            raise ValueError("source_paper_id is required")
+        normalized_source_paper_id = source_paper_id.strip()
+        projection_policy_id = projection.get("domain_policy_id")
+        if not isinstance(projection_policy_id, str) or not projection_policy_id.strip():
+            raise ValueError("projection.domain_policy_id is required")
+        normalized_projection_policy_id = projection_policy_id.strip()
+        if normalized_projection_policy_id != policy.policy_id:
+            raise ValueError("projection.domain_policy_id must match explicit domain_policy_id")
+        if is_data_nsqd_04(projection) and policy.policy_id == "finance/1":
+            raise ValueError("DATA-NSQD-04 cannot credit finance/1")
+        if is_data_nsqd_04(projection) and policy.policy_id != "optimization/1":
+            raise ValueError("DATA-NSQD-04 projects only into optimization/1")
+        source_abstract_sha256 = self._require_sha256(
+            "source_abstract_sha256",
+            projection.get("source_abstract_sha256"),
+        )
+        source_markdown_sha256 = self._require_sha256(
+            "source_markdown_sha256",
+            projection.get("source_markdown_sha256"),
+        )
+        paraphrase_sha256 = self._require_sha256(
+            "paraphrase_sha256",
+            projection.get("paraphrase_sha256"),
+        )
+        if sha256_hex(normalized_paraphrase.encode("utf-8")) != paraphrase_sha256:
+            raise ValueError("paraphrase_sha256 does not match normalized paraphrase bytes")
+        if paraphrase_sha256 == source_abstract_sha256:
+            raise ValueError("abstract is not a mechanism paraphrase")
+        if is_abstract_substitution(paraphrase=normalized_paraphrase, abstract=abstract):
+            raise ValueError("abstract is not a mechanism paraphrase")
+        canonical_projection = canonical_reviewed_projection_bytes(
+            {
+                **projection,
+                "domain_policy_id": normalized_projection_policy_id,
+                "human_approved_at": normalized_human_approved_at,
+                "human_reviewer": normalized_human_reviewer,
+                "paraphrase": normalized_paraphrase,
+                "paraphrase_source": normalized_paraphrase_source,
+                "source_paper_id": normalized_source_paper_id,
+            }
+        )
+        if len(canonical_projection) > MAX_REVIEWED_PROJECTION_BYTES:
+            raise ValueError("reviewed projection payload is too large")
+        reviewed_projection_digest = canonical_reviewed_projection_digest(
+            {
+                **projection,
+                "domain_policy_id": normalized_projection_policy_id,
+                "human_approved_at": normalized_human_approved_at,
+                "human_reviewer": normalized_human_reviewer,
+                "paraphrase": normalized_paraphrase,
+                "paraphrase_source": normalized_paraphrase_source,
+                "source_paper_id": normalized_source_paper_id,
+            }
+        )
+        if reviewed_projection_digest not in self.approved_projection_digests:
+            raise ValueError("projection is not an approved reviewed projection")
+        identity = {
+            "source_paper_id": normalized_source_paper_id,
+            "domain_policy_id": policy.policy_id,
+            "source_abstract_sha256": source_abstract_sha256,
+            "source_markdown_sha256": source_markdown_sha256,
+            "paraphrase_sha256": paraphrase_sha256,
+        }
+        source = f"paper:{normalized_source_paper_id}"
+        content_hash = record_content_hash(
+            type="paper",
+            paraphrase=normalized_paraphrase,
+            source=source,
+        )
+        record_id = projection_record_id(identity)
+        existing = self.records.get(record_id)
+        if existing is not None and projection_identity(existing) == projection_identity(identity):
+            committed = self.harvest.commit([existing], schema_version=1)
+            return {
+                "created": False,
+                "record_id": str(existing["record_id"]),
+                "snapshot_id": committed.snapshot_id,
+                "corpus_version": committed.corpus_version,
+            }
+        record = {
+            "record_id": record_id,
+            "content_hash": content_hash,
+            "type": "paper",
+            "paraphrase": normalized_paraphrase,
+            "source": source,
+            "harvested_at": self.clock.now().isoformat(),
+            "domain_policy_id": policy.policy_id,
+            "source_paper_id": normalized_source_paper_id,
+            "review_status": "approved",
+            "paraphrase_source": normalized_paraphrase_source,
+            "human_reviewer": normalized_human_reviewer,
+            "human_approved_at": normalized_human_approved_at,
+            "projector_version": PROJECTOR_VERSION,
+            "source_abstract_sha256": identity["source_abstract_sha256"],
+            "source_markdown_sha256": identity["source_markdown_sha256"],
+            "paraphrase_sha256": identity["paraphrase_sha256"],
+        }
+        committed = self.harvest.commit([record], schema_version=1)
+        return {
+            "created": True,
+            "record_id": record_id,
+            "snapshot_id": committed.snapshot_id,
+            "corpus_version": committed.corpus_version,
+        }
+
+    @staticmethod
+    def _require_sha256(name: str, value: object) -> str:
+        digest = str(value or "")
+        if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise ValueError(f"{name} must be a lowercase SHA-256 hex digest")
+        return digest
+
+    @staticmethod
+    def _normalize_utc_timestamp(value: object) -> str:
+        if isinstance(value, str):
+            try:
+                value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValueError("human_approved_at must be a UTC timestamp") from exc
+        if not is_utc_datetime(value):
+            raise ValueError("human_approved_at must be a UTC timestamp")
+        assert isinstance(value, datetime)
+        return value.isoformat()
 
 
 @dataclass(frozen=True)
@@ -134,9 +330,14 @@ class GroundUseCase:
     ) -> dict[str, Any]:
         artifact = self._require_artifact(candidate_artifact_hash)
         self._require_snapshot(snapshot_id)
+        policy_id = require_domain_policy_id(artifact["candidate"])
+        get_policy(policy_id)
         record_ids = self.snapshots.record_ids(snapshot_id)
         rows = [self.records.get(record_id) for record_id in record_ids]
-        present = [row for row in rows if row is not None]
+        present = records_for_policy(
+            [row for row in rows if row is not None],
+            policy_id,
+        )
         source = str(artifact["candidate"].get("source") or "")
         normalized_source = normalize_source(source) if source else ""
         exact = any(
@@ -149,7 +350,13 @@ class GroundUseCase:
         if present:
             query = artifact["candidate"].get("query_vector")
             if isinstance(query, list) and query:
-                hits = self.index.query(snapshot_id, [float(x) for x in query], k=5)
+                allowed_ids = frozenset(str(row["record_id"]) for row in present)
+                hits = self.index.query(
+                    snapshot_id,
+                    [float(x) for x in query],
+                    k=5,
+                    allowed_record_ids=allowed_ids,
+                )
                 evidence = mean_cosine_distance([hit.distance for hit in hits])
         code_or_benchmark = any(row.get("type") in {"code", "benchmark"} for row in present)
         klass, confidence, layers = classify_local(
@@ -221,17 +428,22 @@ class ScoreUseCase:
             snapshot_state=validated_snapshot_state,
             grounding_class=grounding["grounding_class"],
         )
-        domain_pack = str(candidate.get("domain_pack") or "finance/1")
-        mech = score_mech(candidate, domain_pack=domain_pack)
+        policy_id = require_domain_policy_id(candidate)
+        policy = get_policy(policy_id)
+        require_compatible_dval_rubric(candidate, policy)
+        mech = score_mech(candidate, domain_pack=policy_id)
         fals = score_fals(candidate)
         dpred = score_dpred(candidate)
         dval = score_dval(candidate)
         via = viability(nov=nov, mech=mech, fals=fals, dpred=dpred, dval=dval)
-        cell_id = cell_id_from_descriptor(candidate.get("research_descriptor") or {})
+        cell_id = policy.cell_id(candidate.get("research_descriptor") or {})
+        policy_id = policy.policy_id
         decision = card_decision(via)
         card = {
             "card_id": candidate_artifact_hash,
+            "domain_policy_id": policy_id,
             "cell_id": cell_id,
+            "archive_cell_key": archive_cell_key(domain_policy_id=policy_id, cell_id=cell_id),
             "title": candidate.get("title") or "",
             "generating_operator": artifact["operator"],
             "snapshot_id": snapshot_id,
@@ -286,16 +498,17 @@ class ArchiveInsertUseCase:
     cards: FrontierCardStore
 
     def run(self, card: dict[str, Any]) -> dict[str, Any]:
-        cell_id = str(card["cell_id"])
-        current = self.cards.elite_for_cell(cell_id)
-        if int(card.get("viability") or 0) <= 0:
+        normalized_card = _normalize_archive_card(card, allow_legacy_missing_policy=False)
+        archive_key = str(normalized_card["archive_cell_key"])
+        current = self.cards.elite_for_cell(archive_key)
+        if int(normalized_card.get("viability") or 0) <= 0:
             return {"inserted": False, "reason": "viability_zero", "elite": current}
-        chosen = choose_elite(cell_elite=current, candidate=card)
+        chosen = choose_elite(cell_elite=current, candidate=normalized_card)
         assert chosen is not None
-        self.cards.set_elite(cell_id, str(chosen["card_id"]))
+        self.cards.set_elite(archive_key, str(chosen["card_id"]))
         replaced = current is None or str(current.get("card_id")) != str(chosen["card_id"])
         return {
-            "inserted": replaced and str(chosen["card_id"]) == str(card["card_id"]),
+            "inserted": replaced and str(chosen["card_id"]) == str(normalized_card["card_id"]),
             "reason": None,
             "elite": chosen,
         }
@@ -304,31 +517,72 @@ class ArchiveInsertUseCase:
 @dataclass(frozen=True)
 class RankArchiveUseCase:
     cell_statuses: dict[str, CellStatus]
+    domain_policy_id: str
 
     def run(
         self,
         *,
         elite_cell_ids: set[str],
     ) -> dict[str, float | int | bool]:
+        universe = get_policy(self.domain_policy_id).universe()
         return evaluate_rank_guard(
             elite_cell_ids=elite_cell_ids,
             cell_statuses=self.cell_statuses,
+            universe=universe,
         )
 
 
 def _reconcile_archive(
     cards: FrontierCardStore,
     card: dict[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    archived = ArchiveInsertUseCase(cards=cards).run(card)
-    cell_id = str(card["cell_id"])
-    elite = cards.elite_for_cell(cell_id)
-    if int(card.get("viability") or 0) <= 0 and elite is not None:
-        if str(elite.get("card_id")) == str(card["card_id"]):
-            cards.set_elite(cell_id, None)
+) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any]]:
+    normalized_card = _normalize_archive_card(card, allow_legacy_missing_policy=True)
+    if normalized_card != card:
+        cards.put_card(normalized_card)
+    archived = ArchiveInsertUseCase(cards=cards).run(normalized_card)
+    archive_key = str(normalized_card["archive_cell_key"])
+    elite = cards.elite_for_cell(archive_key)
+    if int(normalized_card.get("viability") or 0) <= 0 and elite is not None:
+        if str(elite.get("card_id")) == str(normalized_card["card_id"]):
+            cards.set_elite(archive_key, None)
             elite = None
     archived = {**archived, "elite": elite}
-    return archived, elite
+    return archived, elite, normalized_card
+
+
+def _normalize_archive_card(
+    card: dict[str, Any], *, allow_legacy_missing_policy: bool
+) -> dict[str, Any]:
+    normalized = dict(card)
+    cell_id = normalized.get("cell_id")
+    if not isinstance(cell_id, str) or not cell_id:
+        raise ValueError("cell_id is required")
+
+    domain_policy_id = normalized.get("domain_policy_id")
+    if not isinstance(domain_policy_id, str) or not domain_policy_id.strip():
+        if not allow_legacy_missing_policy:
+            raise ValueError("domain_policy_id is required")
+        supplied_archive_key = normalized.get("archive_cell_key")
+        if supplied_archive_key is not None:
+            raise ValueError("legacy card requires explicit domain_policy_id")
+        if cell_id not in FINANCE_POLICY.universe():
+            raise ValueError("legacy card requires explicit domain_policy_id")
+        domain_policy_id = FINANCE_POLICY.policy_id
+    else:
+        domain_policy_id = domain_policy_id.strip()
+
+    policy = get_policy(domain_policy_id)
+    if cell_id not in policy.universe():
+        raise ValueError("cell_id is outside the registered policy universe")
+
+    derived_archive_key = archive_cell_key(domain_policy_id=policy.policy_id, cell_id=cell_id)
+    supplied_archive_key = normalized.get("archive_cell_key")
+    if supplied_archive_key is not None and supplied_archive_key != derived_archive_key:
+        raise ValueError("archive_cell_key does not match the policy-scoped cell key")
+
+    normalized["domain_policy_id"] = policy.policy_id
+    normalized["archive_cell_key"] = derived_archive_key
+    return normalized
 
 
 @dataclass(frozen=True)
@@ -360,10 +614,10 @@ class RescoreUseCase:
             card_snapshot_id=str(card["snapshot_id"]),
             current_snapshot_id=current_snapshot_id,
         ):
-            archived, elite = _reconcile_archive(self.cards, card)
+            archived, elite, normalized_card = _reconcile_archive(self.cards, card)
             return {
                 "needs_re_score": False,
-                "card": card,
+                "card": normalized_card,
                 "archive": archived,
                 "elite": elite,
             }
@@ -391,10 +645,10 @@ class RescoreUseCase:
             snapshot_state=snapshot_state,
         )
         new_card = scored["card"]
-        archived, elite = _reconcile_archive(self.cards, new_card)
+        archived, elite, normalized_card = _reconcile_archive(self.cards, new_card)
         return {
             "needs_re_score": True,
-            "card": new_card,
+            "card": normalized_card,
             "archive": archived,
             "elite": elite,
         }
