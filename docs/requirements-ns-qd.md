@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation plus N2b approved-paper projection for reviewed fixtures. N6 calibration/acquisition orchestration and later map/archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
+**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, and Operator A driven by a complete validated status table and structured axioms. N6 calibration/acquisition orchestration and later archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
 
 **Document roles**
 
@@ -102,6 +102,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-D2** No rank/kill/score; does not call the gate.
 - **FR-D3** Output is an immutable candidate artifact (hash persisted) plus `generator_run_id`.
 - **FR-D4** Evaluator is a separate use-case that reloads by hash (`evaluator_run_id` ≠ `generator_run_id`). Session tokens alone are not sufficient (`ALG-SEP`).
+- **FR-D5** When Operator A selects a target, the status table must exactly match the candidate policy universe; the runtime validates any supplied target against `ALG-SEL`, loads elite context from the archive, and rejects conflicting generation semantics at an existing candidate hash.
 
 ### Ground
 
