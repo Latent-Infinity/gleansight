@@ -7,6 +7,14 @@ from datetime import datetime
 from math import isfinite
 from typing import Any
 
+from nsqd.domain.acquisition import (
+    CANDIDATES_PER_BATCH,
+    QUERY_BATCH_LIMIT,
+    STAGED_IMPORT_LIMIT,
+    acquisition_cycle_id,
+    acquisition_route,
+    render_acquisition_query,
+)
 from nsqd.domain.card import (
     card_decision,
     corpus_ingest_rejection,
@@ -42,11 +50,13 @@ from nsqd.domain.novelty import (
 )
 from nsqd.domain.policy import (
     FINANCE_POLICY,
+    DomainPolicy,
     archive_cell_key,
     get_policy,
     records_for_policy,
     require_compatible_dval_rubric,
     require_domain_policy_id,
+    verdict_key,
 )
 from nsqd.domain.project import (
     PROJECTOR_VERSION,
@@ -66,9 +76,16 @@ from nsqd.domain.snapshot import (
     sha256_hex,
     snapshot_id,
 )
-from nsqd.domain.status import CellStatus, require_cell_status, status_table
+from nsqd.domain.status import CellStatus, record_lifecycle, require_cell_status, status_table
+from nsqd.domain.sufficiency import (
+    SEARCHABLE_FAILURES,
+    decide_snapshot_state,
+    evaluate_sufficiency,
+    sufficiency_search_context,
+)
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 from nsqd.ports import (
+    AcquisitionCycleStore,
     Clock,
     CorpusIndex,
     CorpusRecordStore,
@@ -79,6 +96,8 @@ from nsqd.ports import (
     LivePaperSearch,
     MorphospaceStore,
     NsqdCandidateStore,
+    PaperAcquisitionBridge,
+    PolicyVerdictStore,
 )
 
 
@@ -379,6 +398,7 @@ class ProjectPaperUseCase:
             "source_abstract_sha256": identity["source_abstract_sha256"],
             "source_markdown_sha256": identity["source_markdown_sha256"],
             "paraphrase_sha256": identity["paraphrase_sha256"],
+            "reviewed_projection_digest": reviewed_projection_digest,
         }
         committed = self.harvest.commit([record], schema_version=1)
         return {
@@ -1040,3 +1060,311 @@ class RescoreUseCase:
             "archive": archived,
             "elite": elite,
         }
+
+
+@dataclass(frozen=True)
+class PromoteSnapshotUseCase:
+    snapshots: CorpusSnapshotStore
+    records: CorpusRecordStore
+    verdicts: PolicyVerdictStore
+    clock: Clock
+    policies: Mapping[str, DomainPolicy] | None = None
+    approved_harvest_seed_digests: frozenset[str] = frozenset()
+
+    def run(
+        self,
+        *,
+        snapshot_id: str,
+        domain_policy_id: str,
+        target: str,
+    ) -> dict[str, Any]:
+        if self.snapshots.get(snapshot_id) is None:
+            raise ValueError("unknown snapshot_id")
+        resolved_policy = _resolve_evaluation_policy(
+            domain_policy_id,
+            self.policies.get(domain_policy_id.strip()) if self.policies is not None else None,
+        )
+        rows: list[dict[str, Any]] = []
+        for record_id in self.snapshots.record_ids(snapshot_id):
+            row = self.records.get(record_id)
+            if row is not None:
+                rows.append(row)
+        as_of = self.clock.now()
+        approved_manifest = self.policies is not None and resolved_policy.policy_id in self.policies
+        if target == "calibration":
+            approved_manifest = approved_manifest and bool(resolved_policy.recall_probes)
+        if target == "production_valid" and resolved_policy.policy_id == "finance/1":
+            approved_manifest = (
+                approved_manifest
+                and bool(resolved_policy.recall_probes)
+                and bool(resolved_policy.expected_cells)
+                and resolved_policy.min_records > 0
+            )
+        failures = evaluate_sufficiency(
+            rows,
+            policy=resolved_policy,
+            as_of=as_of,
+            disagreement=any(row.get("disagreement_unresolved") is True for row in rows),
+            approved_manifest=approved_manifest,
+        )
+        search_context = sufficiency_search_context(
+            rows,
+            policy=resolved_policy,
+            as_of=as_of,
+        )
+        state = decide_snapshot_state(
+            failures,
+            target=target,
+            domain_policy_id=resolved_policy.policy_id,
+            harvest_seed_approved=_has_approved_harvest_seed(
+                rows,
+                domain_policy_id=resolved_policy.policy_id,
+                as_of=as_of,
+                approved_digests=self.approved_harvest_seed_digests,
+            ),
+            recall_probe_listed=bool(resolved_policy.recall_probes),
+        )
+        verdict = {
+            "snapshot_id": snapshot_id,
+            "domain_policy_id": resolved_policy.policy_id,
+            "state": state,
+            "failures": list(failures),
+            "target": target,
+            "search_context": search_context,
+        }
+        self.verdicts.put_verdict(
+            snapshot_id=snapshot_id,
+            domain_policy_id=resolved_policy.policy_id,
+            verdict=verdict,
+        )
+        return {
+            "key": verdict_key(snapshot_id=snapshot_id, domain_policy_id=resolved_policy.policy_id),
+            "state": state,
+            "failures": failures,
+            "verdict": verdict,
+            "search_context": search_context,
+        }
+
+
+@dataclass(frozen=True)
+class AcquireCorpusUseCase:
+    cycles: AcquisitionCycleStore
+    promote: PromoteSnapshotUseCase
+    bridge: PaperAcquisitionBridge
+
+    def run(
+        self,
+        *,
+        snapshot_id: str,
+        domain_policy_id: str,
+        target: str,
+        human_decision: str | None = None,
+    ) -> dict[str, Any]:
+        if human_decision not in {None, "decline"}:
+            raise ValueError("human_decision must be decline when provided")
+        resolved_policy = _resolve_evaluation_policy(
+            domain_policy_id,
+            (
+                self.promote.policies.get(domain_policy_id.strip())
+                if self.promote.policies is not None
+                else None
+            ),
+        )
+        promoted = self.promote.run(
+            snapshot_id=snapshot_id,
+            domain_policy_id=resolved_policy.policy_id,
+            target=target,
+        )
+        route = acquisition_route(promoted["failures"])
+        if route != "search":
+            return {
+                "route": route,
+                "stopped": (
+                    "manual"
+                    if route == "manual"
+                    else ("sufficient" if promoted["state"] != "insufficient" else "policy_blocked")
+                ),
+                "projected": False,
+                "state": promoted["state"],
+                "cycle_id": None,
+                "failures": promoted["failures"],
+            }
+        searchable = [code for code in promoted["failures"] if code in SEARCHABLE_FAILURES]
+        failure = searchable[0]
+        search_context = promoted["search_context"]
+        missing_cells = search_context["missing_cell_ids"]
+        missing_probes = search_context["missing_recall_probes"]
+        unmet_record_types = search_context["unmet_record_types"]
+        cell_id = missing_cells[0] if failure == "expected_cell_empty" and missing_cells else None
+        probe = missing_probes[0] if failure == "recall_probe_missing" and missing_probes else None
+        probe_id = str(probe["probe_id"]) if probe is not None else None
+        if probe is not None:
+            record_type = str(probe["record_type"])
+        elif failure == "domain_minima_unmet" and unmet_record_types:
+            record_type = str(unmet_record_types[0])
+        else:
+            record_type = "paper"
+        query = render_acquisition_query(
+            policy_id=resolved_policy.policy_id,
+            failure=failure,
+            cell_id=cell_id,
+            probe_id=probe_id,
+            record_type=record_type,
+        )
+        filters = {"type": record_type}
+        cycle_id = acquisition_cycle_id(
+            snapshot_id=snapshot_id,
+            domain_policy_id=resolved_policy.policy_id,
+            failure_signature=promoted["failures"],
+            rendered_query=query,
+            filters=filters,
+        )
+        existing = self.cycles.get(cycle_id)
+        if existing is not None:
+            if human_decision == "decline" and existing.get("stopped") != "human_decline":
+                existing = {**existing, "stopped": "human_decline"}
+                self.cycles.put_cycle(cycle_id, existing)
+            return existing
+        result: dict[str, Any] = {
+            "route": "search",
+            "stopped": "in_progress",
+            "projected": False,
+            "state": promoted["state"],
+            "cycle_id": cycle_id,
+            "failures": promoted["failures"],
+            "staged": [],
+            "batches": 0,
+        }
+        if human_decision == "decline":
+            result["stopped"] = "human_decline"
+            self.cycles.put_cycle(cycle_id, result)
+            return result
+        self.cycles.put_cycle(cycle_id, result)
+        seen_candidates: set[str] = set()
+        staged: list[str] = []
+        try:
+            for _batch in range(QUERY_BATCH_LIMIT):
+                discovered = self.bridge.discover(query, filters)[:CANDIDATES_PER_BATCH]
+                result["batches"] = int(result["batches"]) + 1
+                self.cycles.put_cycle(cycle_id, result)
+                fresh: list[dict[str, Any]] = []
+                for candidate in discovered:
+                    identity = _acquisition_candidate_identity(candidate)
+                    if identity is None or identity in seen_candidates:
+                        continue
+                    seen_candidates.add(identity)
+                    fresh.append(candidate)
+                if not fresh:
+                    break
+                shortlisted = self.bridge.shortlist(
+                    fresh,
+                    limit=min(CANDIDATES_PER_BATCH, STAGED_IMPORT_LIMIT - len(staged)),
+                )
+                if any(item.get("review_status") == "approved" for item in shortlisted):
+                    raise ValueError("LLM output cannot approve corpus evidence")
+                fresh_by_identity = {
+                    identity: candidate
+                    for candidate in fresh
+                    if (identity := _acquisition_candidate_identity(candidate)) is not None
+                }
+                shortlisted_identities: set[str] = set()
+                for candidate in shortlisted:
+                    if len(staged) >= STAGED_IMPORT_LIMIT:
+                        break
+                    identity = _acquisition_candidate_identity(candidate)
+                    if identity is None or identity not in fresh_by_identity:
+                        raise ValueError("shortlist candidate was not discovered")
+                    if identity in shortlisted_identities:
+                        continue
+                    shortlisted_identities.add(identity)
+                    paper_id = self.bridge.stage_import(fresh_by_identity[identity])
+                    if not isinstance(paper_id, str) or not paper_id.strip():
+                        raise ValueError("stage_import returned an invalid paper_id")
+                    paper_id = paper_id.strip()
+                    self.bridge.enqueue_analyze(paper_id)
+                    draft = self.bridge.draft_projection(paper_id)
+                    if draft.get("review_status") == "approved":
+                        raise ValueError("LLM output cannot approve corpus evidence")
+                    staged.append(paper_id)
+                    result["staged"] = list(staged)
+                    self.cycles.put_cycle(cycle_id, result)
+                if len(staged) >= STAGED_IMPORT_LIMIT:
+                    break
+        except Exception:
+            result["stopped"] = "manual_recovery"
+            self.cycles.put_cycle(cycle_id, result)
+            raise
+        result["stopped"] = "pending_human_approval" if staged else "no_new_candidates"
+        self.cycles.put_cycle(cycle_id, result)
+        return result
+
+
+def _has_approved_harvest_seed(
+    records: list[dict[str, Any]],
+    *,
+    domain_policy_id: str,
+    as_of: datetime,
+    approved_digests: frozenset[str],
+) -> bool:
+    if domain_policy_id != "finance/1":
+        return True
+    for row in records_for_policy(records, domain_policy_id):
+        if record_lifecycle(row, as_of=as_of) == "invalid":
+            continue
+        if row.get("review_status") != "approved":
+            continue
+        if row.get("projector_version") != PROJECTOR_VERSION:
+            continue
+        digest = row.get("reviewed_projection_digest")
+        if not isinstance(digest, str) or digest not in approved_digests:
+            continue
+        if canonical_reviewed_projection_digest(row) != digest:
+            continue
+        source_paper_id = row.get("source_paper_id")
+        paraphrase = row.get("paraphrase")
+        if not isinstance(source_paper_id, str) or not source_paper_id.strip():
+            continue
+        if not isinstance(paraphrase, str) or not paraphrase.strip():
+            continue
+        normalized_paraphrase = normalize_paraphrase(paraphrase)
+        if row.get("source") != f"paper:{source_paper_id.strip()}":
+            continue
+        if row.get("paraphrase_sha256") != sha256_hex(normalized_paraphrase.encode("utf-8")):
+            continue
+        if row.get("record_id") != projection_record_id(row):
+            continue
+        if row.get("content_hash") != record_content_hash(
+            type="paper",
+            paraphrase=normalized_paraphrase,
+            source=str(row["source"]),
+        ):
+            continue
+        reviewer = row.get("human_reviewer")
+        approved_at = row.get("human_approved_at")
+        if not isinstance(reviewer, str) or not reviewer.strip():
+            continue
+        if isinstance(approved_at, str):
+            try:
+                approved_at = datetime.fromisoformat(approved_at.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+        if isinstance(approved_at, datetime) and is_utc_datetime(approved_at):
+            return True
+    return False
+
+
+def _acquisition_candidate_identity(candidate: dict[str, Any]) -> str | None:
+    for key in ("paper_id", "source_paper_id"):
+        value = candidate.get(key)
+        if isinstance(value, str) and value.strip():
+            return f"{key}:{value.strip()}"
+    return None
+
+
+def _resolve_evaluation_policy(domain_policy_id: str, policy: DomainPolicy | None) -> DomainPolicy:
+    registered = get_policy(domain_policy_id.strip())
+    if policy is None:
+        return registered
+    if policy.policy_id != registered.policy_id:
+        raise ValueError("policy does not match domain_policy_id")
+    return policy
