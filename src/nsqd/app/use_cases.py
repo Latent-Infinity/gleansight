@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -12,6 +13,13 @@ from nsqd.domain.card import (
     needs_re_score,
 )
 from nsqd.domain.coverage import evaluate_rank_guard
+from nsqd.domain.diverge import (
+    normalize_axiom_rows,
+    parent_card_id_for_target,
+    require_elite_viability,
+    require_operator_a,
+    select_target_cell,
+)
 from nsqd.domain.elite import choose_elite
 from nsqd.domain.grounding import classify_local
 from nsqd.domain.harvest import (
@@ -19,7 +27,12 @@ from nsqd.domain.harvest import (
     HarvestRejected,
     harvest_records_from_payload,
 )
-from nsqd.domain.novelty import SnapshotState, mean_cosine_distance, novelty_term
+from nsqd.domain.novelty import (
+    SnapshotState,
+    mean_cosine_distance,
+    novelty_term,
+    require_snapshot_state,
+)
 from nsqd.domain.policy import (
     FINANCE_POLICY,
     archive_cell_key,
@@ -46,7 +59,7 @@ from nsqd.domain.snapshot import (
     sha256_hex,
     snapshot_id,
 )
-from nsqd.domain.status import CellStatus
+from nsqd.domain.status import CellStatus, require_cell_status, status_table
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 from nsqd.ports import (
     Clock,
@@ -55,6 +68,7 @@ from nsqd.ports import (
     CorpusSnapshotStore,
     FrontierCardStore,
     HarvestStore,
+    MorphospaceStore,
     NsqdCandidateStore,
 )
 
@@ -75,15 +89,7 @@ def artifact_hash_for(candidate: dict[str, Any]) -> str:
 
 
 def _require_snapshot_state(snapshot_state: str) -> SnapshotState:
-    if snapshot_state == "smoke_only":
-        return "smoke_only"
-    if snapshot_state == "calibration":
-        return "calibration"
-    if snapshot_state == "production_valid":
-        return "production_valid"
-    raise ValueError(
-        "invalid snapshot_state: expected one of smoke_only, calibration, production_valid"
-    )
+    return require_snapshot_state(snapshot_state)
 
 
 @dataclass(frozen=True)
@@ -296,22 +302,154 @@ class ProjectPaperUseCase:
 @dataclass(frozen=True)
 class DivergeUseCase:
     candidates: NsqdCandidateStore
+    cards: FrontierCardStore
     clock: Clock
 
-    def run(self, *, candidate: dict[str, Any], axiom: str, generator_run_id: str) -> str:
+    def run(
+        self,
+        *,
+        candidate: dict[str, Any],
+        generator_run_id: str,
+        axiom: str | None = None,
+        axioms: list[Any] | None = None,
+        operator: str = "A",
+        parent_card_id: str | None = None,
+        target_cell_id: str | None = None,
+        cell_statuses: dict[str, CellStatus] | None = None,
+    ) -> str:
+        require_operator_a(operator)
+        source = axioms if axioms is not None else ([axiom] if axiom is not None else [])
+        rows = normalize_axiom_rows(source)
         body = candidate_body(candidate)
-        digest = artifact_hash_for(candidate)
-        self.candidates.put_artifact(
-            digest,
-            {
-                "candidate": body,
-                "axiom": axiom,
-                "operator": "A",
-                "generator_run_id": generator_run_id,
-                "generated_at": self.clock.now().isoformat(),
-            },
+        policy_id = require_domain_policy_id(body)
+        policy = get_policy(policy_id)
+        resolved_target = self._resolve_target(
+            policy_id=policy.policy_id,
+            universe=policy.universe(),
+            target_cell_id=target_cell_id,
+            cell_statuses=cell_statuses,
         )
+        self._require_axiom_cells(rows=rows, universe=policy.universe(), target=resolved_target)
+        actual_elite = self._elite_for_target(
+            policy_id=policy.policy_id, target_cell_id=resolved_target
+        )
+        actual_elite_card_id = None if actual_elite is None else str(actual_elite["card_id"])
+        parent = parent_card_id_for_target(
+            elite_card_id=actual_elite_card_id,
+            parent_card_id=parent_card_id,
+        )
+        digest = artifact_hash_for(candidate)
+        payload = {
+            "candidate": body,
+            "axiom": rows[0]["statement"],
+            "axioms": rows,
+            "operator": "A",
+            "parent_card_id": parent,
+            "target_cell_id": resolved_target,
+            "generator_run_id": generator_run_id,
+            "generated_at": self.clock.now().isoformat(),
+        }
+        if self.candidates.put_artifact_if_absent(digest, payload):
+            return digest
+        existing = self.candidates.get_artifact(digest)
+        if existing is None:
+            raise RuntimeError("candidate artifact conflict could not be loaded")
+        if self._generation_semantics(existing) != self._generation_semantics(payload):
+            raise ValueError("immutable artifact conflict")
         return digest
+
+    @staticmethod
+    def _require_axiom_cells(
+        *,
+        rows: list[dict[str, str]],
+        universe: frozenset[str],
+        target: str | None,
+    ) -> None:
+        for row in rows:
+            cell_id = row.get("cell_id")
+            if cell_id is None:
+                continue
+            if cell_id not in universe:
+                raise ValueError("axiom cell is outside the registered policy universe")
+            if target is None or cell_id != target:
+                raise ValueError("axiom cell_id must match the ALG-SEL target")
+
+    def _resolve_target(
+        self,
+        *,
+        policy_id: str,
+        universe: frozenset[str],
+        target_cell_id: str | None,
+        cell_statuses: dict[str, CellStatus] | None,
+    ) -> str | None:
+        validated_target = None
+        if target_cell_id is not None:
+            validated_target = target_cell_id.strip()
+            if validated_target not in universe:
+                raise ValueError("target cell is outside the registered policy universe")
+        if cell_statuses is None:
+            if validated_target is not None:
+                raise ValueError("cell_statuses are required when target_cell_id is provided")
+            return validated_target
+        if not cell_statuses:
+            raise ValueError("cell_statuses must not be empty")
+        for cell_id, status in cell_statuses.items():
+            if cell_id not in universe:
+                raise ValueError("target cell is outside the registered policy universe")
+            require_cell_status(status)
+        if set(cell_statuses) != universe:
+            raise ValueError("cell_statuses must match the selected policy universe")
+        selected = select_target_cell(
+            cell_statuses,
+            elite_viability=self._elite_viability_for_cells(
+                policy_id=policy_id, cell_ids=cell_statuses
+            ),
+        )
+        if validated_target is not None and validated_target != selected:
+            raise ValueError("target_cell_id disagrees with ALG-SEL")
+        return selected
+
+    def _elite_viability_for_cells(
+        self,
+        *,
+        policy_id: str,
+        cell_ids: Mapping[str, CellStatus],
+    ) -> dict[str, int]:
+        viability: dict[str, int] = {}
+        for cell_id in cell_ids:
+            elite = self._elite_for_target(policy_id=policy_id, target_cell_id=cell_id)
+            if elite is None:
+                continue
+            viability[cell_id] = require_elite_viability(elite.get("viability"))
+        return viability
+
+    def _elite_for_target(
+        self,
+        *,
+        policy_id: str,
+        target_cell_id: str | None,
+    ) -> dict[str, Any] | None:
+        if target_cell_id is None:
+            return None
+        return self.cards.elite_for_cell(
+            archive_cell_key(domain_policy_id=policy_id, cell_id=target_cell_id)
+        )
+
+    @staticmethod
+    def _generation_semantics(artifact: dict[str, Any]) -> dict[str, Any]:
+        axiom = artifact.get("axiom")
+        axioms = artifact.get("axioms")
+        if axioms is None and isinstance(axiom, str):
+            axioms = [{"statement": axiom}]
+        return {
+            "candidate": artifact.get("candidate"),
+            "axiom": axiom,
+            "axioms": axioms,
+            "operator": artifact.get("operator", "A"),
+            "parent_card_id": artifact.get("parent_card_id"),
+            "target_cell_id": artifact.get("target_cell_id"),
+            "generator_run_id": artifact.get("generator_run_id"),
+        }
 
 
 @dataclass(frozen=True)
@@ -530,6 +668,55 @@ class RankArchiveUseCase:
             cell_statuses=self.cell_statuses,
             universe=universe,
         )
+
+
+@dataclass(frozen=True)
+class MapSnapshotUseCase:
+    snapshots: CorpusSnapshotStore
+    records: CorpusRecordStore
+    morph: MorphospaceStore
+    clock: Clock
+
+    def run(
+        self,
+        *,
+        snapshot_id: str,
+        domain_policy_id: str,
+        snapshot_state: str,
+        expected_cell_ids: frozenset[str] | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(domain_policy_id, str) or not domain_policy_id.strip():
+            raise ValueError("domain_policy_id is required")
+        policy = get_policy(domain_policy_id.strip())
+        _require_snapshot_state(snapshot_state)
+        if self.snapshots.get(snapshot_id) is None:
+            raise ValueError("unknown snapshot_id")
+        rows: list[dict[str, Any]] = []
+        for record_id in self.snapshots.record_ids(snapshot_id):
+            row = self.records.get(record_id)
+            if row is not None:
+                rows.append(row)
+        inspected = frozenset(
+            cell_id
+            for cell_id in policy.universe()
+            if self.morph.get_cell(
+                archive_cell_key(domain_policy_id=policy.policy_id, cell_id=cell_id)
+            )
+            is not None
+        )
+        expected = policy.expected_cells if expected_cell_ids is None else expected_cell_ids
+        return {
+            "snapshot_id": snapshot_id,
+            "domain_policy_id": policy.policy_id,
+            "cell_statuses": status_table(
+                rows,
+                domain_policy_id=policy.policy_id,
+                as_of=self.clock.now(),
+                snapshot_state=snapshot_state,
+                inspected_cell_ids=inspected,
+                expected_cell_ids=expected,
+            ),
+        }
 
 
 def _reconcile_archive(

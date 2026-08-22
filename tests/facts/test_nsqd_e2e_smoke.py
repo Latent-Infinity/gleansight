@@ -50,7 +50,7 @@ def test_smoke_loop_rejects_cards_and_leaves_production_archive_empty(tmp_path: 
             "distance_metric": "cosine_distance",
             "algorithm_contract_version": "1.1",
         }
-        assert set(result["job_types"]) == {"diverge", "ground", "score"}
+        assert set(result["job_types"]) == {"map", "diverge", "ground", "score"}
         assert result["expected_outcomes"]["archive_eligible"] is False
 
     assert results[0]["card"]["mech"] == 5
@@ -114,7 +114,7 @@ def test_smoke_loop_leaves_preseeded_stale_job_queued(tmp_path: Path) -> None:
     assert stale_row is not None
     assert stale_row["status"] == "queued"
     assert stale_row["attempts"] == 0
-    assert set(result["job_types"]) == {"diverge", "ground", "score"}
+    assert set(result["job_types"]) == {"map", "diverge", "ground", "score"}
 
 
 def test_smoke_loop_uses_authoritative_snapshot_version_on_reused_database(tmp_path: Path) -> None:

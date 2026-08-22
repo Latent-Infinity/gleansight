@@ -74,7 +74,7 @@ def _ctx() -> NsqdHandlerContext:
 def test_diverge_persists_artifact_and_evaluate_reloads_by_hash() -> None:
     ctx = _ctx()
     candidate = _load_card("gamma-flow.yaml")
-    diverge = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock)
+    diverge = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock)
     artifact_hash = diverge.run(
         candidate=candidate,
         axiom="predictors assume stationary return signal",
@@ -118,7 +118,7 @@ def test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search()
     sid = empty_smoke_snapshot_id()
     assert sid == snapshot_id(records=[], schema_version=1)
     ctx.snapshots.commit(sid, [], schema_version=1)
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="predictors assume stationary return signal",
         generator_run_id="gen-1",
@@ -142,7 +142,9 @@ def test_score_and_archive_reject_smoke_fixtures() -> None:
         candidate = _load_card(name)
         expected = candidate["expected_outcomes"]
         assert isinstance(expected, dict)
-        artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+        artifact_hash = DivergeUseCase(
+            candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock
+        ).run(
             candidate=candidate,
             axiom="predictors assume stationary return signal",
             generator_run_id="gen-1",
@@ -267,7 +269,7 @@ def test_ground_and_score_fail_on_unknown_hash() -> None:
 def test_score_requires_grounding() -> None:
     ctx = _ctx()
     candidate = _load_card("gamma-flow.yaml")
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -309,7 +311,7 @@ def test_ground_hits_exact_source_on_populated_snapshot() -> None:
             "horizon": "intraday",
         },
     }
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -345,7 +347,7 @@ def test_ground_matches_normalized_doi_source_forms() -> None:
             "horizon": "intraday",
         },
     }
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -382,7 +384,7 @@ def test_ground_uses_index_when_query_vector_present() -> None:
             "horizon": "intraday",
         },
     }
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -436,7 +438,7 @@ def test_score_rejects_incomplete_card() -> None:
             "horizon": "intraday",
         },
     }
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -484,7 +486,7 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
             "horizon": "intraday",
         },
     }
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -507,7 +509,7 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
         }
     )
     ctx.snapshots.commit("snap-code", ["r2"], schema_version=1)
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate={**candidate, "title": "t2"},
         axiom="x",
         generator_run_id="gen-2",
@@ -551,7 +553,7 @@ def test_candidate_body_and_diverge_artifact_do_not_alias_nested_payloads() -> N
         "query_vector": [1.0, 0.0],
     }
 
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -571,7 +573,7 @@ def test_candidate_body_and_diverge_artifact_do_not_alias_nested_payloads() -> N
 def test_ground_rejects_uncommitted_snapshot_id() -> None:
     ctx = _ctx()
     candidate = _load_card("gamma-flow.yaml")
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -603,7 +605,7 @@ def test_score_rejects_grounding_stamp_mismatch_without_persisting_card(
     ctx = _ctx()
     ctx.snapshots.commit("snap", [], schema_version=1)
     candidate = _load_card("gamma-flow.yaml")
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",
@@ -637,7 +639,7 @@ def test_score_rejects_invalid_snapshot_state_without_persisting_card() -> None:
     sid = empty_smoke_snapshot_id()
     ctx.snapshots.commit(sid, [], schema_version=1)
     candidate = _load_card("gamma-flow.yaml")
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=candidate,
         axiom="x",
         generator_run_id="gen-1",

@@ -13,6 +13,7 @@ from nsqd.app.use_cases import (
     ArchiveInsertUseCase,
     DivergeUseCase,
     GroundUseCase,
+    MapSnapshotUseCase,
     RankArchiveUseCase,
 )
 from nsqd.domain.descriptor import finance_pack_universe
@@ -144,25 +145,19 @@ def test_score_requires_explicit_policy_and_rejects_unknown() -> None:
     ctx = _ctx()
     sid = "snap"
     ctx.snapshots.commit(sid, [], schema_version=1)
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
-        candidate={
-            "title": "x",
-            "research_descriptor": {
-                "mechanism": "flow-driven",
-                "target": "drawdown",
-                "horizon": "intraday",
-            },
-        },
-        axiom="a",
-        generator_run_id="gen-1",
-    )
     with pytest.raises(ValueError, match="domain_policy_id is required"):
-        GroundUseCase(
-            snapshots=ctx.snapshots,
-            records=ctx.records,
-            index=ctx.index,
-            candidates=ctx.candidates,
-        ).run(candidate_artifact_hash=artifact_hash, snapshot_id=sid, corpus_version=1)
+        DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
+            candidate={
+                "title": "x",
+                "research_descriptor": {
+                    "mechanism": "flow-driven",
+                    "target": "drawdown",
+                    "horizon": "intraday",
+                },
+            },
+            axiom="a",
+            generator_run_id="gen-1",
+        )
 
 
 def test_grounding_ignores_cross_policy_records() -> None:
@@ -187,7 +182,7 @@ def test_grounding_ignores_cross_policy_records() -> None:
             "domain_policy_id": "optimization/1",
         }
     )
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate={
             "title": "opt-cand",
             "domain_policy_id": "optimization/1",
@@ -234,7 +229,7 @@ def test_foreign_policy_neighbors_cannot_displace_policy_scoped_evidence() -> No
         }
     )
     ctx.index.upsert(sid, "opt", [0.0, 1.0])
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate={
             "title": "opt-cand",
             "domain_policy_id": "optimization/1",
@@ -403,3 +398,58 @@ def test_archive_insert_rejects_missing_policy_and_key_even_for_finance_shaped_c
 
     with pytest.raises(ValueError, match="domain_policy_id is required"):
         ArchiveInsertUseCase(cards=ctx.cards).run(card)
+
+
+def test_map_status_table_is_policy_scoped() -> None:
+    ctx = _ctx()
+    ctx.records.put(
+        {
+            "record_id": "fin",
+            "type": "paper",
+            "domain_policy_id": "finance/1",
+            "coordinates": {
+                "mechanism": "flow-driven",
+                "target": "drawdown",
+                "horizon": "intraday",
+            },
+            "harvested_at": AS_OF,
+        }
+    )
+    ctx.records.put(
+        {
+            "record_id": "opt",
+            "type": "paper",
+            "domain_policy_id": "optimization/1",
+            "coordinates": {
+                "problem": "constrained-expectation",
+                "method": "sequential-quadratic",
+                "setting": "rank-deficient",
+            },
+            "harvested_at": AS_OF,
+        }
+    )
+    ctx.snapshots.commit("snap", ["fin", "opt"], schema_version=1)
+    mapped = MapSnapshotUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        morph=ctx.morph,
+        clock=ctx.clock,
+    )
+    finance = mapped.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        snapshot_state="calibration",
+    )["cell_statuses"]
+    optimization = mapped.run(
+        snapshot_id="snap",
+        domain_policy_id="optimization/1",
+        snapshot_state="calibration",
+    )["cell_statuses"]
+    assert len(finance) == 336
+    assert len(optimization) == 8
+    assert finance[FINANCE_CELL_ID] == "Code-gap"
+    assert OPTIMIZATION_CELL_ID not in finance
+    assert optimization[OPTIMIZATION_CELL_ID] == "Code-gap"
+    assert FINANCE_CELL_ID not in optimization
+    assert set(finance) == FINANCE_POLICY.universe()
+    assert set(optimization) == OPTIMIZATION_POLICY.universe()

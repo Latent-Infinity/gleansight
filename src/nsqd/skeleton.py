@@ -9,7 +9,6 @@ import yaml
 
 from nsqd.app.use_cases import empty_smoke_snapshot_id
 from nsqd.composition import build_container, fixed_clock
-from nsqd.domain.status import cell_status
 from nsqd.runner import run_job
 
 
@@ -32,6 +31,17 @@ def run_skeleton(
     evaluator_run_id = str(uuid.uuid4())
     now = container.clock.now()
 
+    mapped = run_job(
+        container,
+        "map",
+        {
+            "snapshot_id": snapshot,
+            "domain_policy_id": str(payload.get("domain_policy_id") or ""),
+            "snapshot_state": "smoke_only",
+        },
+        now,
+    )
+
     diverge = run_job(
         container,
         "diverge",
@@ -39,6 +49,7 @@ def run_skeleton(
             "candidate": payload,
             "axiom": axiom,
             "generator_run_id": generator_run_id,
+            "cell_statuses": mapped["cell_statuses"],
         },
         now,
     )
@@ -73,13 +84,11 @@ def run_skeleton(
     archive_empty = (
         container.database.fetchone("SELECT 1 AS has_elite FROM nsqd_elites LIMIT 1") is None
     )
-    status = cell_status(
-        [],
-        as_of=now,
-        snapshot_state="smoke_only",
-        inspected=True,
-        expected=True,
-    )
+    target_cell_id = artifact.get("target_cell_id")
+    statuses = mapped["cell_statuses"]
+    assert isinstance(target_cell_id, str)
+    assert isinstance(statuses, dict)
+    status = statuses[target_cell_id]
     job_rows = container.database.fetchall("SELECT type, status FROM nsqd_jobs")
     return {
         "snapshot_id": snapshot,

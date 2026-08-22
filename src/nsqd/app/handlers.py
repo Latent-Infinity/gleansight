@@ -8,6 +8,7 @@ from nsqd.app.use_cases import (
     DivergeUseCase,
     GroundUseCase,
     HarvestUseCase,
+    MapSnapshotUseCase,
     ProjectPaperUseCase,
     RescoreUseCase,
     ScoreUseCase,
@@ -46,6 +47,22 @@ def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
         raise ValueError(f"expected job.type={expected_type}, got {job.type}")
 
 
+def _require_payload_string(payload: dict[str, Any], key: str) -> str:
+    value = payload.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{key} is required")
+    return value.strip()
+
+
+def _require_expected_cell_ids(payload: dict[str, Any]) -> frozenset[str] | None:
+    if "expected_cell_ids" not in payload:
+        return None
+    value = payload["expected_cell_ids"]
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError("expected_cell_ids must be a list of strings")
+    return frozenset(value)
+
+
 def handle_harvest(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
     _require_job_type(job, "harvest")
     result = HarvestUseCase(
@@ -76,12 +93,43 @@ def handle_project(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
 def handle_diverge(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
     _require_job_type(job, "diverge")
     payload = job.payload
-    digest = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    axioms = payload.get("axioms")
+    if "axioms" in payload and not isinstance(axioms, list):
+        raise ValueError("axioms must be a list")
+    axiom = payload.get("axiom")
+    parent = payload.get("parent_card_id")
+    target = payload.get("target_cell_id")
+    cell_statuses = payload.get("cell_statuses")
+    if "cell_statuses" in payload and not isinstance(cell_statuses, dict):
+        raise ValueError("cell_statuses must be a mapping")
+    digest = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=payload["candidate"],
-        axiom=str(payload["axiom"]),
         generator_run_id=str(payload["generator_run_id"]),
+        axiom=str(axiom) if axiom is not None else None,
+        axioms=axioms,
+        operator=str(payload.get("operator") or "A"),
+        parent_card_id=str(parent) if parent is not None else None,
+        target_cell_id=str(target) if target is not None else None,
+        cell_statuses=cell_statuses,
     )
     return {"status": "succeeded", "candidate_artifact_hash": digest}
+
+
+def handle_map(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
+    _require_job_type(job, "map")
+    payload = job.payload
+    result = MapSnapshotUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        morph=ctx.morph,
+        clock=ctx.clock,
+    ).run(
+        snapshot_id=_require_payload_string(payload, "snapshot_id"),
+        domain_policy_id=_require_payload_string(payload, "domain_policy_id"),
+        snapshot_state=_require_payload_string(payload, "snapshot_state"),
+        expected_cell_ids=_require_expected_cell_ids(payload),
+    )
+    return {"status": "succeeded", **result}
 
 
 def handle_ground(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:

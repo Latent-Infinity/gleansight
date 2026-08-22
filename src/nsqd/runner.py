@@ -8,6 +8,7 @@ from nsqd.app.handlers import (
     handle_diverge,
     handle_ground,
     handle_harvest,
+    handle_map,
     handle_project,
     handle_rescore,
     handle_score,
@@ -22,6 +23,7 @@ _HANDLER_BY_JOB_TYPE: dict[NsqdJobType, Callable[[Any, NsqdJob], dict[str, Any]]
     "ground": handle_ground,
     "score": handle_score,
     "rescore": handle_rescore,
+    "map": handle_map,
 }
 
 

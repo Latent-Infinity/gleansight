@@ -92,7 +92,7 @@ def _score_on(
     evaluator_run_id: str,
 ) -> dict[str, object]:
     ctx.snapshots.commit(snapshot_id, [], schema_version=1)
-    artifact_hash = DivergeUseCase(candidates=ctx.candidates, clock=ctx.clock).run(
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate=_candidate(),
         axiom="x",
         generator_run_id="gen-1",
