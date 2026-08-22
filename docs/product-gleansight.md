@@ -2,7 +2,7 @@
 
 **Status:** Direction for review (2026-08-18)
 **What:** gleansight is a **local-first NS/QD-inspired discovery platform** (see `docs/glossary-nsqd.md`).
-**Maturity:** The **paper evidence pipeline is executable today**. The discovery baseline provides a local skeleton, validated harvest path, domain-policy isolation, approved reviewed-payload paper projection, a persisted pack-scoped map stage, and Operator A driven by validated status tables and structured axioms; N6 live bridging, calibration/acquisition orchestration, and later archive/UI phases remain planned.
+**Maturity:** The **paper evidence pipeline is executable today**. The discovery baseline provides a local skeleton, validated harvest path, domain-policy isolation, approved reviewed-payload paper projection, a persisted pack-scoped map stage, Operator A driven by validated status tables and structured axioms, and pack-scoped grounding with an injected paper hybrid/scholar budget of 3 after local miss; N6 calibration/acquisition orchestration and later archive/UI phases remain planned.
 **Also:** the existing paper pipeline stays, as the **evidence / harvest layer** for scholarly literature.
 
 This document is the product thesis. Framework detail: `docs/prd-ns-qd.md`. Implementation bindings: `docs/requirements-ns-qd.md`. Build order: `docs/development-plan-ns-qd.md` (discovery) and `docs/development-plan-open-work.md` (evidence-layer closeout).
@@ -37,7 +37,7 @@ Not a ranked list of “cool ideas.” Not a paper manager that happens to have 
 | Layer | Job | Today |
 |-------|-----|--------|
 | **Evidence** | Dense, versionable **positive space**: papers (and later code, benchmarks, patents, industry, internal kills) | Implemented as `papers` CLI/UI/pipeline |
-| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A in the baseline (B–G later)**, **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline skeleton, harvest, policy isolation, approved projection, persisted pack-scoped map jobs, and Operator A (structured axioms, server-validated ALG-SEL) are implemented; N6 calibration/acquisition plus later archive hardening and unified UI remain planned |
+| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A in the baseline (B–G later)**, **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline skeleton, harvest, policy isolation, approved projection, persisted pack-scoped map jobs, Operator A (structured axioms, server-validated ALG-SEL), and pack-scoped grounding with injected paper hybrid/scholar clients (budget 3) are implemented; N6 calibration/acquisition plus later archive hardening and unified UI remain planned |
 
 The paper features are not legacy to sunset. They are how Stage 0 harvests **type=paper**. An imported, converted paper should become a corpus record (mechanism paraphrase + coordinates) when harvest projection runs. Code/benchmark/patent types are additional harvest connectors, not a replacement for papers.
 
