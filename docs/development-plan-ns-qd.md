@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.4.2 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.4.5 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is pending seed data that must be human-approved once acquired.
@@ -16,8 +16,8 @@
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing** and may be acquired through the bounded N6 fallback. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1/N2/N2a/N2b/N7/N8. Next up are pack-aware N3, N5, and N6. N6 evaluates sufficiency, may acquire searchable gaps through a bounded human-gated loop, rechecks, and only then promotes.
-**Outstanding Blockers**: N6 sufficiency/EV-N13, N6 acquisition fallback/EV-N17, and approved DATA-NSQD-03 for honest `finance/1` production validity. N2a and N2b are done. N3 ablations still wait on an N6 calibration snapshot; N6 acquisition itself does **not** wait on DATA-NSQD-03.
+**Slice Ordering**: Preserve completed N1/N2/N2a/N2b/N3/N4/N7/N8. Next up are N5 and N6. N6 evaluates sufficiency, may acquire searchable gaps through a bounded human-gated loop, rechecks, and only then promotes.
+**Outstanding Blockers**: N6 sufficiency/EV-N13, N6 acquisition fallback/EV-N17, and approved DATA-NSQD-03 for honest `finance/1` production validity. N2a, N2b, N3, and N4 are done. `ALG.STATUS` ablation still waits on an N6 calibration snapshot; N6 acquisition itself does **not** wait on DATA-NSQD-03.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -59,6 +59,9 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.4.1 | 2026-08-21 | N2a: explicit domain_policy_id, finance/optimization isolation, pack-scoped rank universe, policy verdict keys. |
 | 1.4.2 | 2026-08-21 | N2b: project human-approved paraphrases into optimization/1; reject abstract substitution and finance credit for DATA-NSQD-04. |
 | 1.4.3 | 2026-08-21 | Reconcile docs with completed N2a/N2b hardening and explicitly deferred N6 sufficiency/acquisition orchestration. |
+| 1.4.4 | 2026-08-22 | Pack-scoped ALG-STATUS tables over finance/optimization universes on larger snapshots; `ALG.STATUS` ablation still deferred until N6 calibration. |
+| 1.4.5 | 2026-08-22 | Operator A only: structured axiom list, ALG-SEL target-cell selection, no parent card on empty cells; B–G remain deferred. |
+| 1.4.6 | 2026-08-22 | Persist map as an `nsqd_jobs` stage; validate pack-scoped status inputs; derive Operator A target, axiom-cell, and elite context from trusted runtime state; atomically reject immutable generation conflicts. |
 
 ---
 
@@ -84,7 +87,7 @@ Closeout phases (`docs/development-plan-open-work.md`) are prefixed **EW-**.
 
 **Choice: (2) `nsqd_jobs` owned by discovery.**
 
-Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, ground, score, re-score are rows in `nsqd_jobs` with `NsqdJobType` / `NsqdJobRecord` owned by `src/nsqd/`. Do not import paper `JobType`. Shared lease/retry/backoff may be extracted into a **neutral** policy module only when both contexts actually call it. Do not run those stages as untracked synchronous CLI-only work once N1 persists. Stage handlers stay callable without the CLI.
+Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverge, ground, score, and re-score are rows in `nsqd_jobs` with `NsqdJobType` owned by `src/nsqd/`. Do not import paper `JobType`. Shared lease/retry/backoff may be extracted into a **neutral** policy module only when both contexts actually call it. Do not run those stages as untracked synchronous CLI-only work once N1 persists. Stage handlers stay callable without the CLI.
 
 ---
 
@@ -125,7 +128,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase + hashes; abstract is not stored as paraphrase; idempotent on source/content identity | Paper projection **N2b** | Behavior | LOCAL-NSQD-E | EV-N09 |
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist `{layer, checked, hit, escalate_reason}`; live and paper hybrid search are not called on the N1 path; version stamped | Ground | Behavior | LOCAL-NSQD-G | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases (`ALG-NOV`); covers 0, `<k`, exact `k`, ties, known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | EV-N11 |
-| NSQD.JOBS.OWNED.v1 | Harvest/diverge/ground/score persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
+| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
 | NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to `calibration` / `production_valid` is evaluated independently by `(snapshot_id, domain_policy_id)` under `ALG-SUF`; every `SufficiencyFailure` code is tested. Honest `finance/1 production_valid` is blocked until approved DATA-NSQD-03 exists | N6 | Behavior | LOCAL-NSQD-H | EV-N13 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Global rank fails below 50 elites and below 20% of `U \\ {Invalid}`; both thresholds and the below-threshold case are tested | N7 | Behavior | LOCAL-NSQD-A | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Stale cards re-ground and re-score against the current snapshot; current-card retries skip those operations but reconcile archive state; rejected current elites are removed | N8 | Behavior | LOCAL-NSQD-A | EV-N15 |
@@ -146,7 +149,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), diverge, gr
 | EV-N03 | NSQD.HARVEST.ENUMERATION.v1 | `uv run pytest tests/facts/test_nsqd_harvest_reject_essay.py -q --no-cov` | N2 | Required |
 | EV-N04 | NSQD.GATE.SMOKE_PAIR.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_fixture_expected_outcomes_match_gate_oracles -q --no-cov` | N1 | Required |
 | EV-N05 | NSQD.SEP.AUDIT_RECORD.v1 | `uv run pytest tests/nsqd/test_application.py::test_diverge_persists_artifact_and_evaluate_reloads_by_hash -q --no-cov` | N1 | Required |
-| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_status_table_and_overlaps -q --no-cov` | N1 | Required |
+| EV-N06 | NSQD.MAP.STATUS_RULES.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_status_table_and_overlaps tests/nsqd/test_status_table.py tests/nsqd/test_map.py -q --no-cov` | N1 | Required |
 | EV-N07 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_elite_replacement_and_hash_tie_and_rejection tests/nsqd/test_domain_policies.py::test_elite_replay_is_order_independent -q --no-cov` | N1 | Required |
 | EV-N08 | NSQD.CARD.SCHEMA.v1 | `uv run pytest tests/nsqd/test_domain_policies.py::test_card_schema_rejects_each_required_field -q --no-cov` | N1 | Required |
 | EV-N09 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | `uv run pytest tests/facts/test_nsqd_paper_project.py -q --no-cov` | N2b | Required |
@@ -623,12 +626,29 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 ### NSQD-N3 Map harden
 
 **Depends On:** N2a
+**Facts:** NSQD.MAP.STATUS_RULES.v1 → EV-N06
 **Acceptance:** Full pack-scoped status table on larger snapshots; `ALG.STATUS` ablation only after N6 produces a calibration snapshot for the policy under test.
+
+- [x] Finance universe table has 336 cells; optimization has 8
+- [x] Records from one policy cannot change another policy's statuses
+- [x] Unlisted coordinates do not coerce into a cell
+- [x] Smoke snapshots force every cell to Unknown
+- [x] `ALG.STATUS` ablation deferred until N6 calibration
+
+**Close note (2026-08-22):** `status_table` and `MapSnapshotUseCase` emit a complete ALG-STATUS table for an explicit `domain_policy_id`. Finance covers the 336-cell universe and optimization covers the 8-cell universe. Records are filtered by policy before placement; unlisted coordinates are left unplaced. Snapshot states and expected/inspected/disagreement/invalid-reason cell metadata are validated against the selected policy, while every `smoke_only` cell remains Unknown as required. Expected cells come from the policy (or an injected override); morphospace inspection is keyed by `archive_cell_key`. `map` now runs through its callable handler and persisted `nsqd_jobs` dispatch path, including the executable smoke skeleton; migration `007_nsqd_map_job_type` upgrades existing databases and rolls back atomically on copy failure. Rank can consume the table without callers inventing per-cell statuses. No `ALG.STATUS` ablation was run; DATA-NSQD-03 was not invented. Four-command gate: 932 passed, 1 skipped, 92.39% repository coverage; dedicated NSQD command: 356 passed, 94.59% coverage.
 
 ### NSQD-N4 Operator A harden (B–G still deferred)
 
 **Depends On:** N3
 **Acceptance:** Axiom list → Operator A only.
+
+- [x] Structured axiom rows (FR-M3); empty/blank lists rejected
+- [x] `generating_operator` / artifact operator is `A`; B–G rejected
+- [x] ALG-SEL target-cell selection from the pack-scoped status table
+- [x] Empty target cell has no parent card; parent must be the cell elite when present
+- [x] Operators B–G remain deferred
+
+**Close note (2026-08-22):** Diverge accepts a structured axiom list and always records operator `A`. Deferred operators B–G are rejected. A supplied status table must exactly cover the candidate's registered policy universe. ALG-SEL prefers Missing/Sparse/Code-gap/Benchmark-gap/Stalled cells with no elite, then the lowest-viability stored elite, then the smaller cell id (including an all-Unknown table); a caller-supplied target must agree with that result, and any structured axiom `cell_id` must be in-policy and match it. Parent context is validated against the actual elite loaded from the archive, and empty targets cannot carry a parent. Initial candidate persistence is atomic: repeating the same semantic generation, including the legacy single-axiom Operator A shape, is idempotent, while different axioms, operator context, parent, target, or generator run at the same candidate hash raise an immutable-artifact conflict instead of overwriting, including competing inserts. Single-string `axiom` payloads remain valid as a one-row list so the smoke skeleton is unchanged. No `ALG.STATUS` ablation was run; DATA-NSQD-03 was not invented. Four-command gate: 932 passed, 1 skipped, 92.39% repository coverage; dedicated NSQD command: 356 passed, 94.59% coverage.
 
 ### NSQD-N5 Ground + live budget
 
