@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, Operator A driven by a complete validated status table and structured axioms, and pack-scoped grounding with injected paper hybrid/scholar clients and a budget of 3 after local miss. N6 calibration/acquisition orchestration and later archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
+**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, Operator A, pack-scoped live/hybrid grounding, pack-aware sufficiency verdicts, and a fail-closed acquisition-staging foundation. The resumable approval/projection/recheck fallback and honest `finance/1 production_valid` remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
 
 **Document roles**
 
@@ -86,7 +86,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-H7** Snapshot id from the canonical JSON preimage (`ALG-SNAP`). Duplicates/retractions per that contract.
 - **FR-H8** Sufficiency failure reasons are the closed set in `ALG-SUF` and are all tested.
 - **FR-H6** `type=paper` records may originate from FR-E2 (N2b).
-- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence remain **EV-N17 / N6** until implemented.
+- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence: **EV-N17 Pending until approval/projection/recheck orchestration is complete**.
 
 ### Map
 
@@ -164,6 +164,9 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 | `Clock` | UTC `now()` |
 | `HybridPaperSearch` | N5 search-only access to existing paper hybrid results |
 | `LivePaperSearch` | N5 search-only access to scholar results |
+| `PolicyVerdictStore` | Persist pack-scoped ALG-SUF verdicts |
+| `AcquisitionCycleStore` | Reserve and persist fail-closed acquisition staging cycles |
+| `PaperAcquisitionBridge` | N6 staging boundary; approval/projection/recheck completion remains pending |
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
