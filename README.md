@@ -2,7 +2,7 @@
 
 Local-first **NS/QD-inspired discovery platform** with an **executable paper evidence pipeline** (discover, import, convert, extract, search).
 
-**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton`, `python -m nsqd harvest`, and `python -m nsqd project`) and now includes implemented domain-policy isolation plus trusted-manifest-backed approved paper projection for reviewed fixtures; N6 calibration data and acquisition fallback, along with later map/archive phases, remain pending.
+**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton`, `python -m nsqd harvest`, and `python -m nsqd project`) and now includes domain-policy isolation, trusted-manifest-backed approved paper projection, a persisted pack-scoped map stage, and Operator A driven by validated status tables and structured axioms; N6 calibration data and acquisition fallback, along with later archive/UI phases, remain pending.
 
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
