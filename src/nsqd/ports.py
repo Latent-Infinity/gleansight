@@ -68,7 +68,14 @@ class HarvestStore(Protocol):
 class CorpusIndex(Protocol):
     def upsert(self, snapshot_id: str, record_id: str, vector: list[float]) -> None: ...
 
-    def query(self, snapshot_id: str, vector: list[float], k: int) -> list[CorpusHit]: ...
+    def query(
+        self,
+        snapshot_id: str,
+        vector: list[float],
+        k: int,
+        *,
+        allowed_record_ids: frozenset[str] | None = None,
+    ) -> list[CorpusHit]: ...
 
 
 @runtime_checkable

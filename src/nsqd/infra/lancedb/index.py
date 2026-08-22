@@ -86,7 +86,14 @@ class LanceDBCorpusIndex:
             .execute(rows)
         )
 
-    def query(self, snapshot_id: str, vector: list[float], k: int) -> list[CorpusHit]:
+    def query(
+        self,
+        snapshot_id: str,
+        vector: list[float],
+        k: int,
+        *,
+        allowed_record_ids: frozenset[str] | None = None,
+    ) -> list[CorpusHit]:
         if k <= 0:
             return []
         try:
@@ -102,8 +109,11 @@ class LanceDBCorpusIndex:
         rows = search.limit(row_count).to_list()
         scored: list[tuple[str, float]] = []
         for row in rows:
+            record_id = str(row["record_id"])
+            if allowed_record_ids is not None and record_id not in allowed_record_ids:
+                continue
             stored = _vector_values(row["embedding"])
-            scored.append((str(row["record_id"]), _cosine_distance(vector, stored)))
+            scored.append((record_id, _cosine_distance(vector, stored)))
         scored.sort(key=lambda item: (item[1], item[0]))
         return [
             CorpusHit(record_id=record_id, distance=distance, rank=rank)

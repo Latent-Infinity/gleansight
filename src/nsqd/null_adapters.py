@@ -141,10 +141,19 @@ class NullCorpusIndex:
     def upsert(self, snapshot_id: str, record_id: str, vector: list[float]) -> None:
         self._vectors[(snapshot_id, record_id)] = list(vector)
 
-    def query(self, snapshot_id: str, vector: list[float], k: int) -> list[CorpusHit]:
+    def query(
+        self,
+        snapshot_id: str,
+        vector: list[float],
+        k: int,
+        *,
+        allowed_record_ids: frozenset[str] | None = None,
+    ) -> list[CorpusHit]:
         scored: list[tuple[str, float]] = []
         for (snap, record_id), stored in self._vectors.items():
-            if snap != snapshot_id:
+            if snap != snapshot_id or (
+                allowed_record_ids is not None and record_id not in allowed_record_ids
+            ):
                 continue
             scored.append((record_id, _cosine_distance(vector, stored)))
         scored.sort(key=lambda item: (item[1], item[0]))

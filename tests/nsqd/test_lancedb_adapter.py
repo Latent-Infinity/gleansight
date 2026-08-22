@@ -20,6 +20,13 @@ def test_lancedb_corpus_index_filters_snapshot_and_breaks_ties(tmp_path: Path) -
     assert hits[0].rank == 1
     assert hits[0].distance == pytest.approx(0.0)
     assert [hit.record_id for hit in index.query("snap-b", [0.0, 1.0], k=5)] == ["rec-c"]
+    filtered = index.query(
+        "snap-a",
+        [1.0, 0.0],
+        k=5,
+        allowed_record_ids=frozenset({"rec-b"}),
+    )
+    assert [hit.record_id for hit in filtered] == ["rec-b"]
     assert index.query("snap-missing", [1.0, 0.0], k=5) == []
     assert index.query("snap-a", [1.0, 0.0], k=0) == []
     empty = LanceDBCorpusIndex(tmp_path / "empty.lancedb")

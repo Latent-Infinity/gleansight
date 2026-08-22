@@ -38,6 +38,13 @@ def test_corpus_index_filters_by_snapshot_and_breaks_distance_ties() -> None:
     assert all(isinstance(hit, CorpusHit) for hit in hits)
     assert hits[0].rank == 1
     assert [hit.record_id for hit in index.query("snap-b", [0.0, 1.0], k=5)] == ["rec-c"]
+    filtered = index.query(
+        "snap-a",
+        [1.0, 0.0],
+        k=5,
+        allowed_record_ids=frozenset({"rec-b"}),
+    )
+    assert [hit.record_id for hit in filtered] == ["rec-b"]
     assert index.query("snap-missing", [1.0, 0.0], k=5) == []
 
 
