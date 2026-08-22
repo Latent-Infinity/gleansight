@@ -19,6 +19,7 @@ _JOB_COLUMNS = (
 )
 _MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
 _MIGRATION_007 = "007_nsqd_map_job_type"
+_MIGRATION_008 = "008_nsqd_acquisition_cycles"
 _FINANCE_CELL_ID = "mechanism=flow-driven|target=drawdown|horizon=intraday"
 _OPTIMIZATION_CELL_ID = (
     "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
@@ -209,6 +210,7 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
         "005_nsqd_policy_verdicts",
         _MIGRATION_006,
         _MIGRATION_007,
+        _MIGRATION_008,
     }
     assert "CHECK" in _jobs_sql(db).upper()
     assert _policy_verdict_columns(db) == [
@@ -232,7 +234,7 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
     ]
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 7
+    assert len(again) == 8
 
 
 def test_map_job_migration_upgrades_existing_nsqd_jobs_check_and_preserves_rows(
@@ -495,7 +497,7 @@ def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempoten
         )
         == elite_row
     )
-    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 7
+    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 8
 
 
 def test_policy_backfill_migration_rejects_candidate_outside_finance_universe(
@@ -885,6 +887,7 @@ def test_nsqd_migration_recovers_when_tables_exist_without_ledger_row(tmp_path: 
         "nsqd_elites",
         "nsqd_morphospace",
         "nsqd_policy_verdicts",
+        "nsqd_acquisition_cycles",
     } <= names
 
 
