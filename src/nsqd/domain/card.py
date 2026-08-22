@@ -4,7 +4,9 @@ from typing import Any
 
 REQUIRED_CARD_FIELDS = (
     "card_id",
+    "domain_policy_id",
     "cell_id",
+    "archive_cell_key",
     "title",
     "generating_operator",
     "snapshot_id",

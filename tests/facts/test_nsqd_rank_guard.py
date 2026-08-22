@@ -8,6 +8,7 @@ import pytest
 from nsqd.app.use_cases import RankArchiveUseCase
 from nsqd.domain.coverage import RankGuardBlocked, archive_coverage, evaluate_rank_guard
 from nsqd.domain.descriptor import finance_pack_universe
+from nsqd.domain.policy import OPTIMIZATION_POLICY
 from nsqd.domain.status import CellStatus
 
 
@@ -16,9 +17,11 @@ def _cells(count: int) -> set[str]:
     return set(universe[:count])
 
 
-def _use_case(*, invalid: set[str] | None = None) -> RankArchiveUseCase:
+def _use_case(
+    *, invalid: set[str] | None = None, domain_policy_id: str = "finance/1"
+) -> RankArchiveUseCase:
     statuses: dict[str, CellStatus] = {cell_id: "Invalid" for cell_id in invalid or set()}
-    return RankArchiveUseCase(cell_statuses=statuses)
+    return RankArchiveUseCase(cell_statuses=statuses, domain_policy_id=domain_policy_id)
 
 
 def test_finance_pack_universe_has_336_cells() -> None:
@@ -84,20 +87,52 @@ def test_all_invalid_cells_leave_an_empty_eligible_universe() -> None:
 def test_rank_guard_rejects_non_builtin_collections() -> None:
     elite_generator = cast(set[str], iter(finance_pack_universe()))
     with pytest.raises(TypeError, match="elite_cell_ids must be a set or frozenset"):
-        evaluate_rank_guard(elite_cell_ids=elite_generator, cell_statuses={})
+        evaluate_rank_guard(
+            elite_cell_ids=elite_generator,
+            cell_statuses={},
+            universe=finance_pack_universe(),
+        )
 
     proxy = cast(dict[str, CellStatus], MappingProxyType({}))
     with pytest.raises(TypeError, match="cell_statuses must be a dict"):
-        evaluate_rank_guard(elite_cell_ids=set(), cell_statuses=proxy)
+        evaluate_rank_guard(
+            elite_cell_ids=set(),
+            cell_statuses=proxy,
+            universe=finance_pack_universe(),
+        )
 
 
 def test_rank_guard_rejects_inputs_larger_than_the_universe() -> None:
     oversized_elites = {f"unknown-{index}" for index in range(337)}
     with pytest.raises(ValueError, match="elite_cell_ids exceeds the descriptor universe"):
-        evaluate_rank_guard(elite_cell_ids=oversized_elites, cell_statuses={})
+        evaluate_rank_guard(
+            elite_cell_ids=oversized_elites,
+            cell_statuses={},
+            universe=finance_pack_universe(),
+        )
 
     oversized_statuses: dict[str, CellStatus] = {
         f"unknown-{index}": "Unknown" for index in range(337)
     }
     with pytest.raises(ValueError, match="cell_statuses exceeds the descriptor universe"):
-        evaluate_rank_guard(elite_cell_ids=set(), cell_statuses=oversized_statuses)
+        evaluate_rank_guard(
+            elite_cell_ids=set(),
+            cell_statuses=oversized_statuses,
+            universe=finance_pack_universe(),
+        )
+
+
+def test_rank_guard_rejects_elite_cell_ids_outside_the_policy_universe() -> None:
+    off_policy_cell = next(iter(OPTIMIZATION_POLICY.universe()))
+    with pytest.raises(
+        ValueError, match="elite_cell_ids contain cells outside the descriptor universe"
+    ):
+        _use_case().run(elite_cell_ids={off_policy_cell})
+
+
+def test_rank_guard_rejects_status_cells_outside_the_policy_universe() -> None:
+    off_policy_cell = next(iter(OPTIMIZATION_POLICY.universe()))
+    with pytest.raises(
+        ValueError, match="cell_statuses contain cells outside the descriptor universe"
+    ):
+        _use_case(invalid={off_policy_cell}).run(elite_cell_ids=set())
