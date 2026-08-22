@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -32,7 +33,21 @@ AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 CELL = "mechanism=flow-driven|target=drawdown|horizon=intraday"
 
 
-def _ctx() -> NsqdHandlerContext:
+class _HybridSearch:
+    def __init__(self, hits: list[dict[str, Any]]) -> None:
+        self.calls: list[tuple[str, int]] = []
+        self._hits = hits
+
+    def search(self, query: str, limit: int) -> list[dict[str, Any]]:
+        self.calls.append((query, limit))
+        return list(self._hits)
+
+
+def _ctx(
+    *,
+    scholar: object | None = None,
+    hybrid: object | None = None,
+) -> NsqdHandlerContext:
     records = NullCorpusRecordStore()
     snapshots = NullCorpusSnapshotStore()
     return NsqdHandlerContext(
@@ -44,6 +59,8 @@ def _ctx() -> NsqdHandlerContext:
         harvest=NullHarvestStore(records, snapshots),
         index=NullCorpusIndex(),
         morph=NullMorphospaceStore(),
+        scholar_client=scholar,
+        paper_vector_index=hybrid,
     )
 
 
@@ -54,6 +71,8 @@ def _rescore(ctx: NsqdHandlerContext) -> RescoreUseCase:
         index=ctx.index,
         candidates=ctx.candidates,
         cards=ctx.cards,
+        live_search=ctx.scholar_client,
+        hybrid_search=ctx.paper_vector_index,
     )
 
 
@@ -317,6 +336,31 @@ def test_stale_card_is_rescored_against_current_snapshot() -> None:
     assert stored["snapshot_id"] == "snap-new"
 
 
+def test_stale_calibration_card_replays_live_grounding() -> None:
+    hybrid = _HybridSearch([{"paper_id": "p1", "score": 0.75}])
+    ctx = _ctx(hybrid=hybrid)
+    scored = _score_on(ctx, snapshot_id="snap-old", corpus_version=1, evaluator_run_id="eval-1")
+    card = scored["card"]
+    assert isinstance(card, dict)
+    ctx.snapshots.commit("snap-new", [], schema_version=1)
+
+    result = _rescore(ctx).run(
+        card_id=str(card["card_id"]),
+        current_snapshot_id="snap-new",
+        current_corpus_version=2,
+        snapshot_state="calibration",
+        evaluator_run_id="eval-2",
+    )
+
+    artifact = ctx.candidates.get_artifact(str(card["candidate_artifact_hash"]))
+    assert artifact is not None
+    assert artifact["grounding"]["live_call_count"] == 1
+    assert artifact["grounding"]["grounding_class"] == "related_partial"
+    assert artifact["novelty"]["snapshot_state"] == "calibration"
+    assert result["needs_re_score"] is True
+    assert hybrid.calls == [("gamma", 3)]
+
+
 def test_rescore_replays_elite_and_clears_rejected_elite() -> None:
     ctx = _ctx()
     high = {
@@ -359,7 +403,8 @@ def test_rescore_replays_elite_and_clears_rejected_elite() -> None:
 
 
 def test_handle_rescore_job() -> None:
-    ctx = _ctx()
+    hybrid = _HybridSearch([{"paper_id": "p1", "score": 0.75}])
+    ctx = _ctx(hybrid=hybrid)
     scored = _score_on(ctx, snapshot_id="snap-old", corpus_version=1, evaluator_run_id="eval-1")
     card = scored["card"]
     assert isinstance(card, dict)
@@ -372,7 +417,7 @@ def test_handle_rescore_job() -> None:
             "card_id": card["card_id"],
             "current_snapshot_id": "snap-new",
             "current_corpus_version": 2,
-            "snapshot_state": "production_valid",
+            "snapshot_state": "calibration",
             "evaluator_run_id": "payload-must-not-control-provenance",
         },
         attempts=1,
@@ -386,7 +431,9 @@ def test_handle_rescore_job() -> None:
     assert result["card"]["evaluator_run_id"] == "rescore:jr"
     artifact = ctx.candidates.get_artifact(str(card["candidate_artifact_hash"]))
     assert artifact is not None
-    assert artifact["novelty"]["snapshot_state"] == "smoke_only"
+    assert artifact["grounding"]["live_call_count"] == 1
+    assert artifact["novelty"]["snapshot_state"] == "calibration"
+    assert hybrid.calls == [("gamma", 3)]
 
 
 def test_queued_rescore_dispatches_through_skeleton_runner(tmp_path: Path) -> None:
@@ -412,7 +459,7 @@ def test_queued_rescore_dispatches_through_skeleton_runner(tmp_path: Path) -> No
             "card_id": card["card_id"],
             "current_snapshot_id": "snap-new",
             "current_corpus_version": 2,
-            "snapshot_state": "production_valid",
+            "snapshot_state": "calibration",
             "evaluator_run_id": "payload-must-not-control-provenance",
         },
         AS_OF,

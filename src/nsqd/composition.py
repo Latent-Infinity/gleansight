@@ -16,7 +16,7 @@ from nsqd.infra.piccolo.stores import (
     PiccoloNsqdJobQueue,
 )
 from nsqd.null_adapters import FixedClock, SystemClock
-from nsqd.ports import Clock
+from nsqd.ports import Clock, HybridPaperSearch, LivePaperSearch
 from papers.infra.piccolo.database import PiccoloDatabase
 
 
@@ -34,6 +34,8 @@ def build_container(
     index_path: Path,
     clock: Clock | None = None,
     approved_projection_digests: frozenset[str] | None = None,
+    scholar_client: LivePaperSearch | None = None,
+    paper_hybrid_search: HybridPaperSearch | None = None,
 ) -> NsqdContainer:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +56,8 @@ def build_container(
         approved_projection_digests=(
             approved_projection_digests if approved_projection_digests is not None else frozenset()
         ),
+        scholar_client=scholar_client,
+        paper_vector_index=paper_hybrid_search,
     )
     return NsqdContainer(
         clock=resolved_clock,

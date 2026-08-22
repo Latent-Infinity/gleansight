@@ -20,6 +20,8 @@ from nsqd.ports import (
     CorpusSnapshotStore,
     FrontierCardStore,
     HarvestStore,
+    HybridPaperSearch,
+    LivePaperSearch,
     MorphospaceStore,
     NsqdCandidateStore,
     NsqdJob,
@@ -38,8 +40,8 @@ class NsqdHandlerContext:
     index: CorpusIndex
     morph: MorphospaceStore
     approved_projection_digests: frozenset[str] = frozenset()
-    scholar_client: Any = None
-    paper_vector_index: Any = None
+    scholar_client: LivePaperSearch | None = None
+    paper_vector_index: HybridPaperSearch | None = None
 
 
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
@@ -140,10 +142,13 @@ def handle_ground(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         records=ctx.records,
         index=ctx.index,
         candidates=ctx.candidates,
+        live_search=ctx.scholar_client,
+        hybrid_search=ctx.paper_vector_index,
     ).run(
         candidate_artifact_hash=str(payload["candidate_artifact_hash"]),
         snapshot_id=str(payload["snapshot_id"]),
         corpus_version=int(payload["corpus_version"]),
+        snapshot_state=str(payload.get("snapshot_state") or "smoke_only"),
     )
     return {"status": "succeeded", **result}
 
@@ -182,11 +187,13 @@ def handle_rescore(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         index=ctx.index,
         candidates=ctx.candidates,
         cards=ctx.cards,
+        live_search=ctx.scholar_client,
+        hybrid_search=ctx.paper_vector_index,
     ).run(
         card_id=str(payload["card_id"]),
         current_snapshot_id=str(payload["current_snapshot_id"]),
         current_corpus_version=int(payload["current_corpus_version"]),
-        snapshot_state="smoke_only",
+        snapshot_state=str(payload.get("snapshot_state") or "smoke_only"),
         evaluator_run_id=f"rescore:{job.job_id}",
     )
     return {"status": "succeeded", **result}
