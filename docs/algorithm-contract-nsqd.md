@@ -20,7 +20,11 @@ Implementations must cite the section identifiers below (`ALG-DESC`, `ALG-STATUS
 
 Cell id = `mechanism={v}|target={v}|horizon={v}`. Unknown/unlisted value → reject placement (do not coerce).
 
-The finance pack’s **eligible archive-cell universe** is the cartesian product of the three closed vocabs (7 × 8 × 6 = 336 cells). Coverage (ALG-COV) uses this universe. Morphospace may store extra axes (modality, model-class, …) as **metadata**, not archive bins, until `ALG.AXES` says otherwise.
+The finance pack’s **eligible archive-cell universe** is the cartesian product of the three closed vocabs (7 × 8 × 6 = 336 cells). Coverage (ALG-COV) uses the **selected domain policy’s** universe, not an implicit global `finance/1` default. Morphospace may store extra axes (modality, model-class, …) as **metadata**, not archive bins, until `ALG.AXES` says otherwise.
+
+## ALG-POLICY — Versioned subject policies
+
+`domain_policy_id` is required and must be supplied explicitly; there is no implicit default and no fallback from a missing pack field. Verdicts, corpus views, grounding, novelty, cards/elites, and rank coverage are scoped to that id. Archive membership and elite replacement use a policy-scoped archive key while preserving the raw cell id emitted by the selected policy. Key sufficiency/promotion by `(snapshot_id, domain_policy_id)`. Records tagged to one policy cannot satisfy another. `finance/1` is a registered policy, not a missing-value fallback. `optimization/1` is a separate registered policy and does not inherit finance cells, minima, or credit. Its current `optimization/1` use is characterization-only: it does **not** activate a nonzero mechanism rubric, prove sufficiency, or imply production viability.
 
 **Bin boundaries:** v1 values are categorical. Adding a continuous axis requires a new contract revision and an ablation.
 
@@ -384,10 +388,13 @@ The evaluator **loads the artifact by hash**; it does not accept a live object f
 
 v1 projector (**human-approved only**). Model-assisted drafting is allowed when the fixture records human approval. **Not part of NSQD-N1.** First delivery is NSQD-N2b, after EW-V0A approves real paper fixtures, DATA-NSQD-04 exists (real paper + approved mechanism paraphrase), and EW-V2 is available for live imports.
 
-- Input: approved fixture or reviewed row: `paraphrase`, `source_paper_id`, `title`, `abstract_hash`, `markdown_hash`
+- Input: approved fixture or reviewed projection payload: `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` computed from normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`
+- The application computes a canonical digest of the normalized reviewed payload and requires it in an injected human-approved digest allowlist. A job payload cannot approve itself by supplying a status or digest, and its explicit `domain_policy_id` must match the policy bound into the approved payload. N6 owns replacement of the fixture/config allowlist with durable live approval state.
+- The executable fixture-backed path is `python -m nsqd project`: it verifies the projection file's byte hash and approval metadata against an operator-selected approved manifest before injecting the contract-field digest. The manifest path and trusted digest are not copied into the job payload.
 - **Not** “use the abstract as the paraphrase”
-- Persist the approved fixture's `paraphrase_source`, `review_status = approved`, human-review metadata, hashes, and projector version `paper-projector/1`
-- Idempotent on `source_paper_id` + content hashes: same hashes → no new record; hash change → new `content_hash`, same logical id, new snapshot
+- Persist the approved payload's `paraphrase_source`, `review_status = approved`, human-review metadata, hashes, and projector-assigned version `paper-projector/1`
+- Canonical `content_hash` stays the ALG-SNAP hash of `{type, paraphrase, source}`. `record_id` is policy + source/hash-revision sensitive. The same full identity is idempotent; any source/hash revision creates a new record and therefore a new snapshot.
+- There is no fallback from `paper_id` to `source_paper_id`; projector identity is driven by the reviewed payload fields above.
 
 Unapproved model output (`review_status = pending`) is not accepted by v1.
 
