@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -14,7 +15,7 @@ from nsqd.app.handlers import (
     handle_score,
 )
 from nsqd.composition import NsqdContainer
-from nsqd.ports import NsqdJob, NsqdJobType
+from nsqd.ports import Clock, NsqdJob, NsqdJobType
 
 _HANDLER_BY_JOB_TYPE: dict[NsqdJobType, Callable[[Any, NsqdJob], dict[str, Any]]] = {
     "harvest": handle_harvest,
@@ -37,6 +38,12 @@ def run_job(
     claimed = container.queue.claim_job(job_id, now)
     if claimed is None:
         raise RuntimeError(f"failed to claim {job_type} job")
+    _log_job_event(
+        clock=container.clock,
+        job=claimed,
+        status_from="queued",
+        status_to="running",
+    )
     try:
         result = dispatch_job(container, claimed)
     except Exception as exc:
@@ -44,8 +51,21 @@ def run_job(
             container.queue.mark_failed(job_id, str(exc)[:1000])
         except Exception as mark_exc:  # pragma: no cover - defensive note propagation
             exc.add_note(f"also failed to mark {job_type} job failed: {mark_exc}")
+        _log_job_event(
+            clock=container.clock,
+            job=claimed,
+            status_from="running",
+            status_to="failed",
+            error=str(exc)[:1000],
+        )
         raise
     container.queue.mark_succeeded(job_id)
+    _log_job_event(
+        clock=container.clock,
+        job=claimed,
+        status_from="running",
+        status_to="succeeded",
+    )
     return result
 
 
@@ -54,3 +74,24 @@ def dispatch_job(container: NsqdContainer, job: NsqdJob) -> dict[str, Any]:
     if handler is None:
         raise ValueError(f"unsupported nsqd job type: {job.type}")
     return handler(container.ctx, job)
+
+
+def _log_job_event(
+    *,
+    clock: Clock,
+    job: NsqdJob,
+    status_from: str,
+    status_to: str,
+    error: str | None = None,
+) -> None:
+    logging.getLogger("nsqd.runner").info(
+        "job_event",
+        extra={
+            "timestamp": clock.now().isoformat(),
+            "job_id": job.job_id,
+            "job_type": job.type,
+            "status_from": status_from,
+            "status_to": status_to,
+            "error": error,
+        },
+    )

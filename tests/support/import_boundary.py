@@ -6,7 +6,7 @@ import ast
 from pathlib import Path
 
 FORBIDDEN_IMPORTS = frozenset({"docling", "lancedb", "sentence_transformers", "httpx"})
-NSQD_FORBIDDEN_IMPORT_PREFIXES = ("papers.infra",)
+NSQD_FORBIDDEN_IMPORT_PREFIXES = ("papers.infra", "nsqd.infra")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_TREES = (
     REPO_ROOT / "src" / "papers" / "domain",

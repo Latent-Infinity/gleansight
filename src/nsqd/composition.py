@@ -62,7 +62,7 @@ def build_container(
     return NsqdContainer(
         clock=resolved_clock,
         database=database,
-        queue=PiccoloNsqdJobQueue(database),
+        queue=PiccoloNsqdJobQueue(database, clock=resolved_clock),
         ctx=ctx,
     )
 
