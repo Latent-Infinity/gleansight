@@ -54,14 +54,14 @@ Counts on a cell, at `as_of`:
 
 ## ALG-STATUS — Cell-status computation (map)
 
-Statuses are a **single** label. Exception/gap labels preempt density labels. Density labels are exclusive of each other. Evaluate **first match** in the table below; later rows assume earlier rows did not match.
+Statuses are a **single** label. A `smoke_only` snapshot always returns `Unknown` before record or cell metadata is evaluated, so smoke maps cannot look production-ready. For every other snapshot state, exception/gap labels preempt density labels and density labels are exclusive of each other. Evaluate **first match** in the table below; later rows assume earlier rows did not match.
 
 `inspected` means the cell appears in the domain-pack expected-cell manifest **or** has an explicit `inspected_at`. `expected` means the cell id is in that manifest.
 
 | Order | Status | Exclusive predicate | Notes |
 |------:|--------|---------------------|-------|
 | 1 | Invalid | cell `invalid_reason` set **or** ≥1 authoritative `lifecycle=invalid` record | |
-| 2 | Unknown | unresolved disagreement flag **or** snapshot state is `smoke_only` **or** (`P+C+B = 0` and not `inspected`) | Smoke maps are Unknown so they cannot look production-ready |
+| 2 | Unknown | unresolved disagreement flag **or** (`P+C+B = 0` and not `inspected`) | |
 | 3 | Future-work-only | `P+C+B ≥ 1` and every non-invalid record is `lifecycle=future_work` | |
 | 4 | Stalled | `attempted ≥ 1` and `current_paper = 0` and `current_code = 0` | Uses record-level `current`, not cell Active/Mature |
 | 5 | Missing | `inspected` and `expected` and `P+C+B = 0` | |
@@ -85,7 +85,7 @@ Every cell matches exactly one row. Uninspected empty cells are Unknown (row 2).
 | `P=3`, `C=1`, recent, no evaluation claim or `B≥1` | Active | Not Mature (`P<5`), not a gap |
 | `P=3`, `C=1`, all records older than the window, `attempted = 0` | Unknown | Row 11 (inspected or not) |
 | Attempted kills + no current paper/code | Stalled | Row 4, even if stale papers remain |
-| `smoke_only` snapshot, any counts | Unknown | Row 2 |
+| `smoke_only` snapshot, any counts | Unknown | Smoke precondition |
 
 ---
 
@@ -438,7 +438,7 @@ Unit tests use deterministic hand-built vectors. Adapter tests use a local Lance
 
 ## ALG-JOB — Discovery jobs
 
-NS-QD owns `NsqdJobType`, `NsqdJobRecord`, table `nsqd_jobs`, and its queue port. Types: `harvest | project | diverge | ground | score | rescore`.
+NS-QD owns `NsqdJobType`, table `nsqd_jobs`, and its queue port. Types: `harvest | project | map | diverge | ground | score | rescore`.
 
 Paper `JobType` / `jobs` remain closed: `discover | download | convert | embed | analyze`. Discovery types must not be inserted there.
 
