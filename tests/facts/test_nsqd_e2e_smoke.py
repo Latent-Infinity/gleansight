@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from nsqd.app.use_cases import empty_smoke_snapshot_id
+from nsqd.domain.policy import FINANCE_POLICY, archive_cell_key
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloFrontierCardStore, PiccoloNsqdJobQueue
 from nsqd.skeleton import run_skeleton
@@ -63,8 +64,18 @@ def test_smoke_loop_reports_global_archive_when_unrelated_elite_exists(tmp_path:
     database = PiccoloDatabase(db_path)
     database.initialize_schema()
     cards = PiccoloFrontierCardStore(database)
-    cards.put_card({"card_id": "existing-elite", "cell_id": "other-cell", "viability": 1})
-    cards.set_elite("other-cell", "existing-elite")
+    cell_id = sorted(FINANCE_POLICY.universe())[0]
+    scoped_cell_id = archive_cell_key(domain_policy_id="finance/1", cell_id=cell_id)
+    cards.put_card(
+        {
+            "card_id": "existing-elite",
+            "domain_policy_id": "finance/1",
+            "cell_id": cell_id,
+            "archive_cell_key": scoped_cell_id,
+            "viability": 1,
+        }
+    )
+    cards.set_elite(scoped_cell_id, "existing-elite")
 
     result = run_skeleton(
         fixture_path=FIXTURES / "gamma-flow.yaml",
@@ -111,7 +122,11 @@ def test_smoke_loop_uses_authoritative_snapshot_version_on_reused_database(tmp_p
     index_path = tmp_path / "corpus.lancedb"
     harvest_path = tmp_path / "records.yaml"
     harvest_path.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    domain_policy_id: finance/1\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n",
         encoding="utf-8",
     )
     harvested = run_harvest(

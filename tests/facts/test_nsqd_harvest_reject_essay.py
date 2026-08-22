@@ -15,6 +15,7 @@ KNOWN = {
     "type": "paper",
     "paraphrase": "Condition allocation trust on dealer-hedging convexity regime.",
     "source": "doi:10.0000/example",
+    "domain_policy_id": "finance/1",
 }
 
 
@@ -36,7 +37,10 @@ def test_essay_file_is_rejected_and_writes_no_corpus_rows(tmp_path: Path) -> Non
 def test_sourceless_enumerated_record_is_rejected_and_writes_no_rows(tmp_path: Path) -> None:
     path = tmp_path / "records.yaml"
     path.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism without a source\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    domain_policy_id: finance/1\n"
+        "    paraphrase: A mechanism without a source\n",
         encoding="utf-8",
     )
     db_path = tmp_path / "nsqd.sqlite"
@@ -64,6 +68,7 @@ def test_enumerated_known_vector_is_harvested(tmp_path: Path) -> None:
     path.write_text(
         "records:\n"
         "  - type: paper\n"
+        "    domain_policy_id: finance/1\n"
         "    paraphrase: Condition allocation trust on dealer-hedging convexity regime.\n"
         "    source: doi:10.0000/example\n",
         encoding="utf-8",
@@ -73,7 +78,11 @@ def test_enumerated_known_vector_is_harvested(tmp_path: Path) -> None:
         db_path=tmp_path / "nsqd.sqlite",
         index_path=tmp_path / "idx",
     )
-    expected = record_content_hash(**KNOWN)
+    expected = record_content_hash(
+        type=KNOWN["type"],
+        paraphrase=KNOWN["paraphrase"],
+        source=KNOWN["source"],
+    )
     assert result["record_ids"] == [expected]
     db = PiccoloDatabase(tmp_path / "nsqd.sqlite")
     row = db.fetchone(
