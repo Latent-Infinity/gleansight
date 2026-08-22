@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 GroundingClass = Literal[
     "already_done",
@@ -52,3 +52,22 @@ def classify_local(
         return "already_done", 0.9, layers
     layers.append(LayerResult(4, "code/benchmark", False, "no neighbor", None, None))
     return "unevaluated", 0.0, layers
+
+
+LIVE_SEARCH_BUDGET = 3
+LIVE_PRIOR_ART_CONFIDENCE = 0.4
+
+
+def live_escalation_allowed(*, snapshot_state: str, local_class: GroundingClass) -> bool:
+    return snapshot_state in {"calibration", "production_valid"} and local_class == "unevaluated"
+
+
+def apply_live_hits(
+    *,
+    local_class: GroundingClass,
+    local_confidence: float,
+    live_hits: list[dict[str, Any]],
+) -> tuple[GroundingClass, float]:
+    if local_class != "unevaluated" or not live_hits:
+        return local_class, local_confidence
+    return "related_partial", LIVE_PRIOR_ART_CONFIDENCE

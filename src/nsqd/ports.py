@@ -79,6 +79,27 @@ class CorpusIndex(Protocol):
 
 
 @runtime_checkable
+class HybridPaperSearch(Protocol):
+    """Read-only N5 prior-art search; acquisition remains paper-owned in N6."""
+
+    def search(self, query: str, limit: int) -> list[dict[str, Any]]: ...
+
+
+@runtime_checkable
+class LivePaperSearch(Protocol):
+    """Read-only N5 scholar search; it does not import or approve evidence."""
+
+    def search(
+        self,
+        query: str,
+        filters: dict[str, Any],
+        max_results: int,
+        page_size: int,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]: ...
+
+
+@runtime_checkable
 class MorphospaceStore(Protocol):
     def mark_inspected(self, cell_id: str, inspected_at: datetime) -> None: ...
 
