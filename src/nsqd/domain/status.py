@@ -70,7 +70,7 @@ def record_lifecycle(
     window: timedelta = timedelta(days=365 * 2),
 ) -> RecordLifecycle:
     _require_utc_as_of(as_of)
-    if record.get("invalid_reason"):
+    if record.get("invalid_reason") or record.get("retracted") is True:
         return "invalid"
     tags = set(record.get("tags") or [])
     if "future_work" in tags:
