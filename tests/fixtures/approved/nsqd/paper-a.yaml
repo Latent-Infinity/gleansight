@@ -2,6 +2,7 @@ schema_version: 1
 kind: corpus-paper-paraphrase
 id: DATA-NSQD-04
 source_fixture_id: DATA-01c
+domain_policy_id: optimization/1
 paper_id: paper-20
 source_paper_id: 7dbcef75-2d52-49a6-86a3-471be71f0fd7
 title: A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians

@@ -107,6 +107,7 @@ def test_approved_paper_paraphrase_matches_source_and_review_contract() -> None:
     assert payload["kind"] == row["kind"] == "corpus-paper-paraphrase"
     assert payload["id"] == row["id"] == "DATA-NSQD-04"
     assert payload["source_fixture_id"] == row["source_fixture_id"] == source["id"]
+    assert payload["domain_policy_id"] == row["domain_policy_id"] == "optimization/1"
     assert payload["paper_id"] == row["paper_id"] == source["paper_id"] == "paper-20"
     assert payload["source_paper_id"] == row["source_paper_id"] == source["source_paper_id"]
     assert payload["title"] == row["title"] == source["title"]
