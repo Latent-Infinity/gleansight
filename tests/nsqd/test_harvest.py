@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import nsqd.harvest as harvest_module
+import nsqd.runner as runner_module
 from nsqd.app.use_cases import HarvestUseCase
 from nsqd.domain.harvest import (
     HarvestRejected,
@@ -31,6 +32,7 @@ KNOWN = {
     "type": "paper",
     "paraphrase": "Condition allocation trust on dealer-hedging convexity regime.",
     "source": "doi:10.0000/example",
+    "domain_policy_id": "finance/1",
 }
 
 
@@ -43,16 +45,28 @@ def test_essay_payloads_are_detected() -> None:
             "type": "paper",
             "paraphrase": "Condition allocation trust on dealer-hedging convexity regime.",
             "source": "doi:10.0000/example",
+            "domain_policy_id": "finance/1",
         }
     )
 
 
 def test_sourceless_and_empty_paraphrase_are_rejected() -> None:
-    assert harvest_record_rejection({"type": "paper", "paraphrase": "x", "source": ""}) == (
-        "sourceless"
+    assert (
+        harvest_record_rejection(
+            {"type": "paper", "paraphrase": "x", "source": "", "domain_policy_id": "finance/1"}
+        )
+        == "sourceless"
     )
-    assert harvest_record_rejection({"type": "paper", "paraphrase": "  ", "source": "doi:1"}) == (
-        "empty paraphrase"
+    assert (
+        harvest_record_rejection(
+            {
+                "type": "paper",
+                "paraphrase": "  ",
+                "source": "doi:1",
+                "domain_policy_id": "finance/1",
+            }
+        )
+        == "empty paraphrase"
     )
     assert (
         harvest_record_rejection(
@@ -61,6 +75,7 @@ def test_sourceless_and_empty_paraphrase_are_rejected() -> None:
                 "type": "paper",
                 "paraphrase": "x",
                 "source": "s",
+                "domain_policy_id": "finance/1",
             }
         )
         == "requirement-card is not a corpus record"
@@ -75,6 +90,7 @@ def test_enumerated_known_vector_is_accepted() -> None:
                     "type": "paper",
                     "paraphrase": "Condition allocation trust on dealer-hedging convexity regime.",
                     "source": "doi:10.0000/example",
+                    "domain_policy_id": "finance/1",
                 }
             ]
         }
@@ -97,11 +113,22 @@ def test_required_record_fields_must_be_strings(field: str, value: object) -> No
 def test_toml_harvest_file_parses_enumerated_records(tmp_path: Path) -> None:
     path = tmp_path / "harvest-seed.toml"
     path.write_text(
-        '[[records]]\ntype = "paper"\nparaphrase = "A mechanism"\nsource = "doi:10.1/x"\n',
+        "[[records]]\n"
+        'type = "paper"\n'
+        'paraphrase = "A mechanism"\n'
+        'source = "doi:10.1/x"\n'
+        'domain_policy_id = "finance/1"\n',
         encoding="utf-8",
     )
     assert parse_harvest_file(path) == {
-        "records": [{"type": "paper", "paraphrase": "A mechanism", "source": "doi:10.1/x"}]
+        "records": [
+            {
+                "type": "paper",
+                "paraphrase": "A mechanism",
+                "source": "doi:10.1/x",
+                "domain_policy_id": "finance/1",
+            }
+        ]
     }
 
 
@@ -126,6 +153,39 @@ def test_harvest_file_size_is_bounded(monkeypatch: pytest.MonkeyPatch, tmp_path:
 )
 def test_optional_metadata_schema_is_validated(field: str, value: object, message: str) -> None:
     assert harvest_record_rejection({**KNOWN, field: value}) == message
+
+
+def test_harvest_rejects_missing_and_unknown_domain_policy_id() -> None:
+    records = NullCorpusRecordStore()
+    snapshots = NullCorpusSnapshotStore()
+    use_case = HarvestUseCase(harvest=NullHarvestStore(records, snapshots), clock=FixedClock(AS_OF))
+
+    with pytest.raises(HarvestRejected, match="domain_policy_id is required"):
+        use_case.run(
+            {
+                "records": [
+                    {
+                        "type": "paper",
+                        "paraphrase": "A mechanism",
+                        "source": "doi:10.1/x",
+                    }
+                ]
+            }
+        )
+
+    with pytest.raises(HarvestRejected, match="unknown domain_policy_id"):
+        use_case.run(
+            {
+                "records": [
+                    {
+                        "type": "paper",
+                        "paraphrase": "A mechanism",
+                        "source": "doi:10.1/x",
+                        "domain_policy_id": "missing/1",
+                    }
+                ]
+            }
+        )
 
 
 def test_harvest_commits_versioned_snapshot_and_preserves_metadata() -> None:
@@ -156,6 +216,7 @@ def test_harvest_commits_versioned_snapshot_and_preserves_metadata() -> None:
     assert stored["tags"] == ["reviewed"]
     assert stored["aliases"] == ["doi:10.0000/EXAMPLE"]
     assert stored["retracted"] is False
+    assert stored["domain_policy_id"] == "finance/1"
     assert "ignored" not in stored
     assert record_lifecycle(stored, as_of=AS_OF) == "current"
     assert result["corpus_version"] == 1
@@ -172,6 +233,7 @@ def test_harvest_commits_versioned_snapshot_and_preserves_metadata() -> None:
                     "type": "code",
                     "paraphrase": "A second mechanism",
                     "source": "https://example.com/code",
+                    "domain_policy_id": "finance/1",
                 }
             ]
         }
@@ -188,12 +250,17 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
         "  - type: paper\n"
         "    paraphrase: A mechanism\n"
         "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n"
         "    tags: [reviewed]\n",
         encoding="utf-8",
     )
     omitted = tmp_path / "omitted.yaml"
     omitted.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
         encoding="utf-8",
     )
     conflicting = tmp_path / "conflicting.yaml"
@@ -202,6 +269,7 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
         "  - type: paper\n"
         "    paraphrase: A mechanism\n"
         "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n"
         "    tags: [unreviewed]\n",
         encoding="utf-8",
     )
@@ -210,7 +278,10 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
         file_path=first, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF
     )
     repeated = run_harvest(
-        file_path=omitted, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF
+        file_path=omitted,
+        db_path=db_path,
+        index_path=tmp_path / "idx",
+        as_of=AS_OF,
     )
     with pytest.raises(HarvestRejected, match="immutable metadata"):
         run_harvest(
@@ -225,7 +296,40 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
     database = PiccoloDatabase(db_path)
     row = database.fetchone("SELECT payload_json FROM nsqd_corpus_records")
     assert row is not None
-    assert json.loads(str(row["payload_json"]))["tags"] == ["reviewed"]
+    payload = json.loads(str(row["payload_json"]))
+    assert payload["tags"] == ["reviewed"]
+    assert payload["domain_policy_id"] == "finance/1"
+
+
+def test_reharvest_rejects_cross_policy_conflicts(tmp_path: Path) -> None:
+    db_path = tmp_path / "nsqd.sqlite"
+    first = tmp_path / "first.yaml"
+    first.write_text(
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
+        encoding="utf-8",
+    )
+    conflicting = tmp_path / "conflicting.yaml"
+    conflicting.write_text(
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: optimization/1\n",
+        encoding="utf-8",
+    )
+
+    run_harvest(file_path=first, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF)
+    with pytest.raises(HarvestRejected, match="immutable metadata conflict: domain_policy_id"):
+        run_harvest(
+            file_path=conflicting,
+            db_path=db_path,
+            index_path=tmp_path / "idx",
+            as_of=AS_OF,
+        )
 
 
 def test_concurrent_identical_harvests_share_one_snapshot_version(tmp_path: Path) -> None:
@@ -233,7 +337,11 @@ def test_concurrent_identical_harvests_share_one_snapshot_version(tmp_path: Path
     PiccoloDatabase(db_path).initialize_schema()
     path = tmp_path / "records.yaml"
     path.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
         encoding="utf-8",
     )
 
@@ -261,7 +369,8 @@ def test_concurrent_distinct_harvests_commit_serial_versions(tmp_path: Path) -> 
         path.write_text(
             "records:\n"
             f"  - type: paper\n    paraphrase: Mechanism {index}\n"
-            f"    source: doi:10.1/{index}\n",
+            f"    source: doi:10.1/{index}\n"
+            "    domain_policy_id: finance/1\n",
             encoding="utf-8",
         )
         paths.append(path)
@@ -291,7 +400,11 @@ def test_run_harvest_claims_its_job_without_touching_older_work(tmp_path: Path) 
     older_job_id = queue.enqueue("diverge", {"axiom": "older"})
     path = tmp_path / "records.yaml"
     path.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
         encoding="utf-8",
     )
 
@@ -310,7 +423,11 @@ def test_run_harvest_marks_claimed_job_failed_on_unexpected_error(
 ) -> None:
     path = tmp_path / "records.yaml"
     path.write_text(
-        "records:\n  - type: paper\n    paraphrase: A mechanism\n    source: doi:10.1/x\n",
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
         encoding="utf-8",
     )
     db_path = tmp_path / "nsqd.sqlite"
@@ -318,7 +435,7 @@ def test_run_harvest_marks_claimed_job_failed_on_unexpected_error(
     def fail(*_: object, **__: object) -> dict[str, object]:
         raise RuntimeError("adapter failed")
 
-    monkeypatch.setattr(harvest_module, "handle_harvest", fail)
+    monkeypatch.setitem(runner_module._HANDLER_BY_JOB_TYPE, "harvest", fail)
     with pytest.raises(RuntimeError, match="adapter failed"):
         run_harvest(file_path=path, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF)
 

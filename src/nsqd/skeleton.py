@@ -7,11 +7,10 @@ from typing import Any
 
 import yaml
 
-from nsqd.app.handlers import handle_diverge, handle_ground, handle_rescore, handle_score
 from nsqd.app.use_cases import empty_smoke_snapshot_id
-from nsqd.composition import NsqdContainer, build_container, fixed_clock
+from nsqd.composition import build_container, fixed_clock
 from nsqd.domain.status import cell_status
-from nsqd.ports import NsqdJob, NsqdJobType
+from nsqd.runner import run_job
 
 
 def run_skeleton(
@@ -33,7 +32,7 @@ def run_skeleton(
     evaluator_run_id = str(uuid.uuid4())
     now = container.clock.now()
 
-    diverge = _run_job(
+    diverge = run_job(
         container,
         "diverge",
         {
@@ -44,7 +43,7 @@ def run_skeleton(
         now,
     )
     artifact_hash = str(diverge["candidate_artifact_hash"])
-    grounding = _run_job(
+    grounding = run_job(
         container,
         "ground",
         {
@@ -54,7 +53,7 @@ def run_skeleton(
         },
         now,
     )
-    scored = _run_job(
+    scored = run_job(
         container,
         "score",
         {
@@ -70,7 +69,7 @@ def run_skeleton(
     assert artifact is not None
     card = container.ctx.cards.get_card(artifact_hash)
     assert card is not None
-    elite = container.ctx.cards.elite_for_cell(str(card["cell_id"]))
+    elite = container.ctx.cards.elite_for_cell(str(card["archive_cell_key"]))
     archive_empty = (
         container.database.fetchone("SELECT 1 AS has_elite FROM nsqd_elites LIMIT 1") is None
     )
@@ -101,30 +100,3 @@ def run_skeleton(
         "generator_run_id": generator_run_id,
         "evaluator_run_id": evaluator_run_id,
     }
-
-
-def _run_job(
-    container: NsqdContainer,
-    job_type: NsqdJobType,
-    payload: dict[str, Any],
-    now: datetime,
-) -> dict[str, Any]:
-    job_id = container.queue.enqueue(job_type, payload)
-    claimed = container.queue.claim_job(job_id, now)
-    if claimed is None:
-        raise RuntimeError(f"failed to claim {job_type} job")
-    result = _dispatch(container, claimed)
-    container.queue.mark_succeeded(job_id)
-    return result
-
-
-def _dispatch(container: NsqdContainer, job: NsqdJob) -> dict[str, Any]:
-    if job.type == "diverge":
-        return handle_diverge(container.ctx, job)
-    if job.type == "ground":
-        return handle_ground(container.ctx, job)
-    if job.type == "score":
-        return handle_score(container.ctx, job)
-    if job.type == "rescore":
-        return handle_rescore(container.ctx, job)
-    raise ValueError(f"unsupported skeleton job type: {job.type}")

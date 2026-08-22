@@ -6,6 +6,15 @@ from typing import Any
 from nsqd.domain.card import corpus_ingest_rejection
 
 ALLOWED_RECORD_TYPES = frozenset({"paper", "code", "benchmark"})
+IMMUTABLE_RECORD_FIELDS = (
+    "domain_policy_id",
+    "coordinates",
+    "provenance",
+    "tags",
+    "aliases",
+    "retracted",
+    "invalid_reason",
+)
 OPTIONAL_RECORD_FIELDS = (
     "coordinates",
     "provenance",
@@ -32,6 +41,9 @@ def harvest_record_rejection(record: dict[str, Any]) -> str | None:
     card_reason = corpus_ingest_rejection(record)
     if card_reason is not None:
         return card_reason
+    policy_id = record.get("domain_policy_id")
+    if not isinstance(policy_id, str) or not policy_id.strip():
+        return "domain_policy_id is required"
     for field in ("type", "paraphrase", "source"):
         value = record.get(field)
         if value is not None and not isinstance(value, str):
@@ -60,7 +72,7 @@ def harvest_record_rejection(record: dict[str, Any]) -> str | None:
 
 
 def immutable_record_conflict(existing: dict[str, Any], incoming: dict[str, Any]) -> str | None:
-    for field in OPTIONAL_RECORD_FIELDS:
+    for field in IMMUTABLE_RECORD_FIELDS:
         if field in incoming and existing.get(field) != incoming[field]:
             return f"immutable metadata conflict: {field}"
     return None

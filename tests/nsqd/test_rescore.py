@@ -26,7 +26,7 @@ from nsqd.null_adapters import (
     NullNsqdCandidateStore,
 )
 from nsqd.ports import NsqdJob
-from nsqd.skeleton import _run_job
+from nsqd.runner import run_job
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 CELL = "mechanism=flow-driven|target=drawdown|horizon=intraday"
@@ -60,7 +60,7 @@ def _rescore(ctx: NsqdHandlerContext) -> RescoreUseCase:
 def _candidate() -> dict[str, object]:
     return {
         "title": "gamma",
-        "domain_pack": "finance/1",
+        "domain_policy_id": "finance/1",
         "research_descriptor": {
             "mechanism": "flow-driven",
             "target": "drawdown",
@@ -150,8 +150,8 @@ def test_current_card_reconciles_interrupted_archive_cleanup() -> None:
     scored = _score_on(ctx, snapshot_id="snap-old", corpus_version=1, evaluator_run_id="eval-1")
     card = scored["card"]
     assert isinstance(card, dict)
-    ctx.cards.set_elite(CELL, str(card["card_id"]))
-    assert ctx.cards.elite_for_cell(CELL) is not None
+    ctx.cards.set_elite(str(card["archive_cell_key"]), str(card["card_id"]))
+    assert ctx.cards.elite_for_cell(str(card["archive_cell_key"])) is not None
 
     result = _rescore(ctx).run(
         card_id=str(card["card_id"]),
@@ -165,7 +165,7 @@ def test_current_card_reconciles_interrupted_archive_cleanup() -> None:
     assert result["archive"]["reason"] == "viability_zero"
     assert result["archive"]["elite"] is None
     assert result["elite"] is None
-    assert ctx.cards.elite_for_cell(CELL) is None
+    assert ctx.cards.elite_for_cell(str(card["archive_cell_key"])) is None
 
     repeated = _rescore(ctx).run(
         card_id=str(card["card_id"]),
@@ -184,7 +184,9 @@ def test_current_card_reconciles_interrupted_archive_insertion() -> None:
     assert ctx.snapshots.commit("snap-current", [], schema_version=1) == 2
     card = {
         "card_id": "current-positive",
+        "domain_policy_id": "finance/1",
         "cell_id": CELL,
+        "archive_cell_key": f"finance/1::{CELL}",
         "title": "positive",
         "generating_operator": "A",
         "snapshot_id": "snap-current",
@@ -212,7 +214,7 @@ def test_current_card_reconciles_interrupted_archive_insertion() -> None:
     assert result["archive"]["inserted"] is True
     assert result["archive"]["elite"] == card
     assert result["elite"] == card
-    assert ctx.cards.elite_for_cell(CELL) == card
+    assert ctx.cards.elite_for_cell(str(card["archive_cell_key"])) == card
 
     repeated = _rescore(ctx).run(
         card_id=str(card["card_id"]),
@@ -223,6 +225,75 @@ def test_current_card_reconciles_interrupted_archive_insertion() -> None:
     )
     assert repeated["archive"]["elite"] == card
     assert repeated["elite"] == card
+
+
+def test_current_snapshot_replay_normalizes_legacy_finance_card_without_policy_fields() -> None:
+    ctx = _ctx()
+    ctx.snapshots.commit("snap-current", [], schema_version=1)
+    legacy_card = {
+        "card_id": "legacy-finance",
+        "cell_id": CELL,
+        "title": "legacy",
+        "generating_operator": "A",
+        "snapshot_id": "snap-current",
+        "corpus_version": 1,
+        "viability": 5,
+        "nov": 1,
+        "mech": 5,
+        "fals": 5,
+        "dpred": 5,
+        "dval": 5,
+        "candidate_artifact_hash": "legacy-hash",
+        "card_decision": "accepted",
+    }
+    ctx.cards.put_card(legacy_card)
+
+    result = _rescore(ctx).run(
+        card_id="legacy-finance",
+        current_snapshot_id="snap-current",
+        current_corpus_version=1,
+        snapshot_state="calibration",
+        evaluator_run_id="eval-retry",
+    )
+
+    normalized = result["card"]
+    assert normalized["domain_policy_id"] == "finance/1"
+    assert normalized["archive_cell_key"] == f"finance/1::{CELL}"
+    assert result["archive"]["elite"] == normalized
+    assert ctx.cards.elite_for_cell(f"finance/1::{CELL}") == normalized
+
+
+def test_current_snapshot_replay_rejects_legacy_card_with_non_finance_cell() -> None:
+    ctx = _ctx()
+    opt_cell = "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
+    ctx.snapshots.commit("snap-current", [], schema_version=1)
+    ctx.cards.put_card(
+        {
+            "card_id": "legacy-unknown",
+            "cell_id": opt_cell,
+            "title": "legacy",
+            "generating_operator": "A",
+            "snapshot_id": "snap-current",
+            "corpus_version": 1,
+            "viability": 5,
+            "nov": 1,
+            "mech": 5,
+            "fals": 5,
+            "dpred": 5,
+            "dval": 5,
+            "candidate_artifact_hash": "legacy-hash",
+            "card_decision": "accepted",
+        }
+    )
+
+    with pytest.raises(ValueError, match="legacy card requires explicit domain_policy_id"):
+        _rescore(ctx).run(
+            card_id="legacy-unknown",
+            current_snapshot_id="snap-current",
+            current_corpus_version=1,
+            snapshot_state="calibration",
+            evaluator_run_id="eval-retry",
+        )
 
 
 def test_stale_card_is_rescored_against_current_snapshot() -> None:
@@ -250,7 +321,9 @@ def test_rescore_replays_elite_and_clears_rejected_elite() -> None:
     ctx = _ctx()
     high = {
         "card_id": "c-high",
+        "domain_policy_id": "finance/1",
         "cell_id": CELL,
+        "archive_cell_key": f"finance/1::{CELL}",
         "title": "t",
         "generating_operator": "A",
         "snapshot_id": "snap-old",
@@ -266,12 +339,12 @@ def test_rescore_replays_elite_and_clears_rejected_elite() -> None:
     }
     ctx.cards.put_card(high)
     ArchiveInsertUseCase(cards=ctx.cards).run(high)
-    assert ctx.cards.elite_for_cell(CELL) == high
+    assert ctx.cards.elite_for_cell(str(high["archive_cell_key"])) == high
 
     scored = _score_on(ctx, snapshot_id="snap-old", corpus_version=1, evaluator_run_id="eval-1")
     card = scored["card"]
     assert isinstance(card, dict)
-    ctx.cards.set_elite(CELL, str(card["card_id"]))
+    ctx.cards.set_elite(str(card["archive_cell_key"]), str(card["card_id"]))
     ctx.snapshots.commit("snap-new", [], schema_version=1)
     result = _rescore(ctx).run(
         card_id=str(card["card_id"]),
@@ -282,7 +355,7 @@ def test_rescore_replays_elite_and_clears_rejected_elite() -> None:
     )
     assert result["needs_re_score"] is True
     assert result["card"]["viability"] == 0
-    assert ctx.cards.elite_for_cell(CELL) is None
+    assert ctx.cards.elite_for_cell(str(card["archive_cell_key"])) is None
 
 
 def test_handle_rescore_job() -> None:
@@ -332,7 +405,7 @@ def test_queued_rescore_dispatches_through_skeleton_runner(tmp_path: Path) -> No
     assert isinstance(card, dict)
     assert container.ctx.snapshots.commit("snap-new", [], schema_version=1) == 2
 
-    result = _run_job(
+    result = run_job(
         container,
         "rescore",
         {

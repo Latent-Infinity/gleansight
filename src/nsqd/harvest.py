@@ -7,8 +7,8 @@ from typing import Any
 
 import yaml
 
-from nsqd.app.handlers import handle_harvest
 from nsqd.composition import build_container, fixed_clock
+from nsqd.runner import run_job
 
 MAX_HARVEST_FILE_BYTES = 10 * 1024 * 1024
 
@@ -36,21 +36,9 @@ def run_harvest(
     clock = fixed_clock(as_of) if as_of is not None else None
     container = build_container(db_path=db_path, index_path=index_path, clock=clock)
     payload = parse_harvest_file(file_path)
-    now = container.clock.now()
-    job_id = container.queue.enqueue(
+    return run_job(
+        container,
         "harvest",
         {"filename": str(file_path), "payload": payload},
+        container.clock.now(),
     )
-    claimed = container.queue.claim_job(job_id, now)
-    if claimed is None:
-        raise RuntimeError("failed to claim harvest job")
-    try:
-        result = handle_harvest(container.ctx, claimed)
-    except Exception as exc:
-        try:
-            container.queue.mark_failed(job_id, str(exc)[:1000])
-        except Exception as mark_exc:
-            exc.add_note(f"also failed to mark harvest job failed: {mark_exc}")
-        raise
-    container.queue.mark_succeeded(job_id)
-    return result
