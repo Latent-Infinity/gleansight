@@ -240,6 +240,17 @@ class PiccoloNsqdCandidateStore:
     def __init__(self, database: PiccoloDatabase) -> None:
         self._db = database
 
+    def put_artifact_if_absent(self, artifact_hash: str, payload: dict[str, Any]) -> bool:
+        row = self._db.fetchone(
+            """
+            INSERT OR IGNORE INTO nsqd_candidates (artifact_hash, payload_json)
+            VALUES (?, ?)
+            RETURNING artifact_hash
+            """,
+            [artifact_hash, _dumps(payload)],
+        )
+        return row is not None
+
     def put_artifact(self, artifact_hash: str, payload: dict[str, Any]) -> None:
         raw = _dumps(payload)
         self._db.execute(

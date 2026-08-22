@@ -180,13 +180,23 @@ class NullMorphospaceStore:
 class NullNsqdCandidateStore:
     def __init__(self) -> None:
         self._artifacts: dict[str, dict[str, Any]] = {}
+        self._lock = threading.Lock()
+
+    def put_artifact_if_absent(self, artifact_hash: str, payload: dict[str, Any]) -> bool:
+        with self._lock:
+            if artifact_hash in self._artifacts:
+                return False
+            self._artifacts[artifact_hash] = deepcopy(payload)
+            return True
 
     def put_artifact(self, artifact_hash: str, payload: dict[str, Any]) -> None:
-        self._artifacts[artifact_hash] = deepcopy(payload)
+        with self._lock:
+            self._artifacts[artifact_hash] = deepcopy(payload)
 
     def get_artifact(self, artifact_hash: str) -> dict[str, Any] | None:
-        row = self._artifacts.get(artifact_hash)
-        return deepcopy(row) if row is not None else None
+        with self._lock:
+            row = self._artifacts.get(artifact_hash)
+            return deepcopy(row) if row is not None else None
 
 
 class NullFrontierCardStore:

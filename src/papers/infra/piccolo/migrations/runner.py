@@ -37,8 +37,17 @@ MIGRATION_003 = "003_nsqd_tables"
 MIGRATION_004 = "004_nsqd_snapshot_versions"
 MIGRATION_005 = "005_nsqd_policy_verdicts"
 MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
+MIGRATION_007 = "007_nsqd_map_job_type"
 KNOWN_MIGRATIONS = frozenset(
-    {MIGRATION_001, MIGRATION_002, MIGRATION_003, MIGRATION_004, MIGRATION_005, MIGRATION_006}
+    {
+        MIGRATION_001,
+        MIGRATION_002,
+        MIGRATION_003,
+        MIGRATION_004,
+        MIGRATION_005,
+        MIGRATION_006,
+        MIGRATION_007,
+    }
 )
 
 NSQD_SNAPSHOT_VERSIONED_DDL = """
@@ -94,6 +103,7 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _apply_004(database)
     _apply_005(database)
     _apply_006(database)
+    _apply_007(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -198,6 +208,9 @@ def _apply_003(database: PiccoloDatabase) -> None:
     for row in existing_rows:
         name = str(row["name"])
         sql = row["sql"]
+        if name == "nsqd_jobs" and isinstance(sql, str):
+            if _classify_nsqd_jobs_sql(sql) in {"legacy", "current"}:
+                continue
         if not isinstance(sql, str) or normalize_create_table_sql(sql) != expected_sql[name]:
             raise ConfigurationError(f"existing NSQD table schema mismatch: {name}")
 
@@ -407,6 +420,40 @@ def _apply_006(database: PiccoloDatabase) -> None:
     _validate_policy_backfill_state(database)
 
 
+def _apply_007(database: PiccoloDatabase) -> None:
+    observed_schema = _nsqd_jobs_schema_state(database)
+    if MIGRATION_007 in _applied_versions(database):
+        if observed_schema != "current":
+            raise ConfigurationError("existing nsqd_jobs schema mismatch")
+        return
+
+    if observed_schema == "current":
+        _record(database, MIGRATION_007)
+        return
+    if observed_schema != "legacy":
+        raise ConfigurationError("existing nsqd_jobs schema mismatch")
+
+    async def rebuild_nsqd_jobs() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            await database.engine.run_querystring(QueryString(_new_nsqd_jobs_ddl()))
+            await copy_nsqd_jobs_into_new_table(database.engine)
+            await database.engine.run_querystring(QueryString("DROP TABLE nsqd_jobs"))
+            await database.engine.run_querystring(
+                QueryString("ALTER TABLE new_nsqd_jobs RENAME TO nsqd_jobs")
+            )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_007,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(rebuild_nsqd_jobs())
+    if _nsqd_jobs_schema_state(database) != "current":
+        raise ConfigurationError("existing nsqd_jobs schema mismatch")
+
+
 def _validate_policy_verdict_schema(database: PiccoloDatabase) -> None:
     rows = database.fetchall("PRAGMA table_info(nsqd_policy_verdicts)")
     expected = [
@@ -419,6 +466,60 @@ def _validate_policy_verdict_schema(database: PiccoloDatabase) -> None:
     ]
     if observed != expected:
         raise ConfigurationError("existing NSQD policy verdict schema mismatch")
+
+
+def _nsqd_jobs_schema_state(database: PiccoloDatabase) -> str:
+    row = database.fetchone(
+        "SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'"
+    )
+    if row is None or not isinstance(row["sql"], str):
+        raise ConfigurationError("existing nsqd_jobs schema mismatch")
+    return _classify_nsqd_jobs_sql(str(row["sql"]))
+
+
+def _classify_nsqd_jobs_sql(sql: str) -> str:
+    from nsqd.infra.piccolo.schema import normalize_create_table_sql
+
+    observed = normalize_create_table_sql(sql.replace('"', ""))
+    current = normalize_create_table_sql(_current_nsqd_jobs_ddl())
+    if observed == current:
+        return "current"
+    legacy = normalize_create_table_sql(_legacy_nsqd_jobs_ddl())
+    if observed == legacy:
+        return "legacy"
+    return "unexpected"
+
+
+def _current_nsqd_jobs_ddl() -> str:
+    from nsqd.infra.piccolo.schema import NSQD_TABLE_DDL_BY_NAME
+
+    return NSQD_TABLE_DDL_BY_NAME["nsqd_jobs"]
+
+
+def _legacy_nsqd_jobs_ddl() -> str:
+    return _current_nsqd_jobs_ddl().replace(",'map'", "")
+
+
+def _new_nsqd_jobs_ddl() -> str:
+    return _current_nsqd_jobs_ddl().replace(
+        "CREATE TABLE IF NOT EXISTS nsqd_jobs", "CREATE TABLE new_nsqd_jobs"
+    )
+
+
+async def copy_nsqd_jobs_into_new_table(engine: SQLiteEngine) -> None:
+    await engine.run_querystring(
+        QueryString(
+            """
+            INSERT INTO new_nsqd_jobs (
+                job_id, type, status, payload_json, attempts, max_attempts,
+                run_after, last_error, created_at, updated_at
+            )
+            SELECT job_id, type, status, payload_json, attempts, max_attempts,
+                   run_after, last_error, created_at, updated_at
+            FROM nsqd_jobs
+            """
+        )
+    )
 
 
 def _new_jobs_ddl(database: PiccoloDatabase) -> str:

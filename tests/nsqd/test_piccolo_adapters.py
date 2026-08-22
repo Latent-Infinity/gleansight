@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import cast
@@ -134,7 +135,7 @@ def test_nsqd_jobs_claim_retry_cancel_and_utc(tmp_path: Path) -> None:
     queue.cancel(cancel_id)
     assert queue.claim_next(later) is None
 
-    ok_id = queue.enqueue("score", {"n": 1})
+    ok_id = queue.enqueue("map", {"n": 1})
     claimed = queue.claim_next(later)
     assert claimed is not None
     assert claimed.job_id == ok_id
@@ -199,9 +200,24 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
     assert snapshots.record_ids("missing") == []
 
     candidates = PiccoloNsqdCandidateStore(db)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        inserted = list(
+            executor.map(
+                lambda payload: candidates.put_artifact_if_absent("race", payload),
+                ({"claim": "first"}, {"claim": "second"}),
+            )
+        )
+    assert sorted(inserted) == [False, True]
+    assert candidates.get_artifact("race") in ({"claim": "first"}, {"claim": "second"})
     candidates.put_artifact("abc", {"claim": "x"})
-    candidates.put_artifact("abc", {"claim": "y"})
-    assert candidates.get_artifact("abc") == {"claim": "y"}
+    candidates.put_artifact(
+        "abc",
+        {"claim": "y", "axioms": [{"statement": "first"}, {"statement": "second"}]},
+    )
+    assert candidates.get_artifact("abc") == {
+        "claim": "y",
+        "axioms": [{"statement": "first"}, {"statement": "second"}],
+    }
     assert candidates.get_artifact("missing") is None
 
     cards = PiccoloFrontierCardStore(db)

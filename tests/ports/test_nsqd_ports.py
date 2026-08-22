@@ -149,6 +149,9 @@ def test_index_zero_vector_distance_is_one() -> None:
 
 def test_candidate_and_card_stores_round_trip() -> None:
     candidates = NullNsqdCandidateStore()
+    assert candidates.put_artifact_if_absent("abc", {"claim": "x"}) is True
+    assert candidates.put_artifact_if_absent("abc", {"claim": "other"}) is False
+    assert candidates.get_artifact("abc") == {"claim": "x"}
     candidates.put_artifact("abc", {"claim": "x"})
     assert candidates.get_artifact("abc") == {"claim": "x"}
     assert candidates.get_artifact("missing") is None

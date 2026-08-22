@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
+
+import pytest
 
 from nsqd.infra.piccolo.stores import PiccoloNsqdJobQueue
 from nsqd.ports import NSQD_JOB_TYPES
@@ -13,7 +16,7 @@ def test_discovery_jobs_persist_on_nsqd_jobs_table(tmp_path: Path) -> None:
     db.initialize_schema()
     queue = PiccoloNsqdJobQueue(db)
     now = datetime(2024, 6, 1, tzinfo=UTC)
-    for job_type in ("harvest", "diverge", "ground", "score"):
+    for job_type in sorted(NSQD_JOB_TYPES):
         job_id = queue.enqueue(job_type, {"k": job_type})
         row = db.fetchone("SELECT type, status FROM nsqd_jobs WHERE job_id = ?", [job_id])
         assert row is not None
@@ -24,10 +27,19 @@ def test_discovery_jobs_persist_on_nsqd_jobs_table(tmp_path: Path) -> None:
         assert claimed.job_id == job_id
         queue.mark_succeeded(job_id)
     types = {row["type"] for row in db.fetchall("SELECT type FROM nsqd_jobs")}
-    assert {"harvest", "diverge", "ground", "score"} <= types
-    assert types <= NSQD_JOB_TYPES
-    paper_types = db.fetchall("SELECT type FROM jobs WHERE type IN ('diverge','ground','score')")
-    assert paper_types == []
+    assert types == NSQD_JOB_TYPES
+
+    for job_type in sorted(NSQD_JOB_TYPES):
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                """
+                INSERT INTO jobs (
+                    job_id, type, status, paper_id, run_id, payload_json,
+                    attempts, max_attempts, run_after, last_error, created_at, updated_at
+                ) VALUES (?, ?, 'queued', NULL, NULL, ?, 0, 3, NULL, NULL, ?, ?)
+                """,
+                [f"paper-{job_type}", job_type, "{}", now, now],
+            )
 
 
 def test_terminal_job_transitions_are_ignored_after_completion(tmp_path: Path) -> None:

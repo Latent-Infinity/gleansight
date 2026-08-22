@@ -18,6 +18,7 @@ _JOB_COLUMNS = (
     "attempts, max_attempts, run_after, last_error, created_at, updated_at"
 )
 _MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
+_MIGRATION_007 = "007_nsqd_map_job_type"
 _FINANCE_CELL_ID = "mechanism=flow-driven|target=drawdown|horizon=intraday"
 _OPTIMIZATION_CELL_ID = (
     "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
@@ -70,6 +71,38 @@ def _prepare_legacy_policy_database(path: Path) -> PiccoloDatabase:
     db.initialize_schema()
     db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
     return db
+
+
+def _downgrade_nsqd_jobs_to_legacy(db: PiccoloDatabase) -> None:
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_007])
+    db.execute("ALTER TABLE nsqd_jobs RENAME TO nsqd_jobs_old")
+    db.execute(
+        """
+        CREATE TABLE nsqd_jobs (
+            job_id VARCHAR PRIMARY KEY NOT NULL,
+            type VARCHAR NOT NULL,
+            status VARCHAR NOT NULL,
+            payload_json TEXT NOT NULL,
+            attempts INTEGER NOT NULL,
+            max_attempts INTEGER NOT NULL,
+            run_after TIMESTAMPTZ,
+            last_error TEXT,
+            created_at TIMESTAMPTZ NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL,
+            CHECK (type IN ('harvest','project','diverge','ground','score','rescore')),
+            CHECK (status IN ('queued','running','succeeded','failed','canceled'))
+        )
+        """
+    )
+    db.execute(
+        """
+        INSERT INTO nsqd_jobs
+        SELECT job_id, type, status, payload_json, attempts, max_attempts,
+               run_after, last_error, created_at, updated_at
+        FROM nsqd_jobs_old
+        """
+    )
+    db.execute("DROP TABLE nsqd_jobs_old")
 
 
 def _dump_json(payload: dict[str, object]) -> str:
@@ -175,6 +208,7 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
         "004_nsqd_snapshot_versions",
         "005_nsqd_policy_verdicts",
         _MIGRATION_006,
+        _MIGRATION_007,
     }
     assert "CHECK" in _jobs_sql(db).upper()
     assert _policy_verdict_columns(db) == [
@@ -198,7 +232,132 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
     ]
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 6
+    assert len(again) == 7
+
+
+def test_map_job_migration_upgrades_existing_nsqd_jobs_check_and_preserves_rows(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "map-job-upgrade.sqlite")
+    db.initialize_schema()
+    _downgrade_nsqd_jobs_to_legacy(db)
+    db.execute(
+        """
+        INSERT INTO nsqd_jobs (
+            job_id, type, status, payload_json, attempts, max_attempts,
+            run_after, last_error, created_at, updated_at
+        ) VALUES (?, 'score', 'queued', ?, 1, 3, NULL, 'note', ?, ?)
+        """,
+        ["job-score", '{"k":"v"}', _NOW, _NOW],
+    )
+
+    db.initialize_schema()
+
+    sql = db.fetchone("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'")
+    assert sql is not None
+    assert "'map'" in str(sql["sql"])
+    row = db.fetchone(
+        "SELECT type, status, payload_json, attempts, max_attempts, last_error "
+        "FROM nsqd_jobs WHERE job_id = ?",
+        ["job-score"],
+    )
+    assert row == {
+        "type": "score",
+        "status": "queued",
+        "payload_json": '{"k":"v"}',
+        "attempts": 1,
+        "max_attempts": 3,
+        "last_error": "note",
+    }
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_007])
+        is not None
+    )
+
+
+def test_map_job_migration_rolls_back_when_copy_fails(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "map-job-rollback.sqlite")
+    db.initialize_schema()
+    _downgrade_nsqd_jobs_to_legacy(db)
+    db.execute(
+        """
+        INSERT INTO nsqd_jobs (
+            job_id, type, status, payload_json, attempts, max_attempts,
+            run_after, last_error, created_at, updated_at
+        ) VALUES (?, 'score', 'queued', ?, 1, 3, NULL, 'note', ?, ?)
+        """,
+        ["job-score", '{"k":"v"}', _NOW, _NOW],
+    )
+    original = db.fetchone(
+        "SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'"
+    )
+    assert original is not None
+
+    async def boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("nsqd job copy aborted")
+
+    with (
+        patch(
+            "papers.infra.piccolo.migrations.runner.copy_nsqd_jobs_into_new_table",
+            new=boom,
+        ),
+        pytest.raises(RuntimeError, match="nsqd job copy aborted"),
+    ):
+        db.initialize_schema()
+
+    after = db.fetchone("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'")
+    assert after == original
+    assert db.fetchone("SELECT job_id FROM nsqd_jobs WHERE job_id = ?", ["job-score"]) is not None
+    assert db.fetchone("SELECT name FROM sqlite_schema WHERE name = 'new_nsqd_jobs'") is None
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_007])
+        is None
+    )
+
+
+def test_map_job_migration_recovers_when_new_check_already_applied_without_ledger_row(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "map-job-recover.sqlite")
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_007])
+
+    db.initialize_schema()
+
+    sql = db.fetchone("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_jobs'")
+    assert sql is not None
+    assert "'map'" in str(sql["sql"])
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_007])
+        is not None
+    )
+
+
+def test_map_job_migration_rejects_malformed_existing_applied_schema(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "map-job-malformed-applied.sqlite")
+    db.initialize_schema()
+    db.execute("DROP TABLE nsqd_jobs")
+    db.execute(
+        """
+        CREATE TABLE nsqd_jobs (
+            job_id VARCHAR PRIMARY KEY NOT NULL,
+            type VARCHAR NOT NULL,
+            status VARCHAR NOT NULL,
+            payload_json TEXT NOT NULL,
+            attempts INTEGER NOT NULL,
+            max_attempts INTEGER NOT NULL,
+            run_after TIMESTAMPTZ,
+            last_error TEXT,
+            created_at TIMESTAMPTZ NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL,
+            CHECK (type IN ('harvest','project','diverge','ground','score')),
+            CHECK (status IN ('queued','running','succeeded','failed','canceled'))
+        )
+        """
+    )
+
+    with pytest.raises(ConfigurationError, match="nsqd_jobs schema mismatch"):
+        db.initialize_schema()
 
 
 def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempotent(
@@ -336,7 +495,7 @@ def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempoten
         )
         == elite_row
     )
-    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 6
+    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 7
 
 
 def test_policy_backfill_migration_rejects_candidate_outside_finance_universe(

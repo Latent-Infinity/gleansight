@@ -19,9 +19,9 @@ class HarvestCommit:
     corpus_version: int
 
 
-NsqdJobType = Literal["harvest", "project", "diverge", "ground", "score", "rescore"]
+NsqdJobType = Literal["harvest", "project", "diverge", "ground", "score", "rescore", "map"]
 NSQD_JOB_TYPES: frozenset[str] = frozenset(
-    {"harvest", "project", "diverge", "ground", "score", "rescore"}
+    {"harvest", "project", "diverge", "ground", "score", "rescore", "map"}
 )
 
 
@@ -87,6 +87,8 @@ class MorphospaceStore(Protocol):
 
 @runtime_checkable
 class NsqdCandidateStore(Protocol):
+    def put_artifact_if_absent(self, artifact_hash: str, payload: dict[str, Any]) -> bool: ...
+
     def put_artifact(self, artifact_hash: str, payload: dict[str, Any]) -> None: ...
 
     def get_artifact(self, artifact_hash: str) -> dict[str, Any] | None: ...
