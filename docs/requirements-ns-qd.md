@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`; calibration data, live projection, and later map/archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
+**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation plus N2b approved-paper projection for reviewed fixtures. N6 calibration/acquisition orchestration and later map/archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
 
 **Document roles**
 
@@ -61,7 +61,7 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | Card/corpus metadata | Piccolo + `data/blobs/nsqd/` | Rule of Three |
 | Paper → corpus (v1) | Approved **human-reviewed** paraphrase + hashes (`ALG-PROJ`) | Abstract is not the paraphrase. Model-assisted drafting requires recorded human approval |
 | Harvest (non-paper) | Approved enumerated captures first; optional S2 | No invented citations |
-| Domain | Packs; `finance/1` for calibration | General platform |
+| Domain | Versioned `domain_policy_id` (e.g. `finance/1`, `optimization/1`); no implicit finance default | General platform |
 | Generate ≠ evaluate | Persist candidate by hash; evaluator reloads under a new run id (`ALG-SEP`) | Session tokens alone are not sufficient |
 | Clock | Injected `as_of` / `Clock` (`ALG-CLOCK`) | Windowed status tests must not use the wall clock |
 
@@ -74,7 +74,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 ### Evidence layer (existing — protect)
 
 - **FR-E1** Discover, import, pipeline, analysis, hybrid search, projects/tags, CLI, UI keep current behavior.
-- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist source hashes, projector version, provenance, and review status. Idempotent on `source_paper_id` + content hashes. **N2b**, not N1.
+- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist explicit `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` over normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`; the projector assigns/persists `paper-projector/1`. The application computes the normalized reviewed-payload digest and requires it in an injected approved-digest allowlist; caller payloads cannot self-approve, and the payload policy must match the explicit application argument. Canonical `content_hash` stays ALG-SNAP `{type, paraphrase, source}`; `record_id` is policy + source/hash-revision sensitive; the same full identity is idempotent and any approved source/hash revision creates a new record/snapshot. **N2b**, not N1.
 
 ### Harvest
 
@@ -86,6 +86,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-H7** Snapshot id from the canonical JSON preimage (`ALG-SNAP`). Duplicates/retractions per that contract.
 - **FR-H8** Sufficiency failure reasons are the closed set in `ALG-SUF` and are all tested.
 - **FR-H6** `type=paper` records may originate from FR-E2 (N2b).
+- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence remain **EV-N17 / N6** until implemented.
 
 ### Map
 
@@ -160,11 +161,12 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 | `FrontierCardStore` | Cards + elite pointer per cell |
 | `NsqdJobQueue` | `nsqd_jobs` claim/retry/cancel |
 | `Clock` | UTC `now()` |
-| `PaperSource` (N2b) | Minimal read of an approved paper row for the projector |
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
-**Application use cases** (not ports): `PaperToCorpusProjector` (N2b), harvest, map, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
+N2b consumes a reviewed projection payload, not a dedicated paper-read port. A typed live NSQD→paper bridge is deferred to N6.
+
+**Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
 
 Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock). They do not freeze unnecessary method/class shapes.
 
@@ -191,13 +193,13 @@ Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock)
 
 | ID | Source | Contract | First test / evidence |
 |----|--------|----------|------------------------|
-| LOCAL-NSQD-H | PRD §3 Harvest | ALG-SNAP, ALG-SUF, ALG-NOV | EV-N01, EV-N02, EV-N03, EV-N13 |
+| LOCAL-NSQD-H | PRD §3 Harvest | ALG-SNAP, ALG-SUF, ALG-NOV | EV-N01, EV-N02, EV-N03, EV-N13, EV-N16, EV-N17 |
 | LOCAL-NSQD-M | PRD §4 Map | ALG-STATUS, ALG-CLOCK, ALG-SEL | EV-N06 |
 | LOCAL-NSQD-D | PRD §5 Diverge | ALG-SEP, Operator A only | EV-N05 |
 | LOCAL-NSQD-G | PRD §6 Ground | ALG-GROUND, ALG-NOV, ALG-IDX | EV-N10, EV-N11 |
 | LOCAL-NSQD-V | PRD §7 Value | ALG-VIA | EV-N04 |
-| LOCAL-NSQD-A | PRD §8 Archive | ALG-ELITE, ALG-COV | EV-N07, EV-N14 |
+| LOCAL-NSQD-A | PRD §8 Archive | ALG-ELITE, ALG-COV | EV-N07, EV-N14, EV-N16 |
 | LOCAL-NSQD-C | PRD §9 Card | ALG-ELITE, card schema | EV-N08 |
 | LOCAL-NSQD-CAL | PRD §13 Calibration | ALG-STATE, ALG-VIA | EV-N00, EV-N04 |
 | LOCAL-NSQD-SEP | PRD §1 generate ≠ evaluate | ALG-SEP | EV-N05 |
-| LOCAL-NSQD-E | product thesis — evidence layer | ALG-PROJ (N2b), ALG-JOB | EV-N09 (N2b), EV-N12 |
+| LOCAL-NSQD-E | product thesis — evidence layer | ALG-PROJ (N2b), ALG-JOB | EV-N09 (N2b), EV-N12, EV-N17 |
