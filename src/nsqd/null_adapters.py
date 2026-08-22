@@ -341,6 +341,32 @@ class NullNsqdJobQueue:
         )
 
 
+class NullPolicyVerdictStore:
+    def __init__(self) -> None:
+        self._rows: dict[tuple[str, str], dict[str, Any]] = {}
+
+    def put_verdict(
+        self, *, snapshot_id: str, domain_policy_id: str, verdict: dict[str, Any]
+    ) -> None:
+        self._rows[(snapshot_id, domain_policy_id)] = deepcopy(verdict)
+
+    def get_verdict(self, *, snapshot_id: str, domain_policy_id: str) -> dict[str, Any] | None:
+        row = self._rows.get((snapshot_id, domain_policy_id))
+        return deepcopy(row) if row is not None else None
+
+
+class NullAcquisitionCycleStore:
+    def __init__(self) -> None:
+        self._rows: dict[str, dict[str, Any]] = {}
+
+    def put_cycle(self, cycle_id: str, payload: dict[str, Any]) -> None:
+        self._rows[cycle_id] = deepcopy(payload)
+
+    def get(self, cycle_id: str) -> dict[str, Any] | None:
+        row = self._rows.get(cycle_id)
+        return deepcopy(row) if row is not None else None
+
+
 def _require_utc_datetime(name: str, value: datetime) -> None:
     if not is_utc_datetime(value):
         raise ValueError(f"{name} must be a UTC datetime")
