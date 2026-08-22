@@ -537,7 +537,9 @@ def test_card_schema_rejects_each_required_field() -> None:
         field: "x"
         for field in (
             "card_id",
+            "domain_policy_id",
             "cell_id",
+            "archive_cell_key",
             "title",
             "generating_operator",
             "snapshot_id",
@@ -636,7 +638,7 @@ def test_fixture_expected_outcomes_match_gate_oracles() -> None:
             snapshot_state=expected["snapshot_state"],
             grounding_class="unevaluated",
         )
-        mech = score_mech(payload, domain_pack=payload["domain_pack"])
+        mech = score_mech(payload, domain_pack=payload["domain_policy_id"])
         fals = score_fals(payload)
         dpred = score_dpred(payload)
         dval = score_dval(payload)

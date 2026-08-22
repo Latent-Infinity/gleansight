@@ -1,0 +1,33 @@
+# Versioned finance domain policy. Not an implicit default.
+policy_id = "finance/1"
+dval_rubric_ids = ["r1", "finance-dval/1", "finance/dval/1"]
+min_records = 0
+expected_cells = []
+recall_probes = []
+
+[required_record_types]
+paper = 0
+code = 0
+benchmark = 0
+
+[axes]
+mechanism = [
+  "behavioral",
+  "institutional",
+  "microstructure",
+  "balance-sheet",
+  "reflexivity",
+  "flow-driven",
+  "shock-propagation",
+]
+target = [
+  "returns",
+  "volatility",
+  "drawdown",
+  "liquidity",
+  "slippage",
+  "crowding",
+  "signal-decay",
+  "regime-transition",
+]
+horizon = ["tick", "intraday", "daily", "weekly", "event-time", "regime-time"]
