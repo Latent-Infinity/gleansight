@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Literal
+from typing import Any, Literal, cast, get_args
 
+from nsqd.domain.novelty import require_snapshot_state
+from nsqd.domain.policy import get_policy, records_for_policy
 from nsqd.domain.snapshot import is_utc_datetime
 
 CellStatus = Literal[
@@ -19,11 +21,35 @@ CellStatus = Literal[
 ]
 
 RecordLifecycle = Literal["invalid", "future_work", "attempted", "current", "stale"]
+CELL_STATUS_VALUES = frozenset(get_args(CellStatus))
 
 
 def _require_utc_as_of(as_of: datetime) -> None:
     if not is_utc_datetime(as_of):
         raise ValueError("as_of must be a UTC datetime")
+
+
+def require_cell_status(value: object) -> CellStatus:
+    if not isinstance(value, str) or value not in CELL_STATUS_VALUES:
+        raise ValueError("invalid CellStatus value")
+    return cast(CellStatus, value)
+
+
+def _require_cells_within_universe(
+    name: str,
+    cell_ids: frozenset[str] | set[str],
+    *,
+    universe: frozenset[str],
+) -> None:
+    if not cell_ids <= universe:
+        raise ValueError(f"{name} must stay inside the selected policy universe")
+
+
+def _require_reason_cells_within_universe(
+    invalid_reasons: dict[str, str], *, universe: frozenset[str]
+) -> None:
+    if not set(invalid_reasons) <= universe:
+        raise ValueError("cell_invalid_reasons keys must stay inside the selected policy universe")
 
 
 def _is_current_harvest(*, harvested: object, as_of: datetime, window: timedelta) -> bool:
@@ -73,6 +99,9 @@ def cell_status(
     window: timedelta = timedelta(days=365 * 2),
 ) -> CellStatus:
     _require_utc_as_of(as_of)
+    require_snapshot_state(snapshot_state)
+    if snapshot_state == "smoke_only":
+        return "Unknown"
     lifecycles = [record_lifecycle(record, as_of=as_of, window=window) for record in records]
     valid = [
         (record, life)
@@ -93,7 +122,7 @@ def cell_status(
 
     if invalid_reason or any(life == "invalid" for life in lifecycles):
         return "Invalid"
-    if disagreement or snapshot_state == "smoke_only" or (total == 0 and not inspected):
+    if disagreement or (total == 0 and not inspected):
         return "Unknown"
     if total >= 1 and all(life == "future_work" for _, life in valid):
         return "Future-work-only"
@@ -118,3 +147,73 @@ def cell_status(
     if total >= 3:
         return "Unknown"
     return "Unknown"
+
+
+def status_table(
+    records: list[dict[str, Any]],
+    *,
+    domain_policy_id: str,
+    as_of: datetime,
+    snapshot_state: str,
+    inspected_cell_ids: frozenset[str] | set[str] = frozenset(),
+    expected_cell_ids: frozenset[str] | set[str] | None = None,
+    cell_invalid_reasons: dict[str, str] | None = None,
+    disagreement_cell_ids: frozenset[str] | set[str] = frozenset(),
+    window: timedelta = timedelta(days=365 * 2),
+) -> dict[str, CellStatus]:
+    if not isinstance(domain_policy_id, str) or not domain_policy_id.strip():
+        raise ValueError("domain_policy_id is required")
+    _require_utc_as_of(as_of)
+    policy = get_policy(domain_policy_id.strip())
+    universe = policy.universe()
+    require_snapshot_state(snapshot_state)
+    expected = policy.expected_cells if expected_cell_ids is None else frozenset(expected_cell_ids)
+    invalid_reasons = cell_invalid_reasons or {}
+    inspected_ids = frozenset(inspected_cell_ids)
+    disagreement_ids = frozenset(disagreement_cell_ids)
+    _require_cells_within_universe(
+        "expected_cell_ids",
+        expected,
+        universe=universe,
+    )
+    _require_cells_within_universe(
+        "inspected_cell_ids",
+        inspected_ids,
+        universe=universe,
+    )
+    _require_cells_within_universe(
+        "disagreement_cell_ids",
+        disagreement_ids,
+        universe=universe,
+    )
+    _require_reason_cells_within_universe(invalid_reasons, universe=universe)
+    grouped: dict[str, list[dict[str, Any]]] = {cell_id: [] for cell_id in universe}
+    for row in records_for_policy(records, policy.policy_id):
+        coords = row.get("coordinates")
+        if not isinstance(coords, dict):
+            coords = row.get("research_descriptor")
+        if not isinstance(coords, dict):
+            continue
+        try:
+            cell_id = policy.cell_id(coords)
+        except ValueError:
+            continue
+        bucket = grouped.get(cell_id)
+        if bucket is not None:
+            bucket.append(row)
+    table: dict[str, CellStatus] = {}
+    for cell_id, cell_records in grouped.items():
+        table[cell_id] = cell_status(
+            cell_records,
+            as_of=as_of,
+            snapshot_state=snapshot_state,
+            inspected=cell_id in expected or cell_id in inspected_ids,
+            expected=cell_id in expected,
+            invalid_reason=invalid_reasons.get(cell_id),
+            disagreement=cell_id in disagreement_ids,
+            method_claims_evaluation=any(
+                record.get("method_claims_evaluation") is True for record in cell_records
+            ),
+            window=window,
+        )
+    return table

@@ -7,6 +7,18 @@ from nsqd.domain.grounding import GroundingClass
 SnapshotState = Literal["smoke_only", "calibration", "production_valid"]
 
 
+def require_snapshot_state(snapshot_state: str) -> SnapshotState:
+    if snapshot_state == "smoke_only":
+        return "smoke_only"
+    if snapshot_state == "calibration":
+        return "calibration"
+    if snapshot_state == "production_valid":
+        return "production_valid"
+    raise ValueError(
+        "invalid snapshot_state: expected one of smoke_only, calibration, production_valid"
+    )
+
+
 def novelty_term(
     *,
     evidence: float | None,
