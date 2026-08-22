@@ -2,7 +2,7 @@
 
 Local-first **NS/QD-inspired discovery platform** with an **executable paper evidence pipeline** (discover, import, convert, extract, search).
 
-**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton` and `python -m nsqd harvest`); calibration data, live paper projection, and later map/archive phases remain pending.
+**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton`, `python -m nsqd harvest`, and `python -m nsqd project`) and now includes implemented domain-policy isolation plus trusted-manifest-backed approved paper projection for reviewed fixtures; N6 calibration data and acquisition fallback, along with later map/archive phases, remain pending.
 
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
@@ -63,6 +63,17 @@ uv run python -m papers.cli \
   --llm-base-url "$LLM_BASE_URL" \
   --llm-api-key "$LLM_API_KEY"
 ```
+
+Run the NS/QD discovery entrypoint:
+
+```bash
+uv run python -m nsqd --help
+uv run python -m nsqd project \
+  --projection tests/fixtures/approved/nsqd/paper-a.yaml \
+  --manifest tests/fixtures/approved/nsqd/manifest.toml
+```
+
+The projection fixture does not self-approve: the operator-supplied manifest is the trust bootstrap, and the runtime only allowlists the fixture after verifying the approved manifest row and fixture bytes.
 
 ## UI
 
