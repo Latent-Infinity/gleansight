@@ -2,7 +2,7 @@
 
 **Plan Set:** gleansight
 **Authority:** project register. Closeout: `docs/development-plan-open-work.md`. NS-QD: `docs/development-plan-ns-qd.md`.
-**As of:** 2026-08-21
+**As of:** 2026-08-22
 
 Facts are append-only. Lifecycle is not a test result. Evidence results live in `docs/evidence-index.md`.
 
@@ -24,12 +24,12 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | Given N1’s empty smoke_only snapshot, when the gate runs, then the candidate artifact stores a novelty evidence record with evidence=null and the required measurement stamp, novelty term is 0, and the card is not archive-eligible | Smoke | Behavior | LOCAL-NSQD-H | product | Active | EV-N02 |
 | NSQD.GATE.SMOKE_PAIR.v1 | On a smoke snapshot, mechanism-free has mech=0; gamma-flow has mech=5 and nov=0; both viability=0 and archive_eligible=false | Smoke fixtures | Behavior | LOCAL-NSQD-CAL | product | Active | EV-N04 |
 | NSQD.SEP.AUDIT_RECORD.v1 | Evaluator loads candidate by candidate_artifact_hash under a new evaluator_run_id; same-run generate+evaluate without persist/reload is rejected | Diverge/value | Architecture Contract | LOCAL-NSQD-SEP | product | Active | EV-N05 |
-| NSQD.MAP.STATUS_RULES.v1 | Cell status matches the ALG-STATUS exclusive table at an injected as_of, including listed overlaps | Map | Behavior | LOCAL-NSQD-M | product | Active | EV-N06 |
+| NSQD.MAP.STATUS_RULES.v1 | Given a persisted map job for an explicit policy and snapshot, cell status matches the complete pack-scoped ALG-STATUS table at an injected as_of, including listed overlaps; invalid states and out-of-policy metadata are rejected | Map | Behavior | LOCAL-NSQD-M | product | Active | EV-N06 |
 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | Given non-smoke constructed inputs with viability > 0, elite replacement uses viability then smaller candidate_artifact_hash; rejected cards never insert; replay is order-independent | Archive write | Behavior | LOCAL-NSQD-A | product | Active | EV-N07 |
 | NSQD.CARD.SCHEMA.v1 | A card missing any required schema field is rejected independently | Archive | Data Contract | LOCAL-NSQD-C | product | Active | EV-N08 |
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist layer records; live and paper hybrid search are not called on the N1 path | Ground | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases; covers 0, <k, exact k, ties, and known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | product | Active | EV-N11 |
-| NSQD.JOBS.OWNED.v1 | Harvest/diverge/ground/score persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
+| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Given elite counts and the eligible archive-cell universe excluding Invalid, when global rank is requested, then it fails with rank_guard_blocked unless \|elites\| ≥ 50 or coverage ≥ 0.20 | Archive rank | Behavior | LOCAL-NSQD-A | product | Active | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
@@ -37,7 +37,7 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy ALG-SUF failures trigger a bounded discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures stop and LLM output cannot approve corpus evidence or promotion | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.3)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.6)
 
 See that plan’s ledger for full statements. N1, N2 harvest-reject, N2a isolation, N2b projection, N7 rank-guard, and N8 re-score facts are **Active** with Required evidence. N6 promotion and acquisition fallback remain **Proposed/Pending**. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
