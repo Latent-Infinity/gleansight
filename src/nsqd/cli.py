@@ -8,6 +8,7 @@ import yaml
 
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.harvest import run_harvest
+from nsqd.project_runtime import run_project
 from nsqd.skeleton import run_skeleton
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -60,6 +61,31 @@ def harvest(
         raise typer.Exit(code=1) from exc
     count = len(result["record_ids"])
     typer.echo(f"accepted {count} records")
+
+
+@app.command()
+def project(
+    projection: Annotated[Path, typer.Option("--projection", exists=True, readable=True)],
+    manifest: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
+    db: Annotated[Path, typer.Option("--db")] = Path("data/nsqd/nsqd.sqlite"),
+    index: Annotated[Path, typer.Option("--index")] = Path("data/nsqd/corpus.lancedb"),
+) -> None:
+    try:
+        result = run_project(
+            projection_path=projection,
+            manifest_path=manifest,
+            db_path=db,
+            index_path=index,
+        )
+    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(
+        "projected "
+        f"record={result['record_id']} "
+        f"created={result['created']} "
+        f"snapshot={result['snapshot_id']}"
+    )
 
 
 def main() -> None:

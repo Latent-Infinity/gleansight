@@ -33,6 +33,7 @@ def build_container(
     db_path: Path,
     index_path: Path,
     clock: Clock | None = None,
+    approved_projection_digests: frozenset[str] | None = None,
 ) -> NsqdContainer:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,6 +51,9 @@ def build_container(
         harvest=PiccoloHarvestStore(database),
         index=LanceDBCorpusIndex(index_path),
         morph=PiccoloMorphospaceStore(database),
+        approved_projection_digests=(
+            approved_projection_digests if approved_projection_digests is not None else frozenset()
+        ),
     )
     return NsqdContainer(
         clock=resolved_clock,

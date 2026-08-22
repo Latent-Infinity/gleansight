@@ -30,6 +30,7 @@ def test_skeleton_help_lists_command() -> None:
     assert result.exit_code == 0
     assert "skeleton" in result.output
     assert "harvest" in result.output
+    assert "project" in result.output
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:
@@ -106,3 +107,54 @@ def test_skeleton_cli_reports_startup_errors_concisely(monkeypatch, tmp_path: Pa
     assert result.exit_code != 0
     assert result.stdout == ""
     assert result.stderr == "error: adapter startup failed\n"
+
+
+def test_project_cli_runs_approved_projection(tmp_path: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "--projection",
+            str(FIXTURES / "paper-a.yaml"),
+            "--manifest",
+            str(FIXTURES / "manifest.toml"),
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "corpus.lancedb"),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "projected" in result.output
+    assert "created=True" in result.output
+
+
+def test_project_cli_reports_manifest_rejection_concisely(tmp_path: Path) -> None:
+    runner = CliRunner()
+    fixture = tmp_path / "paper-a.yaml"
+    fixture.write_text(
+        (FIXTURES / "paper-a.yaml").read_text(encoding="utf-8") + "\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "--projection",
+            str(fixture),
+            "--manifest",
+            str(FIXTURES / "manifest.toml"),
+            "--db",
+            str(tmp_path / "bad.sqlite"),
+            "--index",
+            str(tmp_path / "bad.lancedb"),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code != 0
+    assert result.stdout == ""
+    assert "error:" in result.stderr
+    assert "approved" in result.stderr or "content hash" in result.stderr
