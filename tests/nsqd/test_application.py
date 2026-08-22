@@ -128,8 +128,16 @@ def test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search()
         records=ctx.records,
         index=ctx.index,
         candidates=ctx.candidates,
-    ).run(candidate_artifact_hash=artifact_hash, snapshot_id=sid, corpus_version=1)
+        live_search=ctx.scholar_client,
+        hybrid_search=ctx.paper_vector_index,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        snapshot_id=sid,
+        corpus_version=1,
+        snapshot_state="smoke_only",
+    )
     assert grounding["grounding_class"] == "unevaluated"
+    assert grounding["live_call_count"] == 0
     assert grounding["evidence"] is None
     assert [layer["layer"] for layer in grounding["layers"]] == [1, 2, 3, 4]
 
@@ -397,6 +405,12 @@ def test_ground_uses_index_when_query_vector_present() -> None:
     ).run(candidate_artifact_hash=artifact_hash, snapshot_id="snap", corpus_version=1)
     assert grounding["evidence"] == pytest.approx(0.0)
     assert grounding["grounding_class"] == "related_partial"
+    assert grounding["closest_prior_art"] == {
+        "source": "corpus",
+        "record_id": "r1",
+        "record_type": "code",
+        "distance": pytest.approx(0.0),
+    }
 
 
 def test_archive_inserts_nonzero_viability_card() -> None:
@@ -498,6 +512,11 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
         candidates=ctx.candidates,
     ).run(candidate_artifact_hash=artifact_hash, snapshot_id="snap", corpus_version=1)
     assert grounding["grounding_class"] == "renamed"
+    assert grounding["closest_prior_art"] == {
+        "source": "corpus",
+        "record_id": "r1",
+        "record_type": "paper",
+    }
 
     ctx.records.put(
         {
@@ -508,7 +527,7 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
             "domain_policy_id": "finance/1",
         }
     )
-    ctx.snapshots.commit("snap-code", ["r2"], schema_version=1)
+    code_corpus_version = ctx.snapshots.commit("snap-code", ["r2"], schema_version=1)
     artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
         candidate={**candidate, "title": "t2"},
         axiom="x",
@@ -519,9 +538,18 @@ def test_ground_terminology_and_code_layers_on_populated_snapshot() -> None:
         records=ctx.records,
         index=ctx.index,
         candidates=ctx.candidates,
-    ).run(candidate_artifact_hash=artifact_hash, snapshot_id="snap-code", corpus_version=1)
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        snapshot_id="snap-code",
+        corpus_version=code_corpus_version,
+    )
     assert grounding["grounding_class"] == "already_done"
     assert grounding["confidence"] == 0.9
+    assert grounding["closest_prior_art"] == {
+        "source": "corpus",
+        "record_id": "r2",
+        "record_type": "code",
+    }
 
 
 def test_candidate_body_and_diverge_artifact_do_not_alias_nested_payloads() -> None:

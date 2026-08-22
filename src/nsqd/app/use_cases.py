@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from math import isfinite
 from typing import Any
 
 from nsqd.domain.card import (
@@ -21,7 +22,13 @@ from nsqd.domain.diverge import (
     select_target_cell,
 )
 from nsqd.domain.elite import choose_elite
-from nsqd.domain.grounding import classify_local
+from nsqd.domain.grounding import (
+    LIVE_SEARCH_BUDGET,
+    GroundingClass,
+    apply_live_hits,
+    classify_local,
+    live_escalation_allowed,
+)
 from nsqd.domain.harvest import (
     OPTIONAL_RECORD_FIELDS,
     HarvestRejected,
@@ -68,6 +75,8 @@ from nsqd.ports import (
     CorpusSnapshotStore,
     FrontierCardStore,
     HarvestStore,
+    HybridPaperSearch,
+    LivePaperSearch,
     MorphospaceStore,
     NsqdCandidateStore,
 )
@@ -86,6 +95,106 @@ def candidate_body(candidate: dict[str, Any]) -> dict[str, Any]:
 
 def artifact_hash_for(candidate: dict[str, Any]) -> str:
     return sha256_hex(canonical_json(candidate_body(candidate)))
+
+
+def _grounding_queries(candidate: dict[str, Any]) -> list[str]:
+    queries: list[str] = []
+    for key in ("paraphrase", "title", "source", "one_sentence_claim"):
+        value = candidate.get(key)
+        if not isinstance(value, str):
+            continue
+        text = " ".join(value.split())
+        if text and text not in queries:
+            queries.append(text)
+    return queries
+
+
+def _nonempty_string(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _string_keyed_mapping(value: object) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    normalized: dict[str, Any] = {}
+    for key, item in value.items():
+        if isinstance(key, str):
+            normalized[key] = item
+    return normalized
+
+
+def _hybrid_prior_art(result: object) -> list[dict[str, Any]]:
+    if not isinstance(result, list):
+        return []
+    hits: list[dict[str, Any]] = []
+    for raw_item in result:
+        item = _string_keyed_mapping(raw_item)
+        if item is None:
+            continue
+        paper_id = _nonempty_string(item.get("paper_id"))
+        score = item.get("score")
+        if (
+            paper_id is None
+            or isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not isfinite(float(score))
+            or float(score) <= 0.0
+        ):
+            continue
+        hits.append({"source": "hybrid", "paper_id": paper_id, "score": float(score)})
+    return hits
+
+
+def _live_prior_art(result: object) -> list[dict[str, Any]]:
+    if not isinstance(result, list):
+        return []
+    hits: list[dict[str, Any]] = []
+    for raw_item in result:
+        item = _string_keyed_mapping(raw_item)
+        if item is None:
+            continue
+        source_paper_id = _nonempty_string(item.get("source_paper_id"))
+        title = _nonempty_string(item.get("title"))
+        if source_paper_id is None or title is None:
+            continue
+        hits.append(
+            {
+                "source": "scholar",
+                "source_paper_id": source_paper_id,
+                "title": title,
+            }
+        )
+    return hits
+
+
+def _invoke_hybrid_search(client: HybridPaperSearch, query: str) -> list[dict[str, Any]]:
+    return _hybrid_prior_art(client.search(query, LIVE_SEARCH_BUDGET))
+
+
+def _invoke_live_search(client: LivePaperSearch, query: str) -> list[dict[str, Any]]:
+    return _live_prior_art(client.search(query, {}, 1, 1, 0))
+
+
+def _corpus_prior_art(
+    record: dict[str, Any] | None,
+    *,
+    distance: float | None = None,
+) -> dict[str, Any] | None:
+    if record is None:
+        return None
+    record_id = _nonempty_string(record.get("record_id"))
+    if record_id is None:
+        return None
+    prior_art: dict[str, Any] = {"source": "corpus", "record_id": record_id}
+    record_type = _nonempty_string(record.get("type"))
+    if record_type is not None:
+        prior_art["record_type"] = record_type
+    if distance is not None:
+        prior_art["distance"] = distance
+    return prior_art
 
 
 def _require_snapshot_state(snapshot_state: str) -> SnapshotState:
@@ -458,6 +567,8 @@ class GroundUseCase:
     records: CorpusRecordStore
     index: CorpusIndex
     candidates: NsqdCandidateStore
+    live_search: LivePaperSearch | None = None
+    hybrid_search: HybridPaperSearch | None = None
 
     def run(
         self,
@@ -465,9 +576,13 @@ class GroundUseCase:
         candidate_artifact_hash: str,
         snapshot_id: str,
         corpus_version: int,
+        snapshot_state: str = "smoke_only",
     ) -> dict[str, Any]:
         artifact = self._require_artifact(candidate_artifact_hash)
-        self._require_snapshot(snapshot_id)
+        snapshot = self._require_snapshot(snapshot_id)
+        if int(snapshot["corpus_version"]) != corpus_version:
+            raise ValueError("corpus_version does not match snapshot")
+        validated_state = _require_snapshot_state(snapshot_state)
         policy_id = require_domain_policy_id(artifact["candidate"])
         get_policy(policy_id)
         record_ids = self.snapshots.record_ids(snapshot_id)
@@ -478,13 +593,21 @@ class GroundUseCase:
         )
         source = str(artifact["candidate"].get("source") or "")
         normalized_source = normalize_source(source) if source else ""
-        exact = any(
-            normalize_source(str(row.get("source") or "")) == normalized_source
-            and normalized_source != ""
-            for row in present
+        exact_row = next(
+            (
+                row
+                for row in present
+                if normalize_source(str(row.get("source") or "")) == normalized_source
+                and normalized_source != ""
+            ),
+            None,
         )
-        terminology = any("terminology" in set(row.get("tags") or []) for row in present)
+        terminology_row = next(
+            (row for row in present if "terminology" in set(row.get("tags") or [])),
+            None,
+        )
         evidence = mean_cosine_distance([])
+        nearest_hit = None
         if present:
             query = artifact["candidate"].get("query_vector")
             if isinstance(query, list) and query:
@@ -496,12 +619,40 @@ class GroundUseCase:
                     allowed_record_ids=allowed_ids,
                 )
                 evidence = mean_cosine_distance([hit.distance for hit in hits])
-        code_or_benchmark = any(row.get("type") in {"code", "benchmark"} for row in present)
+                nearest_hit = hits[0] if hits else None
+        code_or_benchmark_row = next(
+            (row for row in present if row.get("type") in {"code", "benchmark"}),
+            None,
+        )
         klass, confidence, layers = classify_local(
-            exact_source_hit=exact,
-            terminology_hit=terminology,
+            exact_source_hit=exact_row is not None,
+            terminology_hit=terminology_row is not None,
             evidence=evidence,
-            code_or_benchmark_hit=code_or_benchmark,
+            code_or_benchmark_hit=code_or_benchmark_row is not None,
+        )
+        local_prior_art = _corpus_prior_art(exact_row)
+        if local_prior_art is None:
+            local_prior_art = _corpus_prior_art(terminology_row)
+        if local_prior_art is None and nearest_hit is not None:
+            nearest_record = next(
+                (row for row in present if row.get("record_id") == nearest_hit.record_id),
+                None,
+            )
+            local_prior_art = _corpus_prior_art(
+                nearest_record,
+                distance=nearest_hit.distance,
+            )
+        if local_prior_art is None:
+            local_prior_art = _corpus_prior_art(code_or_benchmark_row)
+        live_hits, live_calls = self._escalate_live(
+            candidate=artifact["candidate"],
+            snapshot_state=validated_state,
+            local_class=klass,
+        )
+        klass, confidence = apply_live_hits(
+            local_class=klass,
+            local_confidence=confidence,
+            live_hits=live_hits,
         )
         result = {
             "grounding_class": klass,
@@ -510,11 +661,53 @@ class GroundUseCase:
             "evidence": evidence,
             "snapshot_id": snapshot_id,
             "corpus_version": corpus_version,
+            "live_call_count": len(live_calls),
+            "live_calls": live_calls,
+            "closest_prior_art": live_hits[0] if live_hits else local_prior_art,
         }
         updated = dict(artifact)
         updated["grounding"] = result
         self.candidates.put_artifact(candidate_artifact_hash, updated)
         return result
+
+    def _escalate_live(
+        self,
+        *,
+        candidate: dict[str, Any],
+        snapshot_state: str,
+        local_class: GroundingClass,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        if not live_escalation_allowed(
+            snapshot_state=snapshot_state,
+            local_class=local_class,
+        ):
+            return [], []
+        backends: list[str] = []
+        if self.hybrid_search is not None:
+            backends.append("hybrid")
+        if self.live_search is not None:
+            backends.append("live")
+        live_calls: list[dict[str, Any]] = []
+        for query in _grounding_queries(candidate):
+            for source in backends:
+                if len(live_calls) >= LIVE_SEARCH_BUDGET:
+                    return [], live_calls
+                if source == "hybrid":
+                    assert self.hybrid_search is not None
+                    hits = _invoke_hybrid_search(self.hybrid_search, query)
+                else:
+                    assert self.live_search is not None
+                    hits = _invoke_live_search(self.live_search, query)
+                live_calls.append(
+                    {
+                        "source": source,
+                        "query_sha256": sha256_hex(query.encode("utf-8")),
+                        "hit": bool(hits),
+                    }
+                )
+                if hits:
+                    return hits, live_calls
+        return [], live_calls
 
     def _require_artifact(self, candidate_artifact_hash: str) -> dict[str, Any]:
         artifact = self.candidates.get_artifact(candidate_artifact_hash)
@@ -522,9 +715,11 @@ class GroundUseCase:
             raise ValueError("unknown candidate_artifact_hash")
         return artifact
 
-    def _require_snapshot(self, snapshot_id: str) -> None:
-        if self.snapshots.get(snapshot_id) is None:
+    def _require_snapshot(self, snapshot_id: str) -> dict[str, Any]:
+        snapshot = self.snapshots.get(snapshot_id)
+        if snapshot is None:
             raise ValueError("unknown snapshot_id")
+        return snapshot
 
 
 @dataclass(frozen=True)
@@ -779,6 +974,8 @@ class RescoreUseCase:
     index: CorpusIndex
     candidates: NsqdCandidateStore
     cards: FrontierCardStore
+    live_search: LivePaperSearch | None = None
+    hybrid_search: HybridPaperSearch | None = None
 
     def run(
         self,
@@ -789,6 +986,7 @@ class RescoreUseCase:
         snapshot_state: str,
         evaluator_run_id: str,
     ) -> dict[str, Any]:
+        validated_state = _require_snapshot_state(snapshot_state)
         card = self.cards.get_card(card_id)
         if card is None:
             raise ValueError("unknown card_id")
@@ -814,10 +1012,13 @@ class RescoreUseCase:
             records=self.records,
             index=self.index,
             candidates=self.candidates,
+            live_search=self.live_search,
+            hybrid_search=self.hybrid_search,
         ).run(
             candidate_artifact_hash=candidate_artifact_hash,
             snapshot_id=current_snapshot_id,
             corpus_version=current_corpus_version,
+            snapshot_state=validated_state,
         )
         scored = ScoreUseCase(
             candidates=self.candidates,
@@ -829,7 +1030,7 @@ class RescoreUseCase:
             evaluator_run_id=evaluator_run_id,
             snapshot_id=current_snapshot_id,
             corpus_version=current_corpus_version,
-            snapshot_state=snapshot_state,
+            snapshot_state=validated_state,
         )
         new_card = scored["card"]
         archived, elite, normalized_card = _reconcile_archive(self.cards, new_card)
