@@ -33,10 +33,13 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Given elite counts and the eligible archive-cell universe excluding Invalid, when global rank is requested, then it fails with rank_guard_blocked unless \|elites\| ≥ 50 or coverage ≥ 0.20 | Archive rank | Behavior | LOCAL-NSQD-A | product | Active | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
+| NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor universe and dval compatibility resolve by explicit domain_policy_id; grounding, corpus filtering, cards/elites/rank are policy-scoped; `(snapshot_id, domain_policy_id)` verdict identity/schema is reserved and validated; records from one policy cannot satisfy, ground, rank, or archive under another | Domain policy | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | product | Active | EV-N16 |
+| NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
+| NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy ALG-SUF failures trigger a bounded discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures stop and LLM output cannot approve corpus evidence or promotion | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.3.16)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.3)
 
-See that plan’s ledger for full statements. N1, N2 harvest-reject, N7 rank-guard, and N8 re-score facts are **Active** with Required evidence. N2b/N6 remain Proposed. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending.
+See that plan’s ledger for full statements. N1, N2 harvest-reject, N2a isolation, N2b projection, N7 rank-guard, and N8 re-score facts are **Active** with Required evidence. N6 promotion and acquisition fallback remain **Proposed/Pending**. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -44,15 +47,17 @@ See that plan’s ledger for full statements. N1, N2 harvest-reject, N7 rank-gua
 | NSQD.CORPUS.SNAPSHOT_HASH.v1 | N1 | |
 | NSQD.CORPUS.SMOKE_NO_NOVELTY_TERM.v1 | N1 | |
 | NSQD.HARVEST.ENUMERATION.v1 | N2 | |
+| NSQD.DOMAIN.POLICY_ISOLATION.v1 | N2a | Active; explicit policy isolation for descriptor universe, corpus/grounding, archive state, and reserved verdict identity schema |
 | NSQD.GATE.SMOKE_PAIR.v1 | N1 | Oracle fields on fixtures |
 | NSQD.SEP.AUDIT_RECORD.v1 | N1 | |
 | NSQD.MAP.STATUS_RULES.v1 | N1 | |
 | NSQD.ARCHIVE.ELITE_REPLACE.v1 | N1 | Non-smoke unit inputs |
 | NSQD.CARD.SCHEMA.v1 | N1 | |
-| NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | **N2b** | Not N1; data prerequisites EW-V0A + DATA-NSQD-04 + EW-V2 are satisfied, but projector implementation and EV-N09 remain pending |
+| NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | **N2b** | Active; DATA-NSQD-04 projects to optimization/1 only |
 | NSQD.GROUND.CASCADE.v1 | N1 | |
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
 | NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Blocked on DATA-NSQD-03 for `production_valid` |
+| NSQD.ACQUISITION.FALLBACK.v1 | N6 | Proposed; EV-N17 pending until N6 orchestration exists |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
 | NSQD.RESCORE.REPLAY.v1 | N8 | Active; retry-safe archive reconciliation |
