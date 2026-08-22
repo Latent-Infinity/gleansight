@@ -11,7 +11,7 @@ from piccolo.utils.sync import run_sync
 
 from nsqd.domain.harvest import HarvestRejected, immutable_record_conflict
 from nsqd.domain.snapshot import is_utc_datetime, snapshot_id
-from nsqd.ports import NSQD_JOB_TYPES, HarvestCommit, NsqdJob, NsqdJobType
+from nsqd.ports import NSQD_JOB_TYPES, Clock, HarvestCommit, NsqdJob, NsqdJobType
 from papers.infra.piccolo.database import PiccoloDatabase
 
 
@@ -344,11 +344,73 @@ class PiccoloMorphospaceStore:
         return {"cell_id": str(row["cell_id"]), "inspected_at": row["inspected_at"]}
 
 
+class PiccoloPolicyVerdictStore:
+    def __init__(self, database: PiccoloDatabase) -> None:
+        self._db = database
+
+    def put_verdict(
+        self, *, snapshot_id: str, domain_policy_id: str, verdict: dict[str, Any]
+    ) -> None:
+        raw = _dumps(verdict)
+        self._db.execute(
+            """
+            INSERT INTO nsqd_policy_verdicts (snapshot_id, domain_policy_id, verdict)
+            VALUES (?, ?, ?)
+            ON CONFLICT(snapshot_id, domain_policy_id) DO UPDATE SET verdict = excluded.verdict
+            """,
+            [snapshot_id, domain_policy_id, raw],
+        )
+
+    def get_verdict(self, *, snapshot_id: str, domain_policy_id: str) -> dict[str, Any] | None:
+        row = self._db.fetchone(
+            """
+            SELECT verdict FROM nsqd_policy_verdicts
+            WHERE snapshot_id = ? AND domain_policy_id = ?
+            """,
+            [snapshot_id, domain_policy_id],
+        )
+        if row is None:
+            return None
+        return _loads(str(row["verdict"]))
+
+
+class PiccoloAcquisitionCycleStore:
+    def __init__(self, database: PiccoloDatabase) -> None:
+        self._db = database
+
+    def put_cycle(self, cycle_id: str, payload: dict[str, Any]) -> None:
+        raw = _dumps(payload)
+        self._db.execute(
+            """
+            INSERT INTO nsqd_acquisition_cycles (cycle_id, payload_json)
+            VALUES (?, ?)
+            ON CONFLICT(cycle_id) DO UPDATE SET payload_json = excluded.payload_json
+            """,
+            [cycle_id, raw],
+        )
+
+    def get(self, cycle_id: str) -> dict[str, Any] | None:
+        row = self._db.fetchone(
+            "SELECT payload_json FROM nsqd_acquisition_cycles WHERE cycle_id = ?",
+            [cycle_id],
+        )
+        if row is None:
+            return None
+        return _loads(str(row["payload_json"]))
+
+
 class PiccoloNsqdJobQueue:
-    def __init__(self, database: PiccoloDatabase, *, max_attempts: int = 3) -> None:
+    def __init__(
+        self,
+        database: PiccoloDatabase,
+        *,
+        max_attempts: int = 3,
+        clock: Clock | None = None,
+    ) -> None:
         self._db = database
         self._engine = database.engine
         self._max_attempts = max_attempts
+        self._clock = clock
 
     def enqueue(
         self,
@@ -359,7 +421,7 @@ class PiccoloNsqdJobQueue:
         _require_job_type(type)
         if run_after is not None:
             _require_utc_datetime("run_after", run_after)
-        now = datetime.now(UTC)
+        now = self._now()
         job_id = str(uuid.uuid4())
         self._db.execute(
             """
@@ -435,7 +497,7 @@ class PiccoloNsqdJobQueue:
         self._update_running_job(
             job_id,
             "SET status = 'succeeded', updated_at = ?",
-            [datetime.now(UTC)],
+            [self._now()],
         )
 
     def mark_retryable(self, job_id: str, error: str, run_after: datetime) -> None:
@@ -443,14 +505,14 @@ class PiccoloNsqdJobQueue:
         self._update_running_job(
             job_id,
             "SET status = 'queued', last_error = ?, run_after = ?, updated_at = ?",
-            [error, run_after, datetime.now(UTC)],
+            [error, run_after, self._now()],
         )
 
     def mark_failed(self, job_id: str, error: str) -> None:
         self._update_running_job(
             job_id,
             "SET status = 'failed', last_error = ?, updated_at = ?",
-            [error, datetime.now(UTC)],
+            [error, self._now()],
         )
 
     def cancel(self, job_id: str) -> None:
@@ -460,8 +522,15 @@ class PiccoloNsqdJobQueue:
             SET status = 'canceled', updated_at = ?
             WHERE job_id = ? AND status IN ('queued', 'running')
             """,
-            [datetime.now(UTC), job_id],
+            [self._now(), job_id],
         )
+
+    def _now(self) -> datetime:
+        if self._clock is not None:
+            now = self._clock.now()
+            _require_utc_datetime("clock.now()", now)
+            return now
+        return datetime.now(UTC)
 
     def _update_running_job(self, job_id: str, set_clause: str, params: list[Any]) -> None:
         self._db.execute(

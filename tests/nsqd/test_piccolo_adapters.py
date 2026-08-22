@@ -10,12 +10,14 @@ import pytest
 
 from nsqd.infra.piccolo.schema import NSQD_TABLE_NAMES
 from nsqd.infra.piccolo.stores import (
+    PiccoloAcquisitionCycleStore,
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
     PiccoloMorphospaceStore,
     PiccoloNsqdCandidateStore,
     PiccoloNsqdJobQueue,
+    PiccoloPolicyVerdictStore,
 )
 from nsqd.ports import NSQD_JOB_TYPES, NsqdJobType
 from papers.infra.piccolo.database import _TABLES, PiccoloDatabase
@@ -245,3 +247,18 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
     assert row["cell_id"] == "cell"
     assert row["inspected_at"] == later
     assert morph.get_cell("missing") is None
+
+    verdicts = PiccoloPolicyVerdictStore(db)
+    verdicts.put_verdict(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        verdict={"state": "insufficient", "failures": ["manifest_missing"]},
+    )
+    assert verdicts.get_verdict(snapshot_id="snap", domain_policy_id="finance/1") == {
+        "state": "insufficient",
+        "failures": ["manifest_missing"],
+    }
+    cycles = PiccoloAcquisitionCycleStore(db)
+    cycles.put_cycle("cyc-1", {"route": "search"})
+    assert cycles.get("cyc-1") == {"route": "search"}
+    assert cycles.get("missing") is None
