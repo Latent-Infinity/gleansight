@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -9,6 +10,7 @@ from typing import TYPE_CHECKING, Any, cast
 from piccolo.engine.sqlite import SQLiteEngine, TransactionType
 from piccolo.querystring import QueryString
 
+from nsqd.domain.policy import FINANCE_POLICY, archive_cell_key, get_policy
 from papers.domain.errors import ConfigurationError
 
 if TYPE_CHECKING:
@@ -33,7 +35,11 @@ MIGRATION_001 = "001_baseline"
 MIGRATION_002 = "002_job_integrity_check"
 MIGRATION_003 = "003_nsqd_tables"
 MIGRATION_004 = "004_nsqd_snapshot_versions"
-KNOWN_MIGRATIONS = frozenset({MIGRATION_001, MIGRATION_002, MIGRATION_003, MIGRATION_004})
+MIGRATION_005 = "005_nsqd_policy_verdicts"
+MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
+KNOWN_MIGRATIONS = frozenset(
+    {MIGRATION_001, MIGRATION_002, MIGRATION_003, MIGRATION_004, MIGRATION_005, MIGRATION_006}
+)
 
 NSQD_SNAPSHOT_VERSIONED_DDL = """
 CREATE TABLE new_nsqd_corpus_snapshots (
@@ -86,6 +92,8 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _apply_002(database)
     _apply_003(database)
     _apply_004(database)
+    _apply_005(database)
+    _apply_006(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -272,6 +280,147 @@ def _validate_snapshot_version_schema(database: PiccoloDatabase) -> None:
         raise ConfigurationError("existing NSQD snapshot version schema mismatch")
 
 
+def _apply_005(database: PiccoloDatabase) -> None:
+    if MIGRATION_005 in _applied_versions(database):
+        _validate_policy_verdict_schema(database)
+        return
+
+    if (
+        database.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'nsqd_policy_verdicts'"
+        )
+        is not None
+    ):
+        _validate_policy_verdict_schema(database)
+        _record(database, MIGRATION_005)
+        return
+
+    async def create_policy_verdicts() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            await database.engine.run_querystring(
+                QueryString(
+                    """
+                    CREATE TABLE IF NOT EXISTS nsqd_policy_verdicts (
+                        snapshot_id VARCHAR NOT NULL,
+                        domain_policy_id VARCHAR NOT NULL,
+                        verdict TEXT NOT NULL,
+                        PRIMARY KEY (snapshot_id, domain_policy_id)
+                    )
+                    """
+                )
+            )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_005,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(create_policy_verdicts())
+    _validate_policy_verdict_schema(database)
+
+
+def _apply_006(database: PiccoloDatabase) -> None:
+    if MIGRATION_006 in _applied_versions(database):
+        _validate_policy_backfill_state(database)
+        return
+
+    async def migrate_legacy_policy_state() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            record_rows = await database.engine.run_querystring(
+                QueryString(
+                    "SELECT record_id, payload_json FROM nsqd_corpus_records ORDER BY record_id"
+                )
+            )
+            candidate_rows = await database.engine.run_querystring(
+                QueryString(
+                    "SELECT artifact_hash, payload_json FROM nsqd_candidates ORDER BY artifact_hash"
+                )
+            )
+            card_rows = await database.engine.run_querystring(
+                QueryString(
+                    "SELECT card_id, cell_id, payload_json "
+                    "FROM nsqd_frontier_cards ORDER BY card_id"
+                )
+            )
+            elite_rows = await database.engine.run_querystring(
+                QueryString("SELECT cell_id, card_id FROM nsqd_elites ORDER BY cell_id")
+            )
+
+            record_updates = _plan_record_policy_updates(record_rows, strict=False)
+            candidate_updates = _plan_candidate_policy_updates(candidate_rows, strict=False)
+            card_updates = _plan_card_policy_updates(card_rows, strict=False)
+            elite_updates, elite_deletes = _plan_elite_key_updates(elite_rows, strict=False)
+
+            for record_id, payload_json in record_updates:
+                await database.engine.run_querystring(
+                    QueryString(
+                        "UPDATE nsqd_corpus_records SET payload_json = {} WHERE record_id = {}",
+                        payload_json,
+                        record_id,
+                    )
+                )
+            for artifact_hash, payload_json in candidate_updates:
+                await database.engine.run_querystring(
+                    QueryString(
+                        "UPDATE nsqd_candidates SET payload_json = {} WHERE artifact_hash = {}",
+                        payload_json,
+                        artifact_hash,
+                    )
+                )
+            for card_id, cell_id, payload_json in card_updates:
+                await database.engine.run_querystring(
+                    QueryString(
+                        """
+                        UPDATE nsqd_frontier_cards
+                        SET cell_id = {}, payload_json = {}
+                        WHERE card_id = {}
+                        """,
+                        cell_id,
+                        payload_json,
+                        card_id,
+                    )
+                )
+            for cell_id in elite_deletes:
+                await database.engine.run_querystring(
+                    QueryString("DELETE FROM nsqd_elites WHERE cell_id = {}", cell_id)
+                )
+            for old_cell_id, new_cell_id, card_id in elite_updates:
+                await database.engine.run_querystring(
+                    QueryString(
+                        "UPDATE nsqd_elites SET cell_id = {} WHERE cell_id = {} AND card_id = {}",
+                        new_cell_id,
+                        old_cell_id,
+                        card_id,
+                    )
+                )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_006,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(migrate_legacy_policy_state())
+    _validate_policy_backfill_state(database)
+
+
+def _validate_policy_verdict_schema(database: PiccoloDatabase) -> None:
+    rows = database.fetchall("PRAGMA table_info(nsqd_policy_verdicts)")
+    expected = [
+        ("snapshot_id", "VARCHAR", 1, 1),
+        ("domain_policy_id", "VARCHAR", 1, 2),
+        ("verdict", "TEXT", 1, 0),
+    ]
+    observed = [
+        (str(row["name"]), str(row["type"]), int(row["notnull"]), int(row["pk"])) for row in rows
+    ]
+    if observed != expected:
+        raise ConfigurationError("existing NSQD policy verdict schema mismatch")
+
+
 def _new_jobs_ddl(database: PiccoloDatabase) -> str:
     row = database.fetchone("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = 'jobs'")
     if row is None or not isinstance(row["sql"], str):
@@ -302,3 +451,313 @@ async def copy_jobs_into_new_table(engine: SQLiteEngine) -> None:
             f"INSERT INTO new_jobs ({_JOB_COPY_COLUMNS}) SELECT {_JOB_COPY_COLUMNS} FROM jobs"
         )
     )
+
+
+def _validate_policy_backfill_state(database: PiccoloDatabase) -> None:
+    _plan_record_policy_updates(
+        database.fetchall(
+            "SELECT record_id, payload_json FROM nsqd_corpus_records ORDER BY record_id"
+        ),
+        strict=True,
+    )
+    _plan_candidate_policy_updates(
+        database.fetchall(
+            "SELECT artifact_hash, payload_json FROM nsqd_candidates ORDER BY artifact_hash"
+        ),
+        strict=True,
+    )
+    _plan_card_policy_updates(
+        database.fetchall(
+            "SELECT card_id, cell_id, payload_json FROM nsqd_frontier_cards ORDER BY card_id"
+        ),
+        strict=True,
+    )
+    _plan_elite_key_updates(
+        database.fetchall("SELECT cell_id, card_id FROM nsqd_elites ORDER BY cell_id"),
+        strict=True,
+    )
+
+
+def _plan_record_policy_updates(
+    rows: list[dict[str, Any]],
+    *,
+    strict: bool,
+) -> list[tuple[str, str]]:
+    updates: list[tuple[str, str]] = []
+    for row in rows:
+        record_id = str(row["record_id"])
+        payload = _load_json_object(str(row["payload_json"]), label=f"corpus record {record_id}")
+        policy_id = payload.get("domain_policy_id")
+        changed = False
+        if policy_id is None:
+            if strict:
+                raise ConfigurationError(
+                    f"corpus record {record_id} is missing domain_policy_id after migration 006"
+                )
+            payload["domain_policy_id"] = FINANCE_POLICY.policy_id
+            changed = True
+        else:
+            normalized_policy_id = _normalize_policy_id(
+                policy_id, label=f"corpus record {record_id}"
+            )
+            if normalized_policy_id != policy_id:
+                payload["domain_policy_id"] = normalized_policy_id
+                changed = True
+        if changed:
+            updates.append(
+                (record_id, _dump_json_object(payload, label=f"corpus record {record_id}"))
+            )
+    return updates
+
+
+def _plan_candidate_policy_updates(
+    rows: list[dict[str, Any]],
+    *,
+    strict: bool,
+) -> list[tuple[str, str]]:
+    updates: list[tuple[str, str]] = []
+    for row in rows:
+        artifact_hash = str(row["artifact_hash"])
+        payload = _load_json_object(
+            str(row["payload_json"]), label=f"candidate artifact {artifact_hash}"
+        )
+        candidate = payload.get("candidate")
+        if not isinstance(candidate, dict):
+            raise ConfigurationError(
+                f"candidate artifact {artifact_hash} candidate must be an object"
+            )
+        changed = False
+        policy_id = candidate.get("domain_policy_id")
+        if policy_id is None:
+            if strict:
+                raise ConfigurationError(
+                    "candidate artifact "
+                    f"{artifact_hash} is missing candidate.domain_policy_id "
+                    "after migration 006"
+                )
+            _require_candidate_maps_to_policy(
+                candidate,
+                policy_id=FINANCE_POLICY.policy_id,
+                label=f"candidate artifact {artifact_hash}",
+            )
+            candidate = dict(candidate)
+            candidate["domain_policy_id"] = FINANCE_POLICY.policy_id
+            payload["candidate"] = candidate
+            changed = True
+            normalized_policy_id = FINANCE_POLICY.policy_id
+        else:
+            normalized_policy_id = _normalize_policy_id(
+                policy_id, label=f"candidate artifact {artifact_hash}"
+            )
+            if normalized_policy_id != policy_id:
+                candidate = dict(candidate)
+                candidate["domain_policy_id"] = normalized_policy_id
+                payload["candidate"] = candidate
+                changed = True
+        _require_candidate_maps_to_policy(
+            candidate,
+            policy_id=normalized_policy_id,
+            label=f"candidate artifact {artifact_hash}",
+        )
+        if changed:
+            updates.append(
+                (
+                    artifact_hash,
+                    _dump_json_object(payload, label=f"candidate artifact {artifact_hash}"),
+                )
+            )
+    return updates
+
+
+def _plan_card_policy_updates(
+    rows: list[dict[str, Any]],
+    *,
+    strict: bool,
+) -> list[tuple[str, str, str]]:
+    updates: list[tuple[str, str, str]] = []
+    for row in rows:
+        card_id = str(row["card_id"])
+        stored_cell_id = str(row["cell_id"])
+        payload = _load_json_object(str(row["payload_json"]), label=f"frontier card {card_id}")
+        payload_card_id = payload.get("card_id")
+        if payload_card_id is not None and str(payload_card_id) != card_id:
+            raise ConfigurationError(f"frontier card {card_id} payload card_id mismatch")
+        payload_cell_id = payload.get("cell_id")
+        if not isinstance(payload_cell_id, str) or not payload_cell_id:
+            raise ConfigurationError(f"frontier card {card_id} cell_id is required")
+        if payload_cell_id != stored_cell_id:
+            raise ConfigurationError(f"frontier card {card_id} stored cell_id mismatch")
+
+        normalized_payload, changed = _normalize_card_payload(
+            payload, card_id=card_id, strict=strict
+        )
+        if changed:
+            updates.append(
+                (
+                    card_id,
+                    stored_cell_id,
+                    _dump_json_object(normalized_payload, label=f"frontier card {card_id}"),
+                )
+            )
+    return updates
+
+
+def _plan_elite_key_updates(
+    rows: list[dict[str, Any]],
+    *,
+    strict: bool,
+) -> tuple[list[tuple[str, str, str]], list[str]]:
+    desired_rows: dict[str, tuple[str, str]] = {}
+    raw_keys_to_delete: list[str] = []
+
+    for row in rows:
+        original_key = str(row["cell_id"])
+        card_id = str(row["card_id"])
+        normalized_key = _normalize_elite_key(original_key, strict=strict)
+        existing = desired_rows.get(normalized_key)
+        if existing is None:
+            desired_rows[normalized_key] = (original_key, card_id)
+            continue
+        existing_original_key, existing_card_id = existing
+        if existing_card_id != card_id:
+            raise ConfigurationError(
+                f"conflicting scoped elite for {normalized_key}: {existing_card_id} vs {card_id}"
+            )
+        if original_key == normalized_key:
+            raw_keys_to_delete.append(existing_original_key)
+            desired_rows[normalized_key] = (original_key, card_id)
+        else:
+            raw_keys_to_delete.append(original_key)
+
+    updates: list[tuple[str, str, str]] = []
+    for normalized_key, (original_key, card_id) in desired_rows.items():
+        if original_key == normalized_key:
+            continue
+        if strict:
+            raise ConfigurationError(
+                f"elite key {original_key} was not backfilled to policy-scoped identity"
+            )
+        updates.append((original_key, normalized_key, card_id))
+    return updates, raw_keys_to_delete
+
+
+def _normalize_card_payload(
+    payload: dict[str, Any],
+    *,
+    card_id: str,
+    strict: bool,
+) -> tuple[dict[str, Any], bool]:
+    normalized = dict(payload)
+    cell_id = normalized.get("cell_id")
+    if not isinstance(cell_id, str) or not cell_id:
+        raise ConfigurationError(f"frontier card {card_id} cell_id is required")
+
+    changed = False
+    policy_id = normalized.get("domain_policy_id")
+    supplied_archive_key = normalized.get("archive_cell_key")
+    if policy_id is None:
+        if strict:
+            raise ConfigurationError(
+                f"frontier card {card_id} is missing domain_policy_id after migration 006"
+            )
+        if supplied_archive_key is not None:
+            raise ConfigurationError(
+                f"frontier card {card_id} legacy card requires explicit domain_policy_id"
+            )
+        if cell_id not in FINANCE_POLICY.universe():
+            raise ConfigurationError(
+                f"frontier card {card_id} legacy card requires explicit domain_policy_id"
+            )
+        policy = FINANCE_POLICY
+        normalized["domain_policy_id"] = policy.policy_id
+        changed = True
+    else:
+        normalized_policy_id = _normalize_policy_id(policy_id, label=f"frontier card {card_id}")
+        policy = get_policy(normalized_policy_id)
+        if normalized_policy_id != policy_id:
+            normalized["domain_policy_id"] = normalized_policy_id
+            changed = True
+
+    if cell_id not in policy.universe():
+        raise ConfigurationError(
+            f"frontier card {card_id} cell_id is outside the registered policy universe"
+        )
+
+    derived_archive_key = archive_cell_key(domain_policy_id=policy.policy_id, cell_id=cell_id)
+    if supplied_archive_key is not None and supplied_archive_key != derived_archive_key:
+        raise ConfigurationError(
+            f"frontier card {card_id} archive_cell_key does not match the policy-scoped cell key"
+        )
+    if supplied_archive_key != derived_archive_key:
+        if strict:
+            raise ConfigurationError(
+                f"frontier card {card_id} archive_cell_key is missing after migration 006"
+            )
+        normalized["archive_cell_key"] = derived_archive_key
+        changed = True
+    return normalized, changed
+
+
+def _normalize_elite_key(original_key: str, *, strict: bool) -> str:
+    if "::" in original_key:
+        policy_id, raw_cell_id = original_key.split("::", 1)
+        normalized_policy_id = _normalize_policy_id(policy_id, label=f"elite key {original_key}")
+        policy = get_policy(normalized_policy_id)
+        if raw_cell_id not in policy.universe():
+            raise ConfigurationError(
+                f"elite key {original_key} cell_id is outside the registered policy universe"
+            )
+        return archive_cell_key(domain_policy_id=policy.policy_id, cell_id=raw_cell_id)
+    if original_key not in FINANCE_POLICY.universe():
+        raise ConfigurationError(
+            f"elite key {original_key} cannot be mapped into the finance/1 archive universe"
+        )
+    if strict:
+        raise ConfigurationError(
+            f"elite key {original_key} was not backfilled to policy-scoped identity"
+        )
+    return archive_cell_key(domain_policy_id=FINANCE_POLICY.policy_id, cell_id=original_key)
+
+
+def _require_candidate_maps_to_policy(
+    candidate: dict[str, Any],
+    *,
+    policy_id: str,
+    label: str,
+) -> None:
+    descriptor = candidate.get("research_descriptor")
+    if not isinstance(descriptor, dict):
+        raise ConfigurationError(f"{label} research_descriptor is required for policy backfill")
+    policy = get_policy(policy_id)
+    try:
+        policy.cell_id(descriptor)
+    except ValueError as exc:
+        raise ConfigurationError(
+            f"{label} cannot be mapped into the {policy.policy_id} universe"
+        ) from exc
+
+
+def _normalize_policy_id(value: object, *, label: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ConfigurationError(f"{label} domain_policy_id must be a non-empty string")
+    try:
+        return get_policy(value.strip()).policy_id
+    except ValueError as exc:
+        raise ConfigurationError(f"{label} has unknown domain_policy_id: {value}") from exc
+
+
+def _load_json_object(raw: str, *, label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ConfigurationError(f"{label} payload_json is not valid JSON") from exc
+    if not isinstance(payload, dict):
+        raise ConfigurationError(f"{label} payload_json must decode to an object")
+    return payload
+
+
+def _dump_json_object(payload: dict[str, Any], *, label: str) -> str:
+    try:
+        return json.dumps(payload)
+    except TypeError as exc:
+        raise ConfigurationError(f"{label} payload_json is not serializable") from exc

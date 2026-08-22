@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,11 @@ _NOW = datetime.now(UTC).isoformat()
 _JOB_COLUMNS = (
     "job_id, type, status, paper_id, run_id, payload_json, "
     "attempts, max_attempts, run_after, last_error, created_at, updated_at"
+)
+_MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
+_FINANCE_CELL_ID = "mechanism=flow-driven|target=drawdown|horizon=intraday"
+_OPTIMIZATION_CELL_ID = (
+    "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
 )
 
 
@@ -53,6 +59,21 @@ def _jobs_sql(db: PiccoloDatabase) -> str:
 def _index_names(db: PiccoloDatabase) -> set[str]:
     rows = db.fetchall("SELECT name FROM sqlite_schema WHERE tbl_name = 'jobs' AND type = 'index'")
     return {row["name"] for row in rows}
+
+
+def _policy_verdict_columns(db: PiccoloDatabase) -> list[dict[str, object]]:
+    return [dict(row) for row in db.fetchall("PRAGMA table_info(nsqd_policy_verdicts)")]
+
+
+def _prepare_legacy_policy_database(path: Path) -> PiccoloDatabase:
+    db = PiccoloDatabase(path)
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
+    return db
+
+
+def _dump_json(payload: dict[str, object]) -> str:
+    return json.dumps(payload)
 
 
 def test_previous_baseline_allows_download_without_paper_id(tmp_path: Path) -> None:
@@ -152,11 +173,449 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
         "002_job_integrity_check",
         "003_nsqd_tables",
         "004_nsqd_snapshot_versions",
+        "005_nsqd_policy_verdicts",
+        _MIGRATION_006,
     }
     assert "CHECK" in _jobs_sql(db).upper()
+    assert _policy_verdict_columns(db) == [
+        {
+            "cid": 0,
+            "name": "snapshot_id",
+            "type": "VARCHAR",
+            "notnull": 1,
+            "dflt_value": None,
+            "pk": 1,
+        },
+        {
+            "cid": 1,
+            "name": "domain_policy_id",
+            "type": "VARCHAR",
+            "notnull": 1,
+            "dflt_value": None,
+            "pk": 2,
+        },
+        {"cid": 2, "name": "verdict", "type": "TEXT", "notnull": 1, "dflt_value": None, "pk": 0},
+    ]
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 4
+    assert len(again) == 6
+
+
+def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempotent(
+    tmp_path: Path,
+) -> None:
+    db = _prepare_legacy_policy_database(tmp_path / "legacy-finance.sqlite")
+    legacy_record = {
+        "record_id": "record-fin-1",
+        "content_hash": "hash-fin-1",
+        "snapshots": ["snap-1"],
+        "type": "paper",
+        "source": "doi:10.1/fin",
+        "paraphrase": "legacy finance record",
+    }
+    legacy_candidate = {
+        "candidate": {
+            "title": "legacy finance candidate",
+            "research_descriptor": {
+                "mechanism": "flow-driven",
+                "target": "drawdown",
+                "horizon": "intraday",
+            },
+        },
+        "axiom": "legacy axiom",
+        "generator_run_id": "gen-1",
+    }
+    legacy_card = {
+        "card_id": "legacy-card",
+        "cell_id": _FINANCE_CELL_ID,
+        "title": "legacy finance card",
+        "generating_operator": "A",
+        "snapshot_id": "snap-1",
+        "corpus_version": 1,
+        "viability": 5,
+        "nov": 1,
+        "mech": 5,
+        "fals": 5,
+        "dpred": 5,
+        "dval": 5,
+        "candidate_artifact_hash": "artifact-fin-1",
+        "card_decision": "accepted",
+    }
+    db.execute(
+        "INSERT INTO nsqd_corpus_records (record_id, payload_json) VALUES (?, ?)",
+        ["record-fin-1", _dump_json(legacy_record)],
+    )
+    db.execute(
+        "INSERT INTO nsqd_candidates (artifact_hash, payload_json) VALUES (?, ?)",
+        ["artifact-fin-1", _dump_json(legacy_candidate)],
+    )
+    db.execute(
+        "INSERT INTO nsqd_frontier_cards (card_id, cell_id, payload_json) VALUES (?, ?, ?)",
+        ["legacy-card", _FINANCE_CELL_ID, _dump_json(legacy_card)],
+    )
+    db.execute(
+        "INSERT INTO nsqd_elites (cell_id, card_id) VALUES (?, ?)",
+        [_FINANCE_CELL_ID, "legacy-card"],
+    )
+
+    db.initialize_schema()
+
+    record_row = db.fetchone(
+        "SELECT payload_json FROM nsqd_corpus_records WHERE record_id = ?",
+        ["record-fin-1"],
+    )
+    candidate_row = db.fetchone(
+        "SELECT payload_json FROM nsqd_candidates WHERE artifact_hash = ?",
+        ["artifact-fin-1"],
+    )
+    card_row = db.fetchone(
+        "SELECT cell_id, payload_json FROM nsqd_frontier_cards WHERE card_id = ?",
+        ["legacy-card"],
+    )
+    elite_row = db.fetchone(
+        "SELECT cell_id, card_id FROM nsqd_elites WHERE card_id = ?",
+        ["legacy-card"],
+    )
+    assert record_row is not None
+    assert candidate_row is not None
+    assert card_row is not None
+    assert elite_row is not None
+
+    record_payload = json.loads(str(record_row["payload_json"]))
+    candidate_payload = json.loads(str(candidate_row["payload_json"]))
+    card_payload = json.loads(str(card_row["payload_json"]))
+    assert record_payload == {**legacy_record, "domain_policy_id": "finance/1"}
+    assert candidate_payload == {
+        **legacy_candidate,
+        "candidate": {
+            **legacy_candidate["candidate"],
+            "domain_policy_id": "finance/1",
+        },
+    }
+    assert card_payload == {
+        **legacy_card,
+        "domain_policy_id": "finance/1",
+        "archive_cell_key": f"finance/1::{_FINANCE_CELL_ID}",
+    }
+    assert card_payload["cell_id"] == _FINANCE_CELL_ID
+    assert card_row["cell_id"] == _FINANCE_CELL_ID
+    assert elite_row == {
+        "cell_id": f"finance/1::{_FINANCE_CELL_ID}",
+        "card_id": "legacy-card",
+    }
+    versions = {row["version"] for row in db.fetchall("SELECT version FROM schema_migrations")}
+    assert _MIGRATION_006 in versions
+
+    db.initialize_schema()
+
+    assert (
+        db.fetchone(
+            "SELECT payload_json FROM nsqd_corpus_records WHERE record_id = ?",
+            ["record-fin-1"],
+        )
+        == record_row
+    )
+    assert (
+        db.fetchone(
+            "SELECT payload_json FROM nsqd_candidates WHERE artifact_hash = ?",
+            ["artifact-fin-1"],
+        )
+        == candidate_row
+    )
+    assert (
+        db.fetchone(
+            "SELECT cell_id, payload_json FROM nsqd_frontier_cards WHERE card_id = ?",
+            ["legacy-card"],
+        )
+        == card_row
+    )
+    assert (
+        db.fetchone(
+            "SELECT cell_id, card_id FROM nsqd_elites WHERE card_id = ?",
+            ["legacy-card"],
+        )
+        == elite_row
+    )
+    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 6
+
+
+def test_policy_backfill_migration_rejects_candidate_outside_finance_universe(
+    tmp_path: Path,
+) -> None:
+    db = _prepare_legacy_policy_database(tmp_path / "legacy-candidate-invalid.sqlite")
+    db.execute(
+        "INSERT INTO nsqd_candidates (artifact_hash, payload_json) VALUES (?, ?)",
+        [
+            "artifact-opt-1",
+            _dump_json(
+                {
+                    "candidate": {
+                        "title": "legacy optimization candidate",
+                        "research_descriptor": {
+                            "problem": "constrained-expectation",
+                            "method": "sequential-quadratic",
+                            "setting": "rank-deficient",
+                        },
+                    },
+                    "axiom": "legacy axiom",
+                    "generator_run_id": "gen-1",
+                }
+            ),
+        ],
+    )
+
+    with pytest.raises(ConfigurationError, match="artifact-opt-1"):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
+        is None
+    )
+
+
+def test_policy_backfill_migration_rejects_tagged_candidate_outside_policy_universe(
+    tmp_path: Path,
+) -> None:
+    db = _prepare_legacy_policy_database(tmp_path / "tagged-candidate-invalid.sqlite")
+    db.execute(
+        "INSERT INTO nsqd_candidates (artifact_hash, payload_json) VALUES (?, ?)",
+        [
+            "artifact-fin-bad-1",
+            _dump_json(
+                {
+                    "candidate": {
+                        "title": "tagged finance candidate with optimization descriptor",
+                        "domain_policy_id": "finance/1",
+                        "research_descriptor": {
+                            "problem": "constrained-expectation",
+                            "method": "sequential-quadratic",
+                            "setting": "rank-deficient",
+                        },
+                    },
+                    "axiom": "legacy axiom",
+                    "generator_run_id": "gen-1",
+                }
+            ),
+        ],
+    )
+
+    with pytest.raises(ConfigurationError, match="artifact-fin-bad-1"):
+        db.initialize_schema()
+
+    stored = db.fetchone(
+        "SELECT payload_json FROM nsqd_candidates WHERE artifact_hash = ?",
+        ["artifact-fin-bad-1"],
+    )
+    assert stored is not None
+    assert json.loads(str(stored["payload_json"])) == {
+        "candidate": {
+            "title": "tagged finance candidate with optimization descriptor",
+            "domain_policy_id": "finance/1",
+            "research_descriptor": {
+                "problem": "constrained-expectation",
+                "method": "sequential-quadratic",
+                "setting": "rank-deficient",
+            },
+        },
+        "axiom": "legacy axiom",
+        "generator_run_id": "gen-1",
+    }
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
+        is None
+    )
+
+
+def test_policy_backfill_migration_rejects_legacy_card_outside_finance_universe(
+    tmp_path: Path,
+) -> None:
+    db = _prepare_legacy_policy_database(tmp_path / "legacy-card-invalid.sqlite")
+    db.execute(
+        "INSERT INTO nsqd_frontier_cards (card_id, cell_id, payload_json) VALUES (?, ?, ?)",
+        [
+            "legacy-opt-card",
+            _OPTIMIZATION_CELL_ID,
+            _dump_json(
+                {
+                    "card_id": "legacy-opt-card",
+                    "cell_id": _OPTIMIZATION_CELL_ID,
+                    "title": "legacy optimization card",
+                    "generating_operator": "A",
+                    "snapshot_id": "snap-1",
+                    "corpus_version": 1,
+                    "viability": 5,
+                    "nov": 1,
+                    "mech": 5,
+                    "fals": 5,
+                    "dpred": 5,
+                    "dval": 5,
+                    "candidate_artifact_hash": "artifact-opt-1",
+                    "card_decision": "accepted",
+                }
+            ),
+        ],
+    )
+
+    with pytest.raises(ConfigurationError, match="legacy-opt-card"):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
+        is None
+    )
+
+
+def test_policy_backfill_migration_rejects_conflicting_scoped_elite(tmp_path: Path) -> None:
+    db = _prepare_legacy_policy_database(tmp_path / "legacy-elite-conflict.sqlite")
+    scoped_key = f"finance/1::{_FINANCE_CELL_ID}"
+    explicit_card = {
+        "card_id": "explicit-card",
+        "domain_policy_id": "finance/1",
+        "cell_id": _FINANCE_CELL_ID,
+        "archive_cell_key": scoped_key,
+        "title": "explicit finance card",
+        "generating_operator": "A",
+        "snapshot_id": "snap-1",
+        "corpus_version": 1,
+        "viability": 5,
+        "nov": 1,
+        "mech": 5,
+        "fals": 5,
+        "dpred": 5,
+        "dval": 5,
+        "candidate_artifact_hash": "artifact-fin-2",
+        "card_decision": "accepted",
+    }
+    db.execute(
+        "INSERT INTO nsqd_frontier_cards (card_id, cell_id, payload_json) "
+        "VALUES (?, ?, ?), (?, ?, ?)",
+        [
+            "legacy-card",
+            _FINANCE_CELL_ID,
+            _dump_json(
+                {
+                    "card_id": "legacy-card",
+                    "cell_id": _FINANCE_CELL_ID,
+                    "title": "legacy finance card",
+                    "generating_operator": "A",
+                    "snapshot_id": "snap-1",
+                    "corpus_version": 1,
+                    "viability": 5,
+                    "nov": 1,
+                    "mech": 5,
+                    "fals": 5,
+                    "dpred": 5,
+                    "dval": 5,
+                    "candidate_artifact_hash": "artifact-fin-1",
+                    "card_decision": "accepted",
+                }
+            ),
+            "explicit-card",
+            _FINANCE_CELL_ID,
+            _dump_json(explicit_card),
+        ],
+    )
+    db.execute(
+        "INSERT INTO nsqd_elites (cell_id, card_id) VALUES (?, ?), (?, ?)",
+        [_FINANCE_CELL_ID, "legacy-card", scoped_key, "explicit-card"],
+    )
+
+    with pytest.raises(ConfigurationError, match="conflicting scoped elite"):
+        db.initialize_schema()
+
+    elite_rows = db.fetchall("SELECT cell_id, card_id FROM nsqd_elites ORDER BY cell_id")
+    assert elite_rows == [
+        {"cell_id": scoped_key, "card_id": "explicit-card"},
+        {"cell_id": _FINANCE_CELL_ID, "card_id": "legacy-card"},
+    ]
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_006])
+        is None
+    )
+
+
+def test_policy_verdict_migration_recovers_when_table_exists_without_ledger_row(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "policy-verdict-recover.sqlite")
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", ["005_nsqd_policy_verdicts"])
+
+    db.initialize_schema()
+
+    assert _policy_verdict_columns(db) == [
+        {
+            "cid": 0,
+            "name": "snapshot_id",
+            "type": "VARCHAR",
+            "notnull": 1,
+            "dflt_value": None,
+            "pk": 1,
+        },
+        {
+            "cid": 1,
+            "name": "domain_policy_id",
+            "type": "VARCHAR",
+            "notnull": 1,
+            "dflt_value": None,
+            "pk": 2,
+        },
+        {"cid": 2, "name": "verdict", "type": "TEXT", "notnull": 1, "dflt_value": None, "pk": 0},
+    ]
+    assert (
+        db.fetchone(
+            "SELECT version FROM schema_migrations WHERE version = '005_nsqd_policy_verdicts'"
+        )
+        is not None
+    )
+
+
+def test_policy_verdict_migration_rejects_malformed_existing_table_without_recording_005(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "policy-verdict-malformed.sqlite")
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", ["005_nsqd_policy_verdicts"])
+    db.execute("DROP TABLE nsqd_policy_verdicts")
+    db.execute(
+        """
+        CREATE TABLE nsqd_policy_verdicts (
+            domain_policy_id VARCHAR NOT NULL,
+            snapshot_id VARCHAR NOT NULL,
+            verdict TEXT,
+            PRIMARY KEY (domain_policy_id, snapshot_id)
+        )
+        """
+    )
+
+    with pytest.raises(ConfigurationError, match="policy verdict schema mismatch"):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone(
+            "SELECT version FROM schema_migrations WHERE version = '005_nsqd_policy_verdicts'"
+        )
+        is None
+    )
+
+
+def test_policy_verdict_migration_rejects_malformed_applied_schema(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "policy-verdict-applied.sqlite")
+    db.initialize_schema()
+    db.execute("DROP TABLE nsqd_policy_verdicts")
+    db.execute(
+        """
+        CREATE TABLE nsqd_policy_verdicts (
+            snapshot_id VARCHAR NOT NULL,
+            domain_policy_id VARCHAR,
+            verdict TEXT NOT NULL,
+            PRIMARY KEY (domain_policy_id, snapshot_id)
+        )
+        """
+    )
+
+    with pytest.raises(ConfigurationError, match="policy verdict schema mismatch"):
+        db.initialize_schema()
 
 
 def test_snapshot_version_migration_preserves_existing_snapshots(tmp_path: Path) -> None:
@@ -266,6 +725,7 @@ def test_nsqd_migration_recovers_when_tables_exist_without_ledger_row(tmp_path: 
         "nsqd_frontier_cards",
         "nsqd_elites",
         "nsqd_morphospace",
+        "nsqd_policy_verdicts",
     } <= names
 
 
