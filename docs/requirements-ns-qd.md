@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, and Operator A driven by a complete validated status table and structured axioms. N6 calibration/acquisition orchestration and later archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
+**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, Operator A driven by a complete validated status table and structured axioms, and pack-scoped grounding with injected paper hybrid/scholar clients and a budget of 3 after local miss. N6 calibration/acquisition orchestration and later archive phases remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
 
 **Document roles**
 
@@ -162,10 +162,12 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 | `FrontierCardStore` | Cards + elite pointer per cell |
 | `NsqdJobQueue` | `nsqd_jobs` claim/retry/cancel |
 | `Clock` | UTC `now()` |
+| `HybridPaperSearch` | N5 search-only access to existing paper hybrid results |
+| `LivePaperSearch` | N5 search-only access to scholar results |
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
-N2b consumes a reviewed projection payload, not a dedicated paper-read port. A typed live NSQD→paper bridge is deferred to N6.
+N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful NSQD→paper acquisition/orchestration bridge remains deferred to N6.
 
 **Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
 

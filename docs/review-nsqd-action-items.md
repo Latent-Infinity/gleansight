@@ -237,7 +237,7 @@ At review time `ruff check` (79) and `ty check` (526) fail. Pytest passes.
 
 - [x] Stores, indexes, clocks, external search, model providers, blobs, and job queues are the ports.
 - [x] Novelty, viability, status, elite, schema validation are domain functions.
-- [x] `ProjectPaperUseCase` is the N2b application use case over reviewed projection payloads; a typed live NSQD→paper bridge is deferred to N6.
+- [x] `ProjectPaperUseCase` is the N2b application use case over reviewed projection payloads; N5 owns typed search-only hybrid/scholar interfaces, while the stateful acquisition/orchestration bridge is deferred to N6.
 - [x] NS-QD must not depend on provider SDKs or broad paper infrastructure.
 - [x] Port tests are specified as behavioral contracts.
 

@@ -413,9 +413,11 @@ Closed `GroundingClass`: `already_done` | `renamed` | `related_partial` | `ortho
 | 3 | Embedding k-NN (ALG-NOV) | `related_partial` if evidence < 0.15, confidence `0.60`; else `orthogonal`, confidence `0.50` | snapshot empty (`evidence` null) or layer inconclusive |
 | 4 | Code/benchmark records in snapshot | `already_done`, confidence `0.90` | no code/benchmark neighbor |
 
-If layers 1–4 miss: `unevaluated`, confidence `0.00`. Live search only after that, **≤3** live calls per candidate. N1 is local-only: live search and paper hybrid search are **not called**; a test fails if they are.
+If layers 1–4 miss: `unevaluated`, confidence `0.00`. Live search only after that, **≤3** calls per candidate. N1 and `smoke_only` are local-only: live search and paper hybrid search are **not called**; a test fails if they are.
 
-Every layer persists `{layer, checked, hit, escalate_reason}`. Stamp `snapshot_id` and `corpus_version`.
+On N5 calibration/production-valid escalation, paper hybrid runs before scholar. A hybrid hit requires a non-empty `paper_id` and finite positive numeric `score`; a scholar hit requires a non-empty `source_paper_id` and `title`. Malformed results are misses. The first valid normalized result is `closest_prior_art` and yields `related_partial`, confidence `0.40`; it is evidence only and never writes a corpus record or claims `already_done`. Persist call source, hit status, and `query_sha256`, never raw candidate query text.
+
+Every layer persists `{layer, checked, hit, escalate_reason}`. Stamp `snapshot_id` and its matching `corpus_version`; mismatches are rejected. The report includes `closest_prior_art` (or null), `GroundingClass`, confidence, snapshot identity, and bounded call metadata.
 
 Confidence in N1 is **deterministic from the table**, not human-assigned. A later slice may attach a human override with provenance.
 
