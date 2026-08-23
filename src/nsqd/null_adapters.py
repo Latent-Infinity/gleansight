@@ -363,6 +363,20 @@ class NullPolicyVerdictStore:
         return deepcopy(row) if row is not None else None
 
 
+class NullApprovedDigestStore:
+    def __init__(self) -> None:
+        self._digests: set[str] = set()
+
+    def add(self, digest: str, *, approved_at: datetime) -> None:
+        _require_utc_datetime("approved_at", approved_at)
+        if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise ValueError("digest must be a lowercase SHA-256 hex digest")
+        self._digests.add(digest)
+
+    def list_digests(self) -> frozenset[str]:
+        return frozenset(self._digests)
+
+
 class NullPaperAcquisitionBridge:
     def discover(self, query: str, filters: dict[str, Any]) -> list[dict[str, Any]]:
         return []

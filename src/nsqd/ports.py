@@ -169,6 +169,13 @@ class AcquisitionCycleStore(Protocol):
 
 
 @runtime_checkable
+class ApprovedDigestStore(Protocol):
+    def add(self, digest: str, *, approved_at: datetime) -> None: ...
+
+    def list_digests(self) -> frozenset[str]: ...
+
+
+@runtime_checkable
 class PaperAcquisitionBridge(Protocol):
     def discover(self, query: str, filters: dict[str, Any]) -> list[dict[str, Any]]: ...
 

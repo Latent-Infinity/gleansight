@@ -6,6 +6,7 @@ import pytest
 
 from nsqd.null_adapters import (
     FixedClock,
+    NullApprovedDigestStore,
     NullCorpusIndex,
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
@@ -16,6 +17,17 @@ from nsqd.null_adapters import (
     SystemClock,
 )
 from nsqd.ports import Clock, CorpusHit, CorpusIndex, NsqdJobQueue
+
+
+def test_approved_digest_store_rejects_invalid_values() -> None:
+    store = NullApprovedDigestStore()
+    as_of = datetime(2024, 6, 1, tzinfo=UTC)
+    with pytest.raises(ValueError, match="digest must be a lowercase SHA-256"):
+        store.add("nope", approved_at=as_of)
+    with pytest.raises(ValueError, match="UTC"):
+        store.add("ab" * 32, approved_at=datetime(2024, 6, 1))
+    store.add("ab" * 32, approved_at=as_of)
+    assert store.list_digests() == frozenset({"ab" * 32})
 
 
 def test_clock_is_injected_and_fixed_clock_is_stable() -> None:
