@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import uuid
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, NoReturn
 
 import typer
 import yaml
@@ -14,9 +15,12 @@ from nsqd.composition import build_container
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.harvest import run_harvest
+from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
 from nsqd.project_runtime import run_project
 from nsqd.runner import run_job
 from nsqd.skeleton import run_skeleton
+from papers.domain.errors import ConfigurationError
+from papers.infra.piccolo.database import PiccoloDatabase
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -99,7 +103,7 @@ def _container(db: Path, index: Path) -> Any:
     return build_container(db_path=db, index_path=index)
 
 
-def _fail(exc: Exception) -> None:
+def _fail(exc: Exception) -> NoReturn:
     typer.echo(f"error: {exc}", err=True)
     raise typer.Exit(code=1) from exc
 
@@ -292,6 +296,27 @@ def archive(
             default=str,
         )
     )
+
+
+@app.command("approve-digest")
+def approve_digest(
+    digest: Annotated[str, typer.Option("--digest")],
+    db: Annotated[Path, typer.Option("--db")] = Path("data/nsqd/nsqd.sqlite"),
+    index: Annotated[Path, typer.Option("--index")] = Path("data/nsqd/corpus.lancedb"),
+) -> None:
+    if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+        _fail(ValueError("digest must be a lowercase SHA-256 hex digest"))
+    try:
+        db.parent.mkdir(parents=True, exist_ok=True)
+        database = PiccoloDatabase(db)
+        database.initialize_schema()
+        digest_store = PiccoloApprovedDigestStore(database)
+        digest_store.add(digest, approved_at=datetime.now(UTC))
+    except (ConfigurationError, ImportError, OSError, ValueError) as exc:
+        _fail(exc)
+    if digest not in digest_store.list_digests():
+        _fail(ValueError("approved digest was not persisted"))
+    typer.echo(f"approved {digest}")
 
 
 def main() -> None:

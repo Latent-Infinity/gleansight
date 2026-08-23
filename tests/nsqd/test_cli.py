@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 import nsqd.__main__ as main_module
 from nsqd import cli as cli_module
 from nsqd.cli import app
+from papers.infra.piccolo.database import PiccoloDatabase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
 
@@ -36,6 +37,7 @@ def test_skeleton_help_lists_command() -> None:
     assert "ground" in result.output
     assert "gate" in result.output
     assert "archive" in result.output
+    assert "approve-digest" in result.output
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:
@@ -275,3 +277,77 @@ def test_diverge_ground_gate_cli_error_paths(tmp_path: Path) -> None:
         ],
     )
     assert gated.exit_code != 0
+
+
+def test_approve_digest_rejects_invalid_digest(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "approve-digest",
+            "--digest",
+            "not-a-digest",
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "error" in result.output.lower()
+    assert not (tmp_path / "nsqd.sqlite").exists()
+    assert not (tmp_path / "index").exists()
+
+
+def test_approve_digest_persists_allowlist(tmp_path: Path) -> None:
+    digest = "cd" * 32
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "approve-digest",
+            "--digest",
+            digest,
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert digest in result.output
+    assert not (tmp_path / "index").exists()
+    from nsqd.composition import build_container
+
+    container = build_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "index",
+    )
+    assert digest in container.ctx.approved_projection_digests
+
+
+def test_approve_digest_reports_partial_schema_error(tmp_path: Path) -> None:
+    db_path = tmp_path / "nsqd.sqlite"
+    database = PiccoloDatabase(db_path)
+    database.initialize_schema()
+    database.execute(
+        "DELETE FROM schema_migrations WHERE version = ?",
+        ["010_nsqd_approval_bootstrap"],
+    )
+    database.execute("DROP TABLE nsqd_pre_digest_projections")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "approve-digest",
+            "--digest",
+            "ab" * 32,
+            "--db",
+            str(db_path),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "error: existing NSQD approval bootstrap schema is partial" in result.output
+    assert result.exception is not None
