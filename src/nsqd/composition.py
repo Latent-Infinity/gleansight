@@ -8,6 +8,7 @@ from nsqd.app.handlers import NsqdHandlerContext
 from nsqd.infra.lancedb.index import LanceDBCorpusIndex
 from nsqd.infra.piccolo.stores import (
     PiccoloAcquisitionCycleStore,
+    PiccoloApprovedDigestStore,
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
@@ -18,7 +19,7 @@ from nsqd.infra.piccolo.stores import (
     PiccoloPolicyVerdictStore,
 )
 from nsqd.null_adapters import FixedClock, NullPaperAcquisitionBridge, SystemClock
-from nsqd.ports import Clock, HybridPaperSearch, LivePaperSearch
+from nsqd.ports import Clock, HybridPaperSearch, LivePaperSearch, PaperAcquisitionBridge
 from papers.infra.piccolo.database import PiccoloDatabase
 
 
@@ -38,6 +39,7 @@ def build_container(
     approved_projection_digests: frozenset[str] | None = None,
     scholar_client: LivePaperSearch | None = None,
     paper_hybrid_search: HybridPaperSearch | None = None,
+    paper_bridge: PaperAcquisitionBridge | None = None,
 ) -> NsqdContainer:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -46,6 +48,11 @@ def build_container(
     resolved_clock = clock if clock is not None else SystemClock()
     records = PiccoloCorpusRecordStore(database)
     snapshots = PiccoloCorpusSnapshotStore(database)
+    digest_store = PiccoloApprovedDigestStore(database)
+    if approved_projection_digests:
+        now = resolved_clock.now()
+        for digest in approved_projection_digests:
+            digest_store.add(digest, approved_at=now)
     ctx = NsqdHandlerContext(
         clock=resolved_clock,
         candidates=PiccoloNsqdCandidateStore(database),
@@ -55,14 +62,12 @@ def build_container(
         harvest=PiccoloHarvestStore(database),
         index=LanceDBCorpusIndex(index_path),
         morph=PiccoloMorphospaceStore(database),
-        approved_projection_digests=(
-            approved_projection_digests if approved_projection_digests is not None else frozenset()
-        ),
+        approved_projection_digests=digest_store.list_digests(),
         scholar_client=scholar_client,
         paper_vector_index=paper_hybrid_search,
         cycles=PiccoloAcquisitionCycleStore(database),
         verdicts=PiccoloPolicyVerdictStore(database),
-        bridge=NullPaperAcquisitionBridge(),
+        bridge=paper_bridge if paper_bridge is not None else NullPaperAcquisitionBridge(),
     )
     return NsqdContainer(
         clock=resolved_clock,
