@@ -221,6 +221,36 @@ def test_projector_ignores_caller_supplied_digest_metadata() -> None:
     assert result["created"] is True
 
 
+def test_projector_rejects_missing_legacy_digest_without_mutating_record() -> None:
+    projection = _non_nsqd_projection()
+    approved_digests = _approved_digests(projection)
+    original_ctx = _ctx(approved_digests)
+    created = _project(original_ctx).run(domain_policy_id="optimization/1", projection=projection)
+    legacy = original_ctx.records.get(str(created["record_id"]))
+    assert legacy is not None
+    legacy.pop("reviewed_projection_digest")
+    legacy_records = NullCorpusRecordStore()
+    legacy_records.put(legacy)
+    repair_ctx = _ctx(approved_digests, records=legacy_records)
+
+    with pytest.raises(ValueError, match="explicit immutable migration is required"):
+        _project(repair_ctx).run(domain_policy_id="optimization/1", projection=projection)
+
+    assert repair_ctx.records.get(str(created["record_id"])) == legacy
+
+
+def test_projector_rejects_existing_different_review_digest() -> None:
+    projection = _non_nsqd_projection()
+    original_ctx = _ctx(_approved_digests(projection))
+    _project(original_ctx).run(domain_policy_id="optimization/1", projection=projection)
+    revised = dict(projection)
+    revised["human_reviewer"] = "different-reviewer"
+    revised_ctx = _ctx(_approved_digests(revised), records=original_ctx.records)
+
+    with pytest.raises(ValueError, match="different reviewed projection metadata"):
+        _project(revised_ctx).run(domain_policy_id="optimization/1", projection=revised)
+
+
 def test_reviewed_projection_fields_contract_is_explicit_and_stable() -> None:
     assert REVIEWED_PROJECTION_FIELDS == (
         "domain_policy_id",

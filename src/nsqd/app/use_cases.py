@@ -10,6 +10,7 @@ from typing import Any
 from nsqd.domain.acquisition import (
     CANDIDATES_PER_BATCH,
     QUERY_BATCH_LIMIT,
+    RECHECK_CYCLE_LIMIT,
     STAGED_IMPORT_LIMIT,
     acquisition_cycle_id,
     acquisition_route,
@@ -374,6 +375,14 @@ class ProjectPaperUseCase:
         record_id = projection_record_id(identity)
         existing = self.records.get(record_id)
         if existing is not None and projection_identity(existing) == projection_identity(identity):
+            existing_digest = existing.get("reviewed_projection_digest")
+            if existing_digest is None:
+                raise ValueError(
+                    "existing projection is missing reviewed_projection_digest; "
+                    "an explicit immutable migration is required"
+                )
+            if existing_digest != reviewed_projection_digest:
+                raise ValueError("existing projection has different reviewed projection metadata")
             committed = self.harvest.commit([existing], schema_version=1)
             return {
                 "created": False,
@@ -1151,6 +1160,7 @@ class AcquireCorpusUseCase:
     cycles: AcquisitionCycleStore
     promote: PromoteSnapshotUseCase
     bridge: PaperAcquisitionBridge
+    project: ProjectPaperUseCase
 
     def run(
         self,
@@ -1159,9 +1169,10 @@ class AcquireCorpusUseCase:
         domain_policy_id: str,
         target: str,
         human_decision: str | None = None,
+        approved_projections: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        if human_decision not in {None, "decline"}:
-            raise ValueError("human_decision must be decline when provided")
+        if human_decision not in {None, "decline", "approve"}:
+            raise ValueError("human_decision must be decline or approve when provided")
         resolved_policy = _resolve_evaluation_policy(
             domain_policy_id,
             (
@@ -1189,6 +1200,57 @@ class AcquireCorpusUseCase:
                 "cycle_id": None,
                 "failures": promoted["failures"],
             }
+        query, filters = self._query_plan(resolved_policy.policy_id, promoted)
+        cycle_id = acquisition_cycle_id(
+            snapshot_id=snapshot_id,
+            domain_policy_id=resolved_policy.policy_id,
+            failure_signature=promoted["failures"],
+            rendered_query=query,
+            filters=filters,
+        )
+        existing = self.cycles.get(cycle_id)
+        if existing is not None:
+            if human_decision == "decline":
+                existing = {**existing, "stopped": "human_decline"}
+                return self._persist_cycle(existing)
+            if existing.get("stopped") == "in_progress":
+                return self._stage_candidates(
+                    existing,
+                    query=query,
+                    filters=filters,
+                    resume=True,
+                )
+            if human_decision == "approve":
+                return self._approve_and_recheck(
+                    existing,
+                    domain_policy_id=resolved_policy.policy_id,
+                    target=target,
+                    approved_projections=approved_projections or [],
+                )
+            return existing
+        result: dict[str, Any] = {
+            "route": "search",
+            "stopped": "in_progress",
+            "projected": False,
+            "state": promoted["state"],
+            "cycle_id": cycle_id,
+            "snapshot_id": snapshot_id,
+            "failures": promoted["failures"],
+            "staged": [],
+            "staged_identities": [],
+            "batches": 0,
+            "rechecks": 0,
+            "alias_cycle_ids": [],
+        }
+        if human_decision == "decline":
+            result["stopped"] = "human_decline"
+            return self._persist_cycle(result)
+        if human_decision == "approve":
+            raise ValueError("no pending acquisition cycle to approve")
+        self._persist_cycle(result)
+        return self._stage_candidates(result, query=query, filters=filters, resume=False)
+
+    def _query_plan(self, policy_id: str, promoted: dict[str, Any]) -> tuple[str, dict[str, str]]:
         searchable = [code for code in promoted["failures"] if code in SEARCHABLE_FAILURES]
         failure = searchable[0]
         search_context = promoted["search_context"]
@@ -1205,48 +1267,49 @@ class AcquireCorpusUseCase:
         else:
             record_type = "paper"
         query = render_acquisition_query(
-            policy_id=resolved_policy.policy_id,
+            policy_id=policy_id,
             failure=failure,
             cell_id=cell_id,
             probe_id=probe_id,
             record_type=record_type,
         )
-        filters = {"type": record_type}
-        cycle_id = acquisition_cycle_id(
-            snapshot_id=snapshot_id,
-            domain_policy_id=resolved_policy.policy_id,
-            failure_signature=promoted["failures"],
-            rendered_query=query,
-            filters=filters,
-        )
-        existing = self.cycles.get(cycle_id)
-        if existing is not None:
-            if human_decision == "decline" and existing.get("stopped") != "human_decline":
-                existing = {**existing, "stopped": "human_decline"}
-                self.cycles.put_cycle(cycle_id, existing)
-            return existing
-        result: dict[str, Any] = {
-            "route": "search",
-            "stopped": "in_progress",
-            "projected": False,
-            "state": promoted["state"],
-            "cycle_id": cycle_id,
-            "failures": promoted["failures"],
-            "staged": [],
-            "batches": 0,
-        }
-        if human_decision == "decline":
-            result["stopped"] = "human_decline"
-            self.cycles.put_cycle(cycle_id, result)
-            return result
-        self.cycles.put_cycle(cycle_id, result)
-        seen_candidates: set[str] = set()
-        staged: list[str] = []
+        return query, {"type": record_type}
+
+    def _persist_cycle(self, result: dict[str, Any]) -> dict[str, Any]:
+        self.cycles.put_cycle(str(result["cycle_id"]), result)
+        aliases = result.get("alias_cycle_ids")
+        if isinstance(aliases, list):
+            for alias in aliases:
+                alias_id = str(alias)
+                if alias_id and alias_id != str(result["cycle_id"]):
+                    self.cycles.put_cycle(alias_id, result)
+        return result
+
+    def _stage_candidates(
+        self,
+        result: dict[str, Any],
+        *,
+        query: str,
+        filters: dict[str, str],
+        resume: bool,
+        skip_identities: set[str] | None = None,
+    ) -> dict[str, Any]:
+        staged = [str(item) for item in result.get("staged") or []]
+        staged_identities = [str(item) for item in result.get("staged_identities") or []]
+        pass_limit = len(staged) + STAGED_IMPORT_LIMIT
+        seen_candidates = set(staged_identities)
+        seen_candidates.update(f"paper_id:{paper_id}" for paper_id in staged)
+        if skip_identities:
+            seen_candidates.update(skip_identities)
+        result["stopped"] = "in_progress"
+        self._persist_cycle(result)
         try:
             for _batch in range(QUERY_BATCH_LIMIT):
+                if len(staged) >= pass_limit:
+                    break
                 discovered = self.bridge.discover(query, filters)[:CANDIDATES_PER_BATCH]
-                result["batches"] = int(result["batches"]) + 1
-                self.cycles.put_cycle(cycle_id, result)
+                result["batches"] = int(result.get("batches") or 0) + 1
+                self._persist_cycle(result)
                 fresh: list[dict[str, Any]] = []
                 for candidate in discovered:
                     identity = _acquisition_candidate_identity(candidate)
@@ -1258,7 +1321,7 @@ class AcquireCorpusUseCase:
                     break
                 shortlisted = self.bridge.shortlist(
                     fresh,
-                    limit=min(CANDIDATES_PER_BATCH, STAGED_IMPORT_LIMIT - len(staged)),
+                    limit=min(CANDIDATES_PER_BATCH, pass_limit - len(staged)),
                 )
                 if any(item.get("review_status") == "approved" for item in shortlisted):
                     raise ValueError("LLM output cannot approve corpus evidence")
@@ -1269,7 +1332,7 @@ class AcquireCorpusUseCase:
                 }
                 shortlisted_identities: set[str] = set()
                 for candidate in shortlisted:
-                    if len(staged) >= STAGED_IMPORT_LIMIT:
+                    if len(staged) >= pass_limit:
                         break
                     identity = _acquisition_candidate_identity(candidate)
                     if identity is None or identity not in fresh_by_identity:
@@ -1286,17 +1349,110 @@ class AcquireCorpusUseCase:
                     if draft.get("review_status") == "approved":
                         raise ValueError("LLM output cannot approve corpus evidence")
                     staged.append(paper_id)
+                    if identity not in staged_identities:
+                        staged_identities.append(identity)
                     result["staged"] = list(staged)
-                    self.cycles.put_cycle(cycle_id, result)
-                if len(staged) >= STAGED_IMPORT_LIMIT:
+                    result["staged_identities"] = list(staged_identities)
+                    self._persist_cycle(result)
+                if len(discovered) < CANDIDATES_PER_BATCH:
                     break
         except Exception:
             result["stopped"] = "manual_recovery"
-            self.cycles.put_cycle(cycle_id, result)
+            self._persist_cycle(result)
             raise
         result["stopped"] = "pending_human_approval" if staged else "no_new_candidates"
-        self.cycles.put_cycle(cycle_id, result)
+        if resume:
+            result["stopped"] = "pending_human_approval" if staged else result["stopped"]
+        self._persist_cycle(result)
         return result
+
+    def _approve_and_recheck(
+        self,
+        cycle: dict[str, Any],
+        *,
+        domain_policy_id: str,
+        target: str,
+        approved_projections: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        if cycle.get("stopped") not in {
+            "pending_human_approval",
+            "no_new_candidates",
+            "no_approved_snapshot_delta",
+        }:
+            return cycle
+        staged_identities = {str(item) for item in cycle.get("staged_identities") or []}
+        if not approved_projections:
+            raise ValueError("approved projections are required")
+        snapshot_before = str(cycle.get("snapshot_id") or "")
+        failures_before = list(cycle.get("failures") or [])
+        projected_snapshot = snapshot_before
+        for projection in approved_projections:
+            source_paper_id = projection.get("source_paper_id")
+            if (
+                not isinstance(source_paper_id, str)
+                or f"source_paper_id:{source_paper_id.strip()}" not in staged_identities
+            ):
+                raise ValueError("approved projection is not the staged source paper")
+            projected = self.project.run(
+                domain_policy_id=domain_policy_id,
+                projection=projection,
+            )
+            projected_snapshot = str(projected["snapshot_id"])
+        promoted = self.promote.run(
+            snapshot_id=projected_snapshot,
+            domain_policy_id=domain_policy_id,
+            target=target,
+        )
+        if projected_snapshot == snapshot_before and list(promoted["failures"]) == failures_before:
+            updated = {
+                **cycle,
+                "projected": True,
+                "snapshot_id": projected_snapshot,
+                "state": promoted["state"],
+                "failures": promoted["failures"],
+                "stopped": "no_approved_snapshot_delta",
+            }
+            return self._persist_cycle(updated)
+        rechecks = int(cycle.get("rechecks") or 0) + 1
+        updated = {
+            **cycle,
+            "projected": True,
+            "snapshot_id": projected_snapshot,
+            "state": promoted["state"],
+            "failures": promoted["failures"],
+            "rechecks": rechecks,
+        }
+        if promoted["state"] != "insufficient":
+            updated["stopped"] = "sufficient"
+            return self._persist_cycle(updated)
+        if rechecks >= RECHECK_CYCLE_LIMIT:
+            updated["stopped"] = "recheck_budget"
+            return self._persist_cycle(updated)
+        if acquisition_route(promoted["failures"]) != "search":
+            updated["stopped"] = "policy_blocked"
+            return self._persist_cycle(updated)
+        query, filters = self._query_plan(domain_policy_id, promoted)
+        alias_id = acquisition_cycle_id(
+            snapshot_id=projected_snapshot,
+            domain_policy_id=domain_policy_id,
+            failure_signature=promoted["failures"],
+            rendered_query=query,
+            filters=filters,
+        )
+        existing_aliases = updated.get("alias_cycle_ids")
+        aliases = (
+            [str(item) for item in existing_aliases] if isinstance(existing_aliases, list) else []
+        )
+        if alias_id not in aliases:
+            aliases.append(alias_id)
+        updated["alias_cycle_ids"] = aliases
+        return self._stage_candidates(
+            updated,
+            query=query,
+            filters=filters,
+            resume=False,
+            skip_identities=staged_identities,
+        )
 
 
 def _has_approved_harvest_seed(
@@ -1354,7 +1510,7 @@ def _has_approved_harvest_seed(
 
 
 def _acquisition_candidate_identity(candidate: dict[str, Any]) -> str | None:
-    for key in ("paper_id", "source_paper_id"):
+    for key in ("source_paper_id", "paper_id"):
         value = candidate.get(key)
         if isinstance(value, str) and value.strip():
             return f"{key}:{value.strip()}"

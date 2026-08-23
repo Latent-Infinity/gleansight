@@ -6,14 +6,17 @@ from typing import Any
 
 import pytest
 
-from nsqd.app.use_cases import AcquireCorpusUseCase, PromoteSnapshotUseCase
-from nsqd.domain.acquisition import QUERY_BATCH_LIMIT, STAGED_IMPORT_LIMIT
+from nsqd.app.use_cases import AcquireCorpusUseCase, ProjectPaperUseCase, PromoteSnapshotUseCase
+from nsqd.domain.acquisition import QUERY_BATCH_LIMIT, RECHECK_CYCLE_LIMIT, STAGED_IMPORT_LIMIT
 from nsqd.domain.policy import FINANCE_POLICY, DomainPolicy
+from nsqd.domain.project import canonical_reviewed_projection_digest, normalize_paraphrase
+from nsqd.domain.snapshot import sha256_hex
 from nsqd.null_adapters import (
     FixedClock,
     NullAcquisitionCycleStore,
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
+    NullHarvestStore,
     NullPolicyVerdictStore,
 )
 
@@ -93,6 +96,7 @@ def _setup(
     fail_stage: bool = False,
     invent_shortlist: bool = False,
     mutate_shortlist: bool = False,
+    approved_projection_digests: frozenset[str] = frozenset(),
 ) -> tuple[AcquireCorpusUseCase, FakePaperBridge, NullAcquisitionCycleStore]:
     records = NullCorpusRecordStore()
     snapshots = NullCorpusSnapshotStore()
@@ -121,8 +125,31 @@ def _setup(
         cycles=cycles,
         promote=promote,
         bridge=bridge,
+        project=ProjectPaperUseCase(
+            harvest=NullHarvestStore(records, snapshots),
+            records=records,
+            clock=FixedClock(AS_OF),
+            approved_projection_digests=approved_projection_digests,
+        ),
     )
     return acquire, bridge, cycles
+
+
+def _approved_projection(paper_id: str) -> tuple[dict[str, Any], str]:
+    paraphrase = normalize_paraphrase(f"Human-approved mechanism for {paper_id}.")
+    payload = {
+        "domain_policy_id": "finance/1",
+        "paraphrase": paraphrase,
+        "paraphrase_source": "human",
+        "source_paper_id": paper_id,
+        "source_abstract_sha256": "a" * 64,
+        "source_markdown_sha256": "b" * 64,
+        "paraphrase_sha256": sha256_hex(paraphrase.encode("utf-8")),
+        "human_reviewer": "product",
+        "human_approved_at": "2026-08-22T00:00:00+00:00",
+        "review_status": "approved",
+    }
+    return payload, canonical_reviewed_projection_digest(payload)
 
 
 def _search_policy() -> DomainPolicy:
@@ -395,3 +422,218 @@ def test_shortlist_metadata_cannot_mutate_import_candidate() -> None:
         target="calibration",
     )
     assert bridge.staged_candidates == [{"paper_id": "p1", "title": "discovered title"}]
+
+
+def test_human_approval_projects_new_snapshot_and_rechecks() -> None:
+    policy = replace(
+        FINANCE_POLICY,
+        recall_probes=(("probe-a", "paper:p1", "paper"),),
+    )
+    projection, digest = _approved_projection("p1")
+    acquire, bridge, _cycles = _setup(
+        candidates=[{"paper_id": "p1", "source_paper_id": "p1", "title": "A"}],
+        policy=policy,
+        approved_projection_digests=frozenset({digest}),
+    )
+    staged = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    assert staged["stopped"] == "pending_human_approval"
+    approved = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[projection],
+    )
+    assert approved["projected"] is True
+    assert approved["stopped"] == "sufficient"
+    assert approved["state"] == "calibration"
+    assert approved["snapshot_id"] != "snap"
+    assert bridge.discover_calls == 1
+
+
+def test_no_approved_snapshot_delta_stops_recheck() -> None:
+    policy = replace(
+        FINANCE_POLICY,
+        recall_probes=(("probe-a", "doi:10.1/missing", "paper"),),
+        expected_cells=frozenset({FIN_CELL}),
+    )
+    projection, digest = _approved_projection("p1")
+    acquire, _bridge, _cycles = _setup(
+        candidates=[{"paper_id": "p1", "source_paper_id": "p1", "title": "A"}],
+        policy=policy,
+        approved_projection_digests=frozenset({digest}),
+    )
+    acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    first = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[projection],
+    )
+    assert first["projected"] is True
+    second = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[projection],
+    )
+    assert second["stopped"] == "no_approved_snapshot_delta"
+    assert second["rechecks"] == first["rechecks"]
+
+
+def test_recheck_budget_stops_after_two_approval_rounds() -> None:
+    policy = replace(
+        FINANCE_POLICY,
+        recall_probes=(("probe-a", "doi:10.1/missing", "paper"),),
+        expected_cells=frozenset({FIN_CELL}),
+    )
+    first_projection, first_digest = _approved_projection("p1")
+    second_projection, second_digest = _approved_projection("p2")
+    acquire, bridge, _cycles = _setup(
+        candidates=[
+            {"paper_id": "p1", "source_paper_id": "p1", "title": "A"},
+            {"paper_id": "p2", "source_paper_id": "p2", "title": "B"},
+            {"paper_id": "p3", "source_paper_id": "p3", "title": "C"},
+            {"paper_id": "p4", "source_paper_id": "p4", "title": "D"},
+        ],
+        policy=policy,
+        approved_projection_digests=frozenset({first_digest, second_digest}),
+    )
+    acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    after_first = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[first_projection],
+    )
+    assert after_first["stopped"] == "pending_human_approval"
+    assert after_first["rechecks"] == 1
+    assert bridge.discover_calls >= 2
+    after_second = acquire.run(
+        snapshot_id=str(after_first["snapshot_id"]),
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[second_projection],
+    )
+    assert after_second["stopped"] == "recheck_budget"
+    assert after_second["rechecks"] == RECHECK_CYCLE_LIMIT
+
+
+def test_resume_in_progress_does_not_restage_completed_papers() -> None:
+    acquire, bridge, cycles = _setup(
+        candidates=[{"paper_id": "p1", "title": "A"}, {"paper_id": "p2", "title": "B"}],
+        policy=_search_policy(),
+    )
+    first = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    stored = cycles.get(str(first["cycle_id"]))
+    assert stored is not None
+    stored["stopped"] = "in_progress"
+    cycles.put_cycle(str(first["cycle_id"]), stored)
+    staged_before = list(bridge.staged)
+    resumed = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    assert resumed["stopped"] == "pending_human_approval"
+    assert bridge.staged == staged_before
+
+
+def test_approval_accepts_internal_paper_id_when_source_id_differs() -> None:
+    policy = replace(
+        FINANCE_POLICY,
+        recall_probes=(("probe-a", "paper:external-1", "paper"),),
+    )
+    projection, digest = _approved_projection("external-1")
+    projection["paper_id"] = "paper-1"
+    acquire, _bridge, _cycles = _setup(
+        candidates=[{"source_paper_id": "external-1", "title": "A"}],
+        policy=policy,
+        approved_projection_digests=frozenset({digest}),
+    )
+    staged = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    assert staged["staged"] == ["paper-1"]
+
+    approved = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+        human_decision="approve",
+        approved_projections=[projection],
+    )
+
+    assert approved["projected"] is True
+
+
+def test_resume_remembers_source_identity_when_internal_paper_id_differs() -> None:
+    acquire, bridge, cycles = _setup(
+        candidates=[{"source_paper_id": "external-1", "title": "A"}],
+        policy=_search_policy(),
+    )
+    first = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    stored = cycles.get(str(first["cycle_id"]))
+    assert stored is not None
+    assert stored["staged_identities"] == ["source_paper_id:external-1"]
+    stored["stopped"] = "in_progress"
+    cycles.put_cycle(str(first["cycle_id"]), stored)
+
+    acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+
+    assert bridge.staged == ["paper-1"]
+
+
+def test_staged_internal_paper_id_cannot_approve_different_source() -> None:
+    projection, digest = _approved_projection("other-source")
+    projection["paper_id"] = "paper-1"
+    acquire, _bridge, _cycles = _setup(
+        candidates=[{"source_paper_id": "staged-source", "title": "A"}],
+        policy=_search_policy(),
+        approved_projection_digests=frozenset({digest}),
+    )
+    staged = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    assert staged["staged"] == ["paper-1"]
+
+    with pytest.raises(ValueError, match="not the staged source paper"):
+        acquire.run(
+            snapshot_id="snap",
+            domain_policy_id="finance/1",
+            target="calibration",
+            human_decision="approve",
+            approved_projections=[projection],
+        )
