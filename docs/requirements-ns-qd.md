@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. The discovery baseline provides `python -m nsqd skeleton` and `python -m nsqd harvest`, and the implemented baseline now includes N2a domain-policy isolation, N2b approved-paper projection, persisted pack-scoped map jobs, Operator A, pack-scoped live/hybrid grounding, pack-aware sufficiency verdicts, and a fail-closed acquisition-staging foundation. The resumable approval/projection/recheck fallback and honest `finance/1 production_valid` remain pending. Unified `gleansight` CLI and Map/Archive UI are **NSQD-N10**.
+**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, the `gleansight` CLI, and Map/Archive/Card screens. Bounded acquisition orchestration is tested through an injected bridge; the production paper bridge and durable approval bootstrap remain pending. Honest `finance/1 production_valid` also waits on approved DATA-NSQD-03.
 
 **Document roles**
 
@@ -42,7 +42,7 @@ One local-first app with two layers:
 
 **Must not (this increment):** trading/`liq-validation` product, Qdrant, 12-process agents, rewrite of `src/papers`.
 
-Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `gleansight` is the **N10** target. Until then: `papers` (evidence), `python -m nsqd skeleton` (N1), and `python -m nsqd harvest` (N2).
+Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `gleansight` is implemented; `papers` remains for evidence scripts.
 
 ---
 
@@ -54,8 +54,8 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | Evidence package | keep `src/papers/` | Behavior-preserving; rename is a later refactor |
 | Discovery package | `src/nsqd/` | New bounded context; not `liq-ideation` |
 | Discovery CLI (N1/N2) | `python -m nsqd skeleton`, `python -m nsqd harvest` | Thin vertical slices |
-| CLI (N10 target) | `gleansight` + existing `papers` | One product; no break of current scripts |
-| UI (N10 target) | One Flet app: evidence screens stay; add Map, Archive, Card | Same desktop; not N1 |
+| CLI | `gleansight` + existing `papers` | One product; no break of current scripts |
+| UI | One Flet app: evidence screens stay; Map, Archive, Card added | Same desktop |
 | Vector store | LanceDB: existing paper table **and** a corpus-paraphrase collection | **HD-NSQD-01 closed: LanceDB.** Qdrant is out of scope |
 | Embeddings | Existing sentence-transformers embedder for paraphrases in V1 | KISS |
 | Card/corpus metadata | Piccolo + `data/blobs/nsqd/` | Rule of Three |
@@ -74,7 +74,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 ### Evidence layer (existing — protect)
 
 - **FR-E1** Discover, import, pipeline, analysis, hybrid search, projects/tags, CLI, UI keep current behavior.
-- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist explicit `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` over normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`; the projector assigns/persists `paper-projector/1`. The application computes the normalized reviewed-payload digest and requires it in an injected approved-digest allowlist; caller payloads cannot self-approve, and the payload policy must match the explicit application argument. Canonical `content_hash` stays ALG-SNAP `{type, paraphrase, source}`; `record_id` is policy + source/hash-revision sensitive; the same full identity is idempotent and any approved source/hash revision creates a new record/snapshot. **N2b**, not N1.
+- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist explicit `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` over normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`; the projector assigns/persists `paper-projector/1`. The application computes the normalized reviewed-payload digest and requires it in an injected approved-digest allowlist; caller payloads cannot self-approve, and the payload policy must match the explicit application argument. Canonical `content_hash` stays ALG-SNAP `{type, paraphrase, source}`; `record_id` is policy + source/hash-revision sensitive; the same full identity is idempotent and any approved source/hash revision creates a new record/snapshot. Existing pre-digest projections fail closed rather than mutating an immutable snapshot; an explicit migration is required. **N2b**, not N1.
 
 ### Harvest
 
@@ -86,7 +86,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-H7** Snapshot id from the canonical JSON preimage (`ALG-SNAP`). Duplicates/retractions per that contract.
 - **FR-H8** Sufficiency failure reasons are the closed set in `ALG-SUF` and are all tested.
 - **FR-H6** `type=paper` records may originate from FR-E2 (N2b).
-- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence: **EV-N17 Pending until approval/projection/recheck orchestration is complete**.
+- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence: **EV-N17 Pending** until the production bridge and approval bootstrap are evidenced.
 
 ### Map
 
@@ -128,8 +128,8 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 
 ### Product surfaces
 
-- **FR-U1** Unified `gleansight` CLI — **deferred to NSQD-N10**. Until then: `papers` (evidence), `python -m nsqd skeleton` (N1), and `python -m nsqd harvest` (N2).
-- **FR-U2** Map/Archive/Card UI — **deferred to NSQD-N10**.
+- **FR-U1** Unified `gleansight` CLI. `papers` remains. Lifecycle/evidence: **EV-N18 Required**.
+- **FR-U2** Map/Archive/Card UI in the existing Flet app. Lifecycle/evidence: **EV-N18 Required**.
 - **FR-U3** Thin clients only; use-cases own orchestration.
 
 ---
@@ -166,13 +166,13 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 | `LivePaperSearch` | N5 search-only access to scholar results |
 | `PolicyVerdictStore` | Persist pack-scoped ALG-SUF verdicts |
 | `AcquisitionCycleStore` | Reserve and persist fail-closed acquisition staging cycles |
-| `PaperAcquisitionBridge` | N6 staging boundary; approval/projection/recheck completion remains pending |
+| `PaperAcquisitionBridge` | N6 injected staging boundary; production paper-pipeline implementation remains pending |
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
-N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful NSQD→paper acquisition/orchestration bridge remains deferred to N6.
+N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful orchestration seam exists, while its production NSQD→paper implementation remains pending N6 completion.
 
-**Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
+**Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, acquisition orchestration, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
 
 Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock). They do not freeze unnecessary method/class shapes.
 
@@ -209,3 +209,4 @@ Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock)
 | LOCAL-NSQD-CAL | PRD §13 Calibration | ALG-STATE, ALG-VIA | EV-N00, EV-N04 |
 | LOCAL-NSQD-SEP | PRD §1 generate ≠ evaluate | ALG-SEP | EV-N05 |
 | LOCAL-NSQD-E | product thesis — evidence layer | ALG-PROJ (N2b), ALG-JOB | EV-N09 (N2b), EV-N12, EV-N17 |
+| LOCAL-NSQD-U | product thesis — surfaces | FR-U1, FR-U2 | EV-N18 |
