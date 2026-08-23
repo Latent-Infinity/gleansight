@@ -2,7 +2,7 @@
 
 Local-first **NS/QD-inspired discovery platform** with an **executable paper evidence pipeline** (discover, import, convert, extract, search).
 
-**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline is also executable (`python -m nsqd skeleton`, `python -m nsqd harvest`, and `python -m nsqd project`) and now includes domain-policy isolation, trusted-manifest-backed approved paper projection, a persisted pack-scoped map stage, Operator A, pack-scoped grounding with a live/hybrid budget of 3, pack-aware sufficiency verdicts, and a fail-closed acquisition-staging foundation. The resumable human approval → projection → snapshot recheck fallback and honest `finance/1` production validity still wait on approved DATA-NSQD-03 and the remaining N6 orchestration. Later archive/UI phases remain pending.
+**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline includes domain-policy isolation, trusted-manifest-backed projection, persisted map and reserved acquisition jobs, Operator A, bounded live/hybrid grounding, pack-aware sufficiency verdicts, the unified `gleansight` CLI, and Map/Archive/Card screens. Acquisition routing and approval/recheck orchestration are tested through an injected bridge, but the production paper bridge and durable approval bootstrap remain pending; honest `finance/1 production_valid` also waits on approved DATA-NSQD-03.
 
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
