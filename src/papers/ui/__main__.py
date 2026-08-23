@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+from nsqd.app.use_cases import MapSnapshotUseCase
+from nsqd.composition import build_container as build_nsqd_container
 from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import (
@@ -35,6 +37,10 @@ def build_ui_services(
         llm_api_key=llm_api_key,
     )
 
+    nsqd = build_nsqd_container(
+        db_path=Path(settings.data.root) / "nsqd" / "nsqd.sqlite",
+        index_path=Path(settings.data.root) / "nsqd" / "corpus.lancedb",
+    )
     candidate_store = PiccoloCandidateStore()
     extraction_store = PiccoloExtractionStore()
     external_id_store = PiccoloPaperExternalIdStore()
@@ -107,6 +113,14 @@ def build_ui_services(
             "scholar_rate_limit": settings.scholar.rate_limit_per_second,
             "require_open_access": settings.scholar.require_open_access,
         },
+        map_snapshot=lambda **kwargs: MapSnapshotUseCase(
+            snapshots=nsqd.ctx.snapshots,
+            records=nsqd.ctx.records,
+            morph=nsqd.ctx.morph,
+            clock=nsqd.clock,
+        ).run(**kwargs),
+        list_archive_elites=nsqd.ctx.cards.list_elites,
+        get_frontier_card=nsqd.ctx.cards.get_card,
     )
 
 

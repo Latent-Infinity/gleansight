@@ -113,6 +113,10 @@ def test_app_state_caches_screen_instances() -> None:
     assert isinstance(unknown, ft.Text)
     assert app.state.route_for_index(2) == "/monitor"
     assert app.state.index_for_route("/query") == 3
+    assert app.state.route_for_index(5) == "/map"
+    assert app.state.route_for_index(6) == "/archive"
+    assert app.state.route_for_index(7) == "/card"
+    assert app.state.index_for_route("/map") == 5
 
 
 def test_navigation_updates_route_and_screen() -> None:

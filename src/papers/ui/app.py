@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
+from papers.ui.screens.archive import ArchiveScreen
+from papers.ui.screens.card import CardScreen
+from papers.ui.screens.map import MapScreen
 from papers.ui.screens.monitor import MonitorScreen
 from papers.ui.screens.paper import PaperDetailScreen
 from papers.ui.screens.query import QueryScreen
@@ -40,10 +43,22 @@ class UIServices:
     reset_pipeline_stage: Callable[[str, str], None]
     synthesize_from_corpus: Any
     ui_settings: dict[str, Any]
+    map_snapshot: Callable[..., dict[str, Any]] | None = None
+    list_archive_elites: Callable[[], list[dict[str, Any]]] | None = None
+    get_frontier_card: Callable[[str], dict[str, Any] | None] | None = None
 
 
 class AppState:
-    ROUTES: tuple[str, ...] = ("/search", "/paper", "/monitor", "/query", "/synthesis")
+    ROUTES: tuple[str, ...] = (
+        "/search",
+        "/paper",
+        "/monitor",
+        "/query",
+        "/synthesis",
+        "/map",
+        "/archive",
+        "/card",
+    )
 
     def __init__(self, services: UIServices) -> None:
         self.current_route = self.ROUTES[0]
@@ -71,6 +86,9 @@ class AppState:
                 2: lambda: MonitorScreen(self._services).build(),
                 3: lambda: QueryScreen(self._services).build(),
                 4: lambda: SynthesisScreen(self._services).build(),
+                5: lambda: MapScreen(self._services).build(),
+                6: lambda: ArchiveScreen(self._services).build(),
+                7: lambda: CardScreen(self._services).build(),
             }
             builder = screen_builders.get(index)
             if builder:
@@ -125,6 +143,18 @@ class UIApp:
                 ft.NavigationRailDestination(
                     icon=pick_icon("QUESTION_ANSWER", "QUESTION_ANSWER_OUTLINED", "CHAT"),
                     label="Synthesis",
+                ),
+                ft.NavigationRailDestination(
+                    icon=pick_icon("MAP", "MAP_OUTLINED", "PUBLIC"),
+                    label="Map",
+                ),
+                ft.NavigationRailDestination(
+                    icon=pick_icon("ARCHIVE", "ARCHIVE_OUTLINED", "INVENTORY_2"),
+                    label="Archive",
+                ),
+                ft.NavigationRailDestination(
+                    icon=pick_icon("BADGE", "ARTICLE", "DESCRIPTION"),
+                    label="Card",
                 ),
             ],
             on_change=on_nav_change,
