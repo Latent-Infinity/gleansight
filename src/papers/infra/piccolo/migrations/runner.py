@@ -39,6 +39,7 @@ MIGRATION_005 = "005_nsqd_policy_verdicts"
 MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
 MIGRATION_007 = "007_nsqd_map_job_type"
 MIGRATION_008 = "008_nsqd_acquisition_cycles"
+MIGRATION_009 = "009_nsqd_acquire_job_type"
 KNOWN_MIGRATIONS = frozenset(
     {
         MIGRATION_001,
@@ -49,6 +50,7 @@ KNOWN_MIGRATIONS = frozenset(
         MIGRATION_006,
         MIGRATION_007,
         MIGRATION_008,
+        MIGRATION_009,
     }
 )
 
@@ -107,6 +109,7 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _apply_006(database)
     _apply_007(database)
     _apply_008(database)
+    _apply_009(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -212,7 +215,7 @@ def _apply_003(database: PiccoloDatabase) -> None:
         name = str(row["name"])
         sql = row["sql"]
         if name == "nsqd_jobs" and isinstance(sql, str):
-            if _classify_nsqd_jobs_sql(sql) in {"legacy", "current"}:
+            if _classify_nsqd_jobs_sql(sql) in {"legacy", "map_era", "current"}:
                 continue
         if not isinstance(sql, str) or normalize_create_table_sql(sql) != expected_sql[name]:
             raise ConfigurationError(f"existing NSQD table schema mismatch: {name}")
@@ -426,11 +429,11 @@ def _apply_006(database: PiccoloDatabase) -> None:
 def _apply_007(database: PiccoloDatabase) -> None:
     observed_schema = _nsqd_jobs_schema_state(database)
     if MIGRATION_007 in _applied_versions(database):
-        if observed_schema != "current":
+        if observed_schema not in {"map_era", "current"}:
             raise ConfigurationError("existing nsqd_jobs schema mismatch")
         return
 
-    if observed_schema == "current":
+    if observed_schema in {"map_era", "current"}:
         _record(database, MIGRATION_007)
         return
     if observed_schema != "legacy":
@@ -438,7 +441,9 @@ def _apply_007(database: PiccoloDatabase) -> None:
 
     async def rebuild_nsqd_jobs() -> None:
         async with database.engine.transaction(transaction_type=TransactionType.immediate):
-            await database.engine.run_querystring(QueryString(_new_nsqd_jobs_ddl()))
+            await database.engine.run_querystring(
+                QueryString(_new_nsqd_jobs_ddl(_map_era_nsqd_jobs_ddl()))
+            )
             await copy_nsqd_jobs_into_new_table(database.engine)
             await database.engine.run_querystring(QueryString("DROP TABLE nsqd_jobs"))
             await database.engine.run_querystring(
@@ -453,7 +458,7 @@ def _apply_007(database: PiccoloDatabase) -> None:
             )
 
     _run_sync(rebuild_nsqd_jobs())
-    if _nsqd_jobs_schema_state(database) != "current":
+    if _nsqd_jobs_schema_state(database) != "map_era":
         raise ConfigurationError("existing nsqd_jobs schema mismatch")
 
 
@@ -495,6 +500,42 @@ def _apply_008(database: PiccoloDatabase) -> None:
 
     _run_sync(create_acquisition_cycles())
     _validate_acquisition_cycle_schema(database)
+
+
+def _apply_009(database: PiccoloDatabase) -> None:
+    observed_schema = _nsqd_jobs_schema_state(database)
+    if MIGRATION_009 in _applied_versions(database):
+        if observed_schema != "current":
+            raise ConfigurationError("existing nsqd_jobs schema mismatch")
+        return
+
+    if observed_schema == "current":
+        _record(database, MIGRATION_009)
+        return
+    if observed_schema != "map_era":
+        raise ConfigurationError("existing nsqd_jobs schema mismatch")
+
+    async def rebuild_nsqd_jobs() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            await database.engine.run_querystring(
+                QueryString(_new_nsqd_jobs_ddl(_current_nsqd_jobs_ddl()))
+            )
+            await copy_nsqd_jobs_into_new_table(database.engine)
+            await database.engine.run_querystring(QueryString("DROP TABLE nsqd_jobs"))
+            await database.engine.run_querystring(
+                QueryString("ALTER TABLE new_nsqd_jobs RENAME TO nsqd_jobs")
+            )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_009,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(rebuild_nsqd_jobs())
+    if _nsqd_jobs_schema_state(database) != "current":
+        raise ConfigurationError("existing nsqd_jobs schema mismatch")
 
 
 def _validate_acquisition_cycle_schema(database: PiccoloDatabase) -> None:
@@ -540,6 +581,9 @@ def _classify_nsqd_jobs_sql(sql: str) -> str:
     current = normalize_create_table_sql(_current_nsqd_jobs_ddl())
     if observed == current:
         return "current"
+    map_era = normalize_create_table_sql(_map_era_nsqd_jobs_ddl())
+    if observed == map_era:
+        return "map_era"
     legacy = normalize_create_table_sql(_legacy_nsqd_jobs_ddl())
     if observed == legacy:
         return "legacy"
@@ -552,14 +596,16 @@ def _current_nsqd_jobs_ddl() -> str:
     return NSQD_TABLE_DDL_BY_NAME["nsqd_jobs"]
 
 
+def _map_era_nsqd_jobs_ddl() -> str:
+    return _current_nsqd_jobs_ddl().replace(",'acquire'", "")
+
+
 def _legacy_nsqd_jobs_ddl() -> str:
-    return _current_nsqd_jobs_ddl().replace(",'map'", "")
+    return _map_era_nsqd_jobs_ddl().replace(",'map'", "")
 
 
-def _new_nsqd_jobs_ddl() -> str:
-    return _current_nsqd_jobs_ddl().replace(
-        "CREATE TABLE IF NOT EXISTS nsqd_jobs", "CREATE TABLE new_nsqd_jobs"
-    )
+def _new_nsqd_jobs_ddl(ddl: str) -> str:
+    return ddl.replace("CREATE TABLE IF NOT EXISTS nsqd_jobs", "CREATE TABLE new_nsqd_jobs")
 
 
 async def copy_nsqd_jobs_into_new_table(engine: SQLiteEngine) -> None:

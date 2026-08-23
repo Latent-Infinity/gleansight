@@ -25,7 +25,7 @@ NSQD_TABLE_DDL = (
         last_error TEXT,
         created_at TIMESTAMPTZ NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL,
-        CHECK (type IN ('harvest','project','diverge','ground','score','rescore','map')),
+        CHECK (type IN ('harvest','project','diverge','ground','score','rescore','map','acquire')),
         CHECK (status IN ('queued','running','succeeded','failed','canceled'))
     )
     """,
