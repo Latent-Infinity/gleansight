@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition through an injected paper adapter with durable digest bootstrap, the `gleansight` CLI, and Map/Archive/Card screens. Default production paper-pipeline composition remains pending; honest `finance/1 production_valid` also waits on approved DATA-NSQD-03.
+**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Honest `finance/1 production_valid` waits on approved DATA-NSQD-03.
 
 **Document roles**
 
@@ -170,7 +170,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
-N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful orchestration seam and injection-ready adapter exist, while default production composition remains pending runtime and analysis-metadata bootstrap.
+N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks. Default acquire/UI composition wires the paper runtime, paper job workers, and analysis-metadata bootstrap.
 
 **Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, acquisition orchestration, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
 
