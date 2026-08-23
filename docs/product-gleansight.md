@@ -2,7 +2,7 @@
 
 **Status:** Direction for review (2026-08-18)
 **What:** gleansight is a **local-first NS/QD-inspired discovery platform** (see `docs/glossary-nsqd.md`).
-**Maturity:** The **paper evidence pipeline is executable today**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, the `gleansight` CLI, and Map/Archive/Card screens. Bounded acquisition orchestration is tested behind an injected bridge; its production paper bridge and durable approval bootstrap remain pending. Honest `finance/1` production validity also waits on approved DATA-NSQD-03.
+**Maturity:** The **paper evidence pipeline is executable today**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition through an injected paper adapter with durable digest bootstrap, the `gleansight` CLI, and Map/Archive/Card screens. Default production paper-pipeline composition remains pending; honest `finance/1` production validity also waits on approved DATA-NSQD-03.
 **Also:** the existing paper pipeline stays, as the **evidence / harvest layer** for scholarly literature.
 
 This document is the product thesis. Framework detail: `docs/prd-ns-qd.md`. Implementation bindings: `docs/requirements-ns-qd.md`. Build order: `docs/development-plan-ns-qd.md` (discovery) and `docs/development-plan-open-work.md` (evidence-layer closeout).

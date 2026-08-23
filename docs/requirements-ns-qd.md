@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, the `gleansight` CLI, and Map/Archive/Card screens. Bounded acquisition orchestration is tested through an injected bridge; the production paper bridge and durable approval bootstrap remain pending. Honest `finance/1 production_valid` also waits on approved DATA-NSQD-03.
+**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition through an injected paper adapter with durable digest bootstrap, the `gleansight` CLI, and Map/Archive/Card screens. Default production paper-pipeline composition remains pending; honest `finance/1 production_valid` also waits on approved DATA-NSQD-03.
 
 **Document roles**
 
@@ -74,7 +74,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 ### Evidence layer (existing — protect)
 
 - **FR-E1** Discover, import, pipeline, analysis, hybrid search, projects/tags, CLI, UI keep current behavior.
-- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist explicit `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` over normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`; the projector assigns/persists `paper-projector/1`. The application computes the normalized reviewed-payload digest and requires it in an injected approved-digest allowlist; caller payloads cannot self-approve, and the payload policy must match the explicit application argument. Canonical `content_hash` stays ALG-SNAP `{type, paraphrase, source}`; `record_id` is policy + source/hash-revision sensitive; the same full identity is idempotent and any approved source/hash revision creates a new record/snapshot. Existing pre-digest projections fail closed rather than mutating an immutable snapshot; an explicit migration is required. **N2b**, not N1.
+- **FR-E2** Projection uses a **human-approved mechanism paraphrase** (not the abstract). Model-assisted drafting is allowed only when human approval is recorded. Persist explicit `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` over normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`; the projector assigns/persists `paper-projector/1`. The application computes the normalized reviewed-payload digest and requires it in an injected approved-digest allowlist; caller payloads cannot self-approve, and the payload policy must match the explicit application argument. Canonical `content_hash` stays ALG-SNAP `{type, paraphrase, source}`; `record_id` is policy + source/hash-revision sensitive; the same full identity is idempotent and any approved source/hash revision creates a new record/snapshot. Existing paper projections without a durably approved digest fail closed rather than mutating an immutable snapshot; an explicit migration is required. **N2b**, not N1.
 
 ### Harvest
 
@@ -86,7 +86,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 - **FR-H7** Snapshot id from the canonical JSON preimage (`ALG-SNAP`). Duplicates/retractions per that contract.
 - **FR-H8** Sufficiency failure reasons are the closed set in `ALG-SUF` and are all tested.
 - **FR-H6** `type=paper` records may originate from FR-E2 (N2b).
-- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence: **EV-N17 Pending** until the production bridge and approval bootstrap are evidenced.
+- **FR-H9** Bounded sufficiency-driven fallback is observable only for searchable `ALG-SUF` failures: searchable failures may trigger the N6 acquisition loop, integrity failures stop for review, and LLM output cannot set human approval or promote corpus evidence. Lifecycle/evidence: **EV-N17 Required**.
 
 ### Map
 
@@ -166,11 +166,11 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 | `LivePaperSearch` | N5 search-only access to scholar results |
 | `PolicyVerdictStore` | Persist pack-scoped ALG-SUF verdicts |
 | `AcquisitionCycleStore` | Reserve and persist fail-closed acquisition staging cycles |
-| `PaperAcquisitionBridge` | N6 injected staging boundary; production paper-pipeline implementation remains pending |
+| `PaperAcquisitionBridge` | N6 paper-pipeline staging boundary; injection-ready adapter is `PapersAcquisitionBridge` |
 
 **Domain services / functions** (not ports): novelty calculation, viability policy, status policy, elite decision, schema validation, snapshot digest, grounding class selection.
 
-N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful orchestration seam exists, while its production NSQD→paper implementation remains pending N6 completion.
+N2b consumes a reviewed projection payload, not a dedicated paper-read port. N5 adds typed search-only hybrid/scholar interfaces for prior-art checks; the stateful orchestration seam and injection-ready adapter exist, while default production composition remains pending runtime and analysis-metadata bootstrap.
 
 **Application use cases** (not ports): `ProjectPaperUseCase` (N2b), harvest, map, acquisition orchestration, diverge, ground, score, archive insert. Stage handlers are callable without the CLI.
 
