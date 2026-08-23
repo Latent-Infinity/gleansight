@@ -40,6 +40,7 @@ MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
 MIGRATION_007 = "007_nsqd_map_job_type"
 MIGRATION_008 = "008_nsqd_acquisition_cycles"
 MIGRATION_009 = "009_nsqd_acquire_job_type"
+MIGRATION_010 = "010_nsqd_approval_bootstrap"
 KNOWN_MIGRATIONS = frozenset(
     {
         MIGRATION_001,
@@ -51,6 +52,7 @@ KNOWN_MIGRATIONS = frozenset(
         MIGRATION_007,
         MIGRATION_008,
         MIGRATION_009,
+        MIGRATION_010,
     }
 )
 
@@ -110,6 +112,7 @@ def apply_forward_migrations(database: PiccoloDatabase) -> None:
     _apply_007(database)
     _apply_008(database)
     _apply_009(database)
+    _apply_010(database)
 
 
 def _ensure_migrations_table(database: PiccoloDatabase) -> None:
@@ -536,6 +539,157 @@ def _apply_009(database: PiccoloDatabase) -> None:
     _run_sync(rebuild_nsqd_jobs())
     if _nsqd_jobs_schema_state(database) != "current":
         raise ConfigurationError("existing nsqd_jobs schema mismatch")
+
+
+def _apply_010(database: PiccoloDatabase) -> None:
+    if MIGRATION_010 in _applied_versions(database):
+        _validate_approval_bootstrap_schema(database)
+        return
+
+    quarantine_ids = _plan_pre_digest_projections(database)
+    digest_exists = (
+        database.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = ? AND name = ?",
+            ["table", "nsqd_approved_projection_digests"],
+        )
+        is not None
+    )
+    quarantine_exists = (
+        database.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = ? AND name = ?",
+            ["table", "nsqd_pre_digest_projections"],
+        )
+        is not None
+    )
+    if digest_exists != quarantine_exists:
+        raise ConfigurationError("existing NSQD approval bootstrap schema is partial")
+    if digest_exists:
+        _validate_approval_bootstrap_schema(database)
+
+    async def apply_approval_bootstrap() -> None:
+        async with database.engine.transaction(transaction_type=TransactionType.immediate):
+            if not digest_exists:
+                await database.engine.run_querystring(
+                    QueryString(
+                        """
+                        CREATE TABLE nsqd_approved_projection_digests (
+                            digest VARCHAR PRIMARY KEY NOT NULL,
+                            approved_at TIMESTAMPTZ NOT NULL
+                        )
+                        """
+                    )
+                )
+                await database.engine.run_querystring(
+                    QueryString(
+                        """
+                        CREATE TABLE nsqd_pre_digest_projections (
+                            record_id VARCHAR PRIMARY KEY NOT NULL
+                        )
+                        """
+                    )
+                )
+            digest_rows = await database.engine.run_querystring(
+                QueryString("PRAGMA table_info(nsqd_approved_projection_digests)")
+            )
+            quarantine_rows = await database.engine.run_querystring(
+                QueryString("PRAGMA table_info(nsqd_pre_digest_projections)")
+            )
+            _validate_approval_bootstrap_rows(digest_rows, quarantine_rows)
+            for record_id in quarantine_ids:
+                await database.engine.run_querystring(
+                    QueryString(
+                        """
+                        INSERT INTO nsqd_pre_digest_projections (record_id)
+                        VALUES ({})
+                        ON CONFLICT(record_id) DO NOTHING
+                        """,
+                        record_id,
+                    )
+                )
+            await database.engine.run_querystring(
+                QueryString(
+                    "INSERT INTO schema_migrations (version, applied_at) VALUES ({}, {})",
+                    MIGRATION_010,
+                    datetime.now(UTC).isoformat(),
+                )
+            )
+
+    _run_sync(apply_approval_bootstrap())
+
+
+def _plan_pre_digest_projections(database: PiccoloDatabase) -> list[str]:
+    if (
+        database.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = ? AND name = ?",
+            ["table", "nsqd_corpus_records"],
+        )
+        is None
+    ):
+        return []
+    rows = database.fetchall(
+        "SELECT record_id, payload_json FROM nsqd_corpus_records ORDER BY record_id"
+    )
+    approved_digests: set[str] = set()
+    if (
+        database.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = ? AND name = ?",
+            ["table", "nsqd_approved_projection_digests"],
+        )
+        is not None
+    ):
+        approved_digests = {
+            str(row["digest"])
+            for row in database.fetchall("SELECT digest FROM nsqd_approved_projection_digests")
+        }
+    quarantine_ids: list[str] = []
+    for row in rows:
+        try:
+            payload = json.loads(str(row["payload_json"]))
+        except json.JSONDecodeError as exc:
+            raise ConfigurationError("existing NSQD corpus record payload is not JSON") from exc
+        if not isinstance(payload, dict):
+            raise ConfigurationError("existing NSQD corpus record payload is not a mapping")
+        source_paper_id = payload.get("source_paper_id")
+        digest = payload.get("reviewed_projection_digest")
+        digest_is_approved = (
+            isinstance(digest, str)
+            and len(digest) == 64
+            and all(ch in "0123456789abcdef" for ch in digest)
+            and digest in approved_digests
+        )
+        if isinstance(source_paper_id, str) and source_paper_id.strip() and not digest_is_approved:
+            quarantine_ids.append(str(row["record_id"]))
+    return quarantine_ids
+
+
+def _validate_approval_bootstrap_schema(database: PiccoloDatabase) -> None:
+    _validate_approval_bootstrap_rows(
+        database.fetchall("PRAGMA table_info(nsqd_approved_projection_digests)"),
+        database.fetchall("PRAGMA table_info(nsqd_pre_digest_projections)"),
+    )
+
+
+def _validate_approval_bootstrap_rows(
+    digest_rows: list[dict[str, Any]],
+    quarantine_rows: list[dict[str, Any]],
+) -> None:
+    digest_expected = [
+        ("digest", "VARCHAR", 1, 1),
+        ("approved_at", "TIMESTAMPTZ", 1, 0),
+    ]
+    digest_observed = [
+        (str(row["name"]), str(row["type"]), int(row["notnull"]), int(row["pk"]))
+        for row in digest_rows
+    ]
+    if digest_observed != digest_expected:
+        raise ConfigurationError("existing NSQD approved digest schema mismatch")
+    quarantine_expected = [("record_id", "VARCHAR", 1, 1)]
+    quarantine_observed = [
+        (str(row["name"]), str(row["type"]), int(row["notnull"]), int(row["pk"]))
+        for row in quarantine_rows
+    ]
+    if quarantine_observed != quarantine_expected:
+        raise ConfigurationError("existing NSQD pre-digest projection schema mismatch")
 
 
 def _validate_acquisition_cycle_schema(database: PiccoloDatabase) -> None:

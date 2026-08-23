@@ -11,6 +11,7 @@ import pytest
 from nsqd.infra.piccolo.schema import NSQD_TABLE_DDL
 from papers.domain.errors import ConfigurationError
 from papers.infra.piccolo.database import _TABLES, PiccoloDatabase
+from papers.infra.piccolo.migrations.runner import _apply_010
 
 _NOW = datetime.now(UTC).isoformat()
 _JOB_COLUMNS = (
@@ -21,6 +22,7 @@ _MIGRATION_006 = "006_nsqd_legacy_finance_policy_backfill"
 _MIGRATION_007 = "007_nsqd_map_job_type"
 _MIGRATION_008 = "008_nsqd_acquisition_cycles"
 _MIGRATION_009 = "009_nsqd_acquire_job_type"
+_MIGRATION_010 = "010_nsqd_approval_bootstrap"
 _FINANCE_CELL_ID = "mechanism=flow-driven|target=drawdown|horizon=intraday"
 _OPTIMIZATION_CELL_ID = (
     "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
@@ -246,6 +248,7 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
         _MIGRATION_007,
         _MIGRATION_008,
         _MIGRATION_009,
+        _MIGRATION_010,
     }
     assert "CHECK" in _jobs_sql(db).upper()
     assert _policy_verdict_columns(db) == [
@@ -269,7 +272,7 @@ def test_fresh_database_applies_baseline_and_check(tmp_path: Path) -> None:
     ]
     db.initialize_schema()
     again = db.fetchall("SELECT version FROM schema_migrations")
-    assert len(again) == 9
+    assert len(again) == 10
 
 
 def test_map_job_migration_upgrades_existing_nsqd_jobs_check_and_preserves_rows(
@@ -496,6 +499,157 @@ def test_acquire_job_migration_recovers_when_new_check_already_applied_without_l
     )
 
 
+def test_approval_bootstrap_quarantines_pre_digest_rows_without_mutating_payload(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "pre-digest.sqlite")
+    db.initialize_schema()
+    payload = {
+        "record_id": "pre-1",
+        "source_paper_id": "paper-1",
+        "paraphrase": "legacy projected paper",
+        "type": "paper",
+        "domain_policy_id": "finance/1",
+    }
+    db.execute(
+        "INSERT INTO nsqd_corpus_records (record_id, payload_json) VALUES (?, ?)",
+        ["pre-1", json.dumps(payload)],
+    )
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+    db.execute("DROP TABLE nsqd_approved_projection_digests")
+    db.execute("DROP TABLE nsqd_pre_digest_projections")
+
+    db.initialize_schema()
+
+    stored = db.fetchone(
+        "SELECT payload_json FROM nsqd_corpus_records WHERE record_id = ?",
+        ["pre-1"],
+    )
+    assert stored is not None
+    assert json.loads(str(stored["payload_json"])) == payload
+    quarantined = db.fetchone(
+        "SELECT record_id FROM nsqd_pre_digest_projections WHERE record_id = ?",
+        ["pre-1"],
+    )
+    assert quarantined is not None
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+        is not None
+    )
+
+
+def test_approval_bootstrap_failure_does_not_record_migration(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "pre-digest-invalid.sqlite")
+    db.initialize_schema()
+    db.execute(
+        "INSERT INTO nsqd_corpus_records (record_id, payload_json) VALUES (?, ?)",
+        [
+            "a-valid-projection",
+            json.dumps({"source_paper_id": "paper-1", "paraphrase": "legacy"}),
+        ],
+    )
+    db.execute(
+        "INSERT INTO nsqd_corpus_records (record_id, payload_json) VALUES (?, ?)",
+        ["z-bad-json", "{not-json"],
+    )
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+    db.execute("DROP TABLE nsqd_approved_projection_digests")
+    db.execute("DROP TABLE nsqd_pre_digest_projections")
+
+    with pytest.raises(ConfigurationError, match="payload is not JSON"):
+        _apply_010(db)
+
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+        is None
+    )
+    assert (
+        db.fetchone(
+            "SELECT name FROM sqlite_schema WHERE type = ? AND name = ?",
+            ["table", "nsqd_pre_digest_projections"],
+        )
+        is None
+    )
+
+
+def test_approval_bootstrap_rolls_back_schema_when_in_transaction_validation_fails(
+    tmp_path: Path,
+) -> None:
+    db = PiccoloDatabase(tmp_path / "approval-rollback.sqlite")
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+    db.execute("DROP TABLE nsqd_approved_projection_digests")
+    db.execute("DROP TABLE nsqd_pre_digest_projections")
+
+    with (
+        patch(
+            "papers.infra.piccolo.migrations.runner._validate_approval_bootstrap_rows",
+            side_effect=ConfigurationError("injected schema validation failure"),
+        ),
+        pytest.raises(ConfigurationError, match="injected schema validation failure"),
+    ):
+        _apply_010(db)
+
+    names = {
+        str(row["name"])
+        for row in db.fetchall("SELECT name FROM sqlite_schema WHERE type = ?", ["table"])
+    }
+    assert "nsqd_approved_projection_digests" not in names
+    assert "nsqd_pre_digest_projections" not in names
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+        is None
+    )
+
+
+def test_approval_bootstrap_quarantines_unapproved_digest(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "unapproved-digest.sqlite")
+    db.initialize_schema()
+    db.execute(
+        "INSERT INTO nsqd_corpus_records (record_id, payload_json) VALUES (?, ?)",
+        [
+            "untrusted-projection",
+            json.dumps(
+                {
+                    "source_paper_id": "paper-1",
+                    "reviewed_projection_digest": "f" * 64,
+                }
+            ),
+        ],
+    )
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+    db.execute("DROP TABLE nsqd_approved_projection_digests")
+    db.execute("DROP TABLE nsqd_pre_digest_projections")
+
+    _apply_010(db)
+
+    assert (
+        db.fetchone(
+            "SELECT record_id FROM nsqd_pre_digest_projections WHERE record_id = ?",
+            ["untrusted-projection"],
+        )
+        is not None
+    )
+
+
+def test_approval_bootstrap_rejects_partial_schema_without_ledger_row(tmp_path: Path) -> None:
+    db = PiccoloDatabase(tmp_path / "approval-partial.sqlite")
+    db.initialize_schema()
+    db.execute("DELETE FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+    db.execute("DROP TABLE nsqd_approved_projection_digests")
+    db.execute("DROP TABLE nsqd_pre_digest_projections")
+    db.execute("CREATE TABLE nsqd_approved_projection_digests (digest VARCHAR PRIMARY KEY)")
+    db.execute("CREATE TABLE nsqd_pre_digest_projections (record_id VARCHAR PRIMARY KEY NOT NULL)")
+
+    with pytest.raises(ConfigurationError, match="approved digest schema mismatch"):
+        db.initialize_schema()
+
+    assert (
+        db.fetchone("SELECT version FROM schema_migrations WHERE version = ?", [_MIGRATION_010])
+        is None
+    )
+
+
 def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempotent(
     tmp_path: Path,
 ) -> None:
@@ -631,7 +785,7 @@ def test_policy_backfill_migration_upgrades_legacy_finance_rows_and_is_idempoten
         )
         == elite_row
     )
-    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 9
+    assert len(db.fetchall("SELECT version FROM schema_migrations")) == 10
 
 
 def test_policy_backfill_migration_rejects_candidate_outside_finance_universe(
@@ -1022,6 +1176,8 @@ def test_nsqd_migration_recovers_when_tables_exist_without_ledger_row(tmp_path: 
         "nsqd_morphospace",
         "nsqd_policy_verdicts",
         "nsqd_acquisition_cycles",
+        "nsqd_approved_projection_digests",
+        "nsqd_pre_digest_projections",
     } <= names
 
 
