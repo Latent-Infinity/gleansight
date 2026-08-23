@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from nsqd.infra.piccolo.stores import (
     PiccoloAcquisitionCycleStore,
+    PiccoloApprovedDigestStore,
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
@@ -13,6 +14,7 @@ from nsqd.infra.piccolo.stores import (
 
 __all__ = [
     "PiccoloAcquisitionCycleStore",
+    "PiccoloApprovedDigestStore",
     "PiccoloCorpusRecordStore",
     "PiccoloCorpusSnapshotStore",
     "PiccoloFrontierCardStore",

@@ -11,6 +11,7 @@ import pytest
 from nsqd.infra.piccolo.schema import NSQD_TABLE_NAMES
 from nsqd.infra.piccolo.stores import (
     PiccoloAcquisitionCycleStore,
+    PiccoloApprovedDigestStore,
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
@@ -151,6 +152,44 @@ def test_nsqd_jobs_claim_retry_cancel_and_utc(tmp_path: Path) -> None:
         queue.enqueue("harvest", {}, run_after=datetime(2024, 1, 1))
 
 
+def test_snapshot_record_ids_exclude_quarantined_pre_digest_projections(
+    tmp_path: Path,
+) -> None:
+    db = _db(tmp_path)
+    snapshots = PiccoloCorpusSnapshotStore(db)
+    snapshots.commit("snapshot-1", ["trusted", "pre-digest"], schema_version=1)
+    db.execute(
+        "INSERT INTO nsqd_pre_digest_projections (record_id) VALUES (?)",
+        ["pre-digest"],
+    )
+
+    assert snapshots.record_ids("snapshot-1") == ["trusted"]
+
+
+def test_approving_digest_releases_matching_quarantined_projection(tmp_path: Path) -> None:
+    db = _db(tmp_path)
+    digest = "ab" * 32
+    records = PiccoloCorpusRecordStore(db)
+    records.put(
+        {
+            "record_id": "projected",
+            "source_paper_id": "paper-1",
+            "reviewed_projection_digest": digest,
+        }
+    )
+    snapshots = PiccoloCorpusSnapshotStore(db)
+    snapshots.commit("snapshot-1", ["projected"], schema_version=1)
+    db.execute(
+        "INSERT INTO nsqd_pre_digest_projections (record_id) VALUES (?)",
+        ["projected"],
+    )
+    assert snapshots.record_ids("snapshot-1") == []
+
+    PiccoloApprovedDigestStore(db).add(digest, approved_at=datetime(2024, 1, 1, tzinfo=UTC))
+
+    assert snapshots.record_ids("snapshot-1") == ["projected"]
+
+
 def test_nsqd_jobs_claim_specific_job_leaves_older_queued_job_untouched(tmp_path: Path) -> None:
     db = _db(tmp_path)
     queue = PiccoloNsqdJobQueue(db)
@@ -270,3 +309,9 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
     cycles.put_cycle("cyc-1", {"route": "search"})
     assert cycles.get("cyc-1") == {"route": "search"}
     assert cycles.get("missing") is None
+    digests = PiccoloApprovedDigestStore(db)
+    digest = "a" * 64
+    digests.add(digest, approved_at=datetime(2024, 1, 1, tzinfo=UTC))
+    assert digests.list_digests() == frozenset({digest})
+    with pytest.raises(ValueError, match="digest must be a lowercase SHA-256"):
+        digests.add("nope", approved_at=datetime(2024, 1, 1, tzinfo=UTC))

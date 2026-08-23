@@ -126,7 +126,11 @@ class PiccoloCorpusSnapshotStore:
             return []
         ids = row["record_ids"]
         assert isinstance(ids, list)
-        return [str(item) for item in ids]
+        quarantined = {
+            str(item["record_id"])
+            for item in self._db.fetchall("SELECT record_id FROM nsqd_pre_digest_projections")
+        }
+        return [str(item) for item in ids if str(item) not in quarantined]
 
 
 class PiccoloHarvestStore:
@@ -408,6 +412,48 @@ class PiccoloAcquisitionCycleStore:
         if row is None:
             return None
         return _loads(str(row["payload_json"]))
+
+
+class PiccoloApprovedDigestStore:
+    def __init__(self, database: PiccoloDatabase) -> None:
+        self._db = database
+
+    def add(self, digest: str, *, approved_at: datetime) -> None:
+        _require_utc_datetime("approved_at", approved_at)
+        if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
+            raise ValueError("digest must be a lowercase SHA-256 hex digest")
+        matching_record_ids = [
+            str(row["record_id"])
+            for row in self._db.fetchall("SELECT record_id, payload_json FROM nsqd_corpus_records")
+            if _loads(str(row["payload_json"])).get("reviewed_projection_digest") == digest
+        ]
+
+        async def approve_in_transaction() -> None:
+            async with self._db.engine.transaction(transaction_type=TransactionType.immediate):
+                await self._db.engine.run_querystring(
+                    QueryString(
+                        """
+                        INSERT INTO nsqd_approved_projection_digests (digest, approved_at)
+                        VALUES ({}, {})
+                        ON CONFLICT(digest) DO UPDATE SET approved_at = excluded.approved_at
+                        """,
+                        digest,
+                        approved_at.isoformat(),
+                    )
+                )
+                for record_id in matching_record_ids:
+                    await self._db.engine.run_querystring(
+                        QueryString(
+                            "DELETE FROM nsqd_pre_digest_projections WHERE record_id = {}",
+                            record_id,
+                        )
+                    )
+
+        run_sync(approve_in_transaction())
+
+    def list_digests(self) -> frozenset[str]:
+        rows = self._db.fetchall("SELECT digest FROM nsqd_approved_projection_digests")
+        return frozenset(str(row["digest"]) for row in rows)
 
 
 class PiccoloNsqdJobQueue:
