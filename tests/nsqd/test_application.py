@@ -9,8 +9,10 @@ import yaml
 
 from nsqd.app.handlers import (
     NsqdHandlerContext,
+    handle_acquire,
     handle_diverge,
     handle_ground,
+    handle_map,
     handle_project,
     handle_rescore,
     handle_score,
@@ -26,6 +28,7 @@ from nsqd.app.use_cases import (
 from nsqd.domain.snapshot import snapshot_id
 from nsqd.null_adapters import (
     FixedClock,
+    NullAcquisitionCycleStore,
     NullCorpusIndex,
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
@@ -33,6 +36,8 @@ from nsqd.null_adapters import (
     NullHarvestStore,
     NullMorphospaceStore,
     NullNsqdCandidateStore,
+    NullPaperAcquisitionBridge,
+    NullPolicyVerdictStore,
 )
 from nsqd.ports import NsqdJob
 
@@ -704,6 +709,8 @@ def test_score_rejects_invalid_snapshot_state_without_persisting_card() -> None:
         (handle_score, "score"),
         (handle_rescore, "rescore"),
         (handle_project, "project"),
+        (handle_map, "map"),
+        (handle_acquire, "acquire"),
     ],
 )
 def test_handlers_reject_mismatched_job_type_before_reading_payload(
@@ -722,3 +729,91 @@ def test_handlers_reject_mismatched_job_type_before_reading_payload(
 
     with pytest.raises(ValueError, match=f"expected job.type={expected_type}"):
         handler(ctx, job)
+
+
+def test_acquire_handler_requires_complete_context() -> None:
+    ctx = _ctx()
+    job = NsqdJob(
+        job_id="job-1",
+        type="acquire",
+        status="running",
+        payload={
+            "snapshot_id": "snap",
+            "domain_policy_id": "finance/1",
+            "target": "calibration",
+        },
+        attempts=1,
+        max_attempts=3,
+        run_after=None,
+    )
+    with pytest.raises(ValueError, match="acquisition context is incomplete"):
+        handle_acquire(ctx, job)
+
+
+def test_acquire_handler_rejects_non_mapping_approved_projection() -> None:
+    ctx = _ctx()
+    ctx.cycles = NullAcquisitionCycleStore()
+    ctx.verdicts = NullPolicyVerdictStore()
+    ctx.bridge = NullPaperAcquisitionBridge()
+    job = NsqdJob(
+        job_id="job-1",
+        type="acquire",
+        status="running",
+        payload={
+            "snapshot_id": "snap",
+            "domain_policy_id": "finance/1",
+            "target": "calibration",
+            "approved_projections": ["not-a-mapping"],
+        },
+        attempts=1,
+        max_attempts=3,
+        run_after=None,
+    )
+
+    with pytest.raises(ValueError, match="list of mappings"):
+        handle_acquire(ctx, job)
+
+
+def test_acquire_handler_passes_approved_digests_to_promotion(monkeypatch) -> None:
+    import nsqd.app.handlers as handlers
+
+    captured: dict[str, object] = {}
+
+    class _Promote:
+        policies = None
+
+        def __init__(self, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+        def run(self, **_kwargs: object) -> dict[str, object]:
+            return {
+                "state": "calibration",
+                "failures": (),
+                "search_context": {},
+            }
+
+    ctx = _ctx()
+    ctx.approved_projection_digests = frozenset({"a" * 64})
+    ctx.cycles = NullAcquisitionCycleStore()
+    ctx.verdicts = NullPolicyVerdictStore()
+    ctx.bridge = NullPaperAcquisitionBridge()
+    ctx.snapshots.commit("snap", [], schema_version=1)
+    monkeypatch.setattr(handlers, "PromoteSnapshotUseCase", _Promote)
+    job = NsqdJob(
+        job_id="job-1",
+        type="acquire",
+        status="running",
+        payload={
+            "snapshot_id": "snap",
+            "domain_policy_id": "finance/1",
+            "target": "calibration",
+        },
+        attempts=1,
+        max_attempts=3,
+        run_after=None,
+    )
+
+    result = handle_acquire(ctx, job)
+
+    assert result["status"] == "succeeded"
+    assert captured["approved_harvest_seed_digests"] == ctx.approved_projection_digests

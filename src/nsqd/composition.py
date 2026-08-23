@@ -7,6 +7,7 @@ from pathlib import Path
 from nsqd.app.handlers import NsqdHandlerContext
 from nsqd.infra.lancedb.index import LanceDBCorpusIndex
 from nsqd.infra.piccolo.stores import (
+    PiccoloAcquisitionCycleStore,
     PiccoloCorpusRecordStore,
     PiccoloCorpusSnapshotStore,
     PiccoloFrontierCardStore,
@@ -14,8 +15,9 @@ from nsqd.infra.piccolo.stores import (
     PiccoloMorphospaceStore,
     PiccoloNsqdCandidateStore,
     PiccoloNsqdJobQueue,
+    PiccoloPolicyVerdictStore,
 )
-from nsqd.null_adapters import FixedClock, SystemClock
+from nsqd.null_adapters import FixedClock, NullPaperAcquisitionBridge, SystemClock
 from nsqd.ports import Clock, HybridPaperSearch, LivePaperSearch
 from papers.infra.piccolo.database import PiccoloDatabase
 
@@ -58,6 +60,9 @@ def build_container(
         ),
         scholar_client=scholar_client,
         paper_vector_index=paper_hybrid_search,
+        cycles=PiccoloAcquisitionCycleStore(database),
+        verdicts=PiccoloPolicyVerdictStore(database),
+        bridge=NullPaperAcquisitionBridge(),
     )
     return NsqdContainer(
         clock=resolved_clock,

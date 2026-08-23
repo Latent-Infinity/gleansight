@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
 from nsqd.app.use_cases import (
+    AcquireCorpusUseCase,
     ArchiveInsertUseCase,
     DivergeUseCase,
     GroundUseCase,
     HarvestUseCase,
     MapSnapshotUseCase,
     ProjectPaperUseCase,
+    PromoteSnapshotUseCase,
     RescoreUseCase,
     ScoreUseCase,
 )
+from nsqd.domain.policy import DomainPolicy
 from nsqd.ports import (
+    AcquisitionCycleStore,
     Clock,
     CorpusIndex,
     CorpusRecordStore,
@@ -26,6 +31,8 @@ from nsqd.ports import (
     NsqdCandidateStore,
     NsqdJob,
     NsqdJobType,
+    PaperAcquisitionBridge,
+    PolicyVerdictStore,
 )
 
 
@@ -42,6 +49,10 @@ class NsqdHandlerContext:
     approved_projection_digests: frozenset[str] = frozenset()
     scholar_client: LivePaperSearch | None = None
     paper_vector_index: HybridPaperSearch | None = None
+    cycles: AcquisitionCycleStore | None = None
+    verdicts: PolicyVerdictStore | None = None
+    bridge: PaperAcquisitionBridge | None = None
+    policies: Mapping[str, DomainPolicy] | None = None
 
 
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
@@ -130,6 +141,47 @@ def handle_map(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         domain_policy_id=_require_payload_string(payload, "domain_policy_id"),
         snapshot_state=_require_payload_string(payload, "snapshot_state"),
         expected_cell_ids=_require_expected_cell_ids(payload),
+    )
+    return {"status": "succeeded", **result}
+
+
+def handle_acquire(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
+    _require_job_type(job, "acquire")
+    payload = job.payload
+    if ctx.cycles is None or ctx.verdicts is None or ctx.bridge is None:
+        raise ValueError("acquisition context is incomplete")
+    human_decision = payload.get("human_decision")
+    if human_decision is not None and not isinstance(human_decision, str):
+        raise ValueError("human_decision must be a string")
+    approved_projections = payload.get("approved_projections")
+    if approved_projections is not None and (
+        not isinstance(approved_projections, list)
+        or any(not isinstance(item, dict) for item in approved_projections)
+    ):
+        raise ValueError("approved_projections must be a list of mappings")
+    result = AcquireCorpusUseCase(
+        cycles=ctx.cycles,
+        promote=PromoteSnapshotUseCase(
+            snapshots=ctx.snapshots,
+            records=ctx.records,
+            verdicts=ctx.verdicts,
+            clock=ctx.clock,
+            policies=ctx.policies,
+            approved_harvest_seed_digests=ctx.approved_projection_digests,
+        ),
+        bridge=ctx.bridge,
+        project=ProjectPaperUseCase(
+            harvest=ctx.harvest,
+            records=ctx.records,
+            clock=ctx.clock,
+            approved_projection_digests=ctx.approved_projection_digests,
+        ),
+    ).run(
+        snapshot_id=_require_payload_string(payload, "snapshot_id"),
+        domain_policy_id=_require_payload_string(payload, "domain_policy_id"),
+        target=_require_payload_string(payload, "target"),
+        human_decision=human_decision.strip() if isinstance(human_decision, str) else None,
+        approved_projections=approved_projections,
     )
     return {"status": "succeeded", **result}
 
