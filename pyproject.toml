@@ -23,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 papers = "papers.cli.app:app"
+gleansight = "gleansight.cli:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
