@@ -31,6 +31,11 @@ def test_skeleton_help_lists_command() -> None:
     assert "skeleton" in result.output
     assert "harvest" in result.output
     assert "project" in result.output
+    assert "map" in result.output
+    assert "diverge" in result.output
+    assert "ground" in result.output
+    assert "gate" in result.output
+    assert "archive" in result.output
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:
@@ -158,3 +163,115 @@ def test_project_cli_reports_manifest_rejection_concisely(tmp_path: Path) -> Non
     assert result.stdout == ""
     assert "error:" in result.stderr
     assert "approved" in result.stderr or "content hash" in result.stderr
+
+
+def test_map_and_archive_cli_on_empty_snapshot(tmp_path: Path) -> None:
+    from datetime import UTC, datetime
+
+    from nsqd.composition import build_container
+    from nsqd.null_adapters import FixedClock
+
+    db = tmp_path / "nsqd.sqlite"
+    index = tmp_path / "index"
+    container = build_container(
+        db_path=db,
+        index_path=index,
+        clock=FixedClock(datetime(2024, 1, 1, tzinfo=UTC)),
+    )
+    assert container.ctx.snapshots.commit("snap", [], schema_version=1) == 1
+    runner = CliRunner()
+    mapped = runner.invoke(
+        app,
+        [
+            "map",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--snapshot-state",
+            "calibration",
+            "--db",
+            str(db),
+            "--index",
+            str(index),
+        ],
+    )
+    assert mapped.exit_code == 0, mapped.output
+    assert "Unknown" in mapped.output
+    archived = runner.invoke(
+        app,
+        [
+            "archive",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--db",
+            str(db),
+            "--index",
+            str(index),
+        ],
+    )
+    assert archived.exit_code == 0, archived.output
+    assert "rank_guard_blocked" in archived.output
+
+
+def test_diverge_ground_gate_cli_error_paths(tmp_path: Path) -> None:
+    runner = CliRunner()
+    fixture = tmp_path / "candidate.yaml"
+    fixture.write_text("- item\n", encoding="utf-8")
+    diverged = runner.invoke(
+        app,
+        [
+            "diverge",
+            "--candidate-fixture",
+            str(fixture),
+            "--axiom",
+            "x",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert diverged.exit_code != 0
+    ground = runner.invoke(
+        app,
+        [
+            "ground",
+            "--candidate-artifact-hash",
+            "missing",
+            "--snapshot-id",
+            "snap",
+            "--corpus-version",
+            "1",
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert ground.exit_code != 0
+    gated = runner.invoke(
+        app,
+        [
+            "gate",
+            "--candidate-artifact-hash",
+            "missing",
+            "--snapshot-id",
+            "snap",
+            "--corpus-version",
+            "1",
+            "--evaluator-run-id",
+            "eval-1",
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert gated.exit_code != 0
