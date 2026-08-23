@@ -1,7 +1,7 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.0 (NS/QD)
+**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.3 (NS/QD)
 **As of:** 2026-08-22
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
@@ -19,7 +19,7 @@
 | EV-09 | OBS.LOG.JOB_CONTEXT.v1 | test | `uv run pytest tests/facts/test_job_log_context.py -q --no-cov` | V6 | Required | exact transition log capture | none | hermetic | pass 2026-08-20 |
 | EV-10 | CFG.STARTUP.MISSING_DEP.v1 | test | `uv run pytest tests/facts/test_startup_missing_dep.py -q --no-cov` | V6 | Required | standalone fail-fast + bounded CLI startup | none | hermetic | pass 2026-08-20 |
 | EV-11 | SCHEMA.JOB.INTEGRITY_CHECK.v1 | test | `uv run pytest tests/facts/test_job_integrity_check.py -q --no-cov` | V0B | Required | SQLite | none | hermetic | pass 2026-08-19 |
-| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline DB; NSQD migrations through 009 | none | hermetic | pass 2026-08-22 |
+| EV-12 | SCHEMA.MIGRATE.FORWARD.v1 | test | `uv run pytest tests/facts/test_schema_forward_migrate.py -q --no-cov` | V0B | Required | previous-baseline DB; NSQD migrations through 010 | none | hermetic | pass 2026-08-22 |
 | EV-13 | docs integrity | test | `uv run pytest tests/support/test_docs_cli_commands.py tests/support/test_no_src_todo.py -q --no-cov` | V7 | Required | workflows + src/ | none | hermetic | pass 2026-08-21 |
 
 ### NS/QD-inspired (see `docs/development-plan-ns-qd.md` evidence table)
@@ -45,5 +45,5 @@ Do not treat smoke fixtures as `calibration`. Smoke E2E (EV-N00) uses an empty s
 | EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Required |
 | EV-N15 | NSQD.RESCORE.REPLAY.v1 | `uv run pytest tests/nsqd/test_rescore.py -q --no-cov` | N8 | Required |
 | EV-N16 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | `uv run pytest tests/facts/test_nsqd_domain_policy_isolation.py -q --no-cov` | N2a | Required |
-| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py -q --no-cov` | N6 | Pending: production bridge and durable approval bootstrap |
+| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py tests/nsqd/test_papers_bridge.py -q --no-cov` | N6 | Required |
 | EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py -q --no-cov` | N10 | Required |
