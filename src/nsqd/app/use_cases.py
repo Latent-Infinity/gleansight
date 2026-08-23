@@ -389,6 +389,7 @@ class ProjectPaperUseCase:
                 "record_id": str(existing["record_id"]),
                 "snapshot_id": committed.snapshot_id,
                 "corpus_version": committed.corpus_version,
+                "reviewed_projection_digest": reviewed_projection_digest,
             }
         record = {
             "record_id": record_id,
@@ -415,6 +416,7 @@ class ProjectPaperUseCase:
             "record_id": record_id,
             "snapshot_id": committed.snapshot_id,
             "corpus_version": committed.corpus_version,
+            "reviewed_projection_digest": reviewed_projection_digest,
         }
 
     @staticmethod
@@ -1510,10 +1512,9 @@ def _has_approved_harvest_seed(
 
 
 def _acquisition_candidate_identity(candidate: dict[str, Any]) -> str | None:
-    for key in ("source_paper_id", "paper_id"):
-        value = candidate.get(key)
-        if isinstance(value, str) and value.strip():
-            return f"{key}:{value.strip()}"
+    source_paper_id = candidate.get("source_paper_id")
+    if isinstance(source_paper_id, str) and source_paper_id.strip():
+        return f"source_paper_id:{source_paper_id.strip()}"
     return None
 
 

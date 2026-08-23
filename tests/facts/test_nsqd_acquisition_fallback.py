@@ -162,7 +162,7 @@ def _search_policy() -> DomainPolicy:
 
 def test_integrity_failure_does_not_search() -> None:
     acquire, bridge, _cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "A"}],
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
         records_payload=[
             {
                 "record_id": "bad",
@@ -184,7 +184,7 @@ def test_integrity_failure_does_not_search() -> None:
 
 def test_searchable_failure_stages_pending_review_idempotently() -> None:
     acquire, bridge, cycles = _setup(
-        candidates=[{"paper_id": f"p{i}", "title": f"T{i}"} for i in range(10)],
+        candidates=[{"source_paper_id": f"p{i}", "title": f"T{i}"} for i in range(10)],
         policy=_search_policy(),
     )
     first = acquire.run(
@@ -248,7 +248,7 @@ def test_llm_output_cannot_approve_corpus_evidence(
     draft_approved: bool,
 ) -> None:
     acquire, _bridge, cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "A"}],
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
         policy=_search_policy(),
         shortlist_approved=shortlist_approved,
         draft_approved=draft_approved,
@@ -265,7 +265,7 @@ def test_llm_output_cannot_approve_corpus_evidence(
 
 def test_side_effect_failure_leaves_fail_closed_reservation() -> None:
     acquire, bridge, cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "A"}],
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
         policy=_search_policy(),
         fail_stage=True,
     )
@@ -290,7 +290,7 @@ def test_side_effect_failure_leaves_fail_closed_reservation() -> None:
 
 def test_llm_shortlist_cannot_invent_undiscovered_candidate() -> None:
     acquire, _bridge, cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "A"}],
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
         policy=_search_policy(),
         invent_shortlist=True,
     )
@@ -412,7 +412,7 @@ def test_query_targets_actual_missing_expected_cell() -> None:
 
 def test_shortlist_metadata_cannot_mutate_import_candidate() -> None:
     acquire, bridge, _cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "discovered title"}],
+        candidates=[{"source_paper_id": "p1", "title": "discovered title"}],
         policy=_search_policy(),
         mutate_shortlist=True,
     )
@@ -421,7 +421,7 @@ def test_shortlist_metadata_cannot_mutate_import_candidate() -> None:
         domain_policy_id="finance/1",
         target="calibration",
     )
-    assert bridge.staged_candidates == [{"paper_id": "p1", "title": "discovered title"}]
+    assert bridge.staged_candidates == [{"source_paper_id": "p1", "title": "discovered title"}]
 
 
 def test_human_approval_projects_new_snapshot_and_rechecks() -> None:
@@ -537,7 +537,10 @@ def test_recheck_budget_stops_after_two_approval_rounds() -> None:
 
 def test_resume_in_progress_does_not_restage_completed_papers() -> None:
     acquire, bridge, cycles = _setup(
-        candidates=[{"paper_id": "p1", "title": "A"}, {"paper_id": "p2", "title": "B"}],
+        candidates=[
+            {"source_paper_id": "p1", "title": "A"},
+            {"source_paper_id": "p2", "title": "B"},
+        ],
         policy=_search_policy(),
     )
     first = acquire.run(

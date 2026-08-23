@@ -95,7 +95,7 @@ def test_acquire_handler_and_runner_persist_and_dispatch(tmp_path: Path) -> None
         clock=FixedClock(AS_OF),
     )
     policy = _search_policy()
-    container.ctx.bridge = FakePaperBridge([{"paper_id": "p1", "title": "A"}])
+    container.ctx.bridge = FakePaperBridge([{"source_paper_id": "p1", "title": "A"}])
     container.ctx.policies = {policy.policy_id: policy}
     assert container.ctx.snapshots.commit("snap", [], schema_version=1) == 1
 
@@ -180,7 +180,7 @@ def test_acquire_restart_reuses_fail_closed_cycle(tmp_path: Path) -> None:
         clock=FixedClock(AS_OF),
     )
     policy = _search_policy()
-    bridge = FakePaperBridge([{"paper_id": "p1", "title": "A"}], fail_stage=True)
+    bridge = FakePaperBridge([{"source_paper_id": "p1", "title": "A"}], fail_stage=True)
     container.ctx.bridge = bridge
     container.ctx.policies = {policy.policy_id: policy}
     assert container.ctx.snapshots.commit("snap", [], schema_version=1) == 1
