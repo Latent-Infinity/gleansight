@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 import nsqd.__main__ as main_module
 from nsqd import cli as cli_module
 from nsqd.cli import app
+from papers.domain.errors import ConfigurationError
 from papers.infra.piccolo.database import PiccoloDatabase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
@@ -38,6 +39,8 @@ def test_skeleton_help_lists_command() -> None:
     assert "gate" in result.output
     assert "archive" in result.output
     assert "approve-digest" in result.output
+    assert "acquire" in result.output
+    assert "run-paper-jobs" in result.output
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:
@@ -277,6 +280,382 @@ def test_diverge_ground_gate_cli_error_paths(tmp_path: Path) -> None:
         ],
     )
     assert gated.exit_code != 0
+
+
+def test_default_paper_runtime_uses_papers_settings(monkeypatch, tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from nsqd.infra.paper_runtime import NsqdPaperRuntime
+
+    settings = SimpleNamespace(
+        data=SimpleNamespace(db_path=tmp_path / "app.sqlite", root=tmp_path / "data"),
+        llm=SimpleNamespace(default_profile="default"),
+    )
+    papers = SimpleNamespace(
+        settings=settings,
+        candidate_store=SimpleNamespace(
+            create_candidate=lambda fields: fields["candidate_id"],
+            get_candidate=lambda _cid: None,
+            get_candidate_by_source=lambda *_a: None,
+        ),
+        paper_store=SimpleNamespace(get=lambda _pid: None),
+        job_queue=SimpleNamespace(enqueue=lambda **_k: "job"),
+        scholar_client=SimpleNamespace(search=lambda **_k: []),
+        prompt_store=SimpleNamespace(
+            get_prompt=lambda _pid: {"prompt_id": "nsqd-acquisition"},
+            get_latest_version=lambda _pid: {"prompt_version_id": "v1"},
+            create_prompt=lambda *_a, **_k: None,
+            create_version=lambda *_a, **_k: None,
+        ),
+        profile_store=SimpleNamespace(
+            get=lambda _pid: {
+                "profile_id": "nsqd-acquisition",
+                "name": "default",
+                "base_url": "http://localhost:9",
+            },
+            create_profile=lambda *_a, **_k: None,
+            update_profile=lambda *_a, **_k: None,
+        ),
+        analysis_store=SimpleNamespace(),
+        blob_store=SimpleNamespace(get_markdown_path=lambda _pid: None),
+        job_runner=SimpleNamespace(run_next=lambda _now: False),
+        atomic_candidate_import=None,
+        project_store=None,
+        tag_store=None,
+        external_id_store=None,
+    )
+    loaded_kwargs: dict[str, object] = {}
+    built: dict[str, object] = {}
+
+    def fake_load_settings(**kwargs: object) -> object:
+        loaded_kwargs.update(kwargs)
+        return settings
+
+    def fake_build_papers(loaded: object, **kwargs: object) -> object:
+        built["settings"] = loaded
+        built["kwargs"] = kwargs
+        return papers
+
+    monkeypatch.setattr("papers.config.settings.load_settings", fake_load_settings)
+    monkeypatch.setattr("papers.app.composition_root.build_container", fake_build_papers)
+    runtime = cli_module._default_paper_runtime(
+        config=tmp_path / "cfg.toml",
+        db=tmp_path / "nsqd.sqlite",
+        index=tmp_path / "index",
+        llm_base_url="http://localhost:9",
+        llm_api_key="k",
+    )
+    assert isinstance(runtime, NsqdPaperRuntime)
+    assert loaded_kwargs["override_path"] == tmp_path / "cfg.toml"
+    assert built["settings"] is settings
+    assert runtime.nsqd.database.path == tmp_path / "nsqd.sqlite"
+
+
+def test_acquire_and_run_paper_jobs_use_composed_runtime(monkeypatch, tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    calls: list[tuple[str, object]] = []
+
+    class _Runtime:
+        def __init__(self) -> None:
+            self.nsqd = SimpleNamespace(clock=SimpleNamespace(now=lambda: None))
+            self.paper_runner = SimpleNamespace(run_next=lambda _now: False)
+
+    def fake_runtime(**_kwargs: object) -> _Runtime:
+        return _Runtime()
+
+    def fake_run_job(
+        container: object, job_type: str, payload: dict[str, object], now: object
+    ) -> dict[str, object]:
+        calls.append((job_type, payload))
+        return {
+            "stopped": "pending_human_approval",
+            "route": "search",
+            "projected": False,
+            "snapshot_id": payload["snapshot_id"],
+        }
+
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", fake_runtime)
+    monkeypatch.setattr(cli_module, "run_job", fake_run_job)
+    runner = CliRunner()
+    acquired = runner.invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert acquired.exit_code == 0, acquired.output
+    assert "pending_human_approval" in acquired.output
+    assert calls[0][0] == "acquire"
+    processed = runner.invoke(app, ["run-paper-jobs", "--max-jobs", "2"])
+    assert processed.exit_code == 0, processed.output
+    assert "processed 0 paper jobs" in processed.output
+
+
+def test_run_paper_jobs_refreshes_time_for_each_attempt(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    ticks = iter(("first", "second", "third"))
+    seen: list[str] = []
+
+    def run_next(now: str) -> bool:
+        seen.append(now)
+        return len(seen) < 3
+
+    runtime = SimpleNamespace(
+        nsqd=SimpleNamespace(clock=SimpleNamespace(now=lambda: next(ticks))),
+        paper_runner=SimpleNamespace(run_next=run_next),
+    )
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", lambda **_kwargs: runtime)
+
+    result = CliRunner().invoke(app, ["run-paper-jobs", "--max-jobs", "3"])
+
+    assert result.exit_code == 0, result.output
+    assert "processed 2 paper jobs" in result.output
+    assert seen == ["first", "second", "third"]
+
+
+def test_run_paper_jobs_rejects_non_positive_limit() -> None:
+    result = CliRunner().invoke(app, ["run-paper-jobs", "--max-jobs", "0"])
+
+    assert result.exit_code == 2
+    assert "range x>=1" in result.output
+
+
+def test_default_paper_runtime_derives_nsqd_paths_from_config_root(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from types import SimpleNamespace
+
+    root = tmp_path / "custom-data"
+    settings = SimpleNamespace(data=SimpleNamespace(root=root))
+    papers = SimpleNamespace(settings=settings)
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr("papers.config.settings.load_settings", lambda **_kwargs: settings)
+    monkeypatch.setattr(
+        "papers.app.composition_root.build_container", lambda *_args, **_kwargs: papers
+    )
+
+    def fake_compose(**kwargs: object) -> object:
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr("nsqd.infra.paper_runtime.compose_default_runtime", fake_compose)
+
+    cli_module._default_paper_runtime(
+        config=tmp_path / "config.toml",
+        db=None,
+        index=None,
+        llm_base_url="http://localhost:8000",
+        llm_api_key=None,
+    )
+
+    assert captured["nsqd_db_path"] == root / "nsqd" / "nsqd.sqlite"
+    assert captured["nsqd_index_path"] == root / "nsqd" / "corpus.lancedb"
+
+
+def test_acquire_forwards_approved_projection_file(monkeypatch, tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    projection = FIXTURES / "paper-a.yaml"
+    manifest = FIXTURES / "manifest.toml"
+    captured: dict[str, object] = {}
+
+    def fake_runtime(**kwargs: object) -> object:
+        captured["runtime_kwargs"] = kwargs
+        return SimpleNamespace(nsqd=SimpleNamespace(clock=SimpleNamespace(now=lambda: None)))
+
+    def fake_run_job(
+        _container: object, _job_type: str, payload: dict[str, object], _now: object
+    ) -> dict[str, object]:
+        captured["payload"] = payload
+        return {
+            "stopped": "sufficient",
+            "route": "search",
+            "projected": True,
+            "snapshot_id": "new-snapshot",
+        }
+
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", fake_runtime)
+    monkeypatch.setattr(cli_module, "run_job", fake_run_job)
+    result = CliRunner().invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--human-decision",
+            "approve",
+            "--approved-projection",
+            str(projection),
+            "--approval-manifest",
+            str(manifest),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = captured["payload"]
+    assert isinstance(payload, dict)
+    assert payload["snapshot_id"] == "snap"
+    assert payload["human_decision"] == "approve"
+    projections = payload["approved_projections"]
+    assert isinstance(projections, list)
+    projection_payload = projections[0]
+    assert isinstance(projection_payload, dict)
+    assert projection_payload["id"] == "DATA-NSQD-04"
+    assert projection_payload["review_status"] == "approved"
+    from nsqd.domain.project import canonical_reviewed_projection_digest
+
+    assert captured["runtime_kwargs"] == {
+        "config": None,
+        "db": None,
+        "index": None,
+        "llm_base_url": "http://localhost:8000",
+        "llm_api_key": None,
+        "approved_projection_digests": frozenset(
+            {canonical_reviewed_projection_digest(projection_payload)}
+        ),
+    }
+
+
+def test_acquire_approval_projects_on_fresh_runtime(monkeypatch, tmp_path: Path) -> None:
+    import json
+    from dataclasses import replace
+    from datetime import UTC, datetime
+    from types import SimpleNamespace
+
+    from nsqd.composition import build_container
+    from nsqd.domain.policy import OPTIMIZATION_POLICY
+    from nsqd.null_adapters import FixedClock
+    from tests.facts.test_nsqd_acquisition_fallback import FakePaperBridge
+
+    db = tmp_path / "nsqd.sqlite"
+    index = tmp_path / "index"
+    as_of = datetime(2024, 1, 1, tzinfo=UTC)
+    source_paper_id = "7dbcef75-2d52-49a6-86a3-471be71f0fd7"
+    policy = replace(
+        OPTIMIZATION_POLICY,
+        recall_probes=(("approved-paper", f"paper:{source_paper_id}", "paper"),),
+    )
+    bridge = FakePaperBridge(
+        [
+            {
+                "paper_id": "paper-20",
+                "source_paper_id": source_paper_id,
+                "title": "Approved paper",
+            }
+        ]
+    )
+    seed = build_container(db_path=db, index_path=index, clock=FixedClock(as_of))
+    seed.ctx.policies = {policy.policy_id: policy}
+    assert seed.ctx.snapshots.commit("snap", [], schema_version=1) == 1
+
+    def fake_runtime(**kwargs: object) -> object:
+        raw_digests = kwargs.get("approved_projection_digests")
+        assert raw_digests is None or isinstance(raw_digests, frozenset)
+        container = build_container(
+            db_path=db,
+            index_path=index,
+            clock=FixedClock(as_of),
+            approved_projection_digests=raw_digests,
+        )
+        container.ctx.policies = {policy.policy_id: policy}
+        container.ctx.bridge = bridge
+        return SimpleNamespace(
+            nsqd=container,
+            paper_runner=SimpleNamespace(run_next=lambda _now: False),
+        )
+
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", fake_runtime)
+    runner = CliRunner()
+    staged = runner.invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "optimization/1",
+        ],
+    )
+    assert staged.exit_code == 0, staged.output
+    assert json.loads(staged.stdout)["stopped"] == "pending_human_approval"
+
+    approved = runner.invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "optimization/1",
+            "--human-decision",
+            "approve",
+            "--approved-projection",
+            str(FIXTURES / "paper-a.yaml"),
+            "--approval-manifest",
+            str(FIXTURES / "manifest.toml"),
+        ],
+    )
+
+    assert approved.exit_code == 0, approved.output
+    approved_payload = json.loads(approved.stdout)
+    assert approved_payload["projected"] is True
+    assert approved_payload["stopped"] == "sufficient"
+
+
+def test_acquire_requires_manifest_for_approved_projection(tmp_path: Path) -> None:
+    projection = FIXTURES / "paper-a.yaml"
+    result = CliRunner().invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--approved-projection",
+            str(projection),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "--approval-manifest is required" in result.output
+
+
+def test_default_runtime_commands_report_configuration_errors(monkeypatch) -> None:
+    def fail_runtime(**_kwargs: object) -> object:
+        raise ConfigurationError("paper runtime is not configured")
+
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", fail_runtime)
+    runner = CliRunner()
+    acquire_result = runner.invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+        ],
+    )
+    worker_result = runner.invoke(app, ["run-paper-jobs"])
+
+    assert acquire_result.exit_code == 1
+    assert "error: Startup configuration failed" in acquire_result.output
+    assert "paper runtime is not configured" not in acquire_result.output
+    assert worker_result.exit_code == 1
+    assert "error: Startup configuration failed" in worker_result.output
+    assert "paper runtime is not configured" not in worker_result.output
 
 
 def test_approve_digest_rejects_invalid_digest(tmp_path: Path) -> None:

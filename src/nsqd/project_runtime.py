@@ -24,18 +24,9 @@ def run_project(
     index_path: Path,
     as_of: datetime | None = None,
 ) -> dict[str, Any]:
-    projection = _load_yaml_mapping(projection_path)
-    manifest = _load_manifest(manifest_path)
-    manifest_row = _find_manifest_row(
-        manifest=manifest,
+    projection = load_verified_projection(
+        projection_path=projection_path,
         manifest_path=manifest_path,
-        projection_path=projection_path,
-        projection=projection,
-    )
-    _verify_projection_fixture(
-        projection_path=projection_path,
-        projection=projection,
-        manifest_row=manifest_row,
     )
     approved_digest = canonical_reviewed_projection_digest(projection)
     clock = fixed_clock(as_of) if as_of is not None else None
@@ -56,8 +47,33 @@ def run_project(
     )
 
 
-def _load_yaml_mapping(path: Path) -> dict[str, Any]:
-    loaded = yaml.safe_load(_read_bounded_text(path, MAX_PROJECT_FILE_BYTES, "projection fixture"))
+def load_verified_projection(
+    *,
+    projection_path: Path,
+    manifest_path: Path,
+) -> dict[str, Any]:
+    projection_bytes = _read_bounded_bytes(
+        projection_path, MAX_PROJECT_FILE_BYTES, "projection fixture"
+    )
+    projection = _load_yaml_mapping(projection_bytes)
+    manifest = _load_manifest(manifest_path)
+    manifest_row = _find_manifest_row(
+        manifest=manifest,
+        manifest_path=manifest_path,
+        projection_path=projection_path,
+        projection=projection,
+    )
+    _verify_projection_fixture(
+        projection_path=projection_path,
+        projection=projection,
+        manifest_row=manifest_row,
+        fixture_bytes=projection_bytes,
+    )
+    return projection
+
+
+def _load_yaml_mapping(content: bytes) -> dict[str, Any]:
+    loaded = yaml.safe_load(content.decode("utf-8"))
     if not isinstance(loaded, dict):
         raise ValueError("projection fixture must be a mapping")
     return loaded
@@ -73,9 +89,15 @@ def _load_manifest(path: Path) -> dict[str, Any]:
 
 
 def _read_bounded_text(path: Path, max_bytes: int, label: str) -> str:
-    if path.stat().st_size > max_bytes:
+    return _read_bounded_bytes(path, max_bytes, label).decode("utf-8")
+
+
+def _read_bounded_bytes(path: Path, max_bytes: int, label: str) -> bytes:
+    with path.open("rb") as handle:
+        content = handle.read(max_bytes + 1)
+    if len(content) > max_bytes:
         raise ValueError(f"{label} is too large")
-    return path.read_text(encoding="utf-8")
+    return content
 
 
 def _find_manifest_row(
@@ -121,8 +143,8 @@ def _verify_projection_fixture(
     projection_path: Path,
     projection: dict[str, Any],
     manifest_row: dict[str, Any],
+    fixture_bytes: bytes,
 ) -> None:
-    fixture_bytes = projection_path.read_bytes()
     content_sha256 = sha256_hex(fixture_bytes)
     if content_sha256 != _require_manifest_string(manifest_row, "content_sha256"):
         raise ValueError("projection fixture content hash does not match manifest")
