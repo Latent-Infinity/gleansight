@@ -318,6 +318,17 @@ class PiccoloFrontierCardStore:
             [cell_id, card_id],
         )
 
+    def list_elites(self) -> list[dict[str, Any]]:
+        rows = self._db.fetchall(
+            """
+            SELECT c.payload_json
+            FROM nsqd_elites e
+            JOIN nsqd_frontier_cards c ON c.card_id = e.card_id
+            ORDER BY e.cell_id
+            """
+        )
+        return [_loads(str(row["payload_json"])) for row in rows]
+
 
 class PiccoloMorphospaceStore:
     def __init__(self, database: PiccoloDatabase) -> None:

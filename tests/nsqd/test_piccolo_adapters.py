@@ -234,8 +234,16 @@ def test_piccolo_stores_round_trip(tmp_path: Path) -> None:
         "cell_id": "cell",
         "viability": 1,
     }
+    assert cards.list_elites() == [
+        {
+            "card_id": "c1",
+            "cell_id": "cell",
+            "viability": 1,
+        }
+    ]
     cards.set_elite("cell", None)
     assert cards.elite_for_cell("cell") is None
+    assert cards.list_elites() == []
 
     morph = PiccoloMorphospaceStore(db)
     inspected = datetime(2024, 1, 1, tzinfo=UTC)
