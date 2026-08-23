@@ -30,18 +30,19 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist layer records; live and paper hybrid search are not called on the N1 path | Ground | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
 | NSQD.GROUND.LIVE_PRIOR_ART.v1 | Given a local unevaluated result on a calibration or production-valid snapshot, grounding makes at most 3 calls through explicitly injected hybrid/scholar search-only interfaces, accepts only backend-contract results, persists the closest normalized prior-art record and hashed query metadata, classifies a valid hit as related_partial, and writes no corpus records | N5 ground escalation | Behavior | LOCAL-NSQD-G | product | Active | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases; covers 0, <k, exact k, ties, and known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | product | Active | EV-N11 |
-| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
+| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore and reserved acquire work persist as nsqd_jobs; paper jobs rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | product | Active | EV-N12 |
 | NSQD.HARVEST.ENUMERATION.v1 | Sourceless / essay-only ingest is rejected; requirement-cards are not corpus records | Harvest | Behavior | LOCAL-NSQD-H | product | Active | EV-N03 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Given elite counts and the eligible archive-cell universe excluding Invalid, when global rank is requested, then it fails with rank_guard_blocked unless \|elites\| ≥ 50 or coverage ≥ 0.20 | Archive rank | Behavior | LOCAL-NSQD-A | product | Active | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor universe and dval compatibility resolve by explicit domain_policy_id; grounding, corpus filtering, cards/elites/rank are policy-scoped; `(snapshot_id, domain_policy_id)` verdict identity/schema is reserved and validated; records from one policy cannot satisfy, ground, rank, or archive under another | Domain policy | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | product | Active | EV-N16 |
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
 | NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to calibration or production_valid is evaluated independently by (snapshot_id, domain_policy_id) under ALG-SUF; every SufficiencyFailure code is tested; honest finance/1 production_valid stays blocked without approved DATA-NSQD-03 | N6 promotion | Behavior | LOCAL-NSQD-H | product | Active | EV-N13 |
-| NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy ALG-SUF failures trigger a bounded discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures stop and LLM output cannot approve corpus evidence or promotion | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
+| NSQD.ACQUISITION.FALLBACK.v1 | The injected acquisition seam bounds searchable ALG-SUF routing, shortlist/staging, human approval, projection, and recheck; integrity failures stop and LLM output cannot approve evidence. Production paper bridging and durable approval bootstrap remain pending | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Proposed | EV-N17 |
+| NSQD.SURFACE.UNIFIED.v1 | Given the discovery use-cases, when a user runs `gleansight` or the desktop app, then harvest/map/diverge/ground/gate/archive are available without breaking `papers`, and Map/Archive/Card screens sit beside the evidence screens | Product surfaces | Behavior | LOCAL-NSQD-U | product | Active | EV-N18 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.4.9)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.0)
 
-See that plan’s ledger for full statements. N1–N5, N6 promotion, N7–N9 facts are **Active** with Required evidence. The N6 acquisition fallback remains **Proposed/Pending**, and honest `finance/1 production_valid` remains blocked without approved DATA-NSQD-03. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
+See that plan’s ledger for full statements. Completed facts are **Active** with Required evidence; `NSQD.ACQUISITION.FALLBACK.v1` remains Proposed with EV-N17 Pending. Honest `finance/1 production_valid` remains blocked without approved DATA-NSQD-03. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -61,6 +62,7 @@ See that plan’s ledger for full statements. N1–N5, N6 promotion, N7–N9 fac
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
 | NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Active; honest finance/1 production_valid still requires DATA-NSQD-03 |
-| NSQD.ACQUISITION.FALLBACK.v1 | N6 | Proposed; fail-closed staging foundation exists, approval/projection/recheck remains pending |
+| NSQD.ACQUISITION.FALLBACK.v1 | N6 | Proposed; injected orchestration and reserved `acquire` dispatch exist, production bridge pending |
+| NSQD.SURFACE.UNIFIED.v1 | N10 | Active; `gleansight` CLI and Map/Archive/Card screens |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
 | NSQD.RESCORE.REPLAY.v1 | N8 | Active; retry-safe archive reconciliation |

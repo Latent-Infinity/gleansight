@@ -8,16 +8,16 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.4.8 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.5.0 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is pending seed data that must be human-approved once acquired.
 **Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
-**Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing** and may be acquired through the bounded N6 fallback. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1/N2/N2a/N2b/N3/N4/N5/N7/N8/N9 and N6 pack-aware promotion. Next up is N6 acquisition completion, then N10. Honest `finance/1 production_valid` still waits on approved DATA-NSQD-03.
-**Outstanding Blockers**: N6 resumable human approval → N2b projection → new snapshot → ALG-SUF recheck orchestration, persisted runtime dispatch/retry integration, and approved DATA-NSQD-03 for honest `finance/1` production validity. `ALG.STATUS` ablation still waits on a calibration snapshot with listed recall probes.
+**Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing**; the injected N6 orchestration seam cannot acquire it until the production paper bridge and durable approval bootstrap are implemented. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
+**Slice Ordering**: Preserve completed N1/N2/N2a/N2b/N3/N4/N5, N6 promotion, and N7/N8/N9/N10. Remaining: N6 production acquisition bridging/approval bootstrap, a separately approved DATA-NSQD-03 probe, then calibration ablations. Honest `finance/1 production_valid` still waits on approved DATA-NSQD-03.
+**Outstanding Blockers**: production `PaperAcquisitionBridge` plus durable policy/digest approval bootstrap for EV-N17; an explicit immutable migration for any pre-digest projected rows; approved DATA-NSQD-03 for honest `finance/1` production validity. `ALG.STATUS` ablation still waits on a calibration snapshot with listed recall probes.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -65,6 +65,9 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.4.7 | 2026-08-22 | Live grounding after local miss, ≤3 calls, pack-scoped corpus view; hybrid allowed because EW-V1 is Active; no acquisition side effects. |
 | 1.4.8 | 2026-08-22 | Pack-aware ALG-SUF promotion plus a fail-closed acquisition-staging foundation; full approval/projection/recheck fallback remains pending. |
 | 1.4.9 | 2026-08-22 | Harden discovery import-boundary, injected UTC job timestamps, and runner job-transition logs. |
+| 1.5.0 | 2026-08-22 | Complete bounded acquisition fallback: human approval, N2b projection, snapshot recheck, persisted `acquire` jobs, and two-recheck stops. |
+| 1.6.0 | 2026-08-22 | Unified `gleansight` CLI and Map/Archive/Card screens. |
+| 1.6.1 | 2026-08-22 | Correct EV-N17 to Pending: injected orchestration and reserved acquire persistence exist, but the production paper bridge and durable approval bootstrap do not. |
 
 ---
 
@@ -111,7 +114,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | Operators B–G | explicitly deferred | N/A (deferred) | — | later revision |
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
 | Domain-policy isolation | EV-N16 | Pass | — | Explicit policy id; pack-scoped corpus views/verdicts; no implicit `finance/1` |
-| Insufficiency acquisition fallback | EV-N17 | Partial | N6 acquisition completion | Searchable/integrity routing and fail-closed staging exist; approval, projection, snapshot recheck, and persisted dispatch remain pending |
+| Insufficiency acquisition fallback | EV-N17 | Pending | N6 production bridge | Searchable/integrity routing, fail-closed staging, approval → projection → recheck, reserved `acquire` dispatch, and two-recheck stops are tested through an injected bridge; production paper bridging and durable approval bootstrap remain. Honest `finance/1 production_valid` still waits on DATA-NSQD-03 |
 
 ---
 
@@ -132,14 +135,15 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.GROUND.CASCADE.v1 | Local layers 1–4 run and persist `{layer, checked, hit, escalate_reason}`; live and paper hybrid search are not called on the N1 path; version stamped | Ground | Behavior | LOCAL-NSQD-G | EV-N10 |
 | NSQD.GROUND.LIVE_PRIOR_ART.v1 | After a pack-scoped local miss on calibration/production-valid, at most 3 calls use typed hybrid/scholar search-only interfaces; only backend-contract hits become normalized closest-prior-art evidence with hashed query metadata; no corpus writes | N5 ground escalation | Behavior | LOCAL-NSQD-G | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases (`ALG-NOV`); covers 0, `<k`, exact `k`, ties, known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | EV-N11 |
-| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
+| NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore and reserved acquire work persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
 | NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to `calibration` / `production_valid` is evaluated independently by `(snapshot_id, domain_policy_id)` under `ALG-SUF`; every `SufficiencyFailure` code is tested. Honest `finance/1 production_valid` is blocked until approved DATA-NSQD-03 exists | N6 | Behavior | LOCAL-NSQD-H | EV-N13 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Global rank fails below 50 elites and below 20% of `U \\ {Invalid}`; both thresholds and the below-threshold case are tested | N7 | Behavior | LOCAL-NSQD-A | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Stale cards re-ground and re-score against the current snapshot; current-card retries skip those operations but reconcile archive state; rejected current elites are removed | N8 | Behavior | LOCAL-NSQD-A | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor axes/universe and dval compatibility resolve by explicit `domain_policy_id`; grounding, corpus filtering, cards/elites/rank are policy-scoped; verdict identity is reserved/validated by `(snapshot_id, domain_policy_id)` schema; records from one policy cannot satisfy, ground, rank, or archive under another | N2a | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | EV-N16 |
-| NSQD.ACQUISITION.FALLBACK.v1 | Searchable per-policy `ALG-SUF` failures trigger a bounded, idempotent discovery → LLM shortlist → staged paper pipeline → human approval → projection → recheck loop; integrity failures do not search and LLM output cannot approve corpus evidence or promotion | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
+| NSQD.ACQUISITION.FALLBACK.v1 | The injected seam bounds searchable `ALG-SUF` routing, shortlist/staging, human approval, projection, and recheck; integrity failures do not search and LLM output cannot approve evidence. Production paper bridging and durable approval bootstrap remain pending | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
+| NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
 
-**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Deferred (not in baseline):** operators B–G; N6 approval/projection/recheck acquisition orchestration.
+**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Deferred (not in baseline):** operators B–G; a separately approved live acquisition probe for DATA-NSQD-03.
 
 ---
 
@@ -164,7 +168,8 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EV-N14 | NSQD.ARCHIVE.RANK_GUARD.v1 | `uv run pytest tests/facts/test_nsqd_rank_guard.py -q --no-cov` | N7 | Required |
 | EV-N15 | NSQD.RESCORE.REPLAY.v1 | `uv run pytest tests/nsqd/test_rescore.py -q --no-cov` | N8 | Required |
 | EV-N16 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | `uv run pytest tests/facts/test_nsqd_domain_policy_isolation.py -q --no-cov` | N2a | Required |
-| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py -q --no-cov` | N6 | Pending: N6 acquisition completion |
+| EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py -q --no-cov` | N6 | Pending: production bridge and durable approval bootstrap |
+| EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py -q --no-cov` | N10 | Required |
 
 Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 
@@ -676,15 +681,16 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 **Facts:** NSQD.SNAPSHOT.PROMOTION.v1 → EV-N13; NSQD.ACQUISITION.FALLBACK.v1 → EV-N17
 **Purpose:** Evaluate sufficiency independently for each `(snapshot_id, domain_policy_id)`, acquire searchable gaps through existing paper capabilities, and recheck without conflating ALG-SUF with ALG-COV.
 
-**Missing prerequisites:** resumable human approval, N2b projection, new-snapshot recheck, persisted handler/runner dispatch with retryable paper jobs, restart tests across each side-effect boundary, then a separately approved live DATA-NSQD-03 acquisition run.
+**Missing prerequisites:** a production `PaperAcquisitionBridge`, configured analysis/review defaults, durable policy/digest approval bootstrap, and then a separately approved DATA-NSQD-03 acquisition run for honest `finance/1 production_valid`.
 
 - [x] Table-driven tests for every closed `SufficiencyFailure`
 - [x] Independent optimization/finance verdicts and cross-pack leakage
 - [x] Pack-aware sufficiency evaluator and persisted `(snapshot_id, domain_policy_id)` verdict
 - [x] Searchable versus integrity routing; LLM cannot approve; staging cycles reserve before provider side effects and fail closed for manual recovery
-- [ ] Resume human approval through N2b projection, a new snapshot, and ALG-SUF recheck
-- [ ] Persist handler/runner dispatch and retry-safe restart progress across paper-pipeline side effects
-- [ ] Complete bounded two-recheck fallback with budget-exhaustion and no-approved-snapshot-delta stops
+- [x] Exercise human approval through N2b projection, a new snapshot, and ALG-SUF recheck through an injected bridge
+- [x] Persist reserved handler/runner dispatch and retry-safe cycle progress
+- [x] Bound injected rechecks with budget-exhaustion and no-approved-snapshot-delta stops
+- [ ] Implement and compose the production paper bridge plus durable policy/digest approval bootstrap
 - [x] Rank guard does not trigger acquisition
 - [x] `finance/1 production_valid` blocked without DATA-NSQD-03
 
@@ -700,7 +706,7 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 - Stop for manual resolution on `manifest_missing`, `record_metadata_missing`, `duplicate_source_conflict`, `retracted_unmarked`, and `disagreement_unresolved`.
 
 **Acquisition trust path:**
-`ALG-SUF failure → deterministic query plan → existing paper discovery → bounded LLM shortlist → automatic import into a dedicated staging project → existing download/convert/embed jobs → explicit analyze enqueue → draft projection/paraphrase → human approval → N2b projection → new snapshot → ALG-SUF recheck`.
+Target path (not yet production-composed): `ALG-SUF failure → deterministic query plan → existing paper discovery → bounded LLM shortlist → automatic import into a dedicated staging project → existing download/convert/embed jobs → explicit analyze enqueue → draft projection/paraphrase → human approval → N2b projection → new snapshot → ALG-SUF recheck`.
 Imported papers and LLM output are operational staging data, not approved NSQD corpus evidence. The LLM may rank and draft, but cannot set human approval, activate a fact, or promote a snapshot.
 
 **Bounds and idempotency:** Persist an acquisition-cycle identity from `(snapshot_id, domain_policy_id, failure_signature, rendered_query, filters)`. Reuse paper deduplication and job retries. Initial hard ceilings are three query batches, 25 candidates per batch, three staged imports per cycle, and two recheck cycles; run a bounded calibration ablation and freeze the smallest budget that yields approved records before production use. Stop on sufficiency, budget exhaustion, no new candidates, human decline, or no change to the approved snapshot/failure set.
@@ -708,12 +714,12 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 **Acceptance:**
 - `optimization/1` and `finance/1` can hold different verdicts over the same physical snapshot; scoring, grounding, archive coverage, and novelty use the candidate's own policy view.
 - Existing optimization papers count only after an approved `optimization/1` manifest/rubric/probe defines their eligibility; the plan does not presume they pass.
-- Missing finance evidence triggers the bounded fallback; approved finance records can create DATA-NSQD-03 and are then re-evaluated.
+- With an explicitly injected bridge and approved policy manifest, missing finance evidence exercises the bounded seam; production creation of DATA-NSQD-03 remains pending.
 - `calibration` requires an approved recall probe and fixtures; allowed calibration failures remain explicit.
 - `finance/1 production_valid` requires approved DATA-NSQD-03, approved nonzero minima, expected-cell coverage, satisfied recall probes, and zero `ALG-SUF` failures.
 - ALG-COV remains a separate N7 rank permission and never triggers acquisition.
 
-**Progress note (2026-08-22):** `evaluate_sufficiency` implements the closed ALG-SUF failure set. `PromoteSnapshotUseCase` persists independent `(snapshot_id, domain_policy_id)` verdicts; `calibration` may keep expected-cell and minima failures pending, while `finance/1 production_valid` requires an injected nonzero policy manifest plus a valid N2b-projected seed whose canonical reviewed-payload digest is in the trusted allowlist. `AcquireCorpusUseCase` searches only for searchable failures, stops integrity failures for manual review, persists idempotent acquisition-cycle identity in `nsqd_acquisition_cycles` (migration `008_nsqd_acquisition_cycles`), stages paper-pipeline work through an injected bridge, and never lets LLM shortlist or drafts set approval or write corpus rows. Rank coverage still does not acquire. The resumable human approval → N2b projection → new snapshot → ALG-SUF recheck path and persisted runtime dispatch remain open, so EV-N17 stays Pending and DATA-NSQD-03 was not invented. Four-command gate: 990 passed, 1 skipped, 92.14% repository coverage; dedicated NSQD command: 414 passed, 93.60% coverage.
+**Current note (2026-08-22):** The application seam tests allowlisted human approval through N2b projection, a new snapshot, and ALG-SUF recheck, including two-round and no-delta stops. Reserved `acquire` work persists on `nsqd_jobs` through migration `009_nsqd_acquire_job_type`. Default composition still uses `NullPaperAcquisitionBridge` and has no durable policy/digest approval bootstrap, so EV-N17 remains Pending and this is not a production fallback. Rank coverage does not acquire, and DATA-NSQD-03 was not invented.
 
 ### NSQD-N7 Archive coverage API
 
@@ -761,8 +767,16 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 ### NSQD-N10 Surfaces (FR-U1/U2)
 
-**Depends On:** N9
-**Acceptance:** `gleansight` unified CLI; Map/Archive/Card UI. **Until then FR-U1/U2 are deferred.** Only `python -m nsqd skeleton` exists from N1.
+**Depends On:** N6 promotion + N9; production acquisition completion is independent remaining work
+**Facts:** NSQD.SURFACE.UNIFIED.v1 → EV-N18
+**Acceptance:** `gleansight` unified CLI; Map/Archive/Card UI.
+
+- [x] `gleansight` entrypoint lists harvest, map, diverge, ground, gate, archive
+- [x] Existing `papers` CLI remains
+- [x] Thin commands call existing use-cases / `nsqd_jobs` dispatch
+- [x] Flet app keeps Search/Paper/Monitor/Query/Synthesis and adds Map, Archive, Card
+
+**Close note (2026-08-22):** `gleansight` is the product CLI and reuses the discovery Typer app (`python -m nsqd` still works). Map/diverge/ground/gate/archive are thin wrappers over persisted jobs and rank evaluation. The desktop app adds Map, Archive, and Card screens beside the evidence screens. DATA-NSQD-03 was not invented. Four-command gate: 1021 passed, 1 skipped, 91.91% repository coverage; dedicated NSQD command: 434 passed, 92.99% coverage.
 
 ---
 
