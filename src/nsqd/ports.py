@@ -19,9 +19,11 @@ class HarvestCommit:
     corpus_version: int
 
 
-NsqdJobType = Literal["harvest", "project", "diverge", "ground", "score", "rescore", "map"]
+NsqdJobType = Literal[
+    "harvest", "project", "diverge", "ground", "score", "rescore", "map", "acquire"
+]
 NSQD_JOB_TYPES: frozenset[str] = frozenset(
-    {"harvest", "project", "diverge", "ground", "score", "rescore", "map"}
+    {"harvest", "project", "diverge", "ground", "score", "rescore", "map", "acquire"}
 )
 
 
@@ -124,6 +126,8 @@ class FrontierCardStore(Protocol):
     def elite_for_cell(self, cell_id: str) -> dict[str, Any] | None: ...
 
     def set_elite(self, cell_id: str, card_id: str | None) -> None: ...
+
+    def list_elites(self) -> list[dict[str, Any]]: ...
 
 
 @runtime_checkable

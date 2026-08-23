@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from nsqd.app.handlers import (
+    handle_acquire,
     handle_diverge,
     handle_ground,
     handle_harvest,
@@ -25,6 +26,7 @@ _HANDLER_BY_JOB_TYPE: dict[NsqdJobType, Callable[[Any, NsqdJob], dict[str, Any]]
     "score": handle_score,
     "rescore": handle_rescore,
     "map": handle_map,
+    "acquire": handle_acquire,
 }
 
 

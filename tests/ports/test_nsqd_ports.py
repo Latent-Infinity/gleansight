@@ -96,8 +96,10 @@ def test_frontier_elite_clear_and_missing_cell() -> None:
     assert cards.elite_for_cell("cell") is None
     cards.set_elite("cell", "c1")
     assert cards.elite_for_cell("cell") == {"card_id": "c1", "cell_id": "cell"}
+    assert cards.list_elites() == [{"card_id": "c1", "cell_id": "cell"}]
     cards.set_elite("cell", None)
     assert cards.elite_for_cell("cell") is None
+    assert cards.list_elites() == []
 
 
 def test_job_retry_fail_and_attempt_cap() -> None:

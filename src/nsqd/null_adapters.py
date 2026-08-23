@@ -223,6 +223,14 @@ class NullFrontierCardStore:
             return
         self._elites[cell_id] = card_id
 
+    def list_elites(self) -> list[dict[str, Any]]:
+        elites: list[dict[str, Any]] = []
+        for card_id in self._elites.values():
+            card = self.get_card(card_id)
+            if card is not None:
+                elites.append(card)
+        return elites
+
 
 @dataclass
 class _JobRow:
@@ -353,6 +361,23 @@ class NullPolicyVerdictStore:
     def get_verdict(self, *, snapshot_id: str, domain_policy_id: str) -> dict[str, Any] | None:
         row = self._rows.get((snapshot_id, domain_policy_id))
         return deepcopy(row) if row is not None else None
+
+
+class NullPaperAcquisitionBridge:
+    def discover(self, query: str, filters: dict[str, Any]) -> list[dict[str, Any]]:
+        return []
+
+    def shortlist(self, candidates: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+        return list(candidates[:limit])
+
+    def stage_import(self, candidate: dict[str, Any]) -> str:
+        raise RuntimeError("paper acquisition bridge is not configured")
+
+    def enqueue_analyze(self, paper_id: str) -> None:
+        raise RuntimeError("paper acquisition bridge is not configured")
+
+    def draft_projection(self, paper_id: str) -> dict[str, Any]:
+        raise RuntimeError("paper acquisition bridge is not configured")
 
 
 class NullAcquisitionCycleStore:
