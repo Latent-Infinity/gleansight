@@ -20,8 +20,10 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     mock_settings.data.blobs_md_dir = tmp_path / "blobs" / "md"
     mock_settings.data.blobs_analysis_dir = tmp_path / "blobs" / "analysis"
     mock_settings.data.lancedb_dir = tmp_path / "lancedb"
+    mock_settings.llm.default_profile = "default"
 
     mock_container = MagicMock()
+    mock_container.settings = mock_settings
     mock_container.scholar_client = MagicMock()
     mock_container.paper_store = MagicMock()
     mock_container.paper_store.get = MagicMock(return_value=None)
@@ -35,6 +37,7 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     with (
         patch.object(main_module, "load_settings", return_value=mock_settings),
         patch.object(main_module, "build_container", return_value=mock_container),
+        patch.object(main_module, "compose_default_runtime") as mock_compose,
         patch.object(main_module, "PiccoloCandidateStore"),
         patch.object(main_module, "PiccoloExtractionStore"),
         patch.object(main_module, "PiccoloPaperExternalIdStore"),
@@ -44,6 +47,12 @@ def test_build_ui_services_returns_ui_services(tmp_path):
         services = main_module.build_ui_services()
 
     assert isinstance(services, UIServices)
+    mock_compose.assert_called_once_with(
+        papers=mock_container,
+        nsqd_db_path=tmp_path / "nsqd" / "nsqd.sqlite",
+        nsqd_index_path=tmp_path / "nsqd" / "corpus.lancedb",
+        llm_base_url="http://localhost:8000",
+    )
     assert services.list_paper is mock_container.paper_store.get
     assert services.list_runs is mock_container.analysis_store.list_runs
     # list_jobs is a lambda wrapper that delegates to job_queue.list_jobs

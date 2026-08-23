@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from nsqd.app.use_cases import MapSnapshotUseCase
-from nsqd.composition import build_container as build_nsqd_container
+from nsqd.infra.paper_runtime import compose_default_runtime, markdown_reader
 from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import (
@@ -37,24 +37,17 @@ def build_ui_services(
         llm_api_key=llm_api_key,
     )
 
-    nsqd = build_nsqd_container(
-        db_path=Path(settings.data.root) / "nsqd" / "nsqd.sqlite",
-        index_path=Path(settings.data.root) / "nsqd" / "corpus.lancedb",
+    runtime = compose_default_runtime(
+        papers=base,
+        nsqd_db_path=Path(settings.data.root) / "nsqd" / "nsqd.sqlite",
+        nsqd_index_path=Path(settings.data.root) / "nsqd" / "corpus.lancedb",
+        llm_base_url=llm_base_url,
     )
+    nsqd = runtime.nsqd
     candidate_store = PiccoloCandidateStore()
     extraction_store = PiccoloExtractionStore()
     external_id_store = PiccoloPaperExternalIdStore()
     papers_fts = PiccoloPaperFTS()
-
-    def get_paper_markdown(paper_id: str) -> str | None:
-        """Get the markdown content for a paper, if available."""
-        md_path = base.blob_store.get_markdown_path(paper_id)
-        if md_path is None or not md_path.exists():
-            return None
-        try:
-            return md_path.read_text(encoding="utf-8")
-        except OSError:
-            return None
 
     return UIServices(
         discover=use_cases.DiscoverCandidatesUseCase(
@@ -95,7 +88,7 @@ def build_ui_services(
         delete_job=base.job_queue.delete_job,
         bulk_delete_jobs=base.job_queue.bulk_delete_jobs,
         bulk_cancel_jobs=base.job_queue.bulk_cancel_jobs,
-        get_paper_markdown=get_paper_markdown,
+        get_paper_markdown=markdown_reader(base.blob_store),
         list_extractions=extraction_store.list_by_paper,
         delete_paper=base.paper_store.delete_paper,
         reset_pipeline_stage=base.paper_store.reset_pipeline_stage,
