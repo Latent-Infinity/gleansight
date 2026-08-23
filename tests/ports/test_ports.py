@@ -280,6 +280,9 @@ class FakeProfileStore:
     def create_profile(self, profile_id: str, name: str, base_url: str) -> None:
         return None
 
+    def update_profile(self, profile_id: str, name: str, base_url: str) -> None:
+        return None
+
     def get(self, profile_id: str):
         return None
 

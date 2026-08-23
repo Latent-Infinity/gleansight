@@ -113,6 +113,11 @@ def test_delete_paper_removes_paper_and_related_records(tmp_path: Path) -> None:
     prompt_store.create_version("pv1", "prompt1", 1, "body", "json_only")
     profile_store = PiccoloProfileStore()
     profile_store.create_profile("profile1", "Local", "http://localhost")
+    profile_store.update_profile("profile1", "Updated", "http://localhost:9000")
+    profile = profile_store.get("profile1")
+    assert profile is not None
+    assert profile["name"] == "Updated"
+    assert profile["base_url"] == "http://localhost:9000"
     analysis_store = PiccoloAnalysisRunStore()
     analysis_store.create_run("run1", "p1", "pv1", "profile1", "model")
     candidates = PiccoloCandidateStore()

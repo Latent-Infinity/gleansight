@@ -1309,6 +1309,11 @@ class PiccoloProfileStore(ports.ProfileStore):
             )
         ).run_sync()
 
+    def update_profile(self, profile_id: str, name: str, base_url: str) -> None:
+        EndpointProfile.update({"name": name, "base_url": base_url, "is_active": True}).where(
+            EndpointProfile.profile_id == profile_id
+        ).run_sync()
+
     def get(self, profile_id: str) -> dict[str, Any] | None:
         row = (
             EndpointProfile.select()
