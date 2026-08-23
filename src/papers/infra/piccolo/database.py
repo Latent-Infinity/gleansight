@@ -48,9 +48,12 @@ class PiccoloDatabase:
 
     def __post_init__(self) -> None:
         engine = SQLiteEngine(path=str(self.path))
-        for table in _TABLES:
-            table._meta.db = engine
         object.__setattr__(self, "_engine", engine)
+        self.bind_tables()
+
+    def bind_tables(self) -> None:
+        for table in _TABLES:
+            table._meta.db = self._engine
 
     @property
     def engine(self) -> SQLiteEngine:
