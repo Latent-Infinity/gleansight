@@ -10,9 +10,9 @@ Paper search needs an on-disk vector index that stays local, replaces without a 
 
 ## Decision
 
-Use LanceDB as the vector store behind the `VectorIndex` port (`src/papers/infra/lancedb/`). Embeddings are produced by the Sentence-Transformers adapter and upserted after convert/embed. Hybrid search queries this index on **markdown**, not title/abstract.
+Use LanceDB as the vector store behind the `VectorIndex` port (`src/papers/infra/lancedb/`). Embeddings are produced by the OpenAI-compatible Ollama embedder (`qwen3-embedding:latest`, 4096-d, L2-normalized) and upserted after convert/embed. Hybrid search queries this index on **markdown**, not title/abstract. Changing the embedding family requires rebuilding the index.
 
-NS/QD corpus embeddings use the same library behind a separate port in `src/nsqd/infra/lancedb/`.
+NS/QD corpus embeddings use the same embedder behind a separate port in `src/nsqd/infra/lancedb/`. Hermetic tests may inject a hash embedder.
 
 ## Consequences
 

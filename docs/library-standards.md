@@ -10,7 +10,7 @@ Confirmed libraries for this project (per design doc and Phase 0 decision):
 | Terminal Output | rich | colorama, print | Tables, progress, consistent styling |
 | UI | flet | tkinter, qt | Thin client, fast iteration |
 | PDF → Text | docling | custom parsers | Higher quality extraction |
-| Embeddings | sentence-transformers | custom embeddings | Proven, configurable |
+| Embeddings | Qwen3 embedding via Ollama (`qwen3-embedding:latest`) | MiniLM as default, mixing vector families | Newest Qwen-lineage embedding tag; replace with `qwen3.6-embedding:*` when it ships |
 | Vector DB | lancedb | faiss-only | Vector store with persistence |
 | Metadata Store (ORM) | Piccolo (SQLite backend) | raw SQL in app code | ORM models + migrations on SQLite |
 

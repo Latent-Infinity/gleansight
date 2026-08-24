@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Honest `finance/1 production_valid` waits on approved DATA-NSQD-03.
+**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Approved DATA-NSQD-03 now exercises an honest `finance/1 production_valid` path with zero `ALG-SUF` failures.
 
 **Document roles**
 
@@ -57,7 +57,7 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | CLI | `gleansight` + existing `papers` | One product; no break of current scripts |
 | UI | One Flet app: evidence screens stay; Map, Archive, Card added | Same desktop |
 | Vector store | LanceDB: existing paper table **and** a corpus-paraphrase collection | **HD-NSQD-01 closed: LanceDB.** Qdrant is out of scope |
-| Embeddings | Existing sentence-transformers embedder for paraphrases in V1 | KISS |
+| Embeddings | Qwen3-lineage Ollama embedder (`qwen3-embedding:latest`) for papers and corpus paraphrases | Same family for both indexes; later Qwen embedding tags replace this setting |
 | Card/corpus metadata | Piccolo + `data/blobs/nsqd/` | Rule of Three |
 | Paper → corpus (v1) | Approved **human-reviewed** paraphrase + hashes (`ALG-PROJ`) | Abstract is not the paraphrase. Model-assisted drafting requires recorded human approval |
 | Harvest (non-paper) | Approved enumerated captures first; optional S2 | No invented citations |

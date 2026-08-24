@@ -44,7 +44,7 @@ This document records the security review checklist and findings through Phase 8
 
 ### Phase 6: Embedding & Vector Search
 - [x] Vector store (LanceDB) runs locally — no external embedding API calls
-- [x] Embedding model loaded locally via sentence-transformers
+- [x] Embedding model loaded locally via Ollama (`qwen3-embedding:latest`)
 - [x] Vector index stored on local filesystem alongside other data artifacts
 
 ### Phase 7: UI
