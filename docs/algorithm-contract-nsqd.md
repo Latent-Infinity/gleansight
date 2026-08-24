@@ -111,7 +111,7 @@ evidence(q, snapshot) =
 
 | Knob | v1 default | Notes |
 |------|------------|--------|
-| embedding | existing sentence-transformers model | same as evidence layer unless ablation says split |
+| embedding | Qwen3-lineage Ollama embedder (`qwen3-embedding:latest`, 4096-d) | same as evidence layer unless ablation says split; replace with a later Qwen embedding family when one ships |
 | distance | `1 - cosine_similarity` | [0, 2] theoretically; expect [0, 1] for unit vectors |
 | k | 5 | if `\|snapshot\| < k`, use `\|snapshot\|`; if 0, `evidence` is **undefined** (`null`) |
 | tie | smaller `record_id` first | deterministic |
@@ -358,7 +358,7 @@ A versioned domain policy (`finance/1`, later packs) declares:
 | `domain_minima_unmet` | Pack `min_records` / `required_record_types` not met |
 | `manifest_missing` | No domain policy / harvest-seed manifest is approved |
 
-`production_valid` requires zero failures. `calibration` requires the recall probe and approved fixtures; it may leave `expected_cell_empty` / `domain_minima_unmet` pending until DATA-NSQD-03 exists. **DATA-NSQD-03 remains a blocker** for an honest `production_valid` decision and for harvest-from-seed.
+`production_valid` requires zero failures. `calibration` requires the recall probe and approved fixtures; it may leave `expected_cell_empty` / `domain_minima_unmet` pending. **DATA-NSQD-03 is now approved**; `production_valid` still requires its trusted digest and zero failures.
 
 Duplicates with identical paraphrase: keep one, point aliases. Retractions: exclude from k-NN unless `include_retracted`.
 
@@ -388,7 +388,7 @@ The evaluator **loads the artifact by hash**; it does not accept a live object f
 
 v1 projector (**human-approved only**). Model-assisted drafting is allowed when the fixture records human approval. **Not part of NSQD-N1.** First delivery is NSQD-N2b, after EW-V0A approves real paper fixtures, DATA-NSQD-04 exists (real paper + approved mechanism paraphrase), and EW-V2 is available for live imports.
 
-- Input: approved fixture or reviewed projection payload: `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` computed from normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`
+- Input: approved fixture or reviewed projection payload: `domain_policy_id`, `paraphrase`, `paraphrase_source`, `source_paper_id`, canonical `source`, policy-valid `coordinates`, `source_abstract_sha256`, `source_markdown_sha256`, `paraphrase_sha256` computed from normalized paraphrase bytes, `human_reviewer`, `human_approved_at` (UTC), and `review_status=approved`
 - The application computes a canonical digest of the normalized reviewed payload and requires it in an injected human-approved digest allowlist. A job payload cannot approve itself by supplying a status or digest, and its explicit `domain_policy_id` must match the policy bound into the approved payload. N6 owns replacement of the fixture/config allowlist with durable live approval state.
 - The executable fixture-backed path is `python -m nsqd project`: it verifies the projection file's byte hash and approval metadata against an operator-selected approved manifest before injecting the contract-field digest. The manifest path and trusted digest are not copied into the job payload.
 - **Not** “use the abstract as the paraphrase”

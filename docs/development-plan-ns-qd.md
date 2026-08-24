@@ -8,16 +8,16 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.5 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.8 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
-**Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is pending seed data that must be human-approved once acquired.
+**Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
 **Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
-**Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing**; live acquisition of it still requires a separately approved probe. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Calibration ablation probes are filed under `docs/ablations/`: `ALG.K` is synthetic math/state evidence, while `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, and `ALG.VIABILITY` are LLM-scored probes. None is frozen. Remaining: a separately approved DATA-NSQD-03 probe. Honest `finance/1 production_valid` still waits on approved DATA-NSQD-03.
-**Outstanding Blockers**: approved DATA-NSQD-03 for honest `finance/1` production validity. Ablation freeze waits on human validation of the recorded math artifact and LLM prompts/results, not on a second labeling panel.
+**Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
+**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection now upsert snapshot-scoped paraphrase vectors so grounding can compute novelty without a caller `query_vector`. Calibration ablation probes remain filed and not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
+**Outstanding Blockers**: Ablation freeze waits on human validation of the recorded math artifact and LLM prompts/results, not on a second labeling panel.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -73,6 +73,9 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.4 | 2026-08-23 | Default acquire/UI composition wires the paper runtime, paper workers, and analysis-metadata bootstrap. |
 | 1.6.5 | 2026-08-23 | ALG.K math probe on a constructed calibration snapshot; k=5 stays tunable; DATA-NSQD-03 still uninvented. |
 | 1.6.6 | 2026-08-23 | ALG.K is a synthetic math probe; the other ablation labels/scores are LLM-produced and human-validated. Remaining probes filed; defaults not frozen. |
+| 1.6.7 | 2026-08-24 | Approve DATA-NSQD-03 from Gamma Fragility; bind source/paraphrase/coordinates; activate non-empty finance/1 policy; verify production_valid with zero ALG-SUF failures. |
+| 1.6.8 | 2026-08-24 | Harvest/project upsert snapshot-scoped paraphrase vectors; ground embeds candidate paraphrases; gamma-flow novelty is defined against DATA-NSQD-03 on production_valid. Four-command gate: 1084 passed, 1 skipped, 92.41%; dedicated NSQD: 494 passed, 93.68%. |
+| 1.6.9 | 2026-08-24 | Default chat is Ollama `qwen3.6:35b-a3b-q4_K_M` with thinking off. Embeddings standardize on `qwen3-embedding:latest` (4096-d) until a later Qwen embedding family ships. Four-command gate: 1089 passed, 1 skipped, 92.34%; dedicated NSQD: 494 passed, 93.68%. |
 
 ---
 
@@ -109,7 +112,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | PRD / algorithm contract | glossary + algorithm-contract | Pass | — | — |
 | Terminology | NS/QD-inspired; corpus-relative novelty | Pass | — | — |
 | Vertical E2E | NSQD-N1 path (rejected smoke card) | Pass (implemented) | — | EV-N00 green; N1 closed |
-| Real data | 01/02/04 committed; 03 pending | Blocked: `finance/1` production validity | N6 | N2b is implemented; N6 fallback or explicit import may produce approved DATA-NSQD-03 |
+| Real data | 01/02/03/04 committed | Pass: `finance/1 production_valid` verified | — | DATA-NSQD-03 is human-approved and bound to primary-source evidence |
 | Four-command gate | EW-V0.11 | Pass (2026-08-18) | — | 536 passed, 1 skipped, 91.91% |
 | EW fact surface | EW-V0.3 | Pass (2026-08-18) | — | `tests/support/test_fact_surface.py` |
 | EW migrator | EW-V0B | Pass (2026-08-19) | — | `schema_migrations` + jobs CHECK |
@@ -119,7 +122,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | Operators B–G | explicitly deferred | N/A (deferred) | — | later revision |
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
 | Domain-policy isolation | EV-N16 | Pass | — | Explicit policy id; pack-scoped corpus views/verdicts; no implicit `finance/1` |
-| Insufficiency acquisition fallback | EV-N17 | Pass | — | Default acquire/UI composition wires the paper runtime, workers, and analysis-metadata bootstrap; live DATA-NSQD-03 remains uninvented |
+| Insufficiency acquisition fallback | EV-N17 | Pass | — | Default acquire/UI composition wires the paper runtime, workers, and analysis-metadata bootstrap; approved DATA-NSQD-03 is committed and verified |
 
 ---
 
@@ -141,14 +144,14 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.GROUND.LIVE_PRIOR_ART.v1 | After a pack-scoped local miss on calibration/production-valid, at most 3 calls use typed hybrid/scholar search-only interfaces; only backend-contract hits become normalized closest-prior-art evidence with hashed query metadata; no corpus writes | N5 ground escalation | Behavior | LOCAL-NSQD-G | EV-N10 |
 | NSQD.NOVELTY.METRIC.v1 | Evidence equals mean cosine distance to k-NN paraphrases (`ALG-NOV`); covers 0, `<k`, exact `k`, ties, known unit vectors | Novelty | Behavior | LOCAL-NSQD-G | EV-N11 |
 | NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore and reserved acquire work persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
-| NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to `calibration` / `production_valid` is evaluated independently by `(snapshot_id, domain_policy_id)` under `ALG-SUF`; every `SufficiencyFailure` code is tested. Honest `finance/1 production_valid` is blocked until approved DATA-NSQD-03 exists | N6 | Behavior | LOCAL-NSQD-H | EV-N13 |
+| NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to `calibration` / `production_valid` is evaluated independently by `(snapshot_id, domain_policy_id)` under `ALG-SUF`; every `SufficiencyFailure` code is tested. Honest `finance/1 production_valid` requires approved DATA-NSQD-03 and now passes with zero failures | N6 | Behavior | LOCAL-NSQD-H | EV-N13 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Global rank fails below 50 elites and below 20% of `U \\ {Invalid}`; both thresholds and the below-threshold case are tested | N7 | Behavior | LOCAL-NSQD-A | EV-N14 |
 | NSQD.RESCORE.REPLAY.v1 | Stale cards re-ground and re-score against the current snapshot; current-card retries skip those operations but reconcile archive state; rejected current elites are removed | N8 | Behavior | LOCAL-NSQD-A | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor axes/universe and dval compatibility resolve by explicit `domain_policy_id`; grounding, corpus filtering, cards/elites/rank are policy-scoped; verdict identity is reserved/validated by `(snapshot_id, domain_policy_id)` schema; records from one policy cannot satisfy, ground, rank, or archive under another | N2a | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | EV-N16 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable `ALG-SUF` failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures do not search; drafts cannot approve; default acquire/UI composition wires the paper runtime | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
 
-**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Deferred (not in baseline):** operators B–G; a separately approved live acquisition probe for DATA-NSQD-03.
+**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Deferred (not in baseline):** operators B–G.
 
 ---
 
@@ -186,10 +189,10 @@ Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 | --- | --- | --- | --- |
 | DATA-NSQD-01 | **Committed** | `candidate-requirement-card` — **not** a corpus record | `tests/fixtures/approved/nsqd/gamma-flow.yaml` |
 | DATA-NSQD-02 | **Committed** | `candidate-requirement-card` — **not** a corpus record | `tests/fixtures/approved/nsqd/mechanism-free.yaml` |
-| DATA-NSQD-03 | **Pending** | pending `finance/1` seed to be acquired through bounded fallback or explicit import and human-approved afterward | `tests/fixtures/approved/nsqd/harvest-seed.toml` |
+| DATA-NSQD-03 | **Committed** | approved finance paper + model-assisted, four-round-reviewed, human-approved mechanism paraphrase | `tests/fixtures/approved/nsqd/gamma-fragility.*` |
 | DATA-NSQD-04 | **Committed** | approved optimization paper + model-assisted, human-approved mechanism paraphrase; zero `finance/1` credit | `tests/fixtures/approved/nsqd/paper-a.*` |
 
-N1 uses 01+02 as **candidate inputs** only and rejects either as corpus data. DATA-NSQD-04 is approved optimization evidence, is not an N1 prerequisite, and receives no `finance/1` expected-cell, minima, recall, calibration, or production credit. DATA-NSQD-03 remains pending until the N6 fallback or an explicit import produces a real finance seed that passes the same human approval and provenance rules.
+N1 uses 01+02 as **candidate inputs** only and rejects either as corpus data. DATA-NSQD-04 is approved optimization evidence, is not an N1 prerequisite, and receives no `finance/1` expected-cell, minima, recall, calibration, or production credit. DATA-NSQD-03 is approved finance evidence; its DOI source, excerpt bytes, paraphrase, coordinates, and reviewed digest are bound by the fixture manifests.
 
 ---
 
@@ -343,14 +346,16 @@ N1 uses 01+02 as **candidate inputs** only and rejects either as corpus data. DA
 **PRD Trace:** LOCAL-NSQD-H
 **Real Data Dependency:** DATA-NSQD-03
 **Provider Boundary:** existing paper discovery/import/pipeline ports through N6
-**Description:** Approved `finance/1` enumerated citations. N0A records the data contract and permits deferral; N6 may create the seed through bounded fallback or explicit import. DATA-NSQD-03 is required for an honest `finance/1 production_valid` verdict, not for running the acquisition fallback.
+**Description:** Approved `finance/1` evidence. DATA-NSQD-03 was created from an explicit primary-source import, passed four writer/reviewer rounds, and received human approval. Its trusted projection is required for an honest `finance/1 production_valid` verdict.
 **Acceptance Criteria:**
 
-- [x] `harvest-seed.toml` or explicitly deferred in manifest
+- [x] Approved `gamma-fragility.yaml` projection and bound source excerpt recorded in the manifest
 
 **N0A Exit:** 01/02 approved; 03/04 status recorded; **Stage**
 
 **Close note (2026-08-19):** `tests/nsqd/test_smoke_fixtures.py` binds DATA-NSQD-01/02 hashes, `kind`, `never_corpus_record`, and `expected_outcomes`. Requirement cards are rejected as corpus input. DATA-NSQD-03 remains pending; DATA-NSQD-04 was acquired and approved later under N0A.3.
+
+**Update note (2026-08-24):** DATA-NSQD-03 is approved from *Gamma Fragility* (DOI `10.2139/ssrn.3725454`). The source excerpt, abstract, projection, coordinates, reviewer metadata, and policy values are hash-bound; the projected snapshot reaches `finance/1 production_valid` with zero `ALG-SUF` failures. Final gate: 1081 passed, 1 skipped, 92.35% coverage; format, lint, and type checks passed.
 
 ---
 
@@ -682,11 +687,11 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 
 ### NSQD-N6 Calibration snapshot (not smoke)
 
-**Depends On:** N2a + N2b + N5 + `ALG-SUF`; DATA-NSQD-03 blocks only an honest `finance/1` `production_valid` verdict, not fallback execution
+**Depends On:** N2a + N2b + N5 + `ALG-SUF`; approved DATA-NSQD-03 closes the finance production-valid data dependency
 **Facts:** NSQD.SNAPSHOT.PROMOTION.v1 → EV-N13; NSQD.ACQUISITION.FALLBACK.v1 → EV-N17
 **Purpose:** Evaluate sufficiency independently for each `(snapshot_id, domain_policy_id)`, acquire searchable gaps through existing paper capabilities, and recheck without conflating ALG-SUF with ALG-COV.
 
-**Missing prerequisites:** a separately approved DATA-NSQD-03 acquisition run for honest `finance/1 production_valid`.
+**Missing prerequisites:** None for the `finance/1 production_valid` evidence path.
 
 - [x] Table-driven tests for every closed `SufficiencyFailure`
 - [x] Independent optimization/finance verdicts and cross-pack leakage
@@ -698,14 +703,14 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 - [x] Implement an injection-ready paper bridge plus durable policy/digest approval bootstrap
 - [x] Compose the default production paper runtime with settings, workers, and analysis-metadata bootstrap
 - [x] Rank guard does not trigger acquisition
-- [x] `finance/1 production_valid` blocked without DATA-NSQD-03
+- [x] `finance/1 production_valid` blocked without DATA-NSQD-03 and passes with the approved fixture
 
 **TDD sequence:**
 1. Add red table-driven tests for every closed `SufficiencyFailure`, independent optimization/finance verdicts, and cross-pack leakage.
 2. Implement the pure pack-aware sufficiency evaluator and persisted verdict; `production_valid` requires zero failures on approved corpus records.
 3. Add red orchestration tests for searchable versus non-searchable failures, bounded retries, idempotency, no-delta stops, and human rejection.
 4. Implement the fallback at the N5/N6 application boundary. Do not put side effects in pure domain policy or trigger acquisition from `RankGuardBlocked`.
-5. Run a calibration E2E with faked providers in CI, then a separately approved live acquisition probe to produce DATA-NSQD-03.
+5. Run calibration with faked providers, then project the separately human-approved DATA-NSQD-03 and verify production sufficiency.
 
 **Failure routing:**
 - Search for `expected_cell_empty`, `recall_probe_missing`, and `domain_minima_unmet`; render deterministic queries from the policy manifest, missing cell/probe, and record type before any LLM ranking.
@@ -720,7 +725,7 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 **Acceptance:**
 - `optimization/1` and `finance/1` can hold different verdicts over the same physical snapshot; scoring, grounding, archive coverage, and novelty use the candidate's own policy view.
 - Existing optimization papers count only after an approved `optimization/1` manifest/rubric/probe defines their eligibility; the plan does not presume they pass.
-- With an explicitly injected bridge and approved policy manifest, missing finance evidence exercises the bounded seam; production creation of DATA-NSQD-03 remains pending.
+- With an explicitly injected bridge and approved policy manifest, missing finance evidence exercises the bounded seam; approved DATA-NSQD-03 now closes the production-valid loop.
 - `calibration` requires an approved recall probe and fixtures; allowed calibration failures remain explicit.
 - `finance/1 production_valid` requires approved DATA-NSQD-03, approved nonzero minima, expected-cell coverage, satisfied recall probes, and zero `ALG-SUF` failures.
 - ALG-COV remains a separate N7 rank permission and never triggers acquisition.

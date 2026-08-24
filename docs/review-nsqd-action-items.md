@@ -23,7 +23,7 @@ This checklist reviews conceptual correctness, cross-document traceability, impl
 | REV-P0-03 | **Accepted** | N1 is domain → application → adapters → E2E; EV-N00 is last |
 | REV-P0-04 | **Accepted** | `ALG-VIA`: novelty evidence is numeric when neighbors exist and `null` on N1’s empty snapshot; the smoke `nov` term is 0. mech/fals/dpred use 0-or-5 presence rubrics; dval is human-assigned with provenance. 1–4 remain reserved for `ALG.VIABILITY` |
 | REV-P0-05 | **Accepted** | Exclusive first-match table; Mature before Active; record-level `lifecycle`; injected `as_of` |
-| REV-P0-06 | **Accepted** | `ALG-SUF` uses expected-cell / recall-probe manifest; closed failure codes; EV-N13 on N6; DATA-NSQD-03 still blocks `production_valid` |
+| REV-P0-06 | **Accepted** | `ALG-SUF` uses expected-cell / recall-probe manifest; closed failure codes; EV-N13 on N6; approved DATA-NSQD-03 now satisfies `production_valid` |
 | REV-P0-07 | **Dependency change** | NSQD-N0 depends on EW-V0.11. This review does not execute V0.11 and does not weaken the gate |
 | REV-P1-01…15 | **Accepted** | Ownership, ports, CorpusIndex, jobs, clock, versions, grounding, coverage denom, tie-break, remove obsolete LanceDB gate, fixtures, synthetic units, nsqd coverage, EV-N13/N14, executable ablations |
 | REV-P1-08 OR-rule | **Confirmed** | `50 elites OR 20%` stays (illuminate-first). Denominator is pack universe minus Invalid |
@@ -191,7 +191,7 @@ N1.1–N1.3 domain; N1.4–N1.6 application; N1.7–N1.9 adapters; N1.10–N1.11
 
 **Resolution**
 
-`ALG-SUF` + EV-N13 (N6). DATA-NSQD-03 remains a blocker for honest `production_valid`.
+`ALG-SUF` + EV-N13 (N6). Approved DATA-NSQD-03 now exercises honest `production_valid` with zero failures.
 
 **Acceptance criteria**
 
@@ -199,7 +199,7 @@ N1.1–N1.3 domain; N1.4–N1.6 application; N1.7–N1.9 adapters; N1.10–N1.11
 - [x] Minimum coverage is delegated to versioned domain policy `finance/1`.
 - [x] Promotion facts/evidence exist (EV-N13, N6).
 - [x] Failure reasons are a closed typed set and are all to be tested.
-- [x] DATA-NSQD-03 remains a blocker until the policy can be evaluated honestly.
+- [x] DATA-NSQD-03 blocked promotion until approval; the approved fixture and non-empty policy now evaluate honestly.
 
 ### [x] REV-P0-07 — Restore the advertised baseline quality gate before N0
 
