@@ -41,6 +41,7 @@ def test_build_client_with_fake_httpx() -> None:
         def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> FakeResponse:
             # Verify URL construction
             assert "/v1/chat/completions" in url
+            assert json.get("think") is False
             return FakeResponse()
 
         def __enter__(self) -> FakeClient:

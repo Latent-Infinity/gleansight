@@ -23,6 +23,7 @@ class OpenAICompatClient(ports.LLMClient):
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
+            "think": False,
         }
         try:
             response = self.send_func(payload, profile, timeout_s)
