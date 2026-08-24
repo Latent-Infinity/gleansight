@@ -9,11 +9,12 @@ from nsqd.infra.papers_bridge import AnalysisDefaults, PapersAcquisitionBridge
 from nsqd.ports import Clock
 from papers.app.use_cases.discovery import DiscoverCandidatesUseCase, ImportCandidateUseCase
 from papers.app.use_cases.pipeline import RunAnalysisUseCase
+from papers.config.settings import DEFAULT_QWEN_CHAT_MODEL
 
 ACQUISITION_PROMPT_ID = "nsqd-acquisition"
 ACQUISITION_PROMPT_VERSION_ID = "nsqd-acquisition-v1"
 ACQUISITION_PROFILE_ID = "nsqd-acquisition"
-ACQUISITION_MODEL_NAME = "acquisition-draft"
+ACQUISITION_MODEL_NAME = DEFAULT_QWEN_CHAT_MODEL
 MAX_MARKDOWN_BYTES = 10 * 1024 * 1024
 ACQUISITION_PROMPT_BODY = (
     "Draft a one-paragraph mechanism paraphrase for the paper. Do not mark the draft as approved."
@@ -120,6 +121,7 @@ def compose_default_runtime(
         clock=clock,
         approved_projection_digests=approved_projection_digests,
         paper_bridge=bridge,
+        embedder=getattr(papers, "embedder", None),
     )
     return NsqdPaperRuntime(
         nsqd=nsqd,

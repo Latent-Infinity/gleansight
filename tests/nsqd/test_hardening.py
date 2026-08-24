@@ -7,14 +7,45 @@ from pathlib import Path
 
 import pytest
 
+import nsqd.composition as composition_module
 from nsqd.composition import build_container
 from nsqd.null_adapters import FixedClock
 from nsqd.runner import run_job
+from nsqd.skeleton import run_skeleton
+from papers.config.settings import DEFAULT_OLLAMA_BASE_URL, packaged_defaults_path
+from papers.config.settings import load_settings as load_paper_settings
 from papers.infra.piccolo.database import PiccoloDatabase
 from tests.support.import_boundary import scan_tree
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 AS_OF = datetime(2024, 6, 1, 12, 0, tzinfo=UTC)
+
+
+def test_default_local_qwen_embedder_factory_uses_no_auth_ollama_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+    sentinel = object()
+    settings = load_paper_settings(defaults_path=packaged_defaults_path())
+
+    def fake_build_configured_ollama_embedder(embedding_settings) -> object:
+        captured["model"] = embedding_settings.model
+        captured["dimension"] = embedding_settings.dimension
+        captured["base_url"] = embedding_settings.base_url
+        return sentinel
+
+    monkeypatch.setattr(
+        composition_module,
+        "build_configured_ollama_embedder",
+        fake_build_configured_ollama_embedder,
+    )
+
+    assert composition_module.build_local_ollama_embedder(settings.embeddings) is sentinel
+    assert captured == {
+        "model": "qwen3-embedding:latest",
+        "dimension": 4096,
+        "base_url": DEFAULT_OLLAMA_BASE_URL,
+    }
 
 
 def test_scanner_rejects_nsqd_infra_import_from_application(tmp_path: Path) -> None:
@@ -102,3 +133,22 @@ def test_runner_logs_utc_job_transitions(tmp_path: Path, caplog: pytest.LogCaptu
     transitions = {(item.get("status_from"), item.get("status_to")) for item in extras}
     assert ("queued", "running") in transitions
     assert ("running", "succeeded") in transitions
+
+
+def test_run_skeleton_remains_intentionally_unconfigured_for_smoke(tmp_path: Path) -> None:
+    result = run_skeleton(
+        fixture_path=REPO_ROOT / "tests" / "fixtures" / "approved" / "nsqd" / "gamma-flow.yaml",
+        axiom="predictors assume stationary return signal",
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        as_of=AS_OF,
+    )
+
+    assert result["grounding"]["measurement_stamp"] == {
+        "embedding_model_id": "unconfigured",
+        "embedding_model_version": "unconfigured",
+        "embedding_dimension": 0,
+        "normalization_policy": "unknown",
+        "distance_metric": "cosine_distance",
+        "algorithm_contract_version": "1.1",
+    }

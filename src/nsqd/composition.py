@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nsqd.app.handlers import NsqdHandlerContext
+from nsqd.domain.policy import POLICIES
 from nsqd.infra.lancedb.index import LanceDBCorpusIndex
 from nsqd.infra.piccolo.stores import (
     PiccoloAcquisitionCycleStore,
@@ -18,8 +19,20 @@ from nsqd.infra.piccolo.stores import (
     PiccoloNsqdJobQueue,
     PiccoloPolicyVerdictStore,
 )
-from nsqd.null_adapters import FixedClock, NullPaperAcquisitionBridge, SystemClock
-from nsqd.ports import Clock, HybridPaperSearch, LivePaperSearch, PaperAcquisitionBridge
+from nsqd.null_adapters import (
+    FixedClock,
+    NullPaperAcquisitionBridge,
+    SystemClock,
+)
+from nsqd.ports import (
+    Clock,
+    HybridPaperSearch,
+    LivePaperSearch,
+    PaperAcquisitionBridge,
+    ParaphraseEmbedder,
+)
+from papers.config.settings import EmbeddingSettings
+from papers.infra.embedder_ollama.adapter import build_configured_ollama_embedder
 from papers.infra.piccolo.database import PiccoloDatabase
 
 
@@ -31,6 +44,10 @@ class NsqdContainer:
     ctx: NsqdHandlerContext
 
 
+def build_local_ollama_embedder(settings: EmbeddingSettings) -> ParaphraseEmbedder:
+    return build_configured_ollama_embedder(settings)
+
+
 def build_container(
     *,
     db_path: Path,
@@ -40,6 +57,7 @@ def build_container(
     scholar_client: LivePaperSearch | None = None,
     paper_hybrid_search: HybridPaperSearch | None = None,
     paper_bridge: PaperAcquisitionBridge | None = None,
+    embedder: ParaphraseEmbedder | None = None,
 ) -> NsqdContainer:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -53,6 +71,13 @@ def build_container(
         now = resolved_clock.now()
         for digest in approved_projection_digests:
             digest_store.add(digest, approved_at=now)
+    index = LanceDBCorpusIndex(
+        index_path,
+        embedding_model=None
+        if embedder is None
+        else f"{embedder.model_id()}:{embedder.model_version()}",
+        embedding_dimension=None if embedder is None else embedder.dimension(),
+    )
     ctx = NsqdHandlerContext(
         clock=resolved_clock,
         candidates=PiccoloNsqdCandidateStore(database),
@@ -60,7 +85,7 @@ def build_container(
         snapshots=snapshots,
         records=records,
         harvest=PiccoloHarvestStore(database),
-        index=LanceDBCorpusIndex(index_path),
+        index=index,
         morph=PiccoloMorphospaceStore(database),
         approved_projection_digests=digest_store.list_digests(),
         scholar_client=scholar_client,
@@ -68,6 +93,8 @@ def build_container(
         cycles=PiccoloAcquisitionCycleStore(database),
         verdicts=PiccoloPolicyVerdictStore(database),
         bridge=paper_bridge if paper_bridge is not None else NullPaperAcquisitionBridge(),
+        policies=POLICIES,
+        embedder=embedder,
     )
     return NsqdContainer(
         clock=resolved_clock,

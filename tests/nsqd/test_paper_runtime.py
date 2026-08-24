@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from nsqd.composition import build_container as build_nsqd_container
 from nsqd.infra.paper_runtime import (
     ACQUISITION_MODEL_NAME,
     ACQUISITION_PROFILE_ID,
@@ -78,6 +79,26 @@ class _ProfileStore:
             "name": name,
             "base_url": base_url,
         }
+
+
+class _FakeEmbedder:
+    def model_name(self) -> str:
+        return "qwen3-embedding:latest"
+
+    def model_id(self) -> str:
+        return "qwen3-embedding"
+
+    def model_version(self) -> str:
+        return "latest"
+
+    def dimension(self) -> int:
+        return 2
+
+    def normalization_policy(self) -> str:
+        return "l2"
+
+    def embed(self, text: str) -> list[float]:
+        return [1.0, 0.0]
 
 
 def test_bootstrap_analysis_defaults_is_idempotent() -> None:
@@ -160,6 +181,7 @@ def test_compose_default_runtime_restores_paper_database_binding(tmp_path: Path)
         atomic_candidate_import=None,
         project_store=None,
         tag_store=None,
+        embedder=_FakeEmbedder(),
     )
 
     runtime = compose_default_runtime(
@@ -224,6 +246,7 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
         project_store=None,
         tag_store=None,
         external_id_store=None,
+        embedder=_FakeEmbedder(),
     )
     runtime = compose_default_runtime(
         papers=papers,
@@ -231,12 +254,22 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
         nsqd_index_path=tmp_path / "nsqd-index",
         llm_base_url="http://localhost:8000",
     )
+    assert runtime.nsqd.ctx.embedder is papers.embedder
     assert isinstance(runtime.nsqd.ctx.bridge, PapersAcquisitionBridge)
     assert not isinstance(runtime.nsqd.ctx.bridge, NullPaperAcquisitionBridge)
     assert runtime.analysis_defaults.prompt_id == ACQUISITION_PROMPT_ID
     assert runtime.paper_runner.run_next(datetime(2024, 1, 1, tzinfo=UTC)) is False
     assert ran["count"] == 1
     assert runtime.nsqd.database.path == tmp_path / "nsqd.sqlite"
+
+
+def test_build_container_defaults_to_no_embedder(tmp_path: Path) -> None:
+    container = build_nsqd_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "nsqd-index",
+    )
+
+    assert container.ctx.embedder is None
 
 
 def test_markdown_reader_handles_missing_and_unreadable_paths(tmp_path: Path) -> None:
