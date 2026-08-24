@@ -231,7 +231,14 @@ def test_retracted_trusted_record_cannot_unlock_finance_production() -> None:
 
 def test_trusted_seed_cannot_unlock_incomplete_finance_manifest() -> None:
     row, digest = _projected_seed(source_paper_id="trusted-but-unconfigured")
-    use_case, records, snapshots = _promote({"finance/1": FINANCE_POLICY}, frozenset({digest}))
+    incomplete_policy = replace(
+        FINANCE_POLICY,
+        expected_cells=frozenset(),
+        recall_probes=(),
+        required_record_types={"paper": 0, "code": 0, "benchmark": 0},
+        min_records=0,
+    )
+    use_case, records, snapshots = _promote({"finance/1": incomplete_policy}, frozenset({digest}))
     records.put(row)
     snapshots.commit("trusted-unconfigured-snap", [str(row["record_id"])], schema_version=1)
 

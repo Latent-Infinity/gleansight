@@ -80,7 +80,12 @@ def test_missing_policy_id_is_rejected() -> None:
 
 
 def test_finance_universe_matches_descriptor_cartesian_product() -> None:
-    assert get_policy("finance/1").universe() == finance_pack_universe()
+    finance = get_policy("finance/1")
+    assert finance.universe() == finance_pack_universe()
+    assert finance.expected_cells == frozenset({FINANCE_CELL_ID})
+    assert finance.recall_probes == (("gamma-fragility", "doi:10.2139/ssrn.3725454", "paper"),)
+    assert finance.required_record_types == {"paper": 1, "code": 0, "benchmark": 0}
+    assert finance.min_records == 1
     assert len(get_policy("optimization/1").universe()) == 8
 
 

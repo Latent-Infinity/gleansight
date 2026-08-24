@@ -16,6 +16,13 @@ from nsqd.domain.sufficiency import (
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 FIN_CELL = "mechanism=flow-driven|target=drawdown|horizon=intraday"
 OPT_CELL = "problem=constrained-expectation|method=sequential-quadratic|setting=rank-deficient"
+EMPTY_FINANCE_POLICY = replace(
+    FINANCE_POLICY,
+    expected_cells=frozenset(),
+    recall_probes=(),
+    required_record_types={"paper": 0, "code": 0, "benchmark": 0},
+    min_records=0,
+)
 
 
 def _paper(
@@ -64,7 +71,7 @@ def test_closed_failure_set_is_complete() -> None:
             [],
             {
                 "policy": replace(
-                    FINANCE_POLICY,
+                    EMPTY_FINANCE_POLICY,
                     expected_cells=frozenset({FIN_CELL}),
                 )
             },
@@ -74,7 +81,7 @@ def test_closed_failure_set_is_complete() -> None:
             [],
             {
                 "policy": replace(
-                    FINANCE_POLICY,
+                    EMPTY_FINANCE_POLICY,
                     recall_probes=(("probe-a", "doi:10.1/a", "paper"),),
                 )
             },
@@ -82,12 +89,12 @@ def test_closed_failure_set_is_complete() -> None:
         ),
         (
             [_paper(policy="finance/1", source="doi:10.1/a")],
-            {"policy": FINANCE_POLICY, "disagreement": True},
+            {"policy": EMPTY_FINANCE_POLICY, "disagreement": True},
             ("disagreement_unresolved",),
         ),
         (
             [{"domain_policy_id": "finance/1", "type": "paper", "paraphrase": "x"}],
-            {"policy": FINANCE_POLICY},
+            {"policy": EMPTY_FINANCE_POLICY},
             ("record_metadata_missing",),
         ),
         (
@@ -99,7 +106,7 @@ def test_closed_failure_set_is_complete() -> None:
                     policy="finance/1", source="doi:10.1/dup", paraphrase="two", content_hash="2"
                 ),
             ],
-            {"policy": FINANCE_POLICY},
+            {"policy": EMPTY_FINANCE_POLICY},
             ("duplicate_source_conflict",),
         ),
         (
@@ -110,17 +117,17 @@ def test_closed_failure_set_is_complete() -> None:
                     retraction_notice="withdrawn",
                 )
             ],
-            {"policy": FINANCE_POLICY},
+            {"policy": EMPTY_FINANCE_POLICY},
             ("retracted_unmarked",),
         ),
         (
             [_paper(policy="finance/1", source="doi:10.1/a")],
-            {"policy": replace(FINANCE_POLICY, min_records=2)},
+            {"policy": replace(EMPTY_FINANCE_POLICY, min_records=2)},
             ("domain_minima_unmet",),
         ),
         (
             [],
-            {"policy": FINANCE_POLICY, "approved_manifest": False},
+            {"policy": EMPTY_FINANCE_POLICY, "approved_manifest": False},
             ("manifest_missing",),
         ),
     ],
@@ -154,11 +161,15 @@ def test_finance_and_optimization_verdicts_are_independent() -> None:
     ]
     finance = evaluate_sufficiency(records, policy=FINANCE_POLICY, as_of=AS_OF)
     optimization = evaluate_sufficiency(records, policy=opt_policy, as_of=AS_OF)
-    assert finance == ()
+    assert finance == (
+        "recall_probe_missing",
+        "expected_cell_empty",
+        "domain_minima_unmet",
+    )
     assert optimization == ()
     finance_empty_expected = evaluate_sufficiency(
         records,
-        policy=replace(FINANCE_POLICY, expected_cells=frozenset({FIN_CELL})),
+        policy=replace(EMPTY_FINANCE_POLICY, expected_cells=frozenset({FIN_CELL})),
         as_of=AS_OF,
     )
     assert finance_empty_expected == ("expected_cell_empty",)

@@ -53,10 +53,10 @@ FINANCE_POLICY = DomainPolicy(
         ("horizon", HORIZON_VALUES),
     ),
     dval_rubric_ids=frozenset({"r1", "finance-dval/1", "finance/dval/1"}),
-    expected_cells=frozenset(),
-    recall_probes=(),
-    required_record_types=MappingProxyType({"paper": 0, "code": 0, "benchmark": 0}),
-    min_records=0,
+    expected_cells=frozenset({"mechanism=flow-driven|target=drawdown|horizon=intraday"}),
+    recall_probes=(("gamma-fragility", "doi:10.2139/ssrn.3725454", "paper"),),
+    required_record_types=MappingProxyType({"paper": 1, "code": 0, "benchmark": 0}),
+    min_records=1,
 )
 
 OPTIMIZATION_POLICY = DomainPolicy(
