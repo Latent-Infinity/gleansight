@@ -97,9 +97,12 @@ def cell_status(
     disagreement: bool = False,
     method_claims_evaluation: bool = False,
     window: timedelta = timedelta(days=365 * 2),
+    density_cut: int = 3,
 ) -> CellStatus:
     _require_utc_as_of(as_of)
     require_snapshot_state(snapshot_state)
+    if density_cut < 2:
+        raise ValueError("density_cut must be >= 2")
     if snapshot_state == "smoke_only":
         return "Unknown"
     lifecycles = [record_lifecycle(record, as_of=as_of, window=window) for record in records]
@@ -140,11 +143,11 @@ def cell_status(
         _is_current_harvest(harvested=record.get("harvested_at"), as_of=as_of, window=window)
         for record, _ in valid
     )
-    if total >= 3 and recent:
+    if total >= density_cut and recent:
         return "Active"
-    if 1 <= total < 3:
+    if 1 <= total < density_cut:
         return "Sparse"
-    if total >= 3:
+    if total >= density_cut:
         return "Unknown"
     return "Unknown"
 
