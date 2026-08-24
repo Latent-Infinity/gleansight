@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -30,14 +31,48 @@ def _snapshot_filter(snapshot_id: str) -> str:
     return f"snapshot_id = '{escaped}'"
 
 
+def _contract_table_name(base_name: str, model: str, dimension: int) -> str:
+    digest = hashlib.sha256(f"{model}:{dimension}".encode()).hexdigest()[:16]
+    return f"{base_name}__{digest}"
+
+
+def _require_contract_dimension(
+    expected_dimension: int | None,
+    actual_dimension: int,
+    *,
+    embedding_model: str | None,
+) -> None:
+    if expected_dimension is None or actual_dimension == expected_dimension:
+        return
+    model = embedding_model or "the configured embedding model"
+    raise ValueError(
+        "embedding dimension mismatch for the configured corpus index contract; "
+        f"expected {expected_dimension}, got {actual_dimension}. "
+        f"rebuild the corpus index for {model}."
+    )
+
+
 class LanceDBCorpusIndex:
-    def __init__(self, path: Path, *, table_name: str = "nsqd_corpus") -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        table_name: str = "nsqd_corpus",
+        embedding_model: str | None = None,
+        embedding_dimension: int | None = None,
+    ) -> None:
         try:
             import lancedb
         except Exception as exc:  # pragma: no cover - optional dependency
             raise ImportError("lancedb is required for LanceDBCorpusIndex") from exc
         self._lancedb = lancedb
-        self._table_name = table_name
+        self._embedding_model = embedding_model
+        self._embedding_dimension = embedding_dimension
+        self._table_name = (
+            _contract_table_name(table_name, embedding_model, embedding_dimension)
+            if embedding_model is not None and embedding_dimension is not None
+            else table_name
+        )
         if hasattr(lancedb, "connect"):
             self._db = lancedb.connect(str(path))
         else:  # pragma: no cover - defensive for API changes
@@ -70,6 +105,11 @@ class LanceDBCorpusIndex:
     def upsert(self, snapshot_id: str, record_id: str, vector: list[float]) -> None:
         import numpy as np
 
+        _require_contract_dimension(
+            self._embedding_dimension,
+            len(vector),
+            embedding_model=self._embedding_model,
+        )
         table = self._get_table(len(vector))
         rows = [
             {
@@ -96,6 +136,11 @@ class LanceDBCorpusIndex:
     ) -> list[CorpusHit]:
         if k <= 0:
             return []
+        _require_contract_dimension(
+            self._embedding_dimension,
+            len(vector),
+            embedding_model=self._embedding_model,
+        )
         try:
             table = self._get_table()
         except Exception:

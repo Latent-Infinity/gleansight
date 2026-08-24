@@ -63,3 +63,39 @@ def test_lancedb_corpus_index_orders_large_ties_deterministically(tmp_path: Path
         "rec-03",
         "rec-04",
     ]
+
+
+def test_lancedb_corpus_contract_specific_tables_isolate_embedding_families(
+    tmp_path: Path,
+) -> None:
+    pytest.importorskip("lancedb")
+    qwen = LanceDBCorpusIndex(
+        tmp_path / "corpus.lancedb",
+        embedding_model="qwen3-embedding:latest",
+        embedding_dimension=2,
+    )
+    legacy = LanceDBCorpusIndex(
+        tmp_path / "corpus.lancedb",
+        embedding_model="test-only-sha256:v1",
+        embedding_dimension=2,
+    )
+
+    qwen.upsert("snap", "qwen-record", [1.0, 0.0])
+    legacy.upsert("snap", "legacy-record", [1.0, 0.0])
+
+    assert [hit.record_id for hit in qwen.query("snap", [1.0, 0.0], k=5)] == ["qwen-record"]
+    assert [hit.record_id for hit in legacy.query("snap", [1.0, 0.0], k=5)] == ["legacy-record"]
+
+
+def test_lancedb_corpus_contract_dimension_mismatch_requires_rebuild_guidance(
+    tmp_path: Path,
+) -> None:
+    pytest.importorskip("lancedb")
+    index = LanceDBCorpusIndex(
+        tmp_path / "corpus.lancedb",
+        embedding_model="qwen3-embedding:latest",
+        embedding_dimension=2,
+    )
+
+    with pytest.raises(ValueError, match="rebuild"):
+        index.query("snap", [1.0, 0.0, 0.0], k=5)
