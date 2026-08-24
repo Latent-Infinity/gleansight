@@ -6,6 +6,7 @@ import pytest
 
 from papers.domain.errors import PipelineError
 from papers.infra.converter_docling.adapter import build_docling_converter
+from papers.infra.embedder_ollama.adapter import build_openai_compat_embedder
 from papers.infra.embedder_st.adapter import build_sentence_transformer_embedder
 from papers.infra.llm_openai_compat.client import build_openai_compat_client
 
@@ -37,3 +38,13 @@ def test_build_openai_client_without_httpx(monkeypatch: pytest.MonkeyPatch) -> N
     _block_import(monkeypatch, "httpx")
     with pytest.raises(PipelineError):
         build_openai_compat_client(base_url="http://localhost")
+
+
+def test_build_ollama_embedder_without_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
+    _block_import(monkeypatch, "httpx")
+    with pytest.raises(PipelineError):
+        build_openai_compat_embedder(
+            model_name="qwen3-embedding:latest",
+            dimension=4096,
+            base_url="http://127.0.0.1:11434",
+        )
