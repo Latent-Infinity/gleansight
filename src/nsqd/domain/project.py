@@ -4,7 +4,7 @@ import unicodedata
 from datetime import datetime
 from typing import Any
 
-from nsqd.domain.snapshot import canonical_json, sha256_hex
+from nsqd.domain.snapshot import canonical_json, normalize_source, sha256_hex
 
 DATA_NSQD_04_SOURCE_PAPER_ID = "7dbcef75-2d52-49a6-86a3-471be71f0fd7"
 DATA_NSQD_04_PAPER_ID = "paper-20"
@@ -14,6 +14,8 @@ REVIEWED_PROJECTION_FIELDS = (
     "paraphrase",
     "paraphrase_source",
     "source_paper_id",
+    "source",
+    "coordinates",
     "source_abstract_sha256",
     "source_markdown_sha256",
     "paraphrase_sha256",
@@ -90,6 +92,15 @@ def _normalize_reviewed_field(key: str, value: Any) -> Any:
         value = value.isoformat()
     if key == "paraphrase" and isinstance(value, str):
         return normalize_paraphrase(value)
+    if key == "source" and isinstance(value, str):
+        return normalize_source(value)
+    if key == "coordinates" and isinstance(value, dict):
+        return {
+            axis_name: normalize_paraphrase(axis_value)
+            if isinstance(axis_value, str)
+            else axis_value
+            for axis_name, axis_value in value.items()
+        }
     if key in {
         "domain_policy_id",
         "human_approved_at",

@@ -10,6 +10,7 @@ import yaml
 from nsqd.composition import build_container, fixed_clock
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.snapshot import sha256_hex
+from nsqd.ports import ParaphraseEmbedder
 from nsqd.runner import run_job
 
 MAX_PROJECT_FILE_BYTES = 256 * 1024
@@ -22,6 +23,7 @@ def run_project(
     manifest_path: Path,
     db_path: Path,
     index_path: Path,
+    embedder: ParaphraseEmbedder,
     as_of: datetime | None = None,
 ) -> dict[str, Any]:
     projection = load_verified_projection(
@@ -35,6 +37,7 @@ def run_project(
         index_path=index_path,
         clock=clock,
         approved_projection_digests=frozenset({approved_digest}),
+        embedder=embedder,
     )
     return run_job(
         container,
@@ -148,12 +151,42 @@ def _verify_projection_fixture(
     content_sha256 = sha256_hex(fixture_bytes)
     if content_sha256 != _require_manifest_string(manifest_row, "content_sha256"):
         raise ValueError("projection fixture content hash does not match manifest")
+    _require_cross_field_match(
+        manifest_row,
+        "excerpt_path",
+        projection,
+        "source_excerpt_path",
+    )
+    fixture_root = projection_path.parent.resolve()
+    excerpt_path = (fixture_root / _require_manifest_string(manifest_row, "excerpt_path")).resolve()
+    if not excerpt_path.is_relative_to(fixture_root):
+        raise ValueError("approved source excerpt path escapes fixture directory")
+    excerpt_bytes = _read_bounded_bytes(
+        excerpt_path,
+        MAX_PROJECT_FILE_BYTES,
+        "source excerpt",
+    )
+    excerpt_sha256 = sha256_hex(excerpt_bytes)
+    if excerpt_sha256 != _require_manifest_string(manifest_row, "excerpt_sha256"):
+        raise ValueError("source markdown hash does not match approved excerpt bytes")
+    if excerpt_sha256 != _require_projection_string(projection, "source_markdown_sha256"):
+        raise ValueError("source markdown hash does not match projection fixture")
+    abstract = projection.get("abstract")
+    if abstract is not None:
+        if not isinstance(abstract, str) or not abstract.strip():
+            raise ValueError("projection fixture abstract must be a non-empty string")
+        if sha256_hex(abstract.encode("utf-8")) != _require_projection_string(
+            projection, "source_abstract_sha256"
+        ):
+            raise ValueError("source abstract hash does not match projection fixture")
     _require_matching_field(manifest_row, projection, "kind")
     _require_matching_field(manifest_row, projection, "id")
     _require_matching_field(manifest_row, projection, "source_fixture_id")
     _require_matching_field(manifest_row, projection, "domain_policy_id")
     _require_matching_field(manifest_row, projection, "paper_id")
     _require_matching_field(manifest_row, projection, "source_paper_id")
+    if "source" in manifest_row or "source" in projection:
+        _require_matching_field(manifest_row, projection, "source")
     _require_matching_field(manifest_row, projection, "source_markdown_sha256")
     _require_matching_field(manifest_row, projection, "source_abstract_sha256")
     _require_matching_field(manifest_row, projection, "paraphrase_sha256")

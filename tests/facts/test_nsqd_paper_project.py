@@ -94,7 +94,21 @@ def _non_nsqd_projection(domain_policy_id: str = "optimization/1") -> dict[str, 
     projection["id"] = "DATA-NSQD-OTHER"
     projection["paper_id"] = "paper-21"
     projection["source_paper_id"] = "paper-source-21"
+    projection["source"] = "paper:paper-source-21"
     projection["domain_policy_id"] = domain_policy_id
+    projection["coordinates"] = (
+        {
+            "mechanism": "flow-driven",
+            "target": "drawdown",
+            "horizon": "intraday",
+        }
+        if domain_policy_id == "finance/1"
+        else {
+            "problem": "constrained-expectation",
+            "method": "sequential-quadratic",
+            "setting": "rank-deficient",
+        }
+    )
     return projection
 
 
@@ -257,12 +271,17 @@ def test_reviewed_projection_fields_contract_is_explicit_and_stable() -> None:
         "paraphrase",
         "paraphrase_source",
         "source_paper_id",
+        "source",
+        "coordinates",
         "source_abstract_sha256",
         "source_markdown_sha256",
         "paraphrase_sha256",
         "human_reviewer",
         "human_approved_at",
         "review_status",
+    )
+    assert canonical_reviewed_projection_digest(_paper_a()) == (
+        "97e4966c16e253ad3a57d58cef191354412f802cb96084deec9e6109b5ed72e9"
     )
 
 
@@ -278,9 +297,19 @@ def test_canonical_reviewed_projection_digest_ignores_non_contract_metadata() ->
 
     reviewed_changed = dict(projection)
     reviewed_changed["human_reviewer"] = "another-reviewer"
+    source_changed = dict(projection)
+    source_changed["source"] = "doi:10.2139/changed"
+    coordinates_changed = dict(projection)
+    coordinates_changed["coordinates"] = {
+        "problem": "unconstrained",
+        "method": "first-order",
+        "setting": "full-rank",
+    }
 
     assert canonical_reviewed_projection_digest(metadata_changed) == base
     assert canonical_reviewed_projection_digest(reviewed_changed) != base
+    assert canonical_reviewed_projection_digest(source_changed) != base
+    assert canonical_reviewed_projection_digest(coordinates_changed) != base
 
 
 def test_projector_rejects_oversized_canonical_payload() -> None:
@@ -323,11 +352,17 @@ def test_data_nsqd_04_projects_into_optimization_policy() -> None:
     assert records_for_policy([stored], "optimization/1") == [stored]
 
 
-def test_projector_normalizes_datetime_and_paraphrase_once_for_storage_and_hash() -> None:
+def test_projector_normalizes_reviewed_fields_once_for_storage_and_hash() -> None:
     projection = _non_nsqd_projection()
     projection["paraphrase"] = "  Alpha\r\nBeta  "
     projection["paraphrase_sha256"] = _normalized_paraphrase_hash("Alpha\nBeta")
     projection["human_approved_at"] = datetime(2026, 8, 21, 19, 3, 54, tzinfo=UTC)
+    projection["source"] = " https://doi.org/10.2139/SSRN.3725454/ "
+    projection["coordinates"] = {
+        "problem": " constrained-expectation ",
+        "method": " sequential-quadratic ",
+        "setting": " rank-deficient ",
+    }
     ctx = _ctx(_approved_digests(projection))
 
     result = _project(ctx).run(domain_policy_id="optimization/1", projection=projection)
@@ -337,8 +372,14 @@ def test_projector_normalizes_datetime_and_paraphrase_once_for_storage_and_hash(
     assert stored["paraphrase"] == "Alpha\nBeta"
     assert stored["paraphrase_sha256"] == _normalized_paraphrase_hash("Alpha\nBeta")
     assert stored["human_approved_at"] == "2026-08-21T19:03:54+00:00"
+    assert stored["source"] == "doi:10.2139/ssrn.3725454"
+    assert stored["coordinates"] == {
+        "problem": "constrained-expectation",
+        "method": "sequential-quadratic",
+        "setting": "rank-deficient",
+    }
     assert stored["content_hash"] == sha256_hex(
-        b'{"paraphrase":"Alpha\\nBeta","source":"paper:paper-source-21","type":"paper"}'
+        b'{"paraphrase":"Alpha\\nBeta","source":"doi:10.2139/ssrn.3725454","type":"paper"}'
     )
 
 
@@ -384,6 +425,10 @@ def test_projection_uses_distinct_record_ids_across_policies() -> None:
     assert finance_record["record_id"] != optimization_record["record_id"]
     assert finance_record["content_hash"] == optimization_record["content_hash"]
     assert finance_record["source_paper_id"] == optimization_record["source_paper_id"]
+    assert finance_record["source"] == "paper:paper-source-21"
+    assert optimization_record["source"] == "paper:paper-source-21"
+    assert finance_record["coordinates"] == finance_projection["coordinates"]
+    assert optimization_record["coordinates"] == optimization_projection["coordinates"]
     assert finance_record["domain_policy_id"] == "finance/1"
     assert optimization_record["domain_policy_id"] == "optimization/1"
 
