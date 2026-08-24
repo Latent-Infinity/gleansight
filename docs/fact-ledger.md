@@ -36,13 +36,13 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.RESCORE.REPLAY.v1 | Given a stale card, re-score grounds and scores against the current persisted snapshot version before archive replay; given a current card retry, ground/score are skipped but archive state is reconciled | Re-score | Behavior | LOCAL-NSQD-A | product | Active | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor universe and dval compatibility resolve by explicit domain_policy_id; grounding, corpus filtering, cards/elites/rank are policy-scoped; `(snapshot_id, domain_policy_id)` verdict identity/schema is reserved and validated; records from one policy cannot satisfy, ground, rank, or archive under another | Domain policy | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | product | Active | EV-N16 |
 | NSQD.PROJECT.HUMAN_PARAPHRASE.v1 | Projector writes human-approved paraphrase and hashes; abstract is not stored as paraphrase; idempotent on source/content/policy identity; DATA-NSQD-04 cannot credit finance/1 | Paper projection | Behavior | LOCAL-NSQD-E | product | Active | EV-N09 |
-| NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to calibration or production_valid is evaluated independently by (snapshot_id, domain_policy_id) under ALG-SUF; every SufficiencyFailure code is tested; honest finance/1 production_valid stays blocked without approved DATA-NSQD-03 | N6 promotion | Behavior | LOCAL-NSQD-H | product | Active | EV-N13 |
+| NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to calibration or production_valid is evaluated independently by (snapshot_id, domain_policy_id) under ALG-SUF; every SufficiencyFailure code is tested; honest finance/1 production_valid requires approved DATA-NSQD-03 and now passes with the approved fixture | N6 promotion | Behavior | LOCAL-NSQD-H | product | Active | EV-N13 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable ALG-SUF failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures stop; drafts cannot approve; default CLI/UI composition wires the paper runtime and persists approved projection digests while lightweight composition remains fail-closed | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Active | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | Given the discovery use-cases, when a user runs `gleansight` or the desktop app, then harvest/map/diverge/ground/gate/archive are available without breaking `papers`, and Map/Archive/Card screens sit beside the evidence screens | Product surfaces | Behavior | LOCAL-NSQD-U | product | Active | EV-N18 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.6)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.7)
 
-See that plan’s ledger for full statements. Completed facts are **Active** with Required evidence. Honest `finance/1 production_valid` remains blocked without approved DATA-NSQD-03. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
+See that plan’s ledger for full statements. Completed facts are **Active** with Required evidence. Approved DATA-NSQD-03 now satisfies the non-empty `finance/1` policy and exercises `production_valid` with zero `ALG-SUF` failures. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 remains optimization-only evidence.
 
 | Fact ID | First phase | Notes |
 |---------|-------------|-------|
@@ -61,7 +61,7 @@ See that plan’s ledger for full statements. Completed facts are **Active** wit
 | NSQD.GROUND.LIVE_PRIOR_ART.v1 | N5 | Search-only escalation; no acquisition or corpus writes |
 | NSQD.NOVELTY.METRIC.v1 | N1 | |
 | NSQD.JOBS.OWNED.v1 | N1 | |
-| NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Active; honest finance/1 production_valid still requires DATA-NSQD-03 |
+| NSQD.SNAPSHOT.PROMOTION.v1 | N6 | Active; approved DATA-NSQD-03 exercises honest finance/1 production_valid |
 | NSQD.ACQUISITION.FALLBACK.v1 | N6 | Active; default acquire/UI composition wires paper runtime, workers, and analysis-metadata bootstrap |
 | NSQD.SURFACE.UNIFIED.v1 | N10 | Active; `gleansight` CLI and Map/Archive/Card screens |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
