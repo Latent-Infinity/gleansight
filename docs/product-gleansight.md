@@ -2,7 +2,7 @@
 
 **Status:** Direction for review (2026-08-18)
 **What:** gleansight is a **local-first NS/QD-inspired discovery platform** (see `docs/glossary-nsqd.md`).
-**Maturity:** The **paper evidence pipeline is executable today**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Honest `finance/1` production validity waits on approved DATA-NSQD-03.
+**Maturity:** The **paper evidence pipeline is executable today**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Approved DATA-NSQD-03 now supports an honest `finance/1 production_valid` verdict with zero `ALG-SUF` failures.
 **Also:** the existing paper pipeline stays, as the **evidence / harvest layer** for scholarly literature.
 
 This document is the product thesis. Framework detail: `docs/prd-ns-qd.md`. Implementation bindings: `docs/requirements-ns-qd.md`. Build order: `docs/development-plan-ns-qd.md` (discovery) and `docs/development-plan-open-work.md` (evidence-layer closeout).
@@ -37,7 +37,7 @@ Not a ranked list of “cool ideas.” Not a paper manager that happens to have 
 | Layer | Job | Today |
 |-------|-----|--------|
 | **Evidence** | Dense, versionable **positive space**: papers (and later code, benchmarks, patents, industry, internal kills) | Implemented as `papers` CLI/UI/pipeline |
-| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A in the baseline (B–G later)**, **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline through sufficiency promotion, default paper-runtime acquisition composition, the `gleansight` CLI, and Map/Archive/Card screens is implemented; honest finance production validity remains pending |
+| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A in the baseline (B–G later)**, **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline through sufficiency promotion, default paper-runtime acquisition composition, the `gleansight` CLI, and Map/Archive/Card screens is implemented; approved DATA-NSQD-03 now exercises honest finance production validity with zero `ALG-SUF` failures |
 
 The paper features are not legacy to sunset. They are how Stage 0 harvests **type=paper**. An imported, converted paper should become a corpus record (mechanism paraphrase + coordinates) when harvest projection runs. Code/benchmark/patent types are additional harvest connectors, not a replacement for papers.
 

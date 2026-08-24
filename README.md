@@ -2,7 +2,7 @@
 
 Local-first **NS/QD-inspired discovery platform** with an **executable paper evidence pipeline** (discover, import, convert, extract, search).
 
-**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline includes domain-policy isolation, trusted-manifest-backed projection, persisted map and reserved acquisition jobs, Operator A, bounded live/hybrid grounding, pack-aware sufficiency verdicts, the unified `gleansight` CLI, Map/Archive/Card screens, and default acquire composition against the paper runtime. Honest `finance/1 production_valid` waits on approved DATA-NSQD-03.
+**Maturity:** The paper evidence pipeline is executable (`papers` CLI/UI). The discovery baseline includes domain-policy isolation, trusted-manifest-backed projection, persisted map and reserved acquisition jobs, Operator A, bounded live/hybrid grounding, pack-aware sufficiency verdicts, the unified `gleansight` CLI, Map/Archive/Card screens, and default acquire composition against the paper runtime. Approved DATA-NSQD-03 now exercises an honest `finance/1 production_valid` path with zero `ALG-SUF` failures.
 
 Product thesis: [`docs/product-gleansight.md`](docs/product-gleansight.md)
 Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/requirements-ns-qd.md`](docs/requirements-ns-qd.md) · Discovery plan: [`docs/development-plan-ns-qd.md`](docs/development-plan-ns-qd.md)
@@ -39,8 +39,8 @@ LLM and API credentials so you do not pass them on the command line.
 Example `.env`:
 
 ```
-LLM_BASE_URL=http://localhost:8000/v1
-LLM_API_KEY=replace-me
+LLM_BASE_URL=http://127.0.0.1:11434
+LLM_API_KEY=
 SEMANTIC_SCHOLAR_API_KEY=
 UNPAYWALL_EMAIL=
 ```
@@ -88,7 +88,7 @@ import os
 from papers.ui.__main__ import main
 
 main(
-    llm_base_url=os.environ.get("LLM_BASE_URL", "http://localhost:8000"),
+    llm_base_url=os.environ.get("LLM_BASE_URL", "http://127.0.0.1:11434"),
     llm_api_key=os.environ.get("LLM_API_KEY"),
 )
 PY
