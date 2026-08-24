@@ -8,8 +8,10 @@ from nsqd.infra.paper_runtime import compose_default_runtime, markdown_reader
 from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import (
+    DEFAULT_OLLAMA_BASE_URL,
     ConfigurationError,
     load_settings,
+    packaged_defaults_path,
     public_configuration_error_message,
 )
 from papers.infra.piccolo.search import PiccoloPaperFTS
@@ -25,12 +27,11 @@ from papers.ui.app import UIServices, run_app
 
 def build_ui_services(
     config_path: Path | None = None,
-    llm_base_url: str = "http://localhost:8000",
+    llm_base_url: str = DEFAULT_OLLAMA_BASE_URL,
     llm_api_key: str | None = None,
 ) -> UIServices:
     """Build UIServices container with all dependencies wired."""
-    defaults_path = Path(__file__).resolve().parents[1] / "config" / "defaults.toml"
-    settings = load_settings(defaults_path=defaults_path, override_path=config_path)
+    settings = load_settings(defaults_path=packaged_defaults_path(), override_path=config_path)
     base = build_container(
         settings,
         llm_base_url=llm_base_url,
@@ -119,7 +120,7 @@ def build_ui_services(
 
 def main(
     config: str | None = None,
-    llm_base_url: str = "http://localhost:8000",
+    llm_base_url: str = DEFAULT_OLLAMA_BASE_URL,
     llm_api_key: str | None = None,
 ) -> None:
     """Launch the Gleansight UI application."""

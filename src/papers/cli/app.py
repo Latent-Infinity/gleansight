@@ -11,11 +11,13 @@ from rich.console import Console
 from papers.app import use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import (
-    ConfigurationError,
+    DEFAULT_OLLAMA_BASE_URL,
     Settings,
     load_settings,
+    packaged_defaults_path,
     public_configuration_error_message,
 )
+from papers.domain.errors import ConfigurationError
 from papers.infra.piccolo.search import PiccoloPaperFTS
 from papers.infra.piccolo.stores import (
     PiccoloAtomicCandidateImport,
@@ -51,7 +53,7 @@ class CLIContainer:
 
 _cli_options: dict[str, Any] = {
     "config": None,
-    "llm_base_url": "http://localhost:8000",
+    "llm_base_url": DEFAULT_OLLAMA_BASE_URL,
     "llm_api_key": None,
 }
 _container: CLIContainer | None = None
@@ -64,7 +66,7 @@ def main(
     ] = None,
     llm_base_url: Annotated[
         str, typer.Option(help="Base URL for OpenAI-compatible LLM")
-    ] = "http://localhost:8000",
+    ] = DEFAULT_OLLAMA_BASE_URL,
     llm_api_key: Annotated[str | None, typer.Option(help="LLM API key")] = None,
 ) -> None:
     _cli_options["config"] = config
@@ -76,9 +78,11 @@ def get_container() -> CLIContainer:
     global _container
     if _container is not None:
         return _container
-    defaults_path = Path(__file__).resolve().parents[1] / "config" / "defaults.toml"
     try:
-        settings = load_settings(defaults_path=defaults_path, override_path=_cli_options["config"])
+        settings = load_settings(
+            defaults_path=packaged_defaults_path(),
+            override_path=_cli_options["config"],
+        )
         base = build_container(
             settings,
             llm_base_url=_cli_options["llm_base_url"],

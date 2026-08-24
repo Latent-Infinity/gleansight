@@ -51,7 +51,7 @@ def test_build_ui_services_returns_ui_services(tmp_path):
         papers=mock_container,
         nsqd_db_path=tmp_path / "nsqd" / "nsqd.sqlite",
         nsqd_index_path=tmp_path / "nsqd" / "corpus.lancedb",
-        llm_base_url="http://localhost:8000",
+        llm_base_url="http://127.0.0.1:11434",
     )
     assert services.list_paper is mock_container.paper_store.get
     assert services.list_runs is mock_container.analysis_store.list_runs
