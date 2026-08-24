@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import math
 import threading
 import uuid
@@ -132,6 +133,26 @@ class NullHarvestStore:
                 snapshot_id=committed_snapshot_id,
                 corpus_version=corpus_version,
             )
+
+
+class HashParaphraseEmbedder:
+    def model_id(self) -> str:
+        return "test-only-sha256"
+
+    def model_version(self) -> str:
+        return "v1"
+
+    def dimension(self) -> int:
+        return 8
+
+    def normalization_policy(self) -> str:
+        return "l2"
+
+    def embed(self, text: str) -> list[float]:
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        raw = [byte / 255.0 for byte in digest[: self.dimension()]]
+        norm = math.sqrt(sum(value * value for value in raw)) or 1.0
+        return [value / norm for value in raw]
 
 
 class NullCorpusIndex:

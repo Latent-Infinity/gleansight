@@ -19,6 +19,15 @@ class SentenceTransformerEmbedder(ports.Embedder):
     def dimension(self) -> int:
         return self.dimension_value
 
+    def model_id(self) -> str:
+        return self.model_name_value
+
+    def model_version(self) -> str:
+        return "unspecified"
+
+    def normalization_policy(self) -> str:
+        return "none"
+
     def embed(self, text: str) -> list[float]:
         return self.embed_func(text)
 

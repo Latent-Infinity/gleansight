@@ -67,6 +67,19 @@ class HarvestStore(Protocol):
 
 
 @runtime_checkable
+class ParaphraseEmbedder(Protocol):
+    def model_id(self) -> str: ...
+
+    def model_version(self) -> str: ...
+
+    def dimension(self) -> int: ...
+
+    def normalization_policy(self) -> str: ...
+
+    def embed(self, text: str) -> list[float]: ...
+
+
+@runtime_checkable
 class CorpusIndex(Protocol):
     def upsert(self, snapshot_id: str, record_id: str, vector: list[float]) -> None: ...
 
