@@ -11,28 +11,53 @@ import typer
 import yaml
 
 from nsqd.app.use_cases import RankArchiveUseCase
-from nsqd.composition import build_container
+from nsqd.composition import build_container, build_local_ollama_embedder
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
+from nsqd.ports import ParaphraseEmbedder
 from nsqd.project_runtime import load_verified_projection, run_project
 from nsqd.runner import run_job
 from nsqd.skeleton import run_skeleton
-from papers.config.settings import public_configuration_error_message
-from papers.domain.errors import ConfigurationError
+from papers.config.settings import (
+    DEFAULT_OLLAMA_BASE_URL,
+    Settings,
+    packaged_defaults_path,
+    public_configuration_error_message,
+)
+from papers.domain.errors import ConfigurationError, PipelineError
 from papers.infra.piccolo.database import PiccoloDatabase
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 DEFAULT_NSQD_DB = Path("data/nsqd/nsqd.sqlite")
 DEFAULT_NSQD_INDEX = Path("data/nsqd/corpus.lancedb")
+_cli_options: dict[str, Path | None] = {"config": None}
 
 
 @app.callback()
-def _root() -> None:
+def _root(
+    config: Annotated[
+        Path | None,
+        typer.Option("--config", "-c", help="Settings override TOML"),
+    ] = None,
+) -> None:
     """NS/QD-inspired discovery commands."""
+
+    _cli_options["config"] = config
+
+
+def _standalone_settings(config: Path | None = None) -> Settings:
+    from papers.config.settings import load_settings
+
+    return load_settings(defaults_path=packaged_defaults_path(), override_path=config)
+
+
+def _standalone_embedder(config: Path | None = None) -> ParaphraseEmbedder:
+    settings = _standalone_settings(config)
+    return build_local_ollama_embedder(settings.embeddings)
 
 
 @app.command()
@@ -52,7 +77,7 @@ def skeleton(
             db_path=db,
             index_path=index,
         )
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
     decision = result["card"]["card_decision"]
@@ -68,11 +93,16 @@ def harvest(
     index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
 ) -> None:
     try:
-        result = run_harvest(file_path=file, db_path=db, index_path=index)
+        result = run_harvest(
+            file_path=file,
+            db_path=db,
+            index_path=index,
+            embedder=_standalone_embedder(_cli_options["config"]),
+        )
     except HarvestRejected as exc:
         typer.echo(f"rejected: {exc}", err=True)
         raise typer.Exit(code=1) from exc
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
     count = len(result["record_ids"])
@@ -92,8 +122,9 @@ def project(
             manifest_path=manifest,
             db_path=db,
             index_path=index,
+            embedder=_standalone_embedder(_cli_options["config"]),
         )
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
     typer.echo(
@@ -104,8 +135,12 @@ def project(
     )
 
 
-def _container(db: Path, index: Path) -> Any:
-    return build_container(db_path=db, index_path=index)
+def _container(db: Path, index: Path, config: Path | None = None) -> Any:
+    return build_container(
+        db_path=db,
+        index_path=index,
+        embedder=_standalone_embedder(config if config is not None else _cli_options["config"]),
+    )
 
 
 def _default_paper_runtime(
@@ -119,10 +154,8 @@ def _default_paper_runtime(
 ) -> Any:
     from nsqd.infra.paper_runtime import compose_default_runtime
     from papers.app.composition_root import build_container as build_papers
-    from papers.config import settings as paper_settings
 
-    defaults_path = Path(paper_settings.__file__).resolve().parent / "defaults.toml"
-    loaded = paper_settings.load_settings(defaults_path=defaults_path, override_path=config)
+    loaded = _standalone_settings(config)
     papers = build_papers(loaded, llm_base_url=llm_base_url, llm_api_key=llm_api_key)
     data_root = Path(loaded.data.root)
     return compose_default_runtime(
@@ -164,7 +197,7 @@ def map_snapshot(
             },
             container.clock.now(),
         )
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         _fail(exc)
     counts = Counter(str(status) for status in result["cell_statuses"].values())
     typer.echo(
@@ -218,7 +251,7 @@ def diverge(
             },
             now,
         )
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         _fail(exc)
     typer.echo(f"candidate={result['candidate_artifact_hash']}")
 
@@ -245,7 +278,7 @@ def ground(
             },
             container.clock.now(),
         )
-    except (ImportError, OSError, ValueError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
         _fail(exc)
     typer.echo(
         json.dumps(
@@ -281,7 +314,7 @@ def gate(
             },
             container.clock.now(),
         )
-    except (ImportError, OSError, ValueError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
         _fail(exc)
     typer.echo(
         f"{result['card_decision']} viability={result['viability']} cell={result['cell_id']}"
@@ -319,7 +352,14 @@ def archive(
             ).run(elite_cell_ids={str(card["cell_id"]) for card in policy_elites})
         except RankGuardBlocked as exc:
             ranked = {"allowed": False, "reason": str(exc)}
-    except (ConfigurationError, ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (
+        ConfigurationError,
+        ImportError,
+        OSError,
+        PipelineError,
+        ValueError,
+        yaml.YAMLError,
+    ) as exc:
         _fail(exc)
     typer.echo(
         json.dumps(
@@ -342,7 +382,7 @@ def acquire(
     config: Annotated[Path | None, typer.Option("--config")] = None,
     db: Annotated[Path | None, typer.Option("--db")] = None,
     index: Annotated[Path | None, typer.Option("--index")] = None,
-    llm_base_url: Annotated[str, typer.Option("--llm-base-url")] = "http://localhost:8000",
+    llm_base_url: Annotated[str, typer.Option("--llm-base-url")] = DEFAULT_OLLAMA_BASE_URL,
     llm_api_key: Annotated[str | None, typer.Option("--llm-api-key")] = None,
     human_decision: Annotated[str | None, typer.Option("--human-decision")] = None,
     approved_projection: Annotated[
@@ -392,7 +432,7 @@ def acquire(
         result = run_job(runtime.nsqd, "acquire", payload, runtime.nsqd.clock.now())
     except ConfigurationError as exc:
         _fail_configuration(exc)
-    except (ImportError, OSError, ValueError, yaml.YAMLError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         _fail(exc)
     typer.echo(
         json.dumps(
@@ -411,7 +451,7 @@ def acquire(
 def run_paper_jobs(
     max_jobs: Annotated[int, typer.Option("--max-jobs", min=1)] = 1,
     config: Annotated[Path | None, typer.Option("--config")] = None,
-    llm_base_url: Annotated[str, typer.Option("--llm-base-url")] = "http://localhost:8000",
+    llm_base_url: Annotated[str, typer.Option("--llm-base-url")] = DEFAULT_OLLAMA_BASE_URL,
     llm_api_key: Annotated[str | None, typer.Option("--llm-api-key")] = None,
 ) -> None:
     ran = 0
@@ -429,7 +469,7 @@ def run_paper_jobs(
             ran += 1
     except ConfigurationError as exc:
         _fail_configuration(exc)
-    except (ImportError, OSError, ValueError) as exc:
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
         _fail(exc)
     typer.echo(f"processed {ran} paper jobs")
 
@@ -448,7 +488,7 @@ def approve_digest(
         database.initialize_schema()
         digest_store = PiccoloApprovedDigestStore(database)
         digest_store.add(digest, approved_at=datetime.now(UTC))
-    except (ConfigurationError, ImportError, OSError, ValueError) as exc:
+    except (ConfigurationError, ImportError, OSError, PipelineError, ValueError) as exc:
         _fail(exc)
     if digest not in digest_store.list_digests():
         _fail(ValueError("approved digest was not persisted"))

@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
+import pytest
 from typer.testing import CliRunner
 
 import nsqd.__main__ as main_module
 from nsqd import cli as cli_module
 from nsqd.cli import app
-from papers.domain.errors import ConfigurationError
+from nsqd.null_adapters import HashParaphraseEmbedder
+from papers.domain.errors import ConfigurationError, ErrorCode, PipelineError
 from papers.infra.piccolo.database import PiccoloDatabase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
@@ -41,6 +44,173 @@ def test_skeleton_help_lists_command() -> None:
     assert "approve-digest" in result.output
     assert "acquire" in result.output
     assert "run-paper-jobs" in result.output
+
+
+def test_container_uses_local_qwen_embedder_contract(monkeypatch, tmp_path: Path) -> None:
+    captured: dict[str, object] = {}
+    fake_embedder = object()
+
+    def fake_standalone_embedder(config: Path | None = None) -> object:
+        captured["config"] = config
+        return fake_embedder
+
+    def fake_build_container(**kwargs: object) -> object:
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(cli_module, "_standalone_embedder", fake_standalone_embedder)
+    monkeypatch.setattr(cli_module, "build_container", fake_build_container)
+
+    cli_module._container(tmp_path / "nsqd.sqlite", tmp_path / "index")
+
+    assert captured["db_path"] == tmp_path / "nsqd.sqlite"
+    assert captured["index_path"] == tmp_path / "index"
+    assert captured["embedder"] is fake_embedder
+
+
+def test_container_uses_config_override_for_standalone_embedding_settings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    override = tmp_path / "nsqd-override.toml"
+    override.write_text(
+        """
+[embeddings]
+model = "custom-embed:dev"
+dimension = 12
+base_url = "http://localhost:9999"
+text_slice_strategy = "markdown_full"
+""".strip(),
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+    fake_embedder = SimpleNamespace(
+        model_id=lambda: "custom-embed",
+        model_version=lambda: "dev",
+        dimension=lambda: 12,
+        normalization_policy=lambda: "l2",
+        embed=lambda _text: [1.0, 0.0],
+    )
+
+    def fake_build_configured_ollama_embedder(embedding_settings) -> object:
+        captured["model"] = embedding_settings.model
+        captured["dimension"] = embedding_settings.dimension
+        captured["base_url"] = embedding_settings.base_url
+        return fake_embedder
+
+    monkeypatch.setattr(
+        cli_module,
+        "build_local_ollama_embedder",
+        fake_build_configured_ollama_embedder,
+    )
+
+    cli_module._container(tmp_path / "nsqd.sqlite", tmp_path / "index", override)
+
+    assert captured == {
+        "model": "custom-embed:dev",
+        "dimension": 12,
+        "base_url": "http://localhost:9999",
+    }
+
+
+def test_project_cli_supplies_production_embedder(monkeypatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    captured: dict[str, object] = {}
+    fake_embedder = object()
+
+    def fake_standalone_embedder(config: Path | None = None) -> object:
+        captured["config"] = config
+        captured["factory_called"] = True
+        return fake_embedder
+
+    def fake_run_project(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {
+            "record_id": "rec-1",
+            "created": True,
+            "snapshot_id": "snap-1",
+        }
+
+    monkeypatch.setattr(cli_module, "_standalone_embedder", fake_standalone_embedder)
+    monkeypatch.setattr(cli_module, "run_project", fake_run_project)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "--projection",
+            str(FIXTURES / "paper-a.yaml"),
+            "--manifest",
+            str(FIXTURES / "manifest.toml"),
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "corpus.lancedb"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["factory_called"] is True
+    assert captured["embedder"] is fake_embedder
+
+
+def test_harvest_cli_supplies_production_embedder(monkeypatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    captured: dict[str, object] = {}
+    fake_embedder = object()
+    harvest_file = tmp_path / "records.yaml"
+    harvest_file.write_text("records: []\n", encoding="utf-8")
+
+    def fake_standalone_embedder(config: Path | None = None) -> object:
+        captured["config"] = config
+        captured["factory_called"] = True
+        return fake_embedder
+
+    def fake_run_harvest(**kwargs: object) -> dict[str, object]:
+        captured.update(kwargs)
+        return {"record_ids": ["rec-1"]}
+
+    monkeypatch.setattr(cli_module, "_standalone_embedder", fake_standalone_embedder)
+    monkeypatch.setattr(cli_module, "run_harvest", fake_run_harvest)
+
+    result = runner.invoke(
+        app,
+        [
+            "harvest",
+            "--file",
+            str(harvest_file),
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "corpus.lancedb"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["factory_called"] is True
+    assert captured["embedder"] is fake_embedder
+
+
+def test_project_cli_reports_unavailable_ollama_without_traceback(monkeypatch) -> None:
+    runner = CliRunner()
+
+    def unavailable(**_kwargs: object) -> dict[str, object]:
+        raise PipelineError(ErrorCode.EMBEDDING_FAILED, "Ollama is unavailable")
+
+    monkeypatch.setattr(cli_module, "run_project", unavailable)
+
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "--projection",
+            str(FIXTURES / "paper-a.yaml"),
+            "--manifest",
+            str(FIXTURES / "manifest.toml"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert result.output == "error: Ollama is unavailable\n"
 
 
 def test_skeleton_cli_runs_gamma_flow(tmp_path: Path) -> None:
@@ -119,8 +289,14 @@ def test_skeleton_cli_reports_startup_errors_concisely(monkeypatch, tmp_path: Pa
     assert result.stderr == "error: adapter startup failed\n"
 
 
-def test_project_cli_runs_approved_projection(tmp_path: Path) -> None:
+def test_project_cli_runs_approved_projection(monkeypatch, tmp_path: Path) -> None:
     runner = CliRunner()
+    cli_module._cli_options["config"] = None
+    monkeypatch.setattr(
+        cli_module,
+        "_standalone_embedder",
+        lambda _config=None: HashParaphraseEmbedder(),
+    )
     result = runner.invoke(
         app,
         [
@@ -138,6 +314,57 @@ def test_project_cli_runs_approved_projection(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "projected" in result.output
     assert "created=True" in result.output
+
+
+def test_standalone_root_config_changes_project_embedder(monkeypatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    override = tmp_path / "nsqd-override.toml"
+    override.write_text(
+        """
+[embeddings]
+model = "custom-embed:dev"
+dimension = 12
+base_url = "http://localhost:9999"
+text_slice_strategy = "markdown_full"
+""".strip(),
+        encoding="utf-8",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_build_configured_ollama_embedder(embedding_settings) -> object:
+        captured["model"] = embedding_settings.model
+        captured["dimension"] = embedding_settings.dimension
+        captured["base_url"] = embedding_settings.base_url
+        return object()
+
+    def fake_run_project(**kwargs: object) -> dict[str, object]:
+        captured["embedder"] = kwargs["embedder"]
+        return {"record_id": "rec-1", "created": True, "snapshot_id": "snap-1"}
+
+    monkeypatch.setattr(
+        cli_module,
+        "build_local_ollama_embedder",
+        fake_build_configured_ollama_embedder,
+    )
+    monkeypatch.setattr(cli_module, "run_project", fake_run_project)
+
+    result = runner.invoke(
+        app,
+        [
+            "--config",
+            str(override),
+            "project",
+            "--projection",
+            str(FIXTURES / "paper-a.yaml"),
+            "--manifest",
+            str(FIXTURES / "manifest.toml"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["model"] == "custom-embed:dev"
+    assert captured["dimension"] == 12
+    assert captured["base_url"] == "http://localhost:9999"
 
 
 def test_project_cli_reports_manifest_rejection_concisely(tmp_path: Path) -> None:
@@ -519,7 +746,7 @@ def test_acquire_forwards_approved_projection_file(monkeypatch, tmp_path: Path) 
         "config": None,
         "db": None,
         "index": None,
-        "llm_base_url": "http://localhost:8000",
+        "llm_base_url": "http://127.0.0.1:11434",
         "llm_api_key": None,
         "approved_projection_digests": frozenset(
             {canonical_reviewed_projection_digest(projection_payload)}
