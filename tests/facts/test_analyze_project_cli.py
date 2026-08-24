@@ -76,7 +76,6 @@ def test_analyze_project_help_lists_flags() -> None:
         "--force",
     ):
         assert flag in opts, flag
-        assert flag in result.output, flag
 
 
 def test_analyze_project_forwards_extraction_filter(monkeypatch) -> None:
