@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from nsqd.composition import build_container, fixed_clock
+from nsqd.ports import ParaphraseEmbedder
 from nsqd.runner import run_job
 
 MAX_HARVEST_FILE_BYTES = 10 * 1024 * 1024
@@ -31,10 +32,16 @@ def run_harvest(
     file_path: Path,
     db_path: Path,
     index_path: Path,
+    embedder: ParaphraseEmbedder,
     as_of: datetime | None = None,
 ) -> dict[str, Any]:
     clock = fixed_clock(as_of) if as_of is not None else None
-    container = build_container(db_path=db_path, index_path=index_path, clock=clock)
+    container = build_container(
+        db_path=db_path,
+        index_path=index_path,
+        clock=clock,
+        embedder=embedder,
+    )
     payload = parse_harvest_file(file_path)
     return run_job(
         container,

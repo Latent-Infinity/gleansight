@@ -9,6 +9,7 @@ from nsqd.cli import app
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.domain.snapshot import record_content_hash
 from nsqd.harvest import run_harvest
+from nsqd.null_adapters import HashParaphraseEmbedder
 from papers.infra.piccolo.database import PiccoloDatabase
 
 KNOWN = {
@@ -17,6 +18,7 @@ KNOWN = {
     "source": "doi:10.0000/example",
     "domain_policy_id": "finance/1",
 }
+HASH_EMBEDDER = HashParaphraseEmbedder()
 
 
 def test_essay_file_is_rejected_and_writes_no_corpus_rows(tmp_path: Path) -> None:
@@ -27,7 +29,12 @@ def test_essay_file_is_rejected_and_writes_no_corpus_rows(tmp_path: Path) -> Non
     )
     db_path = tmp_path / "nsqd.sqlite"
     with pytest.raises(HarvestRejected, match="essay-only"):
-        run_harvest(file_path=essay, db_path=db_path, index_path=tmp_path / "idx")
+        run_harvest(
+            file_path=essay,
+            db_path=db_path,
+            index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
+        )
     db = PiccoloDatabase(db_path)
     db.initialize_schema()
     rows = db.fetchall("SELECT record_id FROM nsqd_corpus_records")
@@ -45,7 +52,12 @@ def test_sourceless_enumerated_record_is_rejected_and_writes_no_rows(tmp_path: P
     )
     db_path = tmp_path / "nsqd.sqlite"
     with pytest.raises(HarvestRejected, match="sourceless"):
-        run_harvest(file_path=path, db_path=db_path, index_path=tmp_path / "idx")
+        run_harvest(
+            file_path=path,
+            db_path=db_path,
+            index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
+        )
     db = PiccoloDatabase(db_path)
     db.initialize_schema()
     assert db.fetchall("SELECT record_id FROM nsqd_corpus_records") == []
@@ -60,6 +72,7 @@ def test_requirement_card_file_is_rejected_as_corpus(tmp_path: Path) -> None:
             file_path=fixture,
             db_path=tmp_path / "nsqd.sqlite",
             index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
         )
 
 
@@ -77,6 +90,7 @@ def test_enumerated_known_vector_is_harvested(tmp_path: Path) -> None:
         file_path=path,
         db_path=tmp_path / "nsqd.sqlite",
         index_path=tmp_path / "idx",
+        embedder=HASH_EMBEDDER,
     )
     expected = record_content_hash(
         type=KNOWN["type"],

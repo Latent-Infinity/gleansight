@@ -10,6 +10,7 @@ import pytest
 import nsqd.harvest as harvest_module
 import nsqd.runner as runner_module
 from nsqd.app.use_cases import HarvestUseCase
+from nsqd.composition import build_container
 from nsqd.domain.harvest import (
     HarvestRejected,
     harvest_record_rejection,
@@ -21,6 +22,7 @@ from nsqd.harvest import parse_harvest_file, run_harvest
 from nsqd.infra.piccolo.stores import PiccoloNsqdJobQueue
 from nsqd.null_adapters import (
     FixedClock,
+    HashParaphraseEmbedder,
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
     NullHarvestStore,
@@ -28,12 +30,30 @@ from nsqd.null_adapters import (
 from papers.infra.piccolo.database import PiccoloDatabase
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
+HASH_EMBEDDER = HashParaphraseEmbedder()
 KNOWN = {
     "type": "paper",
     "paraphrase": "Condition allocation trust on dealer-hedging convexity regime.",
     "source": "doi:10.0000/example",
     "domain_policy_id": "finance/1",
 }
+
+
+class _FakeProductionEmbedder:
+    def model_id(self) -> str:
+        return "qwen3-embedding"
+
+    def model_version(self) -> str:
+        return "latest"
+
+    def dimension(self) -> int:
+        return 2
+
+    def normalization_policy(self) -> str:
+        return "l2"
+
+    def embed(self, text: str) -> list[float]:
+        return [1.0, 0.0] if "A mechanism" in text else [0.0, 1.0]
 
 
 def test_essay_payloads_are_detected() -> None:
@@ -275,12 +295,17 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
     )
 
     initial = run_harvest(
-        file_path=first, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF
+        file_path=first,
+        db_path=db_path,
+        index_path=tmp_path / "idx",
+        embedder=HASH_EMBEDDER,
+        as_of=AS_OF,
     )
     repeated = run_harvest(
         file_path=omitted,
         db_path=db_path,
         index_path=tmp_path / "idx",
+        embedder=HASH_EMBEDDER,
         as_of=AS_OF,
     )
     with pytest.raises(HarvestRejected, match="immutable metadata"):
@@ -288,6 +313,7 @@ def test_reharvest_preserves_omitted_metadata_and_rejects_conflicts(tmp_path: Pa
             file_path=conflicting,
             db_path=db_path,
             index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
             as_of=AS_OF,
         )
 
@@ -322,12 +348,19 @@ def test_reharvest_rejects_cross_policy_conflicts(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    run_harvest(file_path=first, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF)
+    run_harvest(
+        file_path=first,
+        db_path=db_path,
+        index_path=tmp_path / "idx",
+        embedder=HASH_EMBEDDER,
+        as_of=AS_OF,
+    )
     with pytest.raises(HarvestRejected, match="immutable metadata conflict: domain_policy_id"):
         run_harvest(
             file_path=conflicting,
             db_path=db_path,
             index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
             as_of=AS_OF,
         )
 
@@ -350,6 +383,7 @@ def test_concurrent_identical_harvests_share_one_snapshot_version(tmp_path: Path
             file_path=path,
             db_path=db_path,
             index_path=tmp_path / f"idx-{index}",
+            embedder=HASH_EMBEDDER,
             as_of=AS_OF,
         )
 
@@ -380,6 +414,7 @@ def test_concurrent_distinct_harvests_commit_serial_versions(tmp_path: Path) -> 
             file_path=paths[index],
             db_path=db_path,
             index_path=tmp_path / f"idx-{index}",
+            embedder=HASH_EMBEDDER,
             as_of=AS_OF,
         )
 
@@ -408,7 +443,13 @@ def test_run_harvest_claims_its_job_without_touching_older_work(tmp_path: Path) 
         encoding="utf-8",
     )
 
-    run_harvest(file_path=path, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF)
+    run_harvest(
+        file_path=path,
+        db_path=db_path,
+        index_path=tmp_path / "idx",
+        embedder=HASH_EMBEDDER,
+        as_of=AS_OF,
+    )
 
     older = database.fetchone(
         "SELECT status, attempts FROM nsqd_jobs WHERE job_id = ?", [older_job_id]
@@ -437,7 +478,13 @@ def test_run_harvest_marks_claimed_job_failed_on_unexpected_error(
 
     monkeypatch.setitem(runner_module._HANDLER_BY_JOB_TYPE, "harvest", fail)
     with pytest.raises(RuntimeError, match="adapter failed"):
-        run_harvest(file_path=path, db_path=db_path, index_path=tmp_path / "idx", as_of=AS_OF)
+        run_harvest(
+            file_path=path,
+            db_path=db_path,
+            index_path=tmp_path / "idx",
+            embedder=HASH_EMBEDDER,
+            as_of=AS_OF,
+        )
 
     database = PiccoloDatabase(db_path)
     row = database.fetchone(
@@ -446,3 +493,52 @@ def test_run_harvest_marks_claimed_job_failed_on_unexpected_error(
     assert row is not None
     assert row["status"] == "failed"
     assert row["last_error"] == "adapter failed"
+
+
+def test_run_harvest_uses_injected_embedder_and_contract_scoped_index(tmp_path: Path) -> None:
+    path = tmp_path / "records.yaml"
+    path.write_text(
+        "records:\n"
+        "  - type: paper\n"
+        "    paraphrase: A mechanism\n"
+        "    source: doi:10.1/x\n"
+        "    domain_policy_id: finance/1\n",
+        encoding="utf-8",
+    )
+    embedder = _FakeProductionEmbedder()
+
+    result = run_harvest(
+        file_path=path,
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        embedder=embedder,
+        as_of=AS_OF,
+    )
+
+    assert len(result["record_ids"]) == 1
+    qwen_container = build_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        embedder=embedder,
+    )
+    qwen_hits = qwen_container.ctx.index.query(
+        str(result["snapshot_id"]),
+        embedder.embed("A mechanism"),
+        k=5,
+    )
+    assert [hit.record_id for hit in qwen_hits] == [str(result["record_ids"][0])]
+
+    hermetic = HashParaphraseEmbedder()
+    hermetic_container = build_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        embedder=hermetic,
+    )
+    assert (
+        hermetic_container.ctx.index.query(
+            str(result["snapshot_id"]),
+            hermetic.embed("A mechanism"),
+            k=5,
+        )
+        == []
+    )
