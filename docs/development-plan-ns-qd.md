@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.3 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.5 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is pending seed data that must be human-approved once acquired.
@@ -16,8 +16,8 @@
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/04 committed. DATA-NSQD-03 **missing**; live acquisition of it still requires a separately approved probe. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Remaining: a separately approved DATA-NSQD-03 probe, then calibration ablations. Honest `finance/1 production_valid` still waits on approved DATA-NSQD-03.
-**Outstanding Blockers**: approved DATA-NSQD-03 for honest `finance/1` production validity. `ALG.STATUS` ablation still waits on a calibration snapshot with listed recall probes.
+**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Calibration ablation probes are filed under `docs/ablations/`: `ALG.K` is synthetic math/state evidence, while `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, and `ALG.VIABILITY` are LLM-scored probes. None is frozen. Remaining: a separately approved DATA-NSQD-03 probe. Honest `finance/1 production_valid` still waits on approved DATA-NSQD-03.
+**Outstanding Blockers**: approved DATA-NSQD-03 for honest `finance/1` production validity. Ablation freeze waits on human validation of the recorded math artifact and LLM prompts/results, not on a second labeling panel.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -71,6 +71,8 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.2 | 2026-08-22 | Injection-ready paper acquisition adapter, durable approved-digest bootstrap, and immutable unapproved-projection quarantine migration. |
 | 1.6.3 | 2026-08-22 | Correct production boundary: default CLI/UI composition still lacks paper runtime and analysis-metadata bootstrap. |
 | 1.6.4 | 2026-08-23 | Default acquire/UI composition wires the paper runtime, paper workers, and analysis-metadata bootstrap. |
+| 1.6.5 | 2026-08-23 | ALG.K math probe on a constructed calibration snapshot; k=5 stays tunable; DATA-NSQD-03 still uninvented. |
+| 1.6.6 | 2026-08-23 | ALG.K is a synthetic math probe; the other ablation labels/scores are LLM-produced and human-validated. Remaining probes filed; defaults not frozen. |
 
 ---
 
@@ -786,7 +788,15 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 ## Ablations (before freeze)
 
-Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`, `ALG.K`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, `ALG.VIABILITY` per `ALG-ABL`. File artifacts under `docs/ablations/`. Do not use `smoke_only` for `ALG.NOVELTY_BINS`.
+Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`, `ALG.K`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, `ALG.VIABILITY` per `ALG-ABL`. File artifacts under `docs/ablations/`. Do not use `smoke_only` for `ALG.NOVELTY_BINS`. ALG.K is a synthetic math/state probe. Scores for the other ablations are LLM-produced; humans validate their prompts and results. Independent human labeling panels are not required.
+
+- [x] `ALG.K` math probe: Spearman ρ of leave-one-out novelty ranks at k ∈ {3,5,10} vs k=5 on a constructed `calibration` snapshot (`docs/ablations/alg-k.md`). k=3 meets ρ ≥ 0.90; k=10 does not. Production k remains 5 and is **not frozen**. Synthetic unit vectors only; not DATA-NSQD-03.
+- [x] `ALG.AXES` LLM probe: keep finance v1 mechanism × target × horizon; reject oversized and non-illuminable triples (`docs/ablations/alg-axes.md`)
+- [x] `ALG.NOVELTY_BINS` on constructed calibration: gamma-flow `nov ≥ 1`; mechanism-free `mech = 0`; smoke still forces `nov = 0` (`docs/ablations/alg-novelty-bins.md`)
+- [x] `ALG.STATUS.THRESHOLDS` LLM-labeled 10 cells: density cut 3 wins 10/10 vs 2 (9/10) and 5 (8/10); keep 3 (`docs/ablations/alg-status.md`)
+- [x] `ALG.VIABILITY` keeps 0/5 presence stubs; no 1–4 intermediates (`docs/ablations/alg-viability.md`)
+
+**Close note (2026-08-23):** ALG.K is a synthetic math/state probe; the other ablations are LLM-scored with recorded prompts. Humans validate the math artifact and LLM prompts/results; they do not block as a labeling panel. DATA-NSQD-03 was not invented and numeric defaults are not frozen. Four-command gate: 1081 passed, 1 skipped, 92.43% repository coverage; dedicated NSQD command: 491 passed, 93.80% coverage.
 
 ---
 

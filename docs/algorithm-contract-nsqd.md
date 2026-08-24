@@ -450,12 +450,14 @@ Shared lease/retry/backoff/state-transition logic may be extracted into a **neut
 
 ## ALG-ABL — Ablations before freeze
 
+Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, and `ALG.VIABILITY` are LLM-produced. Humans validate each recorded prompt and artifact result; they are not a blocking independent labeling panel. `ALG.K` is synthetic math/state evidence, not an LLM-scored artifact. LLM output still cannot approve corpus evidence, activate a fact, or promote a snapshot.
+
 | Study | Dataset state | Metric | n | Threshold | Artifact |
 |-------|---------------|--------|---|-----------|----------|
-| `ALG.AXES` | `calibration` snapshot + 2 reviewers | each proposed triple scored 0–2 on {illuminable, not empty, not >10k cells}; keep if mean ≥ 4/6 | 3 triples | mean ≥ 4 | `docs/ablations/alg-axes.md` |
-| `ALG.K` | `calibration` snapshot | Spearman rank correlation of calibration-item novelty ranks vs k=5 baseline | k ∈ {3,5,10}, same items | ρ ≥ 0.90 vs k=5 | `docs/ablations/alg-k.md` |
+| `ALG.AXES` | constructed `calibration` snapshot; LLM scores | each proposed triple scored 0–2 on {illuminable, not empty, not >10k cells}; keep if sum ≥ 4 | 3 triples | sum ≥ 4 | `docs/ablations/alg-axes.md` |
+| `ALG.K` | constructed `calibration` snapshot; synthetic vectors | Spearman rank correlation of calibration-item novelty ranks vs k=5 baseline | k ∈ {3,5,10}, same items | ρ ≥ 0.90 vs k=5 | `docs/ablations/alg-k.md` (math probe filed 2026-08-23; **not frozen** — k=10 missed the threshold; production k stays 5) |
 | `ALG.NOVELTY_BINS` | **`calibration` only** (not `smoke_only`) | gamma-flow `nov ≥ 1`; mechanism-free still `mech = 0` | the approved pair | both hold | `docs/ablations/alg-novelty-bins.md` |
-| `ALG.STATUS.THRESHOLDS` | 10 hand-labeled cells + fixed `as_of` | exact status agreement | Sparse cut ∈ {2,3,5} | ≥ 8/10 | `docs/ablations/alg-status.md` |
-| `ALG.VIABILITY` | same calibration pair + 5 extra labeled cards | reviewer agreement on 1–4 intermediates if introduced | 2 reviewers | Cohen’s κ ≥ 0.6 or keep 0/5 presence stubs | `docs/ablations/alg-viability.md` |
+| `ALG.STATUS.THRESHOLDS` | 10 LLM-labeled cells + fixed `as_of` | exact status agreement | Sparse cut ∈ {2,3,5} | ≥ 8/10 | `docs/ablations/alg-status.md` |
+| `ALG.VIABILITY` | same calibration pair + 5 extra cards | introduce 1–4 intermediates only with a recorded rubric; otherwise keep 0/5 presence stubs | LLM probe | keep stubs **or** recorded rubric | `docs/ablations/alg-viability.md` |
 
-Do not treat numeric defaults as frozen until the matching artifact exists.
+Do not treat numeric defaults as frozen until a later freeze review of the matching artifact. Artifacts may exist as probes without freezing.
