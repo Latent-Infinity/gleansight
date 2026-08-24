@@ -35,10 +35,19 @@ class _FakeConverter:
 
 class _FakeEmbedder:
     def model_name(self) -> str:
+        return "fake:latest"
+
+    def model_id(self) -> str:
         return "fake"
+
+    def model_version(self) -> str:
+        return "latest"
 
     def dimension(self) -> int:
         return 1
+
+    def normalization_policy(self) -> str:
+        return "l2"
 
     def embed(self, text: str) -> list[float]:
         return [0.0]
@@ -67,9 +76,10 @@ def _settings(tmp_path: Path) -> Settings:
                 "lancedb_dir": tmp_path / "data" / "lancedb",
             },
             "embeddings": {
-                "model": "fake",
+                "model": "fake:latest",
                 "dimension": 1,
                 "text_slice_strategy": "markdown_full",
+                "base_url": "http://127.0.0.1:11434",
             },
             "llm": {"default_profile": "default"},
             "scholar": {"api_key": "", "rate_limit_per_second": 10},
@@ -91,8 +101,10 @@ def test_build_container_wires_dependencies(
     settings.data.blobs_analysis_dir.mkdir(parents=True, exist_ok=True)
     settings.data.lancedb_dir.mkdir(parents=True, exist_ok=True)
 
-    def _fake_build_embedder(model_name: str):
-        assert model_name == "fake"
+    def _fake_build_embedder(embedding_settings):
+        assert embedding_settings.model == "fake:latest"
+        assert embedding_settings.dimension == 1
+        assert embedding_settings.base_url == "http://127.0.0.1:11434"
         return _FakeEmbedder()
 
     def _fake_build_converter():
@@ -100,7 +112,7 @@ def test_build_container_wires_dependencies(
 
     def _fake_build_llm_client(*, base_url: str, api_key: str | None = None):
         assert base_url == "http://local"
-        assert api_key == "token"
+        assert api_key == "llm-token"
         return _FakeLLM()
 
     def _fake_build_s2_client(*, api_key: str | None = None, rate_limit_per_second: int = 10):
@@ -109,7 +121,7 @@ def test_build_container_wires_dependencies(
     original_find_spec = importlib.util.find_spec
 
     def _fake_find_spec(name: str):
-        if name in {"docling", "lancedb", "sentence_transformers", "httpx"}:
+        if name in {"docling", "lancedb", "httpx"}:
             return object()
         return original_find_spec(name)
 
@@ -118,7 +130,7 @@ def test_build_container_wires_dependencies(
     monkeypatch.setattr(composition_root, "LanceDBVectorIndex", _FakeVectorIndex)
     monkeypatch.setattr(
         composition_root,
-        "build_sentence_transformer_embedder",
+        "build_configured_ollama_embedder",
         _fake_build_embedder,
     )
     monkeypatch.setattr(composition_root, "build_docling_converter", _fake_build_converter)
@@ -128,7 +140,7 @@ def test_build_container_wires_dependencies(
     container = composition_root.build_container(
         settings,
         llm_base_url="http://local",
-        llm_api_key="token",
+        llm_api_key="llm-token",
     )
 
     assert container.settings is settings
@@ -146,6 +158,8 @@ def test_build_container_wires_dependencies(
     assert isinstance(container.blob_store, _FakeBlobStore)
     assert isinstance(container.vector_index, _FakeVectorIndex)
     assert isinstance(container.scholar_client, _FakeScholarClient)
+    assert container.vector_index.config.embedding_model == "fake:latest"
+    assert container.vector_index.config.embedding_dimension == 1
 
     row = container.db.fetchone(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'papers'"
@@ -167,7 +181,7 @@ def test_load_settings_validation_failure(tmp_path: Path) -> None:
         # lancedb_dir missing on purpose
 
         [embeddings]
-        model = "fake"
+        model = "fake:latest"
         dimension = 1
         text_slice_strategy = "markdown_full"
 

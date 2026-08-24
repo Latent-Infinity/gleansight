@@ -10,7 +10,7 @@ from papers.config.settings import Settings
 from papers.domain.errors import ConfigurationError
 from papers.infra.blobs_fs.store import FileSystemBlobStore
 from papers.infra.converter_docling.adapter import build_docling_converter
-from papers.infra.embedder_st.adapter import build_sentence_transformer_embedder
+from papers.infra.embedder_ollama.adapter import build_configured_ollama_embedder
 from papers.infra.lancedb.index import LanceDBConfig, LanceDBVectorIndex
 from papers.infra.llm_openai_compat.client import build_openai_compat_client
 from papers.infra.pdf_resolver import (
@@ -96,8 +96,14 @@ def build_container(
     atomic_candidate_import = PiccoloAtomicCandidateImport()
 
     blob_store = FileSystemBlobStore(settings.data.blobs_dir)
-    vector_index = LanceDBVectorIndex(LanceDBConfig(path=settings.data.lancedb_dir))
-    embedder = build_sentence_transformer_embedder(settings.embeddings.model)
+    vector_index = LanceDBVectorIndex(
+        LanceDBConfig(
+            path=settings.data.lancedb_dir,
+            embedding_model=settings.embeddings.model,
+            embedding_dimension=settings.embeddings.dimension,
+        )
+    )
+    embedder = build_configured_ollama_embedder(settings.embeddings)
     converter = build_docling_converter()
     llm_client = build_openai_compat_client(base_url=llm_base_url, api_key=llm_api_key)
     scholar_client = build_s2_client(
@@ -192,7 +198,6 @@ def validate_startup(settings: Settings) -> None:
     _ensure_dir_exists(settings.data.lancedb_dir, "data.lancedb_dir")
     _require_dependency("docling")
     _require_dependency("lancedb")
-    _require_dependency("sentence_transformers")
     _require_dependency("httpx")
 
 
