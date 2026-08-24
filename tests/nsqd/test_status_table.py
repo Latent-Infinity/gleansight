@@ -65,7 +65,9 @@ def test_status_table_covers_finance_universe_on_empty_snapshot() -> None:
     )
     assert len(table) == 336
     assert set(table) == FINANCE_POLICY.universe()
-    assert set(table.values()) == {"Unknown"}
+    assert table[FINANCE_CELL] == "Missing"
+    assert set(table.values()) == {"Missing", "Unknown"}
+    assert sum(status == "Missing" for status in table.values()) == 1
 
 
 def test_status_table_covers_optimization_universe() -> None:
@@ -128,8 +130,8 @@ def test_pack_scoped_table_ignores_other_policy_records() -> None:
         inspected_cell_ids=frozenset({OPT_CELL}),
         expected_cell_ids=frozenset({OPT_CELL}),
     )
-    assert finance[FINANCE_CELL] == "Unknown"
-    assert set(finance.values()) == {"Unknown"}
+    assert finance[FINANCE_CELL] == "Missing"
+    assert set(finance.values()) == {"Missing", "Unknown"}
     assert optimization[OPT_CELL] == "Active"
     assert sum(status != "Unknown" for status in optimization.values()) == 1
 
@@ -150,7 +152,9 @@ def test_unlisted_coordinates_do_not_place_or_leak() -> None:
         as_of=AS_OF,
         snapshot_state="calibration",
     )
-    assert set(table.values()) == {"Unknown"}
+    assert table[FINANCE_CELL] == "Missing"
+    assert set(table.values()) == {"Missing", "Unknown"}
+    assert sum(status == "Missing" for status in table.values()) == 1
 
 
 def test_expected_empty_cell_is_missing_and_uninspected_empty_is_unknown() -> None:

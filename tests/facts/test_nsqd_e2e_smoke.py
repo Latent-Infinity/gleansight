@@ -7,12 +7,14 @@ from nsqd.app.use_cases import empty_smoke_snapshot_id
 from nsqd.domain.policy import FINANCE_POLICY, archive_cell_key
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloFrontierCardStore, PiccoloNsqdJobQueue
+from nsqd.null_adapters import HashParaphraseEmbedder
 from nsqd.skeleton import run_skeleton
 from papers.infra.piccolo.database import PiccoloDatabase
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
 AXIOM = "predictors assume stationary return signal"
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
+HASH_EMBEDDER = HashParaphraseEmbedder()
 
 
 def test_smoke_loop_rejects_cards_and_leaves_production_archive_empty(tmp_path: Path) -> None:
@@ -44,9 +46,10 @@ def test_smoke_loop_rejects_cards_and_leaves_production_archive_empty(tmp_path: 
         assert result["novelty"]["evidence"] is None
         assert result["novelty"]["term"] == 0
         assert result["novelty"]["measurement_stamp"] == {
-            "embedding_model_id": "none",
-            "embedding_model_version": "none",
-            "normalization_policy": "none",
+            "embedding_model_id": "unconfigured",
+            "embedding_model_version": "unconfigured",
+            "embedding_dimension": 0,
+            "normalization_policy": "unknown",
             "distance_metric": "cosine_distance",
             "algorithm_contract_version": "1.1",
         }
@@ -133,6 +136,7 @@ def test_smoke_loop_uses_authoritative_snapshot_version_on_reused_database(tmp_p
         file_path=harvest_path,
         db_path=db_path,
         index_path=index_path,
+        embedder=HASH_EMBEDDER,
         as_of=AS_OF,
     )
     assert harvested["corpus_version"] == 1
