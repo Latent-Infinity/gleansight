@@ -121,9 +121,6 @@ def compose_default_runtime(
         approved_projection_digests=approved_projection_digests,
         paper_bridge=bridge,
     )
-    paper_database = getattr(papers, "db", None)
-    if paper_database is not None:
-        paper_database.bind_tables()
     return NsqdPaperRuntime(
         nsqd=nsqd,
         paper_runner=papers.job_runner,

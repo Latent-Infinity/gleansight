@@ -43,7 +43,7 @@ def build_container(
 ) -> NsqdContainer:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
-    database = PiccoloDatabase(db_path)
+    database = PiccoloDatabase(db_path, bind_on_init=False)
     database.initialize_schema()
     resolved_clock = clock if clock is not None else SystemClock()
     records = PiccoloCorpusRecordStore(database)

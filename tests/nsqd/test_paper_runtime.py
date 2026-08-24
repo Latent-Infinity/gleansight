@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+
+import pytest
 
 from nsqd.infra.paper_runtime import (
     ACQUISITION_MODEL_NAME,
@@ -16,6 +19,7 @@ from nsqd.infra.paper_runtime import (
 )
 from nsqd.infra.papers_bridge import PapersAcquisitionBridge
 from nsqd.null_adapters import FixedClock, NullPaperAcquisitionBridge
+from papers.domain.errors import ConfigurationError
 
 
 @dataclass
@@ -167,6 +171,22 @@ def test_compose_default_runtime_restores_paper_database_binding(tmp_path: Path)
     )
 
     assert runtime.nsqd.database.path == tmp_path / "nsqd.sqlite"
+    assert prompt_store.get_prompt(ACQUISITION_PROMPT_ID) is not None
+    assert profile_store.get(ACQUISITION_PROFILE_ID) is not None
+    assert [row["job_id"] for row in job_queue.list_jobs()] == [job_id]
+
+    incompatible_db = tmp_path / "incompatible-nsqd.sqlite"
+    with sqlite3.connect(incompatible_db) as connection:
+        connection.execute("CREATE TABLE nsqd_jobs (wrong_column TEXT)")
+    with pytest.raises(ConfigurationError, match="schema mismatch"):
+        compose_default_runtime(
+            papers=papers,
+            nsqd_db_path=incompatible_db,
+            nsqd_index_path=tmp_path / "bad-nsqd-index",
+            llm_base_url="http://localhost:8000",
+            clock=FixedClock(datetime(2024, 1, 1, tzinfo=UTC)),
+        )
+
     assert prompt_store.get_prompt(ACQUISITION_PROMPT_ID) is not None
     assert profile_store.get(ACQUISITION_PROFILE_ID) is not None
     assert [row["job_id"] for row in job_queue.list_jobs()] == [job_id]

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -44,12 +46,14 @@ _TABLES = (
 @dataclass(frozen=True)
 class PiccoloDatabase:
     path: Path
+    bind_on_init: bool = field(default=True, repr=False)
     _engine: SQLiteEngine = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         engine = SQLiteEngine(path=str(self.path))
         object.__setattr__(self, "_engine", engine)
-        self.bind_tables()
+        if self.bind_on_init:
+            self.bind_tables()
 
     def bind_tables(self) -> None:
         for table in _TABLES:
@@ -59,13 +63,24 @@ class PiccoloDatabase:
     def engine(self) -> SQLiteEngine:
         return self._engine
 
+    @contextmanager
+    def temporary_table_bindings(self) -> Iterator[None]:
+        previous = tuple(getattr(table._meta, "_db", None) for table in _TABLES)
+        self.bind_tables()
+        try:
+            yield
+        finally:
+            for table, database in zip(_TABLES, previous, strict=True):
+                table._meta.db = database
+
     def initialize_schema(self) -> None:
         from papers.infra.piccolo.migrations.runner import apply_forward_migrations
 
-        for table in _TABLES:
-            table.create_table(if_not_exists=True).run_sync()
-        self._create_indexes_and_fts()
-        apply_forward_migrations(self)
+        with self.temporary_table_bindings():
+            for table in _TABLES:
+                table.create_table(if_not_exists=True).run_sync()
+            self._create_indexes_and_fts()
+            apply_forward_migrations(self)
 
     def execute(self, sql: str, params: list[Any] | None = None) -> None:
         query = self._to_query(sql, params)
