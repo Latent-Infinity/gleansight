@@ -40,7 +40,7 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable ALG-SUF failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures stop; drafts cannot approve; default CLI/UI composition wires the paper runtime and persists approved projection digests while lightweight composition remains fail-closed | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Active | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | Given the discovery use-cases, when a user runs `gleansight` or the desktop app, then harvest/map/diverge/ground/gate/archive are available without breaking `papers`, and Map/Archive/Card screens sit beside the evidence screens | Product surfaces | Behavior | LOCAL-NSQD-U | product | Active | EV-N18 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.4)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.6)
 
 See that plan’s ledger for full statements. Completed facts are **Active** with Required evidence. Honest `finance/1 production_valid` remains blocked without approved DATA-NSQD-03. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 is acquired; DATA-NSQD-03 remains pending seed data that still requires human approval once acquired.
 
