@@ -32,6 +32,7 @@ from nsqd.ports import (
     NsqdJob,
     NsqdJobType,
     PaperAcquisitionBridge,
+    ParaphraseEmbedder,
     PolicyVerdictStore,
 )
 
@@ -53,6 +54,7 @@ class NsqdHandlerContext:
     verdicts: PolicyVerdictStore | None = None
     bridge: PaperAcquisitionBridge | None = None
     policies: Mapping[str, DomainPolicy] | None = None
+    embedder: ParaphraseEmbedder | None = None
 
 
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
@@ -81,6 +83,8 @@ def handle_harvest(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
     result = HarvestUseCase(
         harvest=ctx.harvest,
         clock=ctx.clock,
+        index=ctx.index,
+        embedder=ctx.embedder,
     ).run(job.payload["payload"])
     return {"status": "succeeded", **result}
 
@@ -96,6 +100,8 @@ def handle_project(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         records=ctx.records,
         clock=ctx.clock,
         approved_projection_digests=ctx.approved_projection_digests,
+        index=ctx.index,
+        embedder=ctx.embedder,
     ).run(
         domain_policy_id=str(payload.get("domain_policy_id") or ""),
         projection=projection,
@@ -175,6 +181,8 @@ def handle_acquire(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
             records=ctx.records,
             clock=ctx.clock,
             approved_projection_digests=ctx.approved_projection_digests,
+            index=ctx.index,
+            embedder=ctx.embedder,
         ),
     ).run(
         snapshot_id=_require_payload_string(payload, "snapshot_id"),
@@ -196,6 +204,7 @@ def handle_ground(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         candidates=ctx.candidates,
         live_search=ctx.scholar_client,
         hybrid_search=ctx.paper_vector_index,
+        embedder=ctx.embedder,
     ).run(
         candidate_artifact_hash=str(payload["candidate_artifact_hash"]),
         snapshot_id=str(payload["snapshot_id"]),
@@ -241,6 +250,7 @@ def handle_rescore(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         cards=ctx.cards,
         live_search=ctx.scholar_client,
         hybrid_search=ctx.paper_vector_index,
+        embedder=ctx.embedder,
     ).run(
         card_id=str(payload["card_id"]),
         current_snapshot_id=str(payload["current_snapshot_id"]),

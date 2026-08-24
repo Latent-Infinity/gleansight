@@ -98,6 +98,7 @@ from nsqd.ports import (
     MorphospaceStore,
     NsqdCandidateStore,
     PaperAcquisitionBridge,
+    ParaphraseEmbedder,
     PolicyVerdictStore,
 )
 
@@ -221,10 +222,76 @@ def _require_snapshot_state(snapshot_state: str) -> SnapshotState:
     return require_snapshot_state(snapshot_state)
 
 
+def _index_paraphrases(
+    index: CorpusIndex | None,
+    embedder: ParaphraseEmbedder | None,
+    *,
+    snapshot_id: str,
+    records: list[dict[str, Any]],
+) -> None:
+    if index is None or embedder is None:
+        return
+    for record in records:
+        record_id = record.get("record_id")
+        paraphrase = record.get("paraphrase")
+        if not isinstance(record_id, str) or not record_id.strip():
+            continue
+        if not isinstance(paraphrase, str) or not paraphrase.strip():
+            continue
+        index.upsert(snapshot_id, record_id, embedder.embed(paraphrase))
+
+
+def _query_vector(
+    candidate: dict[str, Any],
+    embedder: ParaphraseEmbedder | None,
+) -> list[float] | None:
+    query = candidate.get("query_vector")
+    if isinstance(query, list) and query:
+        return [float(value) for value in query]
+    if embedder is None:
+        return None
+    paraphrase = candidate.get("paraphrase")
+    if not isinstance(paraphrase, str) or not paraphrase.strip():
+        return None
+    return embedder.embed(paraphrase)
+
+
+def _measurement_stamp(
+    embedder: ParaphraseEmbedder | None,
+    *,
+    vector: list[float] | None = None,
+) -> dict[str, Any]:
+    if embedder is not None:
+        return {
+            "embedding_model_id": embedder.model_id(),
+            "embedding_model_version": embedder.model_version(),
+            "embedding_dimension": embedder.dimension(),
+            "normalization_policy": embedder.normalization_policy(),
+            "distance_metric": "cosine_distance",
+            "algorithm_contract_version": "1.1",
+        }
+    return {
+        "embedding_model_id": "unconfigured",
+        "embedding_model_version": "unconfigured",
+        "embedding_dimension": 0 if vector is None else len(vector),
+        "normalization_policy": "unknown",
+        "distance_metric": "cosine_distance",
+        "algorithm_contract_version": "1.1",
+    }
+
+
+def _persisted_measurement_stamp(value: object) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return {str(key): item for key, item in value.items()}
+    return _measurement_stamp(None)
+
+
 @dataclass(frozen=True)
 class HarvestUseCase:
     harvest: HarvestStore
     clock: Clock
+    index: CorpusIndex | None = None
+    embedder: ParaphraseEmbedder | None = None
 
     def run(self, payload: Any) -> dict[str, Any]:
         items = harvest_records_from_payload(payload)
@@ -262,6 +329,12 @@ class HarvestUseCase:
             records.append(record)
 
         committed = self.harvest.commit(records, schema_version=1)
+        _index_paraphrases(
+            self.index,
+            self.embedder,
+            snapshot_id=committed.snapshot_id,
+            records=records,
+        )
         return {
             "record_ids": list(committed.record_ids),
             "snapshot_id": committed.snapshot_id,
@@ -275,6 +348,8 @@ class ProjectPaperUseCase:
     records: CorpusRecordStore
     clock: Clock
     approved_projection_digests: frozenset[str]
+    index: CorpusIndex | None = None
+    embedder: ParaphraseEmbedder | None = None
 
     def run(self, *, domain_policy_id: str, projection: dict[str, Any]) -> dict[str, Any]:
         if not domain_policy_id.strip():
@@ -311,6 +386,28 @@ class ProjectPaperUseCase:
         normalized_projection_policy_id = projection_policy_id.strip()
         if normalized_projection_policy_id != policy.policy_id:
             raise ValueError("projection.domain_policy_id must match explicit domain_policy_id")
+        raw_source = projection.get("source")
+        if raw_source is None:
+            source = f"paper:{normalized_source_paper_id}"
+        elif not isinstance(raw_source, str) or not raw_source.strip():
+            raise ValueError("projection.source must be a non-empty string")
+        else:
+            source = normalize_source(raw_source)
+        raw_coordinates = projection.get("coordinates")
+        coordinates: dict[str, str] | None = None
+        if raw_coordinates is not None:
+            if not isinstance(raw_coordinates, dict):
+                raise ValueError("projection.coordinates must be a mapping")
+            axis_names = {name for name, _values in policy.axes}
+            if set(raw_coordinates) != axis_names:
+                raise ValueError("projection.coordinates must match policy axes")
+            coordinates = {}
+            for axis_name, _values in policy.axes:
+                axis_value = raw_coordinates.get(axis_name)
+                if not isinstance(axis_value, str) or not axis_value.strip():
+                    raise ValueError("projection.coordinates values must be non-empty strings")
+                coordinates[axis_name] = normalize_paraphrase(axis_value)
+            policy.cell_id(coordinates)
         if is_data_nsqd_04(projection) and policy.policy_id == "finance/1":
             raise ValueError("DATA-NSQD-04 cannot credit finance/1")
         if is_data_nsqd_04(projection) and policy.policy_id != "optimization/1":
@@ -333,30 +430,23 @@ class ProjectPaperUseCase:
             raise ValueError("abstract is not a mechanism paraphrase")
         if is_abstract_substitution(paraphrase=normalized_paraphrase, abstract=abstract):
             raise ValueError("abstract is not a mechanism paraphrase")
-        canonical_projection = canonical_reviewed_projection_bytes(
-            {
-                **projection,
-                "domain_policy_id": normalized_projection_policy_id,
-                "human_approved_at": normalized_human_approved_at,
-                "human_reviewer": normalized_human_reviewer,
-                "paraphrase": normalized_paraphrase,
-                "paraphrase_source": normalized_paraphrase_source,
-                "source_paper_id": normalized_source_paper_id,
-            }
-        )
+        reviewed_projection = {
+            **projection,
+            "domain_policy_id": normalized_projection_policy_id,
+            "human_approved_at": normalized_human_approved_at,
+            "human_reviewer": normalized_human_reviewer,
+            "paraphrase": normalized_paraphrase,
+            "paraphrase_source": normalized_paraphrase_source,
+            "source_paper_id": normalized_source_paper_id,
+        }
+        if raw_source is not None:
+            reviewed_projection["source"] = source
+        if coordinates is not None:
+            reviewed_projection["coordinates"] = coordinates
+        canonical_projection = canonical_reviewed_projection_bytes(reviewed_projection)
         if len(canonical_projection) > MAX_REVIEWED_PROJECTION_BYTES:
             raise ValueError("reviewed projection payload is too large")
-        reviewed_projection_digest = canonical_reviewed_projection_digest(
-            {
-                **projection,
-                "domain_policy_id": normalized_projection_policy_id,
-                "human_approved_at": normalized_human_approved_at,
-                "human_reviewer": normalized_human_reviewer,
-                "paraphrase": normalized_paraphrase,
-                "paraphrase_source": normalized_paraphrase_source,
-                "source_paper_id": normalized_source_paper_id,
-            }
-        )
+        reviewed_projection_digest = canonical_reviewed_projection_digest(reviewed_projection)
         if reviewed_projection_digest not in self.approved_projection_digests:
             raise ValueError("projection is not an approved reviewed projection")
         identity = {
@@ -366,7 +456,6 @@ class ProjectPaperUseCase:
             "source_markdown_sha256": source_markdown_sha256,
             "paraphrase_sha256": paraphrase_sha256,
         }
-        source = f"paper:{normalized_source_paper_id}"
         content_hash = record_content_hash(
             type="paper",
             paraphrase=normalized_paraphrase,
@@ -384,6 +473,12 @@ class ProjectPaperUseCase:
             if existing_digest != reviewed_projection_digest:
                 raise ValueError("existing projection has different reviewed projection metadata")
             committed = self.harvest.commit([existing], schema_version=1)
+            _index_paraphrases(
+                self.index,
+                self.embedder,
+                snapshot_id=committed.snapshot_id,
+                records=[existing],
+            )
             return {
                 "created": False,
                 "record_id": str(existing["record_id"]),
@@ -391,7 +486,7 @@ class ProjectPaperUseCase:
                 "corpus_version": committed.corpus_version,
                 "reviewed_projection_digest": reviewed_projection_digest,
             }
-        record = {
+        record: dict[str, Any] = {
             "record_id": record_id,
             "content_hash": content_hash,
             "type": "paper",
@@ -410,7 +505,15 @@ class ProjectPaperUseCase:
             "paraphrase_sha256": identity["paraphrase_sha256"],
             "reviewed_projection_digest": reviewed_projection_digest,
         }
+        if coordinates is not None:
+            record["coordinates"] = coordinates
         committed = self.harvest.commit([record], schema_version=1)
+        _index_paraphrases(
+            self.index,
+            self.embedder,
+            snapshot_id=committed.snapshot_id,
+            records=[record],
+        )
         return {
             "created": True,
             "record_id": record_id,
@@ -600,6 +703,7 @@ class GroundUseCase:
     candidates: NsqdCandidateStore
     live_search: LivePaperSearch | None = None
     hybrid_search: HybridPaperSearch | None = None
+    embedder: ParaphraseEmbedder | None = None
 
     def run(
         self,
@@ -637,15 +741,16 @@ class GroundUseCase:
             (row for row in present if "terminology" in set(row.get("tags") or [])),
             None,
         )
+        query = _query_vector(artifact["candidate"], self.embedder)
+        measurement_stamp = _measurement_stamp(self.embedder, vector=query)
         evidence = mean_cosine_distance([])
         nearest_hit = None
         if present:
-            query = artifact["candidate"].get("query_vector")
-            if isinstance(query, list) and query:
+            if query is not None:
                 allowed_ids = frozenset(str(row["record_id"]) for row in present)
                 hits = self.index.query(
                     snapshot_id,
-                    [float(x) for x in query],
+                    query,
                     k=5,
                     allowed_record_ids=allowed_ids,
                 )
@@ -694,6 +799,7 @@ class GroundUseCase:
             "corpus_version": corpus_version,
             "live_call_count": len(live_calls),
             "live_calls": live_calls,
+            "measurement_stamp": measurement_stamp,
             "closest_prior_art": live_hits[0] if live_hits else local_prior_art,
         }
         updated = dict(artifact)
@@ -834,13 +940,7 @@ class ScoreUseCase:
             "snapshot_id": snapshot_id,
             "snapshot_state": validated_snapshot_state,
             "corpus_version": corpus_version,
-            "measurement_stamp": {
-                "embedding_model_id": "none",
-                "embedding_model_version": "none",
-                "normalization_policy": "none",
-                "distance_metric": "cosine_distance",
-                "algorithm_contract_version": "1.1",
-            },
+            "measurement_stamp": _persisted_measurement_stamp(grounding.get("measurement_stamp")),
         }
         self.candidates.put_artifact(candidate_artifact_hash, evaluated)
         self.cards.put_card(card)
@@ -1007,6 +1107,7 @@ class RescoreUseCase:
     cards: FrontierCardStore
     live_search: LivePaperSearch | None = None
     hybrid_search: HybridPaperSearch | None = None
+    embedder: ParaphraseEmbedder | None = None
 
     def run(
         self,
@@ -1045,6 +1146,7 @@ class RescoreUseCase:
             candidates=self.candidates,
             live_search=self.live_search,
             hybrid_search=self.hybrid_search,
+            embedder=self.embedder,
         ).run(
             candidate_artifact_hash=candidate_artifact_hash,
             snapshot_id=current_snapshot_id,
@@ -1485,7 +1587,10 @@ def _has_approved_harvest_seed(
         if not isinstance(paraphrase, str) or not paraphrase.strip():
             continue
         normalized_paraphrase = normalize_paraphrase(paraphrase)
-        if row.get("source") != f"paper:{source_paper_id.strip()}":
+        source = row.get("source")
+        if not isinstance(source, str) or not source.strip():
+            continue
+        if normalize_source(source) != source:
             continue
         if row.get("paraphrase_sha256") != sha256_hex(normalized_paraphrase.encode("utf-8")):
             continue
