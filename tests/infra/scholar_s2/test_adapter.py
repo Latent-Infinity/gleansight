@@ -8,36 +8,37 @@ from papers.domain.errors import ErrorCode, PipelineError
 from papers.infra.scholar_s2.adapter import RateLimiter, SemanticScholarClient, build_s2_client
 
 
+class _FakeClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def time(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.now += seconds
+
+
 class TestRateLimiter:
     """Test RateLimiter class."""
 
-    def test_rate_limiter_enforces_minimum_interval(self) -> None:
-        """Rate limiter should enforce minimum interval between requests."""
-        import time
-
-        limiter = RateLimiter(rate_per_second=10.0)  # 10 req/s = 0.1s interval
-
-        start = time.time()
-        limiter.acquire()  # First call is immediate
-        limiter.acquire()  # Second call should wait ~0.1s
-        elapsed = time.time() - start
-
-        assert elapsed >= 0.1, f"Expected >= 0.1s, got {elapsed}s"
-        assert elapsed < 0.15, f"Expected < 0.15s, got {elapsed}s (too slow)"
-
-    def test_rate_limiter_allows_high_rate(self) -> None:
-        """Rate limiter should allow high rate limits."""
-        import time
-
-        limiter = RateLimiter(rate_per_second=100.0)  # 100 req/s = 0.01s interval
-
-        start = time.time()
+    def test_rate_limiter_enforces_minimum_interval(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        clock = _FakeClock()
+        monkeypatch.setattr("papers.infra.scholar_s2.adapter.time.time", clock.time)
+        monkeypatch.setattr("papers.infra.scholar_s2.adapter.time.sleep", clock.sleep)
+        limiter = RateLimiter(rate_per_second=10.0)
         limiter.acquire()
         limiter.acquire()
-        elapsed = time.time() - start
+        assert clock.now == pytest.approx(0.1)
 
-        assert elapsed >= 0.01, f"Expected >= 0.01s, got {elapsed}s"
-        assert elapsed < 0.02, f"Expected < 0.02s, got {elapsed}s (too slow)"
+    def test_rate_limiter_allows_high_rate(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        clock = _FakeClock()
+        monkeypatch.setattr("papers.infra.scholar_s2.adapter.time.time", clock.time)
+        monkeypatch.setattr("papers.infra.scholar_s2.adapter.time.sleep", clock.sleep)
+        limiter = RateLimiter(rate_per_second=100.0)
+        limiter.acquire()
+        limiter.acquire()
+        assert clock.now == pytest.approx(0.01)
 
 
 class TestSemanticScholarClient:
