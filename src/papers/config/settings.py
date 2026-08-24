@@ -5,12 +5,17 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator
 
 from papers.domain.errors import ConfigurationError
 
 _MISSING_DEPENDENCY_PREFIX = "Missing required dependency: "
+DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434"
+DEFAULT_QWEN_CHAT_MODEL = "qwen3.6:35b-a3b-q4_K_M"
+DEFAULT_QWEN_EMBEDDING_MODEL = "qwen3-embedding:latest"
+DEFAULT_QWEN_EMBEDDING_DIMENSION = 4096
 
 
 def public_configuration_error_message(error: ConfigurationError) -> str:
@@ -47,13 +52,31 @@ class DataPaths(BaseModel):
 
 
 class EmbeddingSettings(BaseModel):
-    model: str
-    dimension: int
+    model: str = DEFAULT_QWEN_EMBEDDING_MODEL
+    dimension: int = Field(default=DEFAULT_QWEN_EMBEDDING_DIMENSION, gt=0)
     text_slice_strategy: str
+    base_url: str = DEFAULT_OLLAMA_BASE_URL
+
+    @field_validator("model", "text_slice_strategy", "base_url", mode="before")
+    @classmethod
+    def _nonblank_string(cls, value: Any, info: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            raise ValueError(f"{info.field_name} must not be blank")
+        return text
+
+    @field_validator("base_url")
+    @classmethod
+    def _validate_base_url(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("base_url must be a valid http or https URL")
+        return value
 
 
 class LLMSettings(BaseModel):
     default_profile: str
+    default_model: str = DEFAULT_QWEN_CHAT_MODEL
 
 
 class ScholarSettings(BaseModel):
@@ -111,6 +134,10 @@ class Settings(BaseModel):
 class SettingsSource:
     defaults_path: Path
     override_path: Path | None
+
+
+def packaged_defaults_path() -> Path:
+    return Path(__file__).resolve().parent / "defaults.toml"
 
 
 def _load_toml(path: Path) -> dict[str, Any]:

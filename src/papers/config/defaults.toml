@@ -8,12 +8,15 @@ blobs_analysis_dir = "data/blobs/analysis"
 lancedb_dir = "data/lancedb"
 
 [embeddings]
-model = "sentence-transformers/all-MiniLM-L6-v2"
-dimension = 384
+# Newest Qwen-lineage embedding tag. Replace with qwen3.6-embedding:* when that family ships.
+model = "qwen3-embedding:latest"
+dimension = 4096
 text_slice_strategy = "markdown_full"
+base_url = "http://127.0.0.1:11434"
 
 [llm]
 default_profile = "default"
+default_model = "qwen3.6:35b-a3b-q4_K_M"
 
 [scholar]
 api_key = ""  # Optional Semantic Scholar API key (env: SEMANTIC_SCHOLAR_API_KEY)

@@ -24,6 +24,7 @@ lancedb_dir = "data/lancedb"
 model = "sentence-transformers/all-MiniLM-L6-v2"
 dimension = 384
 text_slice_strategy = "markdown_full"
+base_url = "http://127.0.0.1:11434"
 
 [llm]
 default_profile = "default"
@@ -54,7 +55,9 @@ def test_packaged_defaults_toml_loads() -> None:
     )
     settings = load_settings(defaults_path=defaults_path)
 
-    assert settings.embeddings.model
+    assert settings.embeddings.model == "qwen3-embedding:latest"
+    assert settings.embeddings.dimension == 4096
+    assert settings.llm.default_model == "qwen3.6:35b-a3b-q4_K_M"
     assert settings.data.db_path.name == "app.sqlite"
     assert settings.scholar.rate_limit_per_second == 1
 
@@ -181,3 +184,86 @@ api_key = "from_config_only"
     )
 
     assert settings.scholar.api_key == "from_config_only"
+
+
+@pytest.mark.parametrize(
+    ("embedding_block", "message"),
+    [
+        (
+            """
+[embeddings]
+model = "   "
+dimension = 384
+text_slice_strategy = "markdown_full"
+base_url = "http://127.0.0.1:11434"
+""".strip(),
+            "model",
+        ),
+        (
+            """
+[embeddings]
+model = "qwen3-embedding:latest"
+dimension = 0
+text_slice_strategy = "markdown_full"
+base_url = "http://127.0.0.1:11434"
+""".strip(),
+            "dimension",
+        ),
+        (
+            """
+[embeddings]
+model = "qwen3-embedding:latest"
+dimension = 4096
+text_slice_strategy = "   "
+base_url = "http://127.0.0.1:11434"
+""".strip(),
+            "text_slice_strategy",
+        ),
+        (
+            """
+[embeddings]
+model = "qwen3-embedding:latest"
+dimension = 4096
+text_slice_strategy = "markdown_full"
+base_url = "ftp://127.0.0.1:11434"
+""".strip(),
+            "base_url",
+        ),
+    ],
+)
+def test_embedding_settings_validation_rejects_invalid_values(
+    tmp_path: Path,
+    embedding_block: str,
+    message: str,
+) -> None:
+    defaults_path = tmp_path / "defaults.toml"
+    defaults_path.write_text(
+        "\n".join(
+            [
+                "[data]",
+                'root = "data"',
+                'db_path = "data/db.sqlite"',
+                'blobs_dir = "data/blobs"',
+                'blobs_pdf_dir = "data/blobs/pdf"',
+                'blobs_md_dir = "data/blobs/md"',
+                'blobs_analysis_dir = "data/blobs/analysis"',
+                'lancedb_dir = "data/lancedb"',
+                "",
+                embedding_block,
+                "",
+                "[llm]",
+                'default_profile = "default"',
+                "",
+                "[scholar]",
+                'api_key = ""',
+                "rate_limit_per_second = 1",
+                "",
+                "[ui]",
+                "search_max_results = 10",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigurationError, match=message):
+        load_settings(defaults_path=defaults_path, base_dir=tmp_path)

@@ -101,8 +101,8 @@ blobs_analysis_dir = "data/blobs/analysis"
 lancedb_dir = "data/lancedb"
 
 [embeddings]
-dimension = 384
-text_slice_strategy = "markdown_full"
+model = "qwen3-embedding:latest"
+dimension = 4096
 
 [llm]
 default_profile = "default"
