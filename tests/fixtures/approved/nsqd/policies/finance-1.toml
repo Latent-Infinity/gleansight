@@ -1,12 +1,12 @@
 # Versioned finance domain policy. Not an implicit default.
 policy_id = "finance/1"
 dval_rubric_ids = ["r1", "finance-dval/1", "finance/dval/1"]
-min_records = 0
-expected_cells = []
-recall_probes = []
+min_records = 1
+expected_cells = ["mechanism=flow-driven|target=drawdown|horizon=intraday"]
+recall_probes = [["gamma-fragility", "doi:10.2139/ssrn.3725454", "paper"]]
 
 [required_record_types]
-paper = 0
+paper = 1
 code = 0
 benchmark = 0
 

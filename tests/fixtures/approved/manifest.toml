@@ -45,3 +45,18 @@ source_kind = "convert-path-paper"
 redaction = "emails replaced with [redacted-email]; markdown truncated to an early excerpt of convert output"
 owner = "product"
 refresh_when = "converter version change"
+
+[fixture.DATA-01d]
+id = "DATA-01d"
+paper_id = "paper-40"
+title = "Gamma Fragility"
+abstract = """
+We build on a growing literature that studies the impact of market frictions on the dynamics of stock markets, such as momentum, price spirals, excess volatility, and investigate the potential feedback effects of delta-hedging in derivative markets on the underlying market. We document a link between large aggregate dealers' gamma imbalances in illiquid markets and intraday momentum/reversal and market fragility. This link is distinct from information frictions (adverse selection and private information) and funding liquidity frictions (margin requirement shocks). We test our joint hypothesis using a large panel of index and equity options that we use to compute a proxy of aggregate gamma imbalance. We find supporting evidence that intra-day momentum (reversal) is explained by the interaction of negative (positive) aggregate ex-ante gamma imbalance and market illiquidity. The effect is stronger for the least liquid underlying securities. The result helps to explain both intra-day volatility and autocorrelation of returns. Moreover, we find that gamma imbalance correlates to the frequency and the magnitude of flash crash events.
+"""
+markdown_path = "papers/d.md"
+source_paper_id = "10.2139/ssrn.3725454"
+source_kind = "primary-source-excerpt"
+source_url = "https://alexandria.unisg.ch/server/api/core/bitstreams/25fec636-90a2-4735-a3a4-dfc0b68d3feb/content"
+source_pdf_sha256 = "eda0e49bd09bec9cc13b18e2991b37535e74de5e42a0a1ee1a057982d3fc036c"
+owner = "product"
+refresh_when = "source version change"

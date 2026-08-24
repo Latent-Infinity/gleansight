@@ -1,6 +1,6 @@
 # Approved NS/QD-inspired fixtures.
 # DATA-NSQD-01/02 are requirement-card fixtures, never corpus records.
-# DATA-NSQD-03 harvest seed is still pending.
+# DATA-NSQD-03 is an approved finance evidence projection.
 # DATA-NSQD-04 is an approved paper+paraphrase fixture bound to optimization/1 projection.
 
 schema_version = 1
@@ -29,6 +29,32 @@ approval_revision = "prd-v1.0"
 approved_at = "2026-08-18T00:00:00+00:00"
 never_corpus_record = true
 
+[fixture.DATA-NSQD-03]
+id = "DATA-NSQD-03"
+path = "gamma-fragility.yaml"
+excerpt_path = "gamma-fragility.md"
+kind = "corpus-paper-paraphrase"
+source_fixture_id = "DATA-01d"
+domain_policy_id = "finance/1"
+paper_id = "paper-40"
+source_paper_id = "10.2139/ssrn.3725454"
+source = "doi:10.2139/ssrn.3725454"
+title = "Gamma Fragility"
+content_sha256 = "e7fc4216f4ab0fe87cf74ec1921c88c050c43c9506e65a368f8b21dc5c4d7e72"
+excerpt_sha256 = "d1d3b155354c77345a0f01e4710fe3c330401646bf9d0a433cf79cbaa8f71952"
+source_markdown_sha256 = "d1d3b155354c77345a0f01e4710fe3c330401646bf9d0a433cf79cbaa8f71952"
+source_abstract_sha256 = "8081bd9b9d61294577b3a3e24d616b4e939b6b419730c62cdb0fc87e2c31bb0c"
+paraphrase_sha256 = "ad9adbfe5176234509732e5f025f33f6820bddae4479b7ceb192b29667d79fcb"
+paraphrase_source = "model_assisted"
+review_status = "approved"
+review_workflow = "writer-reviewer/1"
+review_rounds = 4
+reviewer = "product"
+approval_revision = "model-assisted-summary-v1"
+approved_at = "2026-08-24T02:00:27+00:00"
+overlap_max = 2
+overlap_limit = 8
+
 [fixture.DATA-NSQD-04]
 id = "DATA-NSQD-04"
 path = "paper-a.yaml"
@@ -53,5 +79,3 @@ approval_revision = "model-assisted-summary-v1"
 approved_at = "2026-08-21T19:03:54+00:00"
 overlap_max = 7
 overlap_limit = 8
-
-# DATA-NSQD-03 is intentionally absent; no approved harvest-seed fixture exists yet.
