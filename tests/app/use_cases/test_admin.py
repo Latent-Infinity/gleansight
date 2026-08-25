@@ -4,7 +4,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from papers.app.use_cases.admin import RebuildVectorIndexUseCase, RecoverStuckJobsUseCase
+from papers.app.use_cases.admin import (
+    RebuildTitleAbstractIndexUseCase,
+    RebuildVectorIndexUseCase,
+    RecoverStuckJobsUseCase,
+)
 
 
 @dataclass
@@ -116,3 +120,17 @@ def test_rebuild_vector_index_skips_missing_markdown(tmp_path: Path) -> None:
 
     assert count == 1
     assert vector_index.upserts == [("paper-1", [5.0])]
+
+
+def test_rebuild_title_abstract_index_replaces_rows() -> None:
+    rebuild_calls = 0
+
+    def _rebuild() -> int:
+        nonlocal rebuild_calls
+        rebuild_calls += 1
+        return 2
+
+    count = RebuildTitleAbstractIndexUseCase(rebuild=_rebuild)()
+
+    assert count == 2
+    assert rebuild_calls == 1

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -38,3 +39,11 @@ class RebuildVectorIndexUseCase:
             self.vector_index.upsert(paper_id, embedding)
             processed += 1
         return processed
+
+
+@dataclass(frozen=True)
+class RebuildTitleAbstractIndexUseCase:
+    rebuild: Callable[[], int]
+
+    def __call__(self) -> int:
+        return self.rebuild()

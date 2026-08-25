@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from papers.app.use_cases.admin import RebuildVectorIndexUseCase, RecoverStuckJobsUseCase
+from papers.app.use_cases.admin import (
+    RebuildTitleAbstractIndexUseCase,
+    RebuildVectorIndexUseCase,
+    RecoverStuckJobsUseCase,
+)
 from papers.app.use_cases.analysis import (
     AnalyzeProjectUseCase,
     ExtractionFilter,
@@ -52,6 +56,7 @@ __all__ = [
     "CreateProjectUseCase",
     "AttachPaperToProjectUseCase",
     "RecoverStuckJobsUseCase",
+    "RebuildTitleAbstractIndexUseCase",
     "RebuildVectorIndexUseCase",
     "SynthesizeFromCorpusUseCase",
 ]
