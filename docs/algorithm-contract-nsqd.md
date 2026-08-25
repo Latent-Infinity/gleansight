@@ -1,6 +1,6 @@
 # Algorithm contract — NS/QD-inspired discovery
 
-**Status:** v1.1 defaults; **not frozen** until ablation tasks in `docs/development-plan-ns-qd.md` (ALG.* probes) close.
+**Status:** v1.1 defaults; ALG.* probe review completed 2026-08-24; defaults remain explicitly **not frozen** and tunable.
 **Normative owner:** this file owns formulas, states, deterministic policies, schemas, and version semantics.
 **Related:** terminology in `docs/glossary-nsqd.md`; obligations in `docs/requirements-ns-qd.md`; sequencing in `docs/development-plan-ns-qd.md`.
 
@@ -450,7 +450,7 @@ Shared lease/retry/backoff/state-transition logic may be extracted into a **neut
 
 ## ALG-ABL — Ablations before freeze
 
-Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, and `ALG.VIABILITY` are LLM-produced. Humans validate each recorded prompt and artifact result; they are not a blocking independent labeling panel. `ALG.K` is synthetic math/state evidence, not an LLM-scored artifact. LLM output still cannot approve corpus evidence, activate a fact, or promote a snapshot.
+Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, and `ALG.VIABILITY` are LLM-produced. Human validation of each recorded prompt/result and the synthetic ALG.K math/state artifact completed 2026-08-24; no independent labeling panel was required. This validation retains the current defaults without freezing them. LLM output still cannot approve corpus evidence, activate a fact, or promote a snapshot.
 
 | Study | Dataset state | Metric | n | Threshold | Artifact |
 |-------|---------------|--------|---|-----------|----------|
@@ -460,4 +460,4 @@ Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, a
 | `ALG.STATUS.THRESHOLDS` | 10 LLM-labeled cells + fixed `as_of` | exact status agreement | Sparse cut ∈ {2,3,5} | ≥ 8/10 | `docs/ablations/alg-status.md` |
 | `ALG.VIABILITY` | same calibration pair + 5 extra cards | introduce 1–4 intermediates only with a recorded rubric; otherwise keep 0/5 presence stubs | LLM probe | keep stubs **or** recorded rubric | `docs/ablations/alg-viability.md` |
 
-Do not treat numeric defaults as frozen until a later freeze review of the matching artifact. Artifacts may exist as probes without freezing.
+Human review validated all five artifacts but did not approve a numeric/default freeze. Keep the recorded v1.1 choices as current defaults while treating every reviewed knob as tunable. The 24-month status recency window was not varied, and novelty threshold `τ` remains unset.

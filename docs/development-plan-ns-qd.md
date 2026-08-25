@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.8 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.11 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
@@ -16,8 +16,8 @@
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection now upsert snapshot-scoped paraphrase vectors so grounding can compute novelty without a caller `query_vector`. Calibration ablation probes remain filed and not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
-**Outstanding Blockers**: Ablation freeze waits on human validation of the recorded math artifact and LLM prompts/results, not on a second labeling panel.
+**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection upsert snapshot-scoped paraphrase vectors. Acquisition drafts and shortlists use the configured Ollama chat model and cannot self-approve. `papers analyze` / `analyze-project` omit `--model-name` to `settings.llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`). Calibration ablation probes are human-validated and remain not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
+**Outstanding Blockers**: None for continuing Operator A / acquisition work. Human validation of the recorded math artifact and four LLM prompts/results completed 2026-08-24; all reviewed defaults remain tunable and explicitly not frozen. Freeze of ALG knobs, setting novelty `τ`, reviewing the 24-month status window, and activating Operators B–G remain optional product decisions — they do not block remaining implementation of the current baseline.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -76,6 +76,9 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.7 | 2026-08-24 | Approve DATA-NSQD-03 from Gamma Fragility; bind source/paraphrase/coordinates; activate non-empty finance/1 policy; verify production_valid with zero ALG-SUF failures. |
 | 1.6.8 | 2026-08-24 | Harvest/project upsert snapshot-scoped paraphrase vectors; ground embeds candidate paraphrases; gamma-flow novelty is defined against DATA-NSQD-03 on production_valid. Four-command gate: 1084 passed, 1 skipped, 92.41%; dedicated NSQD: 494 passed, 93.68%. |
 | 1.6.9 | 2026-08-24 | Default chat is Ollama `qwen3.6:35b-a3b-q4_K_M` with thinking off. Embeddings standardize on `qwen3-embedding:latest` (4096-d) until a later Qwen embedding family ships. Four-command gate: 1089 passed, 1 skipped, 92.34%; dedicated NSQD: 494 passed, 93.68%. |
+| 1.6.10 | 2026-08-24 | Acquisition drafts call the configured chat model; review_status stays pending. Four-command gate: 1112 passed, 1 skipped, 92.38%; dedicated NSQD: 511 passed, 93.75%. |
+| 1.6.11 | 2026-08-24 | Acquisition shortlist ranks discovered ids through the chat model; unknown ids are dropped; review_status stays pending. Four-command gate: 1116 passed, 1 skipped, 92.31%; dedicated NSQD: 516 passed, 93.71%. |
+| 1.6.12 | 2026-08-24 | `analyze` / `analyze-project` default `--model-name` to configured `llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`); explicit flag still overrides. Four-command gate: 1119 passed, 1 skipped, 92.38%; dedicated NSQD: 517 passed, 93.71%. |
 
 ---
 
@@ -795,13 +798,21 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`, `ALG.K`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, `ALG.VIABILITY` per `ALG-ABL`. File artifacts under `docs/ablations/`. Do not use `smoke_only` for `ALG.NOVELTY_BINS`. ALG.K is a synthetic math/state probe. Scores for the other ablations are LLM-produced; humans validate their prompts and results. Independent human labeling panels are not required.
 
+| Study | Artifact validated | Current decision | Freeze approved |
+| --- | --- | --- | --- |
+| `ALG.AXES` | yes, 2026-08-24 | keep finance v1 mechanism × target × horizon | no; tunable |
+| `ALG.K` | yes, 2026-08-24 | keep k=5 | no; tunable pending production calibration repeat |
+| `ALG.NOVELTY_BINS` | yes, 2026-08-24 | keep 0.15 / 0.30 / 0.45 / 0.60 edges | no; tunable; `τ` remains unset |
+| `ALG.STATUS.THRESHOLDS` | yes, 2026-08-24 | keep density cut 3 | no; tunable; 24-month window not reviewed |
+| `ALG.VIABILITY` | yes, 2026-08-24 | keep 0/5 presence stubs | no; tunable |
+
 - [x] `ALG.K` math probe: Spearman ρ of leave-one-out novelty ranks at k ∈ {3,5,10} vs k=5 on a constructed `calibration` snapshot (`docs/ablations/alg-k.md`). k=3 meets ρ ≥ 0.90; k=10 does not. Production k remains 5 and is **not frozen**. Synthetic unit vectors only; not DATA-NSQD-03.
 - [x] `ALG.AXES` LLM probe: keep finance v1 mechanism × target × horizon; reject oversized and non-illuminable triples (`docs/ablations/alg-axes.md`)
 - [x] `ALG.NOVELTY_BINS` on constructed calibration: gamma-flow `nov ≥ 1`; mechanism-free `mech = 0`; smoke still forces `nov = 0` (`docs/ablations/alg-novelty-bins.md`)
 - [x] `ALG.STATUS.THRESHOLDS` LLM-labeled 10 cells: density cut 3 wins 10/10 vs 2 (9/10) and 5 (8/10); keep 3 (`docs/ablations/alg-status.md`)
 - [x] `ALG.VIABILITY` keeps 0/5 presence stubs; no 1–4 intermediates (`docs/ablations/alg-viability.md`)
 
-**Close note (2026-08-23):** ALG.K is a synthetic math/state probe; the other ablations are LLM-scored with recorded prompts. Humans validate the math artifact and LLM prompts/results; they do not block as a labeling panel. DATA-NSQD-03 was not invented and numeric defaults are not frozen. Four-command gate: 1081 passed, 1 skipped, 92.43% repository coverage; dedicated NSQD command: 491 passed, 93.80% coverage.
+**Close note (2026-08-24):** Human validation is complete for the ALG.K math artifact and the four recorded LLM prompts/results. The review keeps the current defaults without freezing them: axes remain the finance v1 triple, k remains 5, novelty edges remain 0.15 / 0.30 / 0.45 / 0.60, the density cut remains 3, and viability remains 0/5 presence stubs. The 24-month status window was not reviewed, novelty threshold `τ` remains unset, and no second labeling panel is required. Final four-command gate evidence for the completed close is 1131 passed, 1 skipped, 92.28% coverage; format, lint, and type checks passed.
 
 ---
 
