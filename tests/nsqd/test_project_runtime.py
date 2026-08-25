@@ -205,6 +205,75 @@ def test_run_project_rejects_missing_manifest_approval(tmp_path: Path) -> None:
     assert job_row is None
 
 
+def test_load_verified_projection_rejects_non_mapping_and_oversize(tmp_path: Path) -> None:
+    from nsqd.project_runtime import load_verified_projection
+
+    manifest_path, projection_path, _ = _copy_project_fixture_tree(tmp_path)
+    projection_path.write_text("- not a mapping\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="must be a mapping"):
+        load_verified_projection(
+            projection_path=projection_path,
+            manifest_path=manifest_path,
+        )
+
+    huge = tmp_path / "huge.yaml"
+    huge.write_bytes(b"x" * (256 * 1024 + 1))
+    with pytest.raises(ValueError, match="too large"):
+        load_verified_projection(projection_path=huge, manifest_path=manifest_path)
+
+
+def test_load_verified_projection_rejects_manifest_and_excerpt_integrity(
+    tmp_path: Path,
+) -> None:
+    from nsqd.project_runtime import load_verified_projection
+
+    manifest_path, projection_path, _ = _copy_project_fixture_tree(tmp_path)
+    original_manifest = manifest_path.read_text(encoding="utf-8")
+    original_projection = projection_path.read_text(encoding="utf-8")
+
+    manifest_path.write_text(
+        original_manifest.replace("[fixture.", "[other."),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="fixture table is required"):
+        load_verified_projection(projection_path=projection_path, manifest_path=manifest_path)
+
+    manifest_path.write_text(
+        original_manifest.replace('id = "DATA-NSQD-04"', 'id = ""', 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="fixture id is required"):
+        load_verified_projection(projection_path=projection_path, manifest_path=manifest_path)
+
+    manifest_path.write_text(
+        original_manifest.replace('id = "DATA-NSQD-04"', 'id = "other-id"', 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="key must match"):
+        load_verified_projection(projection_path=projection_path, manifest_path=manifest_path)
+
+    block = original_manifest[original_manifest.index("[fixture.DATA-NSQD-04]") :]
+    duplicate = block.replace("[fixture.DATA-NSQD-04]", "[fixture.DATA-NSQD-04-dup]", 1).replace(
+        'id = "DATA-NSQD-04"', 'id = "DATA-NSQD-04-dup"', 1
+    )
+    manifest_path.write_text(original_manifest + "\n" + duplicate, encoding="utf-8")
+    with pytest.raises(ValueError, match="ambiguous"):
+        load_verified_projection(projection_path=projection_path, manifest_path=manifest_path)
+
+    escaped = original_manifest.replace(
+        'excerpt_path = "paper-a.md"', 'excerpt_path = "../secret.md"', 1
+    )
+    projection_path.write_text(
+        original_projection.replace(
+            "source_excerpt_path: paper-a.md", "source_excerpt_path: ../secret.md"
+        ),
+        encoding="utf-8",
+    )
+    manifest_path.write_text(escaped, encoding="utf-8")
+    with pytest.raises(ValueError, match="escapes fixture directory|content hash"):
+        load_verified_projection(projection_path=projection_path, manifest_path=manifest_path)
+
+
 def test_project_job_payload_cannot_self_approve_through_shared_runner(tmp_path: Path) -> None:
     container = build_container(
         db_path=tmp_path / "self-approve.sqlite",
