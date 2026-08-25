@@ -193,7 +193,13 @@ class PaperAcquisitionBridge(Protocol):
     def discover(self, query: str, filters: dict[str, Any]) -> list[dict[str, Any]]: ...
 
     def shortlist(
-        self, candidates: list[dict[str, Any]], *, limit: int
+        self,
+        candidates: list[dict[str, Any]],
+        *,
+        limit: int,
+        insufficiency_query: str,
+        filters: dict[str, Any],
+        failure_context: dict[str, Any],
     ) -> list[dict[str, Any]]: ...
 
     def stage_import(self, candidate: dict[str, Any]) -> str: ...

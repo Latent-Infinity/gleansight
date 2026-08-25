@@ -1304,7 +1304,7 @@ class AcquireCorpusUseCase:
                 "cycle_id": None,
                 "failures": promoted["failures"],
             }
-        query, filters = self._query_plan(resolved_policy.policy_id, promoted)
+        query, filters, failure_context = self._query_plan(resolved_policy.policy_id, promoted)
         cycle_id = acquisition_cycle_id(
             snapshot_id=snapshot_id,
             domain_policy_id=resolved_policy.policy_id,
@@ -1322,6 +1322,9 @@ class AcquireCorpusUseCase:
                     existing,
                     query=query,
                     filters=filters,
+                    failure_context=(
+                        _string_keyed_mapping(existing.get("failure_context")) or failure_context
+                    ),
                     resume=True,
                 )
             if human_decision == "approve":
@@ -1340,8 +1343,13 @@ class AcquireCorpusUseCase:
             "cycle_id": cycle_id,
             "snapshot_id": snapshot_id,
             "failures": promoted["failures"],
+            "rendered_query": query,
+            "search_filters": dict(filters),
+            "failure_context": failure_context,
             "staged": [],
             "staged_identities": [],
+            "staged_entries": [],
+            "drafts": [],
             "batches": 0,
             "rechecks": 0,
             "alias_cycle_ids": [],
@@ -1352,9 +1360,17 @@ class AcquireCorpusUseCase:
         if human_decision == "approve":
             raise ValueError("no pending acquisition cycle to approve")
         self._persist_cycle(result)
-        return self._stage_candidates(result, query=query, filters=filters, resume=False)
+        return self._stage_candidates(
+            result,
+            query=query,
+            filters=filters,
+            failure_context=failure_context,
+            resume=False,
+        )
 
-    def _query_plan(self, policy_id: str, promoted: dict[str, Any]) -> tuple[str, dict[str, str]]:
+    def _query_plan(
+        self, policy_id: str, promoted: dict[str, Any]
+    ) -> tuple[str, dict[str, str], dict[str, Any]]:
         searchable = [code for code in promoted["failures"] if code in SEARCHABLE_FAILURES]
         failure = searchable[0]
         search_context = promoted["search_context"]
@@ -1377,9 +1393,17 @@ class AcquireCorpusUseCase:
             probe_id=probe_id,
             record_type=record_type,
         )
-        return query, {"type": record_type}
+        return (
+            query,
+            {"type": record_type},
+            {
+                "failures": list(promoted["failures"]),
+                "search_context": deepcopy(search_context),
+            },
+        )
 
     def _persist_cycle(self, result: dict[str, Any]) -> dict[str, Any]:
+        self._sync_staged_state(result)
         self.cycles.put_cycle(str(result["cycle_id"]), result)
         aliases = result.get("alias_cycle_ids")
         if isinstance(aliases, list):
@@ -1395,11 +1419,18 @@ class AcquireCorpusUseCase:
         *,
         query: str,
         filters: dict[str, str],
+        failure_context: dict[str, Any],
         resume: bool,
         skip_identities: set[str] | None = None,
     ) -> dict[str, Any]:
-        staged = [str(item) for item in result.get("staged") or []]
-        staged_identities = [str(item) for item in result.get("staged_identities") or []]
+        staged_entries = self._staged_entries(result)
+        self._sync_staged_state(result, staged_entries)
+        staged = [str(item["paper_id"]) for item in staged_entries]
+        staged_identities = [
+            str(item["identity"])
+            for item in staged_entries
+            if isinstance(item.get("identity"), str) and item["identity"].strip()
+        ]
         pass_limit = len(staged) + STAGED_IMPORT_LIMIT
         seen_candidates = set(staged_identities)
         seen_candidates.update(f"paper_id:{paper_id}" for paper_id in staged)
@@ -1408,6 +1439,7 @@ class AcquireCorpusUseCase:
         result["stopped"] = "in_progress"
         self._persist_cycle(result)
         try:
+            self._complete_pending_staged_entries(result, staged_entries)
             for _batch in range(QUERY_BATCH_LIMIT):
                 if len(staged) >= pass_limit:
                     break
@@ -1426,6 +1458,9 @@ class AcquireCorpusUseCase:
                 shortlisted = self.bridge.shortlist(
                     fresh,
                     limit=min(CANDIDATES_PER_BATCH, pass_limit - len(staged)),
+                    insufficiency_query=query,
+                    filters=filters,
+                    failure_context=failure_context,
                 )
                 if any(item.get("review_status") == "approved" for item in shortlisted):
                     raise ValueError("LLM output cannot approve corpus evidence")
@@ -1448,16 +1483,21 @@ class AcquireCorpusUseCase:
                     if not isinstance(paper_id, str) or not paper_id.strip():
                         raise ValueError("stage_import returned an invalid paper_id")
                     paper_id = paper_id.strip()
-                    self.bridge.enqueue_analyze(paper_id)
-                    draft = self.bridge.draft_projection(paper_id)
-                    if draft.get("review_status") == "approved":
-                        raise ValueError("LLM output cannot approve corpus evidence")
-                    staged.append(paper_id)
-                    if identity not in staged_identities:
-                        staged_identities.append(identity)
-                    result["staged"] = list(staged)
-                    result["staged_identities"] = list(staged_identities)
+                    staged_entry = self._build_staged_entry(
+                        fresh_by_identity[identity],
+                        identity=identity,
+                        paper_id=paper_id,
+                    )
+                    staged_entries.append(staged_entry)
+                    self._sync_staged_state(result, staged_entries)
                     self._persist_cycle(result)
+                    self._complete_staged_entry(result, staged_entries, staged_entry)
+                    staged = [str(item["paper_id"]) for item in staged_entries]
+                    staged_identities = [
+                        str(item["identity"])
+                        for item in staged_entries
+                        if isinstance(item.get("identity"), str) and item["identity"].strip()
+                    ]
                 if len(discovered) < CANDIDATES_PER_BATCH:
                     break
         except Exception:
@@ -1535,7 +1575,7 @@ class AcquireCorpusUseCase:
         if acquisition_route(promoted["failures"]) != "search":
             updated["stopped"] = "policy_blocked"
             return self._persist_cycle(updated)
-        query, filters = self._query_plan(domain_policy_id, promoted)
+        query, filters, failure_context = self._query_plan(domain_policy_id, promoted)
         alias_id = acquisition_cycle_id(
             snapshot_id=projected_snapshot,
             domain_policy_id=domain_policy_id,
@@ -1550,13 +1590,137 @@ class AcquireCorpusUseCase:
         if alias_id not in aliases:
             aliases.append(alias_id)
         updated["alias_cycle_ids"] = aliases
+        updated["rendered_query"] = query
+        updated["search_filters"] = dict(filters)
+        updated["failure_context"] = failure_context
         return self._stage_candidates(
             updated,
             query=query,
             filters=filters,
+            failure_context=failure_context,
             resume=False,
             skip_identities=staged_identities,
         )
+
+    def _complete_pending_staged_entries(
+        self, result: dict[str, Any], staged_entries: list[dict[str, Any]]
+    ) -> None:
+        for staged_entry in staged_entries:
+            if isinstance(staged_entry.get("draft"), dict):
+                continue
+            self._complete_staged_entry(result, staged_entries, staged_entry)
+
+    def _complete_staged_entry(
+        self,
+        result: dict[str, Any],
+        staged_entries: list[dict[str, Any]],
+        staged_entry: dict[str, Any],
+    ) -> None:
+        paper_id = str(staged_entry["paper_id"])
+        if not staged_entry.get("analysis_enqueued"):
+            self.bridge.enqueue_analyze(paper_id)
+            staged_entry["analysis_enqueued"] = True
+            self._sync_staged_state(result, staged_entries)
+            self._persist_cycle(result)
+        draft = self.bridge.draft_projection(paper_id)
+        if draft.get("review_status") == "approved":
+            raise ValueError("LLM output cannot approve corpus evidence")
+        staged_entry["draft"] = self._review_draft(staged_entry, draft)
+        self._sync_staged_state(result, staged_entries)
+        self._persist_cycle(result)
+
+    @staticmethod
+    def _build_staged_entry(
+        candidate: dict[str, Any], *, identity: str, paper_id: str
+    ) -> dict[str, Any]:
+        staged_entry: dict[str, Any] = {
+            "paper_id": paper_id,
+            "identity": identity,
+            "analysis_enqueued": False,
+        }
+        candidate_id = candidate.get("candidate_id")
+        if isinstance(candidate_id, str) and candidate_id.strip():
+            staged_entry["candidate_id"] = candidate_id.strip()
+        source_paper_id = candidate.get("source_paper_id")
+        if isinstance(source_paper_id, str) and source_paper_id.strip():
+            staged_entry["source_paper_id"] = source_paper_id.strip()
+        title = candidate.get("title")
+        if isinstance(title, str) and title.strip():
+            staged_entry["title"] = title.strip()
+        return staged_entry
+
+    @staticmethod
+    def _review_draft(staged_entry: dict[str, Any], draft: dict[str, Any]) -> dict[str, Any]:
+        reviewed = dict(draft)
+        reviewed.setdefault("paper_id", str(staged_entry["paper_id"]))
+        source_paper_id = staged_entry.get("source_paper_id")
+        if isinstance(source_paper_id, str) and source_paper_id.strip():
+            reviewed.setdefault("source_paper_id", source_paper_id)
+        title = staged_entry.get("title")
+        if isinstance(title, str) and title.strip():
+            reviewed.setdefault("title", title)
+        return reviewed
+
+    @staticmethod
+    def _staged_entries(result: dict[str, Any]) -> list[dict[str, Any]]:
+        raw_entries = result.get("staged_entries")
+        if isinstance(raw_entries, list):
+            return [dict(item) for item in raw_entries if isinstance(item, dict)]
+        staged = [str(item) for item in result.get("staged") or []]
+        staged_identities = [str(item) for item in result.get("staged_identities") or []]
+        entries: list[dict[str, Any]] = []
+        for index, paper_id in enumerate(staged):
+            entry: dict[str, Any] = {"paper_id": paper_id, "analysis_enqueued": False}
+            if index < len(staged_identities) and staged_identities[index].strip():
+                entry["identity"] = staged_identities[index].strip()
+            entries.append(entry)
+        return entries
+
+    @staticmethod
+    def _sync_staged_state(
+        result: dict[str, Any], staged_entries: list[dict[str, Any]] | None = None
+    ) -> None:
+        entries = (
+            staged_entries
+            if staged_entries is not None
+            else AcquireCorpusUseCase._staged_entries(result)
+        )
+        normalized_entries: list[dict[str, Any]] = []
+        staged: list[str] = []
+        staged_identities: list[str] = []
+        drafts: list[dict[str, Any]] = []
+        for raw_entry in entries:
+            paper_id = _nonempty_string(raw_entry.get("paper_id"))
+            if paper_id is None:
+                continue
+            entry: dict[str, Any] = {
+                "paper_id": paper_id,
+                "analysis_enqueued": bool(raw_entry.get("analysis_enqueued")),
+            }
+            identity = _nonempty_string(raw_entry.get("identity"))
+            if identity is not None:
+                entry["identity"] = identity
+                staged_identities.append(identity)
+            candidate_id = _nonempty_string(raw_entry.get("candidate_id"))
+            if candidate_id is not None:
+                entry["candidate_id"] = candidate_id
+            source_paper_id = _nonempty_string(raw_entry.get("source_paper_id"))
+            if source_paper_id is not None:
+                entry["source_paper_id"] = source_paper_id
+            title = _nonempty_string(raw_entry.get("title"))
+            if title is not None:
+                entry["title"] = title
+            draft = _string_keyed_mapping(raw_entry.get("draft"))
+            if draft is not None:
+                reviewed = AcquireCorpusUseCase._review_draft(entry, draft)
+                entry["draft"] = reviewed
+                drafts.append(reviewed)
+            normalized_entries.append(entry)
+            staged.append(paper_id)
+        result["staged_entries"] = normalized_entries
+        result["staged"] = staged
+        result["staged_identities"] = staged_identities
+        result["drafts"] = drafts
 
 
 def _has_approved_harvest_seed(

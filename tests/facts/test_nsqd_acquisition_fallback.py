@@ -11,6 +11,7 @@ from nsqd.domain.acquisition import QUERY_BATCH_LIMIT, RECHECK_CYCLE_LIMIT, STAG
 from nsqd.domain.policy import FINANCE_POLICY, DomainPolicy
 from nsqd.domain.project import canonical_reviewed_projection_digest, normalize_paraphrase
 from nsqd.domain.snapshot import sha256_hex
+from nsqd.infra.papers_bridge import MAX_DRAFT_PARAPHRASE_CHARS
 from nsqd.null_adapters import (
     FixedClock,
     NullAcquisitionCycleStore,
@@ -34,6 +35,7 @@ class FakePaperBridge:
         fail_stage: bool = False,
         invent_shortlist: bool = False,
         mutate_shortlist: bool = False,
+        fail_draft: bool = False,
     ) -> None:
         self.candidates = candidates
         self.shortlist_approved = shortlist_approved
@@ -41,19 +43,37 @@ class FakePaperBridge:
         self.fail_stage = fail_stage
         self.invent_shortlist = invent_shortlist
         self.mutate_shortlist = mutate_shortlist
+        self.fail_draft = fail_draft
         self.discover_calls = 0
         self.staged: list[str] = []
         self.analyzed: list[str] = []
         self.drafts: list[dict[str, Any]] = []
         self.queries: list[str] = []
         self.staged_candidates: list[dict[str, Any]] = []
+        self.shortlist_requests: list[dict[str, Any]] = []
 
     def discover(self, query: str, filters: dict[str, Any]) -> list[dict[str, Any]]:
         self.discover_calls += 1
         self.queries.append(query)
         return list(self.candidates)
 
-    def shortlist(self, candidates: list[dict[str, Any]], *, limit: int) -> list[dict[str, Any]]:
+    def shortlist(
+        self,
+        candidates: list[dict[str, Any]],
+        *,
+        limit: int,
+        insufficiency_query: str,
+        filters: dict[str, Any],
+        failure_context: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        self.shortlist_requests.append(
+            {
+                "limit": limit,
+                "insufficiency_query": insufficiency_query,
+                "filters": dict(filters),
+                "failure_context": dict(failure_context),
+            }
+        )
         status = "approved" if self.shortlist_approved else "pending"
         if self.invent_shortlist:
             return [{"paper_id": "invented", "review_status": status, "llm_rank": 1}]
@@ -76,11 +96,14 @@ class FakePaperBridge:
         self.analyzed.append(paper_id)
 
     def draft_projection(self, paper_id: str) -> dict[str, Any]:
+        if self.fail_draft:
+            raise RuntimeError("draft failed")
         status = "approved" if self.draft_approved else "pending"
         draft = {
             "paper_id": paper_id,
             "review_status": status,
             "paraphrase": "draft",
+            "paraphrase_source": "model",
         }
         self.drafts.append(draft)
         return draft
@@ -96,6 +119,7 @@ def _setup(
     fail_stage: bool = False,
     invent_shortlist: bool = False,
     mutate_shortlist: bool = False,
+    fail_draft: bool = False,
     approved_projection_digests: frozenset[str] = frozenset(),
 ) -> tuple[AcquireCorpusUseCase, FakePaperBridge, NullAcquisitionCycleStore]:
     records = NullCorpusRecordStore()
@@ -112,6 +136,7 @@ def _setup(
         fail_stage=fail_stage,
         invent_shortlist=invent_shortlist,
         mutate_shortlist=mutate_shortlist,
+        fail_draft=fail_draft,
     )
     cycles = NullAcquisitionCycleStore()
     promote = PromoteSnapshotUseCase(
@@ -199,6 +224,12 @@ def test_searchable_failure_stages_pending_review_idempotently() -> None:
     assert bridge.analyzed == bridge.staged
     assert bridge.drafts
     assert all(draft["review_status"] == "pending" for draft in bridge.drafts)
+    assert [draft["paper_id"] for draft in first["drafts"]] == bridge.staged
+    assert [draft["paraphrase"] for draft in first["drafts"]] == ["draft"] * len(first["drafts"])
+    assert first["staged_entries"][0]["draft"]["paraphrase"] == "draft"
+    assert len(first["staged_entries"][0]["draft"]["paraphrase"]) <= MAX_DRAFT_PARAPHRASE_CHARS
+    assert "abstract" not in first["staged_entries"][0]["draft"]
+    assert "markdown" not in first["staged_entries"][0]["draft"]
     assert first["projected"] is False
     assert first["state"] == "insufficient"
     cycle_id = first["cycle_id"]
@@ -286,6 +317,66 @@ def test_side_effect_failure_leaves_fail_closed_reservation() -> None:
     )
     assert repeated["stopped"] == "manual_recovery"
     assert bridge.discover_calls == discover_calls
+
+
+def test_draft_failure_is_persisted_for_recovery_without_duplicate_analyze_job() -> None:
+    acquire, bridge, cycles = _setup(
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
+        policy=_search_policy(),
+        fail_draft=True,
+    )
+    with pytest.raises(RuntimeError, match="draft failed"):
+        acquire.run(
+            snapshot_id="snap",
+            domain_policy_id="finance/1",
+            target="calibration",
+        )
+    stored = next(iter(cycles._rows.values()))
+    assert stored["stopped"] == "manual_recovery"
+    assert stored["staged"] == ["paper-1"]
+    assert stored["staged_entries"][0]["paper_id"] == "paper-1"
+    assert stored["staged_entries"][0]["analysis_enqueued"] is True
+    assert stored["drafts"] == []
+    assert bridge.analyzed == ["paper-1"]
+
+    bridge.fail_draft = False
+    stored["stopped"] = "in_progress"
+    cycles.put_cycle(str(stored["cycle_id"]), stored)
+
+    resumed = acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+
+    assert resumed["stopped"] == "pending_human_approval"
+    assert bridge.staged == ["paper-1"]
+    assert bridge.analyzed == ["paper-1"]
+    assert resumed["drafts"][0]["paper_id"] == "paper-1"
+    assert resumed["drafts"][0]["paraphrase"] == "draft"
+
+
+def test_shortlist_receives_query_filters_and_failure_context() -> None:
+    acquire, bridge, _cycles = _setup(
+        candidates=[{"source_paper_id": "p1", "title": "A"}],
+        policy=_search_policy(),
+    )
+    acquire.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        target="calibration",
+    )
+    request = bridge.shortlist_requests[0]
+    assert "probe-a" in request["insufficiency_query"]
+    assert request["filters"] == {"type": "paper"}
+    assert set(request["failure_context"]["failures"]) >= {
+        "recall_probe_missing",
+        "expected_cell_empty",
+    }
+    assert (
+        request["failure_context"]["search_context"]["missing_recall_probes"][0]["probe_id"]
+        == "probe-a"
+    )
 
 
 def test_llm_shortlist_cannot_invent_undiscovered_candidate() -> None:
