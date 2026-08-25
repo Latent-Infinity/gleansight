@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from papers.config.settings import load_settings
+from papers.config.settings import LLMSettings, load_settings
 from papers.domain.errors import ConfigurationError
 
 
@@ -328,3 +328,19 @@ def test_llm_settings_validation_rejects_blank_values(
 
     with pytest.raises(ConfigurationError, match=message):
         load_settings(defaults_path=defaults_path, base_dir=tmp_path)
+
+
+@pytest.mark.parametrize("value", [123, True, ["model"]])
+@pytest.mark.parametrize("field_name", ["default_profile", "default_model"])
+def test_llm_settings_validation_rejects_non_string_values(
+    field_name: str,
+    value: object,
+) -> None:
+    values: dict[str, object] = {
+        "default_profile": "default",
+        "default_model": "model",
+    }
+    values[field_name] = value
+
+    with pytest.raises(ValueError, match=field_name):
+        LLMSettings.model_validate(values)

@@ -81,7 +81,9 @@ class LLMSettings(BaseModel):
     @field_validator("default_profile", "default_model", mode="before")
     @classmethod
     def _nonblank_string(cls, value: Any, info: Any) -> str:
-        text = str(value or "").strip()
+        if not isinstance(value, str):
+            raise ValueError(f"{info.field_name} must be a string")
+        text = value.strip()
         if not text:
             raise ValueError(f"{info.field_name} must not be blank")
         return text
