@@ -22,11 +22,25 @@ CellStatus = Literal[
 
 RecordLifecycle = Literal["invalid", "future_work", "attempted", "current", "stale"]
 CELL_STATUS_VALUES = frozenset(get_args(CellStatus))
+STATUS_WINDOW_DAYS = 730
+DEFAULT_STATUS_WINDOW = timedelta(days=STATUS_WINDOW_DAYS)
 
 
 def _require_utc_as_of(as_of: datetime) -> None:
     if not is_utc_datetime(as_of):
         raise ValueError("as_of must be a UTC datetime")
+
+
+def require_status_window_days(days: object | None = None) -> int:
+    if days is None:
+        return STATUS_WINDOW_DAYS
+    if isinstance(days, bool) or not isinstance(days, int) or days < 1:
+        raise ValueError("window_days must be a positive int")
+    return days
+
+
+def status_window(days: int | None = None) -> timedelta:
+    return timedelta(days=require_status_window_days(days))
 
 
 def require_cell_status(value: object) -> CellStatus:
@@ -67,7 +81,7 @@ def record_lifecycle(
     record: dict[str, Any],
     *,
     as_of: datetime,
-    window: timedelta = timedelta(days=365 * 2),
+    window: timedelta = DEFAULT_STATUS_WINDOW,
 ) -> RecordLifecycle:
     _require_utc_as_of(as_of)
     if record.get("invalid_reason") or record.get("retracted") is True:
@@ -96,7 +110,7 @@ def cell_status(
     invalid_reason: str | None = None,
     disagreement: bool = False,
     method_claims_evaluation: bool = False,
-    window: timedelta = timedelta(days=365 * 2),
+    window: timedelta = DEFAULT_STATUS_WINDOW,
     density_cut: int = 3,
 ) -> CellStatus:
     _require_utc_as_of(as_of)
@@ -162,7 +176,7 @@ def status_table(
     expected_cell_ids: frozenset[str] | set[str] | None = None,
     cell_invalid_reasons: dict[str, str] | None = None,
     disagreement_cell_ids: frozenset[str] | set[str] = frozenset(),
-    window: timedelta = timedelta(days=365 * 2),
+    window: timedelta = DEFAULT_STATUS_WINDOW,
 ) -> dict[str, CellStatus]:
     if not isinstance(domain_policy_id, str) or not domain_policy_id.strip():
         raise ValueError("domain_policy_id is required")

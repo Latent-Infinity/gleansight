@@ -492,6 +492,35 @@ def test_record_lifecycle_bins() -> None:
     assert record_lifecycle(_rec("benchmark", RECENT), as_of=AS_OF) == "stale"
 
 
+def test_status_window_default_is_730_days_and_overridable() -> None:
+    from nsqd.domain.status import (
+        DEFAULT_STATUS_WINDOW,
+        STATUS_WINDOW_DAYS,
+        record_lifecycle,
+        require_status_window_days,
+        status_window,
+    )
+
+    assert STATUS_WINDOW_DAYS == 730
+    assert DEFAULT_STATUS_WINDOW == timedelta(days=730)
+    assert require_status_window_days(None) == 730
+    assert status_window() == timedelta(days=730)
+    assert status_window(365) == timedelta(days=365)
+    with pytest.raises(ValueError, match="window_days must be a positive int"):
+        require_status_window_days(0)
+    with pytest.raises(ValueError, match="window_days must be a positive int"):
+        require_status_window_days(True)
+
+    on_cutoff = _rec("paper", AS_OF - timedelta(days=730))
+    older = _rec("paper", AS_OF - timedelta(days=731))
+    assert record_lifecycle(on_cutoff, as_of=AS_OF) == "current"
+    assert record_lifecycle(older, as_of=AS_OF) == "stale"
+    assert record_lifecycle(older, as_of=AS_OF, window=status_window(1095)) == "current"
+    mid = _rec("paper", AS_OF - timedelta(days=400))
+    assert record_lifecycle(mid, as_of=AS_OF) == "current"
+    assert record_lifecycle(mid, as_of=AS_OF, window=status_window(365)) == "stale"
+
+
 def test_elite_replacement_and_hash_tie_and_rejection() -> None:
     low = {"viability": 2, "candidate_artifact_hash": "b"}
     high = {"viability": 9, "candidate_artifact_hash": "z"}
