@@ -27,7 +27,7 @@ All cuts meet ≥ 8/10. Highest agreement is cut=3, which is also the v1 default
 
 - **Validated:** yes, 2026-08-24.
 - **Scope reviewed:** recorded prompt, ten labeled cells, fixed `as_of`, and exact-agreement table.
-- **Decision:** keep density cut 3 as the current default; do not freeze it. The 24-month recency window is outside this validation.
+- **Decision:** keep density cut 3 as the current default; do not freeze it. Recency window unit is recorded separately as 730 days (`docs/ablations/alg-status-window.md`).
 
 ## Freeze status
 
