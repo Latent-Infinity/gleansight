@@ -1,6 +1,6 @@
 # Algorithm contract — NS/QD-inspired discovery
 
-**Status:** v1.1 defaults; ALG.* probe review completed 2026-08-24; defaults remain explicitly **not frozen** and tunable.
+**Status:** v1.1 defaults; ALG.* probe review completed through 2026-08-25; defaults remain explicitly **not frozen** and tunable.
 **Normative owner:** this file owns formulas, states, deterministic policies, schemas, and version semantics.
 **Related:** terminology in `docs/glossary-nsqd.md`; obligations in `docs/requirements-ns-qd.md`; sequencing in `docs/development-plan-ns-qd.md`.
 
@@ -42,7 +42,7 @@ Each corpus record has exactly one `lifecycle` at a given `as_of` (UTC):
 | `current` | `type ∈ {paper, code}`, `harvested_at >= as_of − window`, and not `invalid` / `future_work` / `attempted` |
 | `stale` | otherwise (including papers/code older than the window, and all benchmarks that are not invalid/future_work) |
 
-Default `window` = 24 months. `as_of` is injected (ALG-CLOCK). These states are **not** cell statuses.
+Default `window` = **730 days** (v1 meaning of “24 months”). This is **not** calendar-month subtraction. Callers may override with a positive `window_days` integer (`gleansight map --window-days`). `as_of` is injected (ALG-CLOCK). These states are **not** cell statuses.
 
 Counts on a cell, at `as_of`:
 
@@ -72,7 +72,7 @@ Statuses are a **single** label. A `smoke_only` snapshot always returns `Unknown
 | 10 | Sparse | `1 ≤ P+C+B < 3` | Residual populated density |
 | 11 | Unknown | `P+C+B ≥ 3`, no record inside the window, `attempted = 0` | Stale populated leftover; do not call it Mature or Active |
 
-Every cell matches exactly one row. Uninspected empty cells are Unknown (row 2). Constants `3`, `5`, `24 months` are ablation-tunable (`ALG.STATUS.THRESHOLDS`).
+Every cell matches exactly one row. Uninspected empty cells are Unknown (row 2). Constants `3` and `5` are ablation-tunable under `ALG.STATUS.THRESHOLDS`; the 730-day recency window is separately tunable under `ALG.STATUS.WINDOW`. The window length is compared as 12/24/36 × 365 days under the 730-day v1 unit; calendar-month subtraction is a later override, not the default.
 
 **Worked overlaps**
 
@@ -459,5 +459,7 @@ Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, a
 | `ALG.NOVELTY_BINS` | **`calibration` only** (not `smoke_only`) | gamma-flow `nov ≥ 1`; mechanism-free still `mech = 0` | the approved pair | both hold | `docs/ablations/alg-novelty-bins.md` |
 | `ALG.STATUS.THRESHOLDS` | 10 LLM-labeled cells + fixed `as_of` | exact status agreement | Sparse cut ∈ {2,3,5} | ≥ 8/10 | `docs/ablations/alg-status.md` |
 | `ALG.VIABILITY` | same calibration pair + 5 extra cards | introduce 1–4 intermediates only with a recorded rubric; otherwise keep 0/5 presence stubs | LLM probe | keep stubs **or** recorded rubric | `docs/ablations/alg-viability.md` |
+| `ALG.ACQUISITION_BUDGET` | constructed searchable-failure worlds; synthetic candidates | smallest (batches/pass, imports/pass, candidates/call) that stages a useful record; approved recheck 1 vs 2 | grid {1,2,3}×{1,2,3}×{1,5,25} | keep 3 / 25 / 3 / 2 as compatibility defaults; 3/3/25 loses the page-2 world | `docs/ablations/alg-acquisition-budget.md` (human-validated 2026-08-25; `approved_default_tunable`; **not frozen**) |
+| `ALG.STATUS.WINDOW` | constructed harvest ages at fixed UTC `as_of` | lifecycle + Active/Unknown under 365/730/1095 days | 10 ages; two dense cells | keep 730-day v1 “24 months”; overridable | `docs/ablations/alg-status-window.md` (packet 1a 2026-08-25; **not frozen**) |
 
-Human review validated all five artifacts but did not approve a numeric/default freeze. Keep the recorded v1.1 choices as current defaults while treating every reviewed knob as tunable. The 24-month status recency window was not varied, and novelty threshold `τ` remains unset.
+Human review validated the five ALG.* geometry/status/viability artifacts and the acquisition-budget math/state probe but did not approve a numeric/default freeze. The acquisition-budget outcome is `approved_default_tunable`: retain 3 / 25 / 3 / 2 for compatibility, not as a demonstrated optimum. Keep every reviewed knob tunable. Packet 1a records v1 “24 months” as **730 days**, overridable via `window_days`; 12/36 day-length sensitivity is filed and not frozen. Novelty threshold `τ` remains unset.
