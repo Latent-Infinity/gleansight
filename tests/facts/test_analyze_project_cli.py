@@ -207,6 +207,38 @@ def test_analyze_project_defaults_model_name_to_configured_settings_value(monkey
     assert fake.calls[0]["model_name"] == CONFIGURED_DEFAULT_MODEL
 
 
+def test_analyze_project_rejects_explicit_blank_model_name(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    container_requests = 0
+    fake = FakeAnalyzeProject()
+
+    def get_container() -> FakeContainer:
+        nonlocal container_requests
+        container_requests += 1
+        return FakeContainer(analyze_project=fake)
+
+    monkeypatch.setattr(cli_app, "get_container", get_container)
+
+    result = CliRunner().invoke(
+        cli_app.app,
+        [
+            "analyze-project",
+            "proj-1",
+            "--prompt-version-id",
+            "pv-target",
+            "--profile-id",
+            "profile",
+            "--model-name",
+            "   ",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--model-name must not be blank" in result.output
+    assert container_requests == 0
+    assert fake.calls == []
+
+
 def test_analyze_project_reports_invalid_filter_without_traceback(monkeypatch) -> None:
     cli_app = importlib.import_module("papers.cli.app")
     monkeypatch.setattr(

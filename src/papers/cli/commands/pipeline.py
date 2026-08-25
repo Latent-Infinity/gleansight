@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import Annotated, Protocol
+from typing import Annotated
 
 import typer
 from rich.table import Table
@@ -10,19 +10,17 @@ from rich.table import Table
 import papers.cli.app as cli_app
 from papers.app.use_cases.analysis import ExtractionFilter
 from papers.cli.commands.query import _parse_constraints
-from papers.config.settings import Settings
 
 app = typer.Typer(add_completion=False)
 
 
-class _SettingsHost(Protocol):
-    settings: Settings
-
-
-def _resolve_model_name(container: _SettingsHost, model_name: str | None) -> str:
-    if model_name is not None and model_name.strip():
-        return model_name.strip()
-    return container.settings.llm.default_model
+def _normalize_model_name(model_name: str | None) -> str | None:
+    if model_name is None:
+        return None
+    resolved = model_name.strip()
+    if not resolved:
+        raise typer.BadParameter("--model-name must not be blank")
+    return resolved
 
 
 @app.command("run-jobs")
@@ -63,13 +61,14 @@ def analyze(
     ),
     force: bool = typer.Option(False, help="Force new analysis run"),
 ) -> None:
+    model_name = _normalize_model_name(model_name)
     container = cli_app.get_container()
     run_id = container.run_analysis(
         paper_id=paper_id,
         prompt_id=prompt_id,
         prompt_version_id=prompt_version_id,
         profile_id=profile_id,
-        model_name=_resolve_model_name(container, model_name),
+        model_name=model_name or container.settings.llm.default_model,
         force=force,
     )
     cli_app.console.print(f"Analysis run queued: {run_id}")
@@ -97,6 +96,7 @@ def analyze_project(
     ] = None,
     force: Annotated[bool, typer.Option(help="Force new analysis runs")] = False,
 ) -> None:
+    model_name = _normalize_model_name(model_name)
     if constraint and field_path is None:
         raise typer.BadParameter("--field-path is required when --constraint is set")
     filters = None
@@ -114,7 +114,7 @@ def analyze_project(
             project_id=project_id,
             prompt_version_id=prompt_version_id,
             profile_id=profile_id,
-            model_name=_resolve_model_name(container, model_name),
+            model_name=model_name or container.settings.llm.default_model,
             label=label,
             filters=filters,
             force=force,

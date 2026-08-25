@@ -5,12 +5,12 @@ Queue analysis for one paper or for project members. Run the job worker to execu
 ## Analyze one paper
 
 ```bash
-uv run python -m papers.cli analyze PAPER_ID --prompt-id PROMPT_ID --profile-id PROFILE_ID --model-name MODEL
+uv run python -m papers.cli analyze PAPER_ID --prompt-id PROMPT_ID --profile-id PROFILE_ID
 ```
 
-Equivalent: `papers analyze PAPER_ID --prompt-id PROMPT_ID --profile-id PROFILE_ID --model-name MODEL`
+Equivalent: `papers analyze PAPER_ID --prompt-id PROMPT_ID --profile-id PROFILE_ID`
 
-`--prompt-version-id` is optional (latest version of `--prompt-id`). `--force` creates a new run even when a successful run already exists.
+`--prompt-version-id` is optional (latest version of `--prompt-id`). Omit `--model-name` to use configured `llm.default_model`, or pass `--model-name MODEL` as an explicit override. `--force` creates a new run even when a successful run already exists.
 
 ## Analyze a project
 
@@ -20,13 +20,14 @@ Members are the project ∩ optional `--label`. Extraction filters AND together;
 uv run python -m papers.cli analyze-project PROJECT_ID \
   --prompt-version-id PROMPT_VERSION_ID \
   --profile-id PROFILE_ID \
-  --model-name MODEL \
   --field-path algorithm_family \
   --constraint value_text=transformer \
   --filter-prompt-version-id FILTER_PROMPT_VERSION_ID
 ```
 
-Equivalent: `papers analyze-project PROJECT_ID --prompt-version-id PROMPT_VERSION_ID --profile-id PROFILE_ID --model-name MODEL`
+Equivalent: `papers analyze-project PROJECT_ID --prompt-version-id PROMPT_VERSION_ID --profile-id PROFILE_ID`
+
+Omit `--model-name` to use configured `llm.default_model`, or pass `--model-name MODEL` as an explicit override.
 
 ## Run jobs
 

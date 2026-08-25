@@ -144,6 +144,42 @@ def test_analyze_command_defaults_model_name_to_configured_settings_value(monkey
     assert container.run_analysis.calls[0]["model_name"] == CONFIGURED_DEFAULT_MODEL
 
 
+def test_analyze_command_rejects_explicit_blank_model_name(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    container_requests = 0
+    container = FakeContainer(
+        job_runner=FakeJobRunner(),
+        run_analysis=FakeRunAnalysis(),
+        job_queue=FakeJobQueue(),
+    )
+
+    def get_container() -> FakeContainer:
+        nonlocal container_requests
+        container_requests += 1
+        return container
+
+    monkeypatch.setattr(cli_app, "get_container", get_container)
+
+    result = CliRunner().invoke(
+        cli_app.app,
+        [
+            "analyze",
+            "paper-1",
+            "--prompt-id",
+            "prompt",
+            "--profile-id",
+            "profile",
+            "--model-name",
+            "   ",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--model-name must not be blank" in result.output
+    assert container_requests == 0
+    assert container.run_analysis.calls == []
+
+
 def test_status_command(monkeypatch) -> None:
     cli_app = importlib.import_module("papers.cli.app")
     runner = CliRunner()
