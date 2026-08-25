@@ -77,7 +77,14 @@ from nsqd.domain.snapshot import (
     sha256_hex,
     snapshot_id,
 )
-from nsqd.domain.status import CellStatus, record_lifecycle, require_cell_status, status_table
+from nsqd.domain.status import (
+    CellStatus,
+    record_lifecycle,
+    require_cell_status,
+    require_status_window_days,
+    status_table,
+    status_window,
+)
 from nsqd.domain.sufficiency import (
     SEARCHABLE_FAILURES,
     decide_snapshot_state,
@@ -1010,6 +1017,7 @@ class MapSnapshotUseCase:
         domain_policy_id: str,
         snapshot_state: str,
         expected_cell_ids: frozenset[str] | None = None,
+        window_days: int | None = None,
     ) -> dict[str, Any]:
         if not isinstance(domain_policy_id, str) or not domain_policy_id.strip():
             raise ValueError("domain_policy_id is required")
@@ -1031,9 +1039,11 @@ class MapSnapshotUseCase:
             is not None
         )
         expected = policy.expected_cells if expected_cell_ids is None else expected_cell_ids
+        resolved_window_days = require_status_window_days(window_days)
         return {
             "snapshot_id": snapshot_id,
             "domain_policy_id": policy.policy_id,
+            "window_days": resolved_window_days,
             "cell_statuses": status_table(
                 rows,
                 domain_policy_id=policy.policy_id,
@@ -1041,6 +1051,7 @@ class MapSnapshotUseCase:
                 snapshot_state=snapshot_state,
                 inspected_cell_ids=inspected,
                 expected_cell_ids=expected,
+                window=status_window(resolved_window_days),
             ),
         }
 

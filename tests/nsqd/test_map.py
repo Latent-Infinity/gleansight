@@ -100,6 +100,59 @@ def test_map_snapshot_builds_pack_scoped_table() -> None:
     assert sum(status == "Unknown" for status in table.values()) == 335
 
 
+def test_map_snapshot_honors_overridden_window_days() -> None:
+    records, snapshots, morph = _stores()
+    aged = AS_OF - timedelta(days=400)
+    for index in range(3):
+        _put(
+            records,
+            f"fin-paper-{index}",
+            rec_type="paper",
+            domain_policy_id="finance/1",
+            coordinates=FINANCE_COORDS,
+            harvested=aged,
+        )
+    _put(
+        records,
+        "fin-code",
+        rec_type="code",
+        domain_policy_id="finance/1",
+        coordinates=FINANCE_COORDS,
+        harvested=aged,
+    )
+    assert (
+        snapshots.commit(
+            "snap",
+            ["fin-paper-0", "fin-paper-1", "fin-paper-2", "fin-code"],
+            schema_version=1,
+        )
+        == 1
+    )
+    mapper = MapSnapshotUseCase(
+        snapshots=snapshots,
+        records=records,
+        morph=morph,
+        clock=FixedClock(AS_OF),
+    )
+    defaulted = mapper.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        snapshot_state="calibration",
+        expected_cell_ids=frozenset({FINANCE_CELL}),
+    )
+    shortened = mapper.run(
+        snapshot_id="snap",
+        domain_policy_id="finance/1",
+        snapshot_state="calibration",
+        expected_cell_ids=frozenset({FINANCE_CELL}),
+        window_days=365,
+    )
+    assert defaulted["window_days"] == 730
+    assert shortened["window_days"] == 365
+    assert defaulted["cell_statuses"][FINANCE_CELL] == "Active"
+    assert shortened["cell_statuses"][FINANCE_CELL] == "Unknown"
+
+
 def test_map_snapshot_isolates_optimization_pack() -> None:
     records, snapshots, morph = _stores()
     _put(
@@ -292,6 +345,15 @@ def test_map_handler_and_runner_persist_and_dispatch_map_job(tmp_path: Path) -> 
                 "expected_cell_ids": [FINANCE_CELL, 7],
             },
             "expected_cell_ids must be a list of strings",
+        ),
+        (
+            {
+                "snapshot_id": "snap",
+                "domain_policy_id": "finance/1",
+                "snapshot_state": "calibration",
+                "window_days": 0,
+            },
+            "window_days must be a positive int",
         ),
     ],
 )

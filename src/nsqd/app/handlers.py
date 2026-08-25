@@ -17,6 +17,7 @@ from nsqd.app.use_cases import (
     ScoreUseCase,
 )
 from nsqd.domain.policy import DomainPolicy
+from nsqd.domain.status import require_status_window_days
 from nsqd.ports import (
     AcquisitionCycleStore,
     Clock,
@@ -76,6 +77,12 @@ def _require_expected_cell_ids(payload: dict[str, Any]) -> frozenset[str] | None
     if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
         raise ValueError("expected_cell_ids must be a list of strings")
     return frozenset(value)
+
+
+def _optional_window_days(payload: dict[str, Any]) -> int | None:
+    if "window_days" not in payload:
+        return None
+    return require_status_window_days(payload["window_days"])
 
 
 def handle_harvest(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
@@ -147,6 +154,7 @@ def handle_map(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         domain_policy_id=_require_payload_string(payload, "domain_policy_id"),
         snapshot_state=_require_payload_string(payload, "snapshot_state"),
         expected_cell_ids=_require_expected_cell_ids(payload),
+        window_days=_optional_window_days(payload),
     )
     return {"status": "succeeded", **result}
 
