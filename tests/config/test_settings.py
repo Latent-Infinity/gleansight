@@ -267,3 +267,64 @@ def test_embedding_settings_validation_rejects_invalid_values(
 
     with pytest.raises(ConfigurationError, match=message):
         load_settings(defaults_path=defaults_path, base_dir=tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("llm_block", "message"),
+    [
+        (
+            """
+[llm]
+default_profile = "   "
+""".strip(),
+            "default_profile",
+        ),
+        (
+            """
+[llm]
+default_profile = "default"
+default_model = "   "
+""".strip(),
+            "default_model",
+        ),
+    ],
+)
+def test_llm_settings_validation_rejects_blank_values(
+    tmp_path: Path,
+    llm_block: str,
+    message: str,
+) -> None:
+    defaults_path = tmp_path / "defaults.toml"
+    defaults_path.write_text(
+        "\n".join(
+            [
+                "[data]",
+                'root = "data"',
+                'db_path = "data/db.sqlite"',
+                'blobs_dir = "data/blobs"',
+                'blobs_pdf_dir = "data/blobs/pdf"',
+                'blobs_md_dir = "data/blobs/md"',
+                'blobs_analysis_dir = "data/blobs/analysis"',
+                'lancedb_dir = "data/lancedb"',
+                "",
+                "[embeddings]",
+                'model = "qwen3-embedding:latest"',
+                "dimension = 4096",
+                'text_slice_strategy = "markdown_full"',
+                'base_url = "http://127.0.0.1:11434"',
+                "",
+                llm_block,
+                "",
+                "[scholar]",
+                'api_key = ""',
+                "rate_limit_per_second = 1",
+                "",
+                "[ui]",
+                "search_max_results = 10",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigurationError, match=message):
+        load_settings(defaults_path=defaults_path, base_dir=tmp_path)

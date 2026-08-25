@@ -78,6 +78,14 @@ class LLMSettings(BaseModel):
     default_profile: str
     default_model: str = DEFAULT_QWEN_CHAT_MODEL
 
+    @field_validator("default_profile", "default_model", mode="before")
+    @classmethod
+    def _nonblank_string(cls, value: Any, info: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            raise ValueError(f"{info.field_name} must not be blank")
+        return text
+
 
 class ScholarSettings(BaseModel):
     api_key: str = ""
