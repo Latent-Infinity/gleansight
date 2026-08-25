@@ -11,6 +11,7 @@ from papers.domain.errors import ErrorCode, PipelineError
 
 DEFAULT_QWEN_EMBEDDING_MODEL = "qwen3-embedding:latest"
 DEFAULT_QWEN_EMBEDDING_DIMENSION = 4096
+DEFAULT_EMBEDDING_TIMEOUT_S = 300.0
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,7 @@ def build_openai_compat_embedder(
     dimension: int,
     base_url: str,
     api_key: str | None = None,
+    timeout_s: float = DEFAULT_EMBEDDING_TIMEOUT_S,
 ) -> OpenAICompatEmbedder:
     try:
         import httpx
@@ -66,7 +68,7 @@ def build_openai_compat_embedder(
         timeout_exc = getattr(httpx, "TimeoutException", TimeoutError)
         http_error_exc = getattr(httpx, "HTTPError", Exception)
         try:
-            with httpx.Client(timeout=30.0) as client:
+            with httpx.Client(timeout=timeout_s) as client:
                 url = f"{base_url.rstrip('/')}/v1/embeddings"
                 resp = client.post(url, json=payload, headers=headers)
                 resp.raise_for_status()

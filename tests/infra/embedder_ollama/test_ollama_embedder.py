@@ -4,9 +4,11 @@ import math
 
 import pytest
 
+from papers.config.settings import EmbeddingSettings
 from papers.domain.errors import ErrorCode, PipelineError
 from papers.infra.embedder_ollama.adapter import (
     OpenAICompatEmbedder,
+    build_configured_ollama_embedder,
     build_openai_compat_embedder,
 )
 
@@ -67,6 +69,7 @@ def test_build_embedder_posts_openai_compat_payload(monkeypatch: pytest.MonkeyPa
         def post(self, url: str, json: dict[str, object], headers: dict[str, str]) -> FakeResponse:
             captured["url"] = url
             captured["json"] = json
+            captured["headers"] = headers
             return FakeResponse()
 
         def __enter__(self) -> FakeClient:
@@ -88,6 +91,123 @@ def test_build_embedder_posts_openai_compat_payload(monkeypatch: pytest.MonkeyPa
     vector = embedder.embed("text")
     assert captured["url"] == "http://127.0.0.1:11434/v1/embeddings"
     assert captured["json"] == {"model": "qwen3-embedding:latest", "input": "text"}
+    assert captured["headers"] == {"Content-Type": "application/json"}
+    assert captured["timeout"] == 300.0
+    assert vector == pytest.approx([0.0, 1.0])
+
+
+def test_build_configured_ollama_embedder_omits_authorization_header(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import sys
+    import types
+    from typing import Any, cast
+
+    fake_httpx = types.ModuleType("httpx")
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, object]:
+            return {"data": [{"embedding": [0.0, 1.0]}]}
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            captured["timeout"] = timeout
+
+        def post(self, url: str, json: dict[str, object], headers: dict[str, str]) -> FakeResponse:
+            captured["url"] = url
+            captured["json"] = json
+            captured["headers"] = headers
+            return FakeResponse()
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = TimeoutError
+    fake_httpx_any.HTTPError = Exception
+    monkeypatch.setitem(sys.modules, "httpx", fake_httpx)
+
+    embedder = build_configured_ollama_embedder(
+        EmbeddingSettings(
+            model="qwen3-embedding:latest",
+            dimension=2,
+            text_slice_strategy="markdown_full",
+            base_url="http://127.0.0.1:11434",
+        )
+    )
+
+    vector = embedder.embed("text")
+
+    assert captured["url"] == "http://127.0.0.1:11434/v1/embeddings"
+    assert captured["json"] == {"model": "qwen3-embedding:latest", "input": "text"}
+    assert captured["headers"] == {"Content-Type": "application/json"}
+    assert captured["timeout"] == 300.0
+    assert vector == pytest.approx([0.0, 1.0])
+
+
+def test_build_embedder_with_api_key_sets_authorization_header(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import sys
+    import types
+    from typing import Any, cast
+
+    fake_httpx = types.ModuleType("httpx")
+    captured: dict[str, object] = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict[str, object]:
+            return {"data": [{"embedding": [0.0, 1.0]}]}
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            captured["timeout"] = timeout
+
+        def post(self, url: str, json: dict[str, object], headers: dict[str, str]) -> FakeResponse:
+            captured["url"] = url
+            captured["json"] = json
+            captured["headers"] = headers
+            return FakeResponse()
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = TimeoutError
+    fake_httpx_any.HTTPError = Exception
+    monkeypatch.setitem(sys.modules, "httpx", fake_httpx)
+
+    embedder = build_openai_compat_embedder(
+        model_name="qwen3-embedding:latest",
+        dimension=2,
+        base_url="http://127.0.0.1:11434",
+        api_key="secret-key",
+    )
+
+    vector = embedder.embed("text")
+
+    assert captured["url"] == "http://127.0.0.1:11434/v1/embeddings"
+    assert captured["json"] == {"model": "qwen3-embedding:latest", "input": "text"}
+    assert captured["headers"] == {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer secret-key",
+    }
+    assert captured["timeout"] == 300.0
     assert vector == pytest.approx([0.0, 1.0])
 
 
