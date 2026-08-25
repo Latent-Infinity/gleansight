@@ -175,6 +175,47 @@ def test_optional_metadata_schema_is_validated(field: str, value: object, messag
     assert harvest_record_rejection({**KNOWN, field: value}) == message
 
 
+def test_harvest_rejects_unsupported_and_oversized_record_fields() -> None:
+    from nsqd.domain.harvest import MAX_PARAPHRASE_LENGTH, MAX_SOURCE_LENGTH
+
+    assert harvest_record_rejection({**KNOWN, "type": ""}) == "missing record type"
+    assert harvest_record_rejection({**KNOWN, "type": "patent"}) == "unsupported record type"
+    assert (
+        harvest_record_rejection({**KNOWN, "paraphrase": "x" * (MAX_PARAPHRASE_LENGTH + 1)})
+        == "paraphrase is too long"
+    )
+    assert (
+        harvest_record_rejection({**KNOWN, "source": "s" * (MAX_SOURCE_LENGTH + 1)})
+        == "source is too long"
+    )
+    assert harvest_record_rejection({**KNOWN, "coordinates": {"k": {1}}}) == (
+        "optional metadata must be JSON-compatible"
+    )
+
+
+def test_harvest_rejects_oversized_optional_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    import nsqd.domain.harvest as harvest_domain
+
+    monkeypatch.setattr(harvest_domain, "MAX_METADATA_BYTES", 8)
+    assert (
+        harvest_record_rejection({**KNOWN, "tags": ["reviewed"]})
+        == "optional metadata is too large"
+    )
+
+
+def test_harvest_payload_bounds_and_non_mapping_rows() -> None:
+    import nsqd.domain.harvest as harvest_domain
+
+    assert is_essay_payload([]) is True
+    assert is_essay_payload(1) is True
+    with pytest.raises(HarvestRejected, match="essay-only"):
+        harvest_records_from_payload(["not-a-record"])
+    with pytest.raises(HarvestRejected, match="too many harvest records"):
+        harvest_domain.harvest_records_from_payload(
+            [KNOWN] * (harvest_domain.MAX_HARVEST_RECORDS + 1)
+        )
+
+
 def test_harvest_rejects_missing_and_unknown_domain_policy_id() -> None:
     records = NullCorpusRecordStore()
     snapshots = NullCorpusSnapshotStore()
