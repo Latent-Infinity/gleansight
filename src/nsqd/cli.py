@@ -177,6 +177,31 @@ def _fail_configuration(exc: ConfigurationError) -> NoReturn:
     raise typer.Exit(code=1) from exc
 
 
+def _draft_review_summary(drafts: object, *, show_drafts: bool) -> tuple[int, list[dict[str, Any]]]:
+    if not isinstance(drafts, list):
+        return 0, []
+    items: list[dict[str, Any]] = []
+    for raw_draft in drafts:
+        if not isinstance(raw_draft, dict):
+            continue
+        draft = {str(key): value for key, value in raw_draft.items() if isinstance(key, str)}
+        paper_id = draft.get("paper_id")
+        source_paper_id = draft.get("source_paper_id")
+        item: dict[str, Any] = {}
+        if isinstance(paper_id, str) and paper_id.strip():
+            item["paper_id"] = paper_id.strip()
+        if isinstance(source_paper_id, str) and source_paper_id.strip():
+            item["source_paper_id"] = source_paper_id.strip()
+        if show_drafts:
+            for key in ("paraphrase", "paraphrase_source", "review_status", "title"):
+                value = draft.get(key)
+                if isinstance(value, str) and value.strip():
+                    item[key] = value
+        if item:
+            items.append(item)
+    return len(items), items
+
+
 @app.command("map")
 def map_snapshot(
     snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
@@ -393,6 +418,7 @@ def acquire(
         Path | None,
         typer.Option("--approval-manifest", exists=True, readable=True),
     ] = None,
+    show_drafts: Annotated[bool, typer.Option("--show-drafts")] = False,
 ) -> None:
     payload: dict[str, Any] = {
         "snapshot_id": snapshot_id,
@@ -434,6 +460,7 @@ def acquire(
         _fail_configuration(exc)
     except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
         _fail(exc)
+    draft_count, draft_items = _draft_review_summary(result.get("drafts"), show_drafts=show_drafts)
     typer.echo(
         json.dumps(
             {
@@ -441,6 +468,8 @@ def acquire(
                 "route": result.get("route"),
                 "projected": result.get("projected"),
                 "snapshot_id": result.get("snapshot_id"),
+                "draft_count": draft_count,
+                "drafts": draft_items,
             },
             default=str,
         )

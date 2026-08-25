@@ -516,7 +516,7 @@ def test_default_paper_runtime_uses_papers_settings(monkeypatch, tmp_path: Path)
 
     settings = SimpleNamespace(
         data=SimpleNamespace(db_path=tmp_path / "app.sqlite", root=tmp_path / "data"),
-        llm=SimpleNamespace(default_profile="default"),
+        llm=SimpleNamespace(default_profile="default", default_model="runtime-model-x"),
     )
     papers = SimpleNamespace(
         settings=settings,
@@ -600,6 +600,16 @@ def test_acquire_and_run_paper_jobs_use_composed_runtime(monkeypatch, tmp_path: 
             "route": "search",
             "projected": False,
             "snapshot_id": payload["snapshot_id"],
+            "drafts": [
+                {
+                    "paper_id": "paper-1",
+                    "source_paper_id": "source-1",
+                    "paraphrase": "review me",
+                    "paraphrase_source": "model",
+                    "review_status": "pending",
+                }
+            ],
+            "draft_count": 1,
         }
 
     monkeypatch.setattr(cli_module, "_default_paper_runtime", fake_runtime)
@@ -618,11 +628,73 @@ def test_acquire_and_run_paper_jobs_use_composed_runtime(monkeypatch, tmp_path: 
         ],
     )
     assert acquired.exit_code == 0, acquired.output
-    assert "pending_human_approval" in acquired.output
+    payload = __import__("json").loads(acquired.stdout)
+    assert payload["stopped"] == "pending_human_approval"
+    assert payload["draft_count"] == 1
+    assert payload["drafts"] == [{"paper_id": "paper-1", "source_paper_id": "source-1"}]
+    assert "review me" not in acquired.output
     assert calls[0][0] == "acquire"
     processed = runner.invoke(app, ["run-paper-jobs", "--max-jobs", "2"])
     assert processed.exit_code == 0, processed.output
     assert "processed 0 paper jobs" in processed.output
+
+
+def test_acquire_show_drafts_opt_in_emits_bounded_draft_bodies(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    import json
+    from types import SimpleNamespace
+
+    class _Runtime:
+        def __init__(self) -> None:
+            self.nsqd = SimpleNamespace(clock=SimpleNamespace(now=lambda: None))
+            self.paper_runner = SimpleNamespace(run_next=lambda _now: False)
+
+    def fake_runtime(**_kwargs: object) -> _Runtime:
+        return _Runtime()
+
+    def fake_run_job(
+        _container: object, _job_type: str, _payload: dict[str, object], _now: object
+    ) -> dict[str, object]:
+        return {
+            "stopped": "pending_human_approval",
+            "route": "search",
+            "projected": False,
+            "snapshot_id": "snap",
+            "drafts": [
+                {
+                    "paper_id": "paper-1",
+                    "source_paper_id": "source-1",
+                    "paraphrase": "review me",
+                    "paraphrase_source": "model",
+                    "review_status": "pending",
+                }
+            ],
+            "draft_count": 1,
+        }
+
+    monkeypatch.setattr(cli_module, "_default_paper_runtime", fake_runtime)
+    monkeypatch.setattr(cli_module, "run_job", fake_run_job)
+
+    acquired = CliRunner().invoke(
+        app,
+        [
+            "acquire",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+            "--show-drafts",
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+
+    assert acquired.exit_code == 0, acquired.output
+    payload = json.loads(acquired.stdout)
+    assert payload["draft_count"] == 1
+    assert payload["drafts"][0]["paraphrase"] == "review me"
+    assert payload["drafts"][0]["review_status"] == "pending"
 
 
 def test_run_paper_jobs_refreshes_time_for_each_attempt(monkeypatch) -> None:
