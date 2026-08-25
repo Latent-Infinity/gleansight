@@ -10,6 +10,12 @@ uv run python -m papers.cli query "optimization algorithm" --limit 10
 
 Equivalent: `papers query "optimization algorithm" --limit 10`
 
+If title/abstract search is empty after import, rebuild the FTS index:
+
+```bash
+papers rebuild-fts
+```
+
 ## Filter by extractions
 
 ```bash
