@@ -1,7 +1,7 @@
 # ALG.VIABILITY ablation
 
 **Study:** `ALG.VIABILITY`  
-**Freeze: no.** `mech` / `fals` / `dpred` remain 0/5 presence stubs. This is an LLM probe. Humans validate the prompt and this result; they are not a two-reviewer kappa panel.
+**Freeze: no.** `mech` / `fals` / `dpred` remain 0/5 presence stubs. This is an LLM probe. Human validation of the prompt and result completed 2026-08-24; no two-reviewer kappa panel was required.
 
 ## Prompt
 
@@ -16,6 +16,12 @@ Command: `uv run pytest tests/nsqd/test_ablations.py -q --no-cov`
 ## Result
 
 Keep **0/5 presence stubs**. No 1–4 intermediates are introduced. `dval` stays a provenance-bearing assigned integer (not LLM self-approval of corpus evidence). Cohen’s κ is not applicable because a second label set was not collected.
+
+## Human validation
+
+- **Validated:** yes, 2026-08-24.
+- **Scope reviewed:** recorded prompt, approved/constructed card set, and no-intermediate-rubric result.
+- **Decision:** keep the 0/5 presence stubs as current defaults; do not freeze the viability rubrics.
 
 ## Freeze status
 

@@ -1,7 +1,7 @@
 # ALG.STATUS.THRESHOLDS ablation
 
 **Study:** `ALG.STATUS.THRESHOLDS`  
-**Freeze: no.** Sparse/Active density cut remains **3**. This is an LLM-labeled 10-cell probe at a fixed `as_of`. Humans validate the prompt and this result; they are not a hand-labeling panel.
+**Freeze: no.** Sparse/Active density cut remains **3**. This is an LLM-labeled 10-cell probe at a fixed `as_of`. Human validation of the prompt and result completed 2026-08-24; no hand-labeling panel was required.
 
 ## Prompt
 
@@ -9,7 +9,7 @@ Given ALG-STATUS exclusive predicates and ten constructed cells at a fixed UTC `
 
 ## Dataset
 
-Ten constructed cells (not DATA-NSQD-03): Unknown empty, Missing, Code-gap, Sparse pair (1 paper + 1 code), Active three, Active four, Mature, Stalled, Future-work-only, Invalid.
+Ten constructed cells at `as_of=2024-01-01T00:00:00Z` (not DATA-NSQD-03): Unknown empty, Missing, Code-gap, Sparse pair (1 paper + 1 code), Active three, Active four, Mature, Stalled, Future-work-only, Invalid.
 
 Command: `uv run pytest tests/nsqd/test_ablations.py -q --no-cov`
 
@@ -22,6 +22,12 @@ Command: `uv run pytest tests/nsqd/test_ablations.py -q --no-cov`
 | 5 | 8/10 |
 
 All cuts meet ≥ 8/10. Highest agreement is cut=3, which is also the v1 default, so **keep 3**. The 24-month recency window was not varied.
+
+## Human validation
+
+- **Validated:** yes, 2026-08-24.
+- **Scope reviewed:** recorded prompt, ten labeled cells, fixed `as_of`, and exact-agreement table.
+- **Decision:** keep density cut 3 as the current default; do not freeze it. The 24-month recency window is outside this validation.
 
 ## Freeze status
 
