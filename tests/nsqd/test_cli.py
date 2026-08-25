@@ -448,6 +448,17 @@ def test_map_and_archive_cli_on_empty_snapshot(tmp_path: Path) -> None:
     assert "rank_guard_blocked" in archived.output
 
 
+def test_map_cli_lists_window_days_override() -> None:
+    from click import Group
+    from typer.main import get_command
+
+    click_app = get_command(app)
+    assert isinstance(click_app, Group)
+    command = click_app.commands["map"]
+    opts = {opt for param in command.params for opt in param.opts}
+    assert "--window-days" in opts
+
+
 def test_diverge_ground_gate_cli_error_paths(tmp_path: Path) -> None:
     runner = CliRunner()
     fixture = tmp_path / "candidate.yaml"

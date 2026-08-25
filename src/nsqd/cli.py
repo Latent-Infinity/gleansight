@@ -15,6 +15,7 @@ from nsqd.composition import build_container, build_local_ollama_embedder
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.domain.project import canonical_reviewed_projection_digest
+from nsqd.domain.status import STATUS_WINDOW_DAYS
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
 from nsqd.ports import ParaphraseEmbedder
@@ -207,6 +208,13 @@ def map_snapshot(
     snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
     domain_policy_id: Annotated[str, typer.Option("--domain-policy-id")],
     snapshot_state: Annotated[str, typer.Option("--snapshot-state")],
+    window_days: Annotated[
+        int,
+        typer.Option(
+            "--window-days",
+            help="Status recency window in days (v1 24 months = 730; overridable)",
+        ),
+    ] = STATUS_WINDOW_DAYS,
     db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
     index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
 ) -> None:
@@ -219,6 +227,7 @@ def map_snapshot(
                 "snapshot_id": snapshot_id,
                 "domain_policy_id": domain_policy_id,
                 "snapshot_state": snapshot_state,
+                "window_days": window_days,
             },
             container.clock.now(),
         )
@@ -230,6 +239,7 @@ def map_snapshot(
             {
                 "snapshot_id": result["snapshot_id"],
                 "domain_policy_id": result["domain_policy_id"],
+                "window_days": result.get("window_days"),
                 "counts": dict(counts),
             }
         )
