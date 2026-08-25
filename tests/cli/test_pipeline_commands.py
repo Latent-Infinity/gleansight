@@ -6,6 +6,8 @@ from datetime import datetime
 
 from typer.testing import CliRunner
 
+CONFIGURED_DEFAULT_MODEL = "configured-analysis-model"
+
 
 @dataclass
 class FakeJobRunner:
@@ -54,10 +56,21 @@ class FakeJobQueue:
 
 
 @dataclass
+class FakeLLMSettings:
+    default_model: str = CONFIGURED_DEFAULT_MODEL
+
+
+@dataclass
+class FakeSettings:
+    llm: FakeLLMSettings = field(default_factory=FakeLLMSettings)
+
+
+@dataclass
 class FakeContainer:
     job_runner: FakeJobRunner
     run_analysis: FakeRunAnalysis
     job_queue: FakeJobQueue
+    settings: FakeSettings = field(default_factory=FakeSettings)
 
 
 def test_run_jobs(monkeypatch) -> None:
@@ -103,6 +116,32 @@ def test_analyze_command(monkeypatch) -> None:
     assert result.exit_code == 0
     assert "run-1" in result.output
     assert container.run_analysis.calls[0]["paper_id"] == "paper-1"
+
+
+def test_analyze_command_defaults_model_name_to_configured_settings_value(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    container = FakeContainer(
+        job_runner=FakeJobRunner(),
+        run_analysis=FakeRunAnalysis(),
+        job_queue=FakeJobQueue(),
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(
+        cli_app.app,
+        [
+            "analyze",
+            "paper-1",
+            "--prompt-id",
+            "prompt",
+            "--profile-id",
+            "profile",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert container.run_analysis.calls[0]["model_name"] == CONFIGURED_DEFAULT_MODEL
 
 
 def test_status_command(monkeypatch) -> None:

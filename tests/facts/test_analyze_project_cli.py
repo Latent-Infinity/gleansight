@@ -10,6 +10,8 @@ from typer.testing import CliRunner
 
 from papers.app.use_cases.analysis import ExtractionFilter
 
+CONFIGURED_DEFAULT_MODEL = "configured-project-analysis-model"
+
 
 @dataclass
 class FakeAnalyzeProject:
@@ -41,8 +43,19 @@ class FakeAnalyzeProject:
 
 
 @dataclass
+class FakeLLMSettings:
+    default_model: str = CONFIGURED_DEFAULT_MODEL
+
+
+@dataclass
+class FakeSettings:
+    llm: FakeLLMSettings = field(default_factory=FakeLLMSettings)
+
+
+@dataclass
 class FakeContainer:
     analyze_project: Any
+    settings: FakeSettings = field(default_factory=FakeSettings)
 
 
 @dataclass
@@ -173,6 +186,25 @@ def test_analyze_project_without_field_path_sends_no_filters(monkeypatch) -> Non
     assert result.exit_code == 0, result.output
     assert fake.calls[0]["filters"] is None
     assert fake.calls[0]["force"] is False
+
+
+def test_analyze_project_defaults_model_name_to_configured_settings_value(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    fake = FakeAnalyzeProject()
+    monkeypatch.setattr(cli_app, "get_container", lambda: FakeContainer(analyze_project=fake))
+    result = CliRunner().invoke(
+        cli_app.app,
+        [
+            "analyze-project",
+            "proj-1",
+            "--prompt-version-id",
+            "pv-target",
+            "--profile-id",
+            "profile",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert fake.calls[0]["model_name"] == CONFIGURED_DEFAULT_MODEL
 
 
 def test_analyze_project_reports_invalid_filter_without_traceback(monkeypatch) -> None:

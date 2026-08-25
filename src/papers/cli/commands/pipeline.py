@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Protocol
 
 import typer
 from rich.table import Table
@@ -10,8 +10,19 @@ from rich.table import Table
 import papers.cli.app as cli_app
 from papers.app.use_cases.analysis import ExtractionFilter
 from papers.cli.commands.query import _parse_constraints
+from papers.config.settings import Settings
 
 app = typer.Typer(add_completion=False)
+
+
+class _SettingsHost(Protocol):
+    settings: Settings
+
+
+def _resolve_model_name(container: _SettingsHost, model_name: str | None) -> str:
+    if model_name is not None and model_name.strip():
+        return model_name.strip()
+    return container.settings.llm.default_model
 
 
 @app.command("run-jobs")
@@ -47,7 +58,9 @@ def analyze(
     prompt_id: str = typer.Option(..., help="Prompt ID"),
     prompt_version_id: str | None = typer.Option(None, help="Prompt version ID"),
     profile_id: str = typer.Option(..., help="Profile ID"),
-    model_name: str = typer.Option(..., help="Model name"),
+    model_name: str | None = typer.Option(
+        None, help="Model name (default: configured llm.default_model)"
+    ),
     force: bool = typer.Option(False, help="Force new analysis run"),
 ) -> None:
     container = cli_app.get_container()
@@ -56,7 +69,7 @@ def analyze(
         prompt_id=prompt_id,
         prompt_version_id=prompt_version_id,
         profile_id=profile_id,
-        model_name=model_name,
+        model_name=_resolve_model_name(container, model_name),
         force=force,
     )
     cli_app.console.print(f"Analysis run queued: {run_id}")
@@ -67,7 +80,10 @@ def analyze_project(
     project_id: Annotated[str, typer.Argument(help="Project ID")],
     prompt_version_id: Annotated[str, typer.Option(help="Target prompt version ID")],
     profile_id: Annotated[str, typer.Option(help="Profile ID")],
-    model_name: Annotated[str, typer.Option(help="Model name")],
+    model_name: Annotated[
+        str | None,
+        typer.Option(help="Model name (default: configured llm.default_model)"),
+    ] = None,
     label: Annotated[str | None, typer.Option(help="Optional membership label")] = None,
     field_path: Annotated[
         str | None, typer.Option(help="Extraction field path to filter on")
@@ -98,7 +114,7 @@ def analyze_project(
             project_id=project_id,
             prompt_version_id=prompt_version_id,
             profile_id=profile_id,
-            model_name=model_name,
+            model_name=_resolve_model_name(container, model_name),
             label=label,
             filters=filters,
             force=force,
