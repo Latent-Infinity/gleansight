@@ -1,7 +1,7 @@
 # ALG.AXES ablation
 
 **Study:** `ALG.AXES`  
-**Freeze: no.** Archive axes remain the v1 finance triple. This is an LLM-scored probe. Humans validate the prompt and this result; they are not a second independent labeling panel.
+**Freeze: no.** Archive axes remain the v1 finance triple. This is an LLM-scored probe. Human validation of the prompt and result completed 2026-08-24; no second independent labeling panel was required.
 
 ## Prompt
 
@@ -19,9 +19,16 @@ Command: `uv run pytest tests/nsqd/test_ablations.py -q --no-cov`
 
 ## Result
 
-Keep only the current finance v1 triple. Extra morphospace axes stay metadata, not archive bins. Defaults remain tunable until a later freeze review of this prompt and table.
+Keep only the current finance v1 triple. Extra morphospace axes stay metadata, not archive bins. Human validation retained the default without freezing it.
+
+## Human validation
+
+- **Validated:** yes, 2026-08-24.
+- **Scope reviewed:** recorded prompt, three scored triples, and keep/reject result.
+- **Decision:** keep the finance v1 mechanism × target × horizon triple as the current default; do not freeze the axes.
 
 ## Freeze status
 
+- Archive-axis selection remains **tunable**.
 - `ALG-ABL` stays **not frozen**.
 - DATA-NSQD-03 was not invented.

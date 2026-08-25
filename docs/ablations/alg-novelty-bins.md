@@ -1,7 +1,7 @@
 # ALG.NOVELTY_BINS ablation
 
 **Study:** `ALG.NOVELTY_BINS`  
-**Freeze: no.** Bin edges stay at 0.15 / 0.30 / 0.45 / 0.60. This probe uses a constructed `calibration` snapshot, not `smoke_only`. Humans validate the prompt and this result.
+**Freeze: no.** Bin edges stay at 0.15 / 0.30 / 0.45 / 0.60. This probe uses a constructed `calibration` snapshot, not `smoke_only`. Human validation of the prompt and result completed 2026-08-24.
 
 ## Prompt
 
@@ -21,6 +21,12 @@ Command: `uv run pytest tests/nsqd/test_ablations.py -q --no-cov`
 ## Result
 
 Both hold on calibration: gamma-flow `nov ≥ 1` (identical neighbor ⇒ evidence 0.0 ⇒ term 1); mechanism-free `mech = 0`. The same evidence on `smoke_only` still forces `nov = 0`. Bin edges are not changed.
+
+## Human validation
+
+- **Validated:** yes, 2026-08-24.
+- **Scope reviewed:** recorded prompt, constructed calibration inputs, and runtime-backed result.
+- **Decision:** keep the 0.15 / 0.30 / 0.45 / 0.60 edges as current defaults; do not freeze the edges or set novelty threshold `τ`.
 
 ## Freeze status
 

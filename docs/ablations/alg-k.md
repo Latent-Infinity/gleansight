@@ -29,7 +29,13 @@ Command: `uv run pytest tests/nsqd/test_k_ablation.py -q --no-cov`
 | 5 | 1.0 | yes (identity) |
 | 10 | < 0.90 (≈ 0.824) | no |
 
-k=3 preserves novelty ranks relative to k=5 on this set. k=10 does not: expanding the neighborhood past local cluster structure reshuffles ranks. Keep the v1 default **k=5**. Do not freeze k until a human-approved calibration corpus with listed recall probes (finance/1 still needs DATA-NSQD-03) repeats the study.
+k=3 preserves novelty ranks relative to k=5 on this set. k=10 does not: expanding the neighborhood past local cluster structure reshuffles ranks. Keep the v1 default **k=5**. Do not freeze k until a human-approved production calibration corpus with listed recall probes repeats the study. DATA-NSQD-03 is approved, but this synthetic artifact does not perform that repeat.
+
+## Human validation
+
+- **Validated:** yes, 2026-08-24.
+- **Scope reviewed:** recorded dataset, leave-one-out protocol, Spearman results, and limitations.
+- **Decision:** keep k=5 as the current default; do not freeze k.
 
 ## Freeze status
 
