@@ -74,7 +74,7 @@ def build_openai_compat_embedder(
                 resp.raise_for_status()
                 body = resp.json()
         except timeout_exc as nested:
-            raise PipelineError(ErrorCode.EMBEDDING_FAILED, str(nested)) from nested
+            raise PipelineError(ErrorCode.TIMEOUT, str(nested)) from nested
         except http_error_exc as nested:
             raise PipelineError(ErrorCode.EMBEDDING_FAILED, str(nested)) from nested
         if not isinstance(body, dict):

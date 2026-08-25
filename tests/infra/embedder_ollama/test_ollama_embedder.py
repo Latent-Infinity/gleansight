@@ -96,6 +96,47 @@ def test_build_embedder_posts_openai_compat_payload(monkeypatch: pytest.MonkeyPa
     assert vector == pytest.approx([0.0, 1.0])
 
 
+def test_build_embedder_classifies_timeout_as_retryable(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+    import types
+    from typing import Any, cast
+
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeTimeoutError(Exception):
+        pass
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            pass
+
+        def post(self, url: str, json: dict[str, object], headers: dict[str, str]) -> None:
+            raise FakeTimeoutError("embedding request timed out")
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = FakeTimeoutError
+    fake_httpx_any.HTTPError = Exception
+    monkeypatch.setitem(sys.modules, "httpx", fake_httpx)
+
+    embedder = build_openai_compat_embedder(
+        model_name="qwen3-embedding:latest",
+        dimension=2,
+        base_url="http://127.0.0.1:11434",
+    )
+
+    with pytest.raises(PipelineError) as excinfo:
+        embedder.embed("text")
+
+    assert excinfo.value.code is ErrorCode.TIMEOUT
+
+
 def test_build_configured_ollama_embedder_omits_authorization_header(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
