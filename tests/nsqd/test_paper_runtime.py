@@ -11,7 +11,6 @@ import pytest
 
 from nsqd.composition import build_container as build_nsqd_container
 from nsqd.infra.paper_runtime import (
-    ACQUISITION_MODEL_NAME,
     ACQUISITION_PROFILE_ID,
     ACQUISITION_PROMPT_ID,
     bootstrap_analysis_defaults,
@@ -109,23 +108,26 @@ def test_bootstrap_analysis_defaults_is_idempotent() -> None:
         profile_store=profiles,
         llm_base_url="http://localhost:8000",
         profile_name="default",
+        model_name="custom-acquire-model",
     )
     second = bootstrap_analysis_defaults(
         prompt_store=prompts,
         profile_store=profiles,
         llm_base_url="http://localhost:8000",
         profile_name="default",
+        model_name="custom-acquire-model",
     )
     third = bootstrap_analysis_defaults(
         prompt_store=prompts,
         profile_store=profiles,
         llm_base_url="http://localhost:9000",
         profile_name="updated",
+        model_name="custom-acquire-model",
     )
     assert first == second == third
     assert first.prompt_id == ACQUISITION_PROMPT_ID
     assert first.profile_id == ACQUISITION_PROFILE_ID
-    assert first.model_name == ACQUISITION_MODEL_NAME
+    assert first.model_name == "custom-acquire-model"
     assert prompts.get_latest_version(ACQUISITION_PROMPT_ID) is not None
     profile = profiles.get(ACQUISITION_PROFILE_ID)
     assert profile is not None
@@ -167,7 +169,9 @@ def test_compose_default_runtime_restores_paper_database_binding(tmp_path: Path)
     job_id = job_queue.enqueue("discover", None, None, {})
     papers = SimpleNamespace(
         db=paper_database,
-        settings=SimpleNamespace(llm=SimpleNamespace(default_profile="default")),
+        settings=SimpleNamespace(
+            llm=SimpleNamespace(default_profile="default", default_model="acquire-model-x")
+        ),
         prompt_store=prompt_store,
         profile_store=profile_store,
         job_queue=job_queue,
@@ -196,6 +200,7 @@ def test_compose_default_runtime_restores_paper_database_binding(tmp_path: Path)
     assert prompt_store.get_prompt(ACQUISITION_PROMPT_ID) is not None
     assert profile_store.get(ACQUISITION_PROFILE_ID) is not None
     assert [row["job_id"] for row in job_queue.list_jobs()] == [job_id]
+    assert runtime.analysis_defaults.model_name == "acquire-model-x"
 
     incompatible_db = tmp_path / "incompatible-nsqd.sqlite"
     with sqlite3.connect(incompatible_db) as connection:
@@ -225,7 +230,7 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
     papers = SimpleNamespace(
         settings=SimpleNamespace(
             data=SimpleNamespace(db_path=tmp_path / "app.sqlite"),
-            llm=SimpleNamespace(default_profile="default"),
+            llm=SimpleNamespace(default_profile="default", default_model="runtime-model-z"),
         ),
         candidate_store=SimpleNamespace(
             create_candidate=lambda fields: fields["candidate_id"],
@@ -258,6 +263,7 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
     assert isinstance(runtime.nsqd.ctx.bridge, PapersAcquisitionBridge)
     assert not isinstance(runtime.nsqd.ctx.bridge, NullPaperAcquisitionBridge)
     assert runtime.analysis_defaults.prompt_id == ACQUISITION_PROMPT_ID
+    assert runtime.analysis_defaults.model_name == "runtime-model-z"
     assert runtime.paper_runner.run_next(datetime(2024, 1, 1, tzinfo=UTC)) is False
     assert ran["count"] == 1
     assert runtime.nsqd.database.path == tmp_path / "nsqd.sqlite"

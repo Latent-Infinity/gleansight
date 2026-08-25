@@ -5,20 +5,20 @@ from pathlib import Path
 from typing import Any
 
 from nsqd.composition import NsqdContainer, build_container
-from nsqd.infra.papers_bridge import AnalysisDefaults, PapersAcquisitionBridge
+from nsqd.infra.papers_bridge import (
+    DRAFT_PARAPHRASE_PROMPT,
+    AnalysisDefaults,
+    PapersAcquisitionBridge,
+)
 from nsqd.ports import Clock
 from papers.app.use_cases.discovery import DiscoverCandidatesUseCase, ImportCandidateUseCase
 from papers.app.use_cases.pipeline import RunAnalysisUseCase
-from papers.config.settings import DEFAULT_QWEN_CHAT_MODEL
 
 ACQUISITION_PROMPT_ID = "nsqd-acquisition"
 ACQUISITION_PROMPT_VERSION_ID = "nsqd-acquisition-v1"
 ACQUISITION_PROFILE_ID = "nsqd-acquisition"
-ACQUISITION_MODEL_NAME = DEFAULT_QWEN_CHAT_MODEL
 MAX_MARKDOWN_BYTES = 10 * 1024 * 1024
-ACQUISITION_PROMPT_BODY = (
-    "Draft a one-paragraph mechanism paraphrase for the paper. Do not mark the draft as approved."
-)
+ACQUISITION_PROMPT_BODY = DRAFT_PARAPHRASE_PROMPT
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,7 @@ def bootstrap_analysis_defaults(
     profile_store: Any,
     llm_base_url: str,
     profile_name: str,
+    model_name: str,
 ) -> AnalysisDefaults:
     if prompt_store.get_prompt(ACQUISITION_PROMPT_ID) is None:
         prompt_store.create_prompt(ACQUISITION_PROMPT_ID, "NSQD acquisition draft")
@@ -65,7 +66,7 @@ def bootstrap_analysis_defaults(
     return AnalysisDefaults(
         prompt_id=ACQUISITION_PROMPT_ID,
         profile_id=ACQUISITION_PROFILE_ID,
-        model_name=ACQUISITION_MODEL_NAME,
+        model_name=_require_model_name(model_name),
         prompt_version_id=prompt_version_id,
     )
 
@@ -81,11 +82,13 @@ def compose_default_runtime(
 ) -> NsqdPaperRuntime:
     llm_settings = getattr(papers.settings, "llm", None)
     profile_name = str(getattr(llm_settings, "default_profile", None) or "default")
+    model_name = _require_model_name(getattr(llm_settings, "default_model", None))
     defaults = bootstrap_analysis_defaults(
         prompt_store=papers.prompt_store,
         profile_store=papers.profile_store,
         llm_base_url=llm_base_url,
         profile_name=profile_name,
+        model_name=model_name,
     )
     discover = DiscoverCandidatesUseCase(
         scholar_client=papers.scholar_client,
@@ -114,6 +117,9 @@ def compose_default_runtime(
         analysis_defaults=defaults,
         get_markdown=markdown_reader(getattr(papers, "blob_store", None)),
         candidate_lookup=papers.candidate_store,
+        llm_client=getattr(papers, "llm_client", None),
+        llm_profile={"base_url": llm_base_url},
+        draft_prompt=ACQUISITION_PROMPT_BODY,
     )
     nsqd = build_container(
         db_path=nsqd_db_path,
@@ -158,3 +164,9 @@ def markdown_reader(blob_store: Any) -> Any:
         return content.decode("utf-8")
 
     return get_markdown
+
+
+def _require_model_name(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("papers.settings.llm.default_model is required")
+    return value.strip()
