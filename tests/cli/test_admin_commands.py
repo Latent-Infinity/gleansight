@@ -22,12 +22,17 @@ class FakeRebuild:
 class FakeContainer:
     recover_jobs: FakeRecover
     rebuild_index: FakeRebuild
+    rebuild_fts: FakeRebuild
 
 
 def test_recover_jobs_command(monkeypatch) -> None:
     cli_app = importlib.import_module("papers.cli.app")
     runner = CliRunner()
-    container = FakeContainer(recover_jobs=FakeRecover(), rebuild_index=FakeRebuild())
+    container = FakeContainer(
+        recover_jobs=FakeRecover(),
+        rebuild_index=FakeRebuild(),
+        rebuild_fts=FakeRebuild(),
+    )
     monkeypatch.setattr(cli_app, "get_container", lambda: container)
 
     result = runner.invoke(cli_app.app, ["recover-jobs"])
@@ -39,10 +44,30 @@ def test_recover_jobs_command(monkeypatch) -> None:
 def test_rebuild_index_command(monkeypatch) -> None:
     cli_app = importlib.import_module("papers.cli.app")
     runner = CliRunner()
-    container = FakeContainer(recover_jobs=FakeRecover(), rebuild_index=FakeRebuild())
+    container = FakeContainer(
+        recover_jobs=FakeRecover(),
+        rebuild_index=FakeRebuild(),
+        rebuild_fts=FakeRebuild(),
+    )
     monkeypatch.setattr(cli_app, "get_container", lambda: container)
 
     result = runner.invoke(cli_app.app, ["rebuild-index"])
 
     assert result.exit_code == 0
     assert "Rebuilt vector index for 3 papers" in result.output
+
+
+def test_rebuild_fts_command(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    container = FakeContainer(
+        recover_jobs=FakeRecover(),
+        rebuild_index=FakeRebuild(),
+        rebuild_fts=FakeRebuild(),
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(cli_app.app, ["rebuild-fts"])
+
+    assert result.exit_code == 0
+    assert "Rebuilt title/abstract index for 3 papers" in result.output

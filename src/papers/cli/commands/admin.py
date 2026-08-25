@@ -19,3 +19,10 @@ def rebuild_index() -> None:
     container = cli_app.get_container()
     count = container.rebuild_index()
     cli_app.console.print(f"Rebuilt vector index for {count} papers")
+
+
+@app.command("rebuild-fts")
+def rebuild_fts() -> None:
+    container = cli_app.get_container()
+    count = container.rebuild_fts()
+    cli_app.console.print(f"Rebuilt title/abstract index for {count} papers")

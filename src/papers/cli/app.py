@@ -48,6 +48,7 @@ class CLIContainer:
     aggregate_extractions: use_cases.AggregateExtractionsUseCase
     recover_jobs: use_cases.RecoverStuckJobsUseCase
     rebuild_index: use_cases.RebuildVectorIndexUseCase
+    rebuild_fts: use_cases.RebuildTitleAbstractIndexUseCase
     synthesize_from_corpus: use_cases.SynthesizeFromCorpusUseCase
 
 
@@ -144,6 +145,9 @@ def get_container() -> CLIContainer:
             blob_store=base.blob_store,
             embedder=base.embedder,
             vector_index=base.vector_index,
+        ),
+        rebuild_fts=use_cases.RebuildTitleAbstractIndexUseCase(
+            rebuild=papers_fts.rebuild,
         ),
         synthesize_from_corpus=use_cases.SynthesizeFromCorpusUseCase(
             embedder=base.embedder,

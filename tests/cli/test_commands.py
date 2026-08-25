@@ -20,5 +20,6 @@ def test_cli_help_lists_commands() -> None:
         "aggregate",
         "recover-jobs",
         "rebuild-index",
+        "rebuild-fts",
     ]:
         assert command in result.output
