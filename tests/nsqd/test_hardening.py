@@ -135,6 +135,44 @@ def test_runner_logs_utc_job_transitions(tmp_path: Path, caplog: pytest.LogCaptu
     assert ("running", "succeeded") in transitions
 
 
+def test_run_job_fails_closed_when_claim_is_lost(tmp_path: Path) -> None:
+    from nsqd.app.use_cases import empty_smoke_snapshot_id
+
+    container = build_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        clock=FixedClock(AS_OF),
+    )
+    snapshot_id = empty_smoke_snapshot_id()
+    container.ctx.snapshots.commit(snapshot_id, [], schema_version=1)
+    container.queue.claim_job = lambda _job_id, _now: None  # type: ignore[method-assign]
+    with pytest.raises(RuntimeError, match="failed to claim"):
+        run_job(
+            container,
+            "map",
+            {
+                "snapshot_id": snapshot_id,
+                "domain_policy_id": "finance/1",
+                "snapshot_state": "smoke_only",
+            },
+            AS_OF,
+        )
+
+
+def test_dispatch_rejects_unknown_job_type(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from nsqd.runner import dispatch_job
+
+    container = build_container(
+        db_path=tmp_path / "nsqd.sqlite",
+        index_path=tmp_path / "corpus.lancedb",
+        clock=FixedClock(AS_OF),
+    )
+    with pytest.raises(ValueError, match="unsupported nsqd job type"):
+        dispatch_job(container, SimpleNamespace(type="not-a-job"))
+
+
 def test_run_skeleton_remains_intentionally_unconfigured_for_smoke(tmp_path: Path) -> None:
     result = run_skeleton(
         fixture_path=REPO_ROOT / "tests" / "fixtures" / "approved" / "nsqd" / "gamma-flow.yaml",
