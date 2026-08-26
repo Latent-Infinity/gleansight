@@ -111,6 +111,65 @@ def test_viability_keeps_presence_stubs() -> None:
     assert score_mech(filled, domain_pack="optimization/1") == 0
 
 
+def test_alg_family_freezes_stay_tunable() -> None:
+    from nsqd.domain.ablation import alg_family_decisions, freeze_is_approved
+    from nsqd.domain.acquisition import (
+        CANDIDATES_PER_BATCH,
+        QUERY_BATCH_LIMIT,
+        RECHECK_CYCLE_LIMIT,
+        STAGED_IMPORT_LIMIT,
+    )
+    from nsqd.domain.novelty import NOVELTY_BIN_EDGES, NOVELTY_K, NOVELTY_THRESHOLD_TAU
+    from nsqd.domain.status import DEFAULT_DENSITY_CUT, STATUS_WINDOW_DAYS
+
+    rows = alg_family_decisions()
+    assert [row.family_id for row in rows] == [
+        "ALG.AXES",
+        "ALG.K",
+        "ALG.NOVELTY_BINS",
+        "ALG.NOV.TAU",
+        "ALG.STATUS.THRESHOLDS",
+        "ALG.STATUS.WINDOW",
+        "ALG.VIABILITY",
+        "ALG.ACQUISITION_BUDGET",
+    ]
+    assert all(row.freeze_approved is False for row in rows)
+    by_id = {row.family_id: row for row in rows}
+    assert by_id["ALG.NOV.TAU"].outcome == "unset"
+    assert {row.family_id for row in rows if row.outcome == "approved_default_tunable"} == {
+        "ALG.AXES",
+        "ALG.K",
+        "ALG.NOVELTY_BINS",
+        "ALG.STATUS.THRESHOLDS",
+        "ALG.STATUS.WINDOW",
+        "ALG.VIABILITY",
+        "ALG.ACQUISITION_BUDGET",
+    }
+    assert by_id["ALG.K"].current_default == str(NOVELTY_K) == "5"
+    assert by_id["ALG.NOVELTY_BINS"].current_default == "/".join(
+        str(edge) for edge in NOVELTY_BIN_EDGES
+    )
+    assert NOVELTY_THRESHOLD_TAU is None
+    assert by_id["ALG.STATUS.THRESHOLDS"].current_default == str(DEFAULT_DENSITY_CUT) == "3"
+    assert by_id["ALG.STATUS.WINDOW"].current_default == f"{STATUS_WINDOW_DAYS}-day"
+    assert by_id["ALG.ACQUISITION_BUDGET"].current_default == (
+        f"{QUERY_BATCH_LIMIT}/{CANDIDATES_PER_BATCH}/{STAGED_IMPORT_LIMIT}/{RECHECK_CYCLE_LIMIT}"
+    )
+    assert freeze_is_approved("ALG.K") is False
+    with pytest.raises(ValueError, match="unknown ALG family"):
+        freeze_is_approved("ALG.NOT_A_FAMILY")
+
+
+def test_alg_freeze_packet_updates_normative_status() -> None:
+    contract = Path("docs/algorithm-contract-nsqd.md").read_text(encoding="utf-8")
+    freeze_packet = Path("docs/ablations/alg-freeze.md").read_text(encoding="utf-8")
+
+    assert "probe review completed through 2026-08-26" in contract
+    assert "`ALG.FREEZE`" in contract
+    assert "Packet 3" in freeze_packet
+    assert "Freeze is **not** approved" in freeze_packet
+
+
 def test_alg_novelty_bins_on_calibration_pair() -> None:
     gamma = _load_card("gamma-flow.yaml")
     mechanism_free = _load_card("mechanism-free.yaml")

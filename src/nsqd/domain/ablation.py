@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 
-from nsqd.domain.status import CellStatus, cell_status
+from nsqd.domain.acquisition import (
+    CANDIDATES_PER_BATCH,
+    QUERY_BATCH_LIMIT,
+    RECHECK_CYCLE_LIMIT,
+    STAGED_IMPORT_LIMIT,
+)
+from nsqd.domain.novelty import NOVELTY_BIN_EDGES, NOVELTY_K
+from nsqd.domain.status import DEFAULT_DENSITY_CUT, STATUS_WINDOW_DAYS, CellStatus, cell_status
 
 AXIS_KEEP_SUM = 4
 DENSITY_CUTS = (2, 3, 5)
-DEFAULT_DENSITY_CUT = 3
 
 
 @dataclass(frozen=True)
@@ -192,3 +198,89 @@ def select_density_cut(agreements: dict[int, int]) -> int:
 
 def viability_keeps_presence_stubs() -> bool:
     return True
+
+
+FreezeOutcome = Literal["approved_default_tunable", "frozen", "deferred", "unset", "rejected"]
+
+
+@dataclass(frozen=True)
+class AlgFamilyDecision:
+    family_id: str
+    outcome: FreezeOutcome
+    freeze_approved: bool
+    current_default: str
+    reopen: str
+
+
+def alg_family_decisions() -> tuple[AlgFamilyDecision, ...]:
+    return (
+        AlgFamilyDecision(
+            family_id="ALG.AXES",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default="finance v1 mechanism × target × horizon",
+            reopen="a second pack needs a different archive triple",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.K",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default=str(NOVELTY_K),
+            reopen="production-valid calibration repeat of leave-one-out Spearman",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.NOVELTY_BINS",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default="/".join(str(edge) for edge in NOVELTY_BIN_EDGES),
+            reopen="labeled novelty-term disagreements on calibration or production_valid",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.NOV.TAU",
+            outcome="unset",
+            freeze_approved=False,
+            current_default="unset_report_only",
+            reopen="labeled near-duplicate vs novel pairs for packet 2b",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.STATUS.THRESHOLDS",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default=str(DEFAULT_DENSITY_CUT),
+            reopen="production-valid map labels disagree with density cut 3",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.STATUS.WINDOW",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default=f"{STATUS_WINDOW_DAYS}-day",
+            reopen=(
+                "production map looks uniformly Stalled or uniformly Active, "
+                "or calendar-month semantics are chosen"
+            ),
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.VIABILITY",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default="0/5 presence stubs",
+            reopen="a recorded 1–4 rubric is accepted",
+        ),
+        AlgFamilyDecision(
+            family_id="ALG.ACQUISITION_BUDGET",
+            outcome="approved_default_tunable",
+            freeze_approved=False,
+            current_default=(
+                f"{QUERY_BATCH_LIMIT}/{CANDIDATES_PER_BATCH}/"
+                f"{STAGED_IMPORT_LIMIT}/{RECHECK_CYCLE_LIMIT}"
+            ),
+            reopen="production acquisition logs or a changed scholar page contract",
+        ),
+    )
+
+
+def freeze_is_approved(family_id: str) -> bool:
+    for row in alg_family_decisions():
+        if row.family_id == family_id:
+            return row.freeze_approved
+    raise ValueError(f"unknown ALG family: {family_id}")
