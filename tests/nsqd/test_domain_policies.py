@@ -11,7 +11,7 @@ from nsqd.domain.card import card_decision, corpus_ingest_rejection, missing_car
 from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
 from nsqd.domain.grounding import classify_local
-from nsqd.domain.novelty import mean_cosine_distance, novelty_term
+from nsqd.domain.novelty import NOVELTY_BIN_EDGES, mean_cosine_distance, novelty_term
 from nsqd.domain.snapshot import normalize_source, record_content_hash, snapshot_id
 from nsqd.domain.status import cell_status, record_lifecycle
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
@@ -647,7 +647,7 @@ def test_grounding_classes_are_deterministic() -> None:
     klass, conf, _ = classify_local(
         exact_source_hit=False,
         terminology_hit=False,
-        evidence=0.10,
+        evidence=NOVELTY_BIN_EDGES[0] - 0.01,
         code_or_benchmark_hit=False,
     )
     assert klass == "related_partial"
@@ -655,7 +655,7 @@ def test_grounding_classes_are_deterministic() -> None:
     klass, conf, _ = classify_local(
         exact_source_hit=False,
         terminology_hit=False,
-        evidence=0.15,
+        evidence=NOVELTY_BIN_EDGES[0],
         code_or_benchmark_hit=False,
     )
     assert klass == "orthogonal"

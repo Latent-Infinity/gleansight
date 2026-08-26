@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from nsqd.domain.novelty import NOVELTY_BIN_EDGES
+
 GroundingClass = Literal[
     "already_done",
     "renamed",
@@ -41,7 +43,7 @@ def classify_local(
     layers.append(LayerResult(2, "terminology variants", False, "no variant hit", None, None))
     if evidence is None:
         layers.append(LayerResult(3, "embedding k-NN", False, "evidence undefined", None, None))
-    elif evidence < 0.15:
+    elif evidence < NOVELTY_BIN_EDGES[0]:
         layers.append(LayerResult(3, "embedding k-NN", True, None, "related_partial", 0.6))
         return "related_partial", 0.6, layers
     else:

@@ -44,6 +44,7 @@ from nsqd.domain.harvest import (
     harvest_records_from_payload,
 )
 from nsqd.domain.novelty import (
+    NOVELTY_K,
     NOVELTY_THRESHOLD_TAU,
     UNSET_TAU_SEMANTICS,
     SnapshotState,
@@ -761,7 +762,7 @@ class GroundUseCase:
                 hits = self.index.query(
                     snapshot_id,
                     query,
-                    k=5,
+                    k=NOVELTY_K,
                     allowed_record_ids=allowed_ids,
                 )
                 evidence = mean_cosine_distance([hit.distance for hit in hits])

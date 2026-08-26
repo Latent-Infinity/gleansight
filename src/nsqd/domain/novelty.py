@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from nsqd.domain.grounding import GroundingClass
+if TYPE_CHECKING:
+    from nsqd.domain.grounding import GroundingClass
 
 SnapshotState = Literal["smoke_only", "calibration", "production_valid"]
 NOVELTY_THRESHOLD_TAU: float | None = None
 NOVELTY_BIN_EDGES = (0.15, 0.30, 0.45, 0.60)
+NOVELTY_K = 5
 UNSET_TAU_SEMANTICS = "unset_report_only"
 
 
@@ -36,13 +38,13 @@ def novelty_term(
         return 0
     if evidence is None:
         return 0
-    if evidence < 0.15:
+    if evidence < NOVELTY_BIN_EDGES[0]:
         return 1
-    if evidence < 0.30:
+    if evidence < NOVELTY_BIN_EDGES[1]:
         return 2
-    if evidence < 0.45:
+    if evidence < NOVELTY_BIN_EDGES[2]:
         return 3
-    if evidence < 0.60:
+    if evidence < NOVELTY_BIN_EDGES[3]:
         return 4
     return 5
 
