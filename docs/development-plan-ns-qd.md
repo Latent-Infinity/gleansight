@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.15 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.16 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
@@ -17,7 +17,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection upsert snapshot-scoped paraphrase vectors. Acquisition drafts and shortlists use the configured Ollama chat model and cannot self-approve. `papers analyze` / `analyze-project` omit `--model-name` to `settings.llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`). Calibration ablation probes are human-validated and remain not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
-**Outstanding Blockers**: None for continuing Operator A / acquisition work. Packet 1a: 730-day overridable window. Packet 2a: `τ` unset/report-only. Remaining optional decisions: ALG freezes, Operators B–G, calendar-month window semantics, and executable `τ` (packet 2b).
+**Outstanding Blockers**: None for continuing Operator A / acquisition work. Packets 1a/2a/3 accepted (730-day window, `τ` unset, ALG defaults tunable). Remaining optional decisions: Operators B–G, calendar-month window semantics, and executable `τ` (packet 2b).
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -83,6 +83,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.14 | 2026-08-25 | `papers rebuild-fts` rebuilds title/abstract search from `papers`; harvest/projection/runner fail-closed paths covered. Four-command gate: 1155 passed, 1 skipped, 92.74%; dedicated NSQD: 538 passed, 94.11%. |
 | 1.6.15 | 2026-08-25 | Status recency window v1 is 730 days, overridable with `--window-days`; 12/36 day-length probe filed and not frozen. Four-command gate: 1162 passed, 1 skipped, 92.77%; dedicated NSQD: 545 passed, 94.32%. |
 | 1.6.16 | 2026-08-25 | Novelty `τ` is unset/report-only; score stamps `tau: null`; low evidence stays term 1. Four-command gate: 1163 passed, 1 skipped, 92.76%; dedicated NSQD: 547 passed, 94.30%. |
+| 1.6.17 | 2026-08-26 | Packet 3: ALG families stay `approved_default_tunable`; no freeze. Four-command gate: 1165 passed, 1 skipped, 92.77%; dedicated NSQD: 549 passed, 94.32%. |
 
 ---
 
@@ -812,6 +813,7 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 | `ALG.STATUS.WINDOW` | yes, 2026-08-25 (1a) | 730-day v1 “24 months”; `--window-days` override | no; tunable; 12/36 table filed |
 | `ALG.VIABILITY` | yes, 2026-08-24 | keep 0/5 presence stubs | no; tunable |
 | `ALG.ACQUISITION_BUDGET` | yes, 2026-08-25 | keep 3 batches/pass / 25 candidates/call / 3 imports/pass / 2 approved rechecks as compatibility defaults | no; `approved_default_tunable` |
+| `ALG.FREEZE` | yes, 2026-08-26 (packet 3) | keep all numeric/default families tunable; `τ` unset | **no** |
 
 - [x] `ALG.K` math probe: Spearman ρ of leave-one-out novelty ranks at k ∈ {3,5,10} vs k=5 on a constructed `calibration` snapshot (`docs/ablations/alg-k.md`). k=3 meets ρ ≥ 0.90; k=10 does not. Production k remains 5 and is **not frozen**. Synthetic unit vectors only; not DATA-NSQD-03.
 - [x] `ALG.AXES` LLM probe: keep finance v1 mechanism × target × horizon; reject oversized and non-illuminable triples (`docs/ablations/alg-axes.md`)
@@ -821,6 +823,7 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 - [x] `ALG.STATUS.WINDOW` packet 1a: 730-day default, `--window-days` override; 12/36 day lengths filed (`docs/ablations/alg-status-window.md`)
 - [x] `ALG.VIABILITY` keeps 0/5 presence stubs; no 1–4 intermediates (`docs/ablations/alg-viability.md`)
 - [x] `ALG.ACQUISITION_BUDGET` math probe: dense first-page useful-at-rank-2 has smallest winner (1, 2, 5); page-2 winners require one candidate per discover call and spare import capacity (`docs/ablations/alg-acquisition-budget.md`). Current 3 / 25 / 3 / 2 is an approved tunable compatibility default and an explicit page-2 counterexample, not an optimum or freeze.
+- [x] `ALG.FREEZE` packet 3: freeze-now vs keep-tunable; all families `approved_default_tunable` except `τ` unset (`docs/ablations/alg-freeze.md`)
 
 **Close note (2026-08-24):** Human validation is complete for the ALG.K math artifact and the four recorded LLM prompts/results. The review keeps the current defaults without freezing them: axes remain the finance v1 triple, k remains 5, novelty edges remain 0.15 / 0.30 / 0.45 / 0.60, the density cut remains 3, and viability remains 0/5 presence stubs. At this close, the 24-month status window had not yet been reviewed; packet 1a accepted the 730-day overridable default on 2026-08-25 without freezing it. Novelty threshold `τ` remains unset, and no second labeling panel is required. Final four-command gate evidence for the completed close is 1131 passed, 1 skipped, 92.28% coverage; format, lint, and type checks passed.
 
@@ -834,7 +837,7 @@ Review in dependency order:
 
 1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Calendar-month subtraction remains a later semantics packet, not the default.
 2. **Novelty threshold `τ`:** packet 2a accepted — **unset / report-only**. Evidence is stamped; the gate uses the discrete novelty term and does not extra-kill on a continuous cutoff. Packet 2b (0.15 / 0.30 / 0.45 / 0.60 as executable τ) waits on labeled near-duplicate vs novel pairs.
-3. **Existing ALG freezes:** review one family per packet and compare only freeze now versus keep tunable. Existing constructed/synthetic probes support current defaults, not freeze; production-valid or human-accepted calibration repeats are the reopen evidence.
+3. **Existing ALG freezes:** packet 3 accepted — every numeric/default family is `approved_default_tunable`; `τ` stays `unset`. No family is frozen. Reopen freeze only after a production-valid or human-accepted calibration repeat for that family (`docs/ablations/alg-freeze.md`).
 4. **Operators B–G:** keep all rejected by runtime until each has a normative contract, fixtures, TDD implementation, evidence packet, and separate activation approval. Candidate order is B → E → C → D → F → G. E waits on `τ` semantics if it uses novelty; F waits on axis-policy clarity; G waits on an approved failed-experiment corpus.
 
 Every packet ends with explicit sign-off on scope, current default/state, `approved_default_tunable` versus `frozen`, evidence sufficiency, reopen trigger, and exact downstream authorization. Operator packets additionally choose deferred, experimental/off-by-default, or supported; they never relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
