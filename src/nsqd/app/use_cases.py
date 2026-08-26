@@ -44,7 +44,10 @@ from nsqd.domain.harvest import (
     harvest_records_from_payload,
 )
 from nsqd.domain.novelty import (
+    NOVELTY_THRESHOLD_TAU,
+    UNSET_TAU_SEMANTICS,
     SnapshotState,
+    apply_novelty_threshold,
     mean_cosine_distance,
     novelty_term,
     require_snapshot_state,
@@ -900,10 +903,15 @@ class ScoreUseCase:
         validated_snapshot_state = _require_snapshot_state(snapshot_state)
         candidate = artifact["candidate"]
         evidence = grounding.get("evidence")
-        nov = novelty_term(
-            evidence=evidence if isinstance(evidence, float) or evidence is None else None,
-            snapshot_state=validated_snapshot_state,
-            grounding_class=grounding["grounding_class"],
+        reported_evidence = evidence if isinstance(evidence, float) or evidence is None else None
+        nov = apply_novelty_threshold(
+            novelty_term(
+                evidence=reported_evidence,
+                snapshot_state=validated_snapshot_state,
+                grounding_class=grounding["grounding_class"],
+            ),
+            evidence=reported_evidence,
+            tau=NOVELTY_THRESHOLD_TAU,
         )
         policy_id = require_domain_policy_id(candidate)
         policy = get_policy(policy_id)
@@ -944,6 +952,8 @@ class ScoreUseCase:
         evaluated["novelty"] = {
             "evidence": evidence,
             "term": nov,
+            "tau": NOVELTY_THRESHOLD_TAU,
+            "tau_semantics": UNSET_TAU_SEMANTICS,
             "snapshot_id": snapshot_id,
             "snapshot_state": validated_snapshot_state,
             "corpus_version": corpus_version,
@@ -954,6 +964,7 @@ class ScoreUseCase:
         return {
             "evidence": evidence,
             "nov": nov,
+            "tau": NOVELTY_THRESHOLD_TAU,
             "mech": mech,
             "fals": fals,
             "dpred": dpred,

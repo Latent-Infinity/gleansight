@@ -153,6 +153,9 @@ def test_project_indexes_gamma_fragility_and_scores_gamma_flow() -> None:
     stored_artifact = candidates.get_artifact(artifact_hash)
     assert stored_artifact is not None
     assert stored_artifact["novelty"]["measurement_stamp"] == grounding["measurement_stamp"]
+    assert stored_artifact["novelty"]["tau"] is None
+    assert stored_artifact["novelty"]["tau_semantics"] == "unset_report_only"
+    assert scored["tau"] is None
     mechanism_free = _load_yaml("mechanism-free.yaml")
     assert score_mech(mechanism_free, domain_pack="finance/1") == 0
 
