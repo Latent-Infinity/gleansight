@@ -7,6 +7,9 @@ from typing import Literal
 from nsqd.domain.grounding import GroundingClass
 
 SnapshotState = Literal["smoke_only", "calibration", "production_valid"]
+NOVELTY_THRESHOLD_TAU: float | None = None
+NOVELTY_BIN_EDGES = (0.15, 0.30, 0.45, 0.60)
+UNSET_TAU_SEMANTICS = "unset_report_only"
 
 
 def require_snapshot_state(snapshot_state: str) -> SnapshotState:
@@ -42,6 +45,21 @@ def novelty_term(
     if evidence < 0.60:
         return 4
     return 5
+
+
+def apply_novelty_threshold(
+    term: int,
+    *,
+    evidence: float | None,
+    tau: float | None = NOVELTY_THRESHOLD_TAU,
+) -> int:
+    if tau is None:
+        return term
+    if isinstance(tau, bool) or not isinstance(tau, (int, float)) or float(tau) < 0:
+        raise ValueError("tau must be a non-negative number or unset")
+    if evidence is not None and evidence < float(tau):
+        return 0
+    return term
 
 
 def mean_cosine_distance(distances: list[float]) -> float | None:

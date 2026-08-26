@@ -149,6 +149,29 @@ def test_novelty_term_bins(
     )
 
 
+def test_novelty_threshold_tau_is_unset_and_report_only() -> None:
+    from nsqd.domain.novelty import (
+        NOVELTY_THRESHOLD_TAU,
+        apply_novelty_threshold,
+        novelty_term,
+    )
+
+    assert NOVELTY_THRESHOLD_TAU is None
+    term = novelty_term(
+        evidence=0.0,
+        snapshot_state="calibration",
+        grounding_class="orthogonal",
+    )
+    assert term == 1
+    assert apply_novelty_threshold(term, evidence=0.0) == 1
+    assert apply_novelty_threshold(term, evidence=0.0, tau=None) == 1
+    assert apply_novelty_threshold(term, evidence=0.0, tau=0.15) == 0
+    with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
+        apply_novelty_threshold(term, evidence=0.0, tau=-0.1)
+    with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
+        apply_novelty_threshold(term, evidence=0.0, tau=True)
+
+
 def test_viability_zero_paths_and_finance_presence() -> None:
     empty = {
         field: ""
