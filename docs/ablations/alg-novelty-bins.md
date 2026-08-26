@@ -26,7 +26,7 @@ Both hold on calibration: gamma-flow `nov ≥ 1` (identical neighbor ⇒ evidenc
 
 - **Validated:** yes, 2026-08-24.
 - **Scope reviewed:** recorded prompt, constructed calibration inputs, and runtime-backed result.
-- **Decision:** keep the 0.15 / 0.30 / 0.45 / 0.60 edges as current defaults; do not freeze the edges or set novelty threshold `τ`.
+- **Decision:** keep the 0.15 / 0.30 / 0.45 / 0.60 edges as current defaults; do not freeze the edges. Packet 2a records `τ` as unset/report-only (`docs/ablations/alg-novelty-tau.md`).
 
 ## Freeze status
 
