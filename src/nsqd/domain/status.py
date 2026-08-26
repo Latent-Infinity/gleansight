@@ -24,6 +24,7 @@ RecordLifecycle = Literal["invalid", "future_work", "attempted", "current", "sta
 CELL_STATUS_VALUES = frozenset(get_args(CellStatus))
 STATUS_WINDOW_DAYS = 730
 DEFAULT_STATUS_WINDOW = timedelta(days=STATUS_WINDOW_DAYS)
+DEFAULT_DENSITY_CUT = 3
 
 
 def _require_utc_as_of(as_of: datetime) -> None:
@@ -111,7 +112,7 @@ def cell_status(
     disagreement: bool = False,
     method_claims_evaluation: bool = False,
     window: timedelta = DEFAULT_STATUS_WINDOW,
-    density_cut: int = 3,
+    density_cut: int = DEFAULT_DENSITY_CUT,
 ) -> CellStatus:
     _require_utc_as_of(as_of)
     require_snapshot_state(snapshot_state)
