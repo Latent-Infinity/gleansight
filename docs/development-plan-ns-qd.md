@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.14 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.15 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
@@ -17,7 +17,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection upsert snapshot-scoped paraphrase vectors. Acquisition drafts and shortlists use the configured Ollama chat model and cannot self-approve. `papers analyze` / `analyze-project` omit `--model-name` to `settings.llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`). Calibration ablation probes are human-validated and remain not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
-**Outstanding Blockers**: None for continuing Operator A / acquisition work. Packet 1a: v1 “24 months” is 730 days and overridable via `window_days`. Remaining optional decisions: `τ` semantics, ALG freezes, Operators B–G, and calendar-month window semantics.
+**Outstanding Blockers**: None for continuing Operator A / acquisition work. Packet 1a: 730-day overridable window. Packet 2a: `τ` unset/report-only. Remaining optional decisions: ALG freezes, Operators B–G, calendar-month window semantics, and executable `τ` (packet 2b).
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -82,6 +82,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.13 | 2026-08-24 | Acquisition-budget math probe on constructed searchable-failure worlds; keep 3 / 25 / 3 / 2; not frozen. Four-command gate: 1145 passed, 1 skipped, 92.35%; dedicated NSQD: 531 passed, 93.47%. |
 | 1.6.14 | 2026-08-25 | `papers rebuild-fts` rebuilds title/abstract search from `papers`; harvest/projection/runner fail-closed paths covered. Four-command gate: 1155 passed, 1 skipped, 92.74%; dedicated NSQD: 538 passed, 94.11%. |
 | 1.6.15 | 2026-08-25 | Status recency window v1 is 730 days, overridable with `--window-days`; 12/36 day-length probe filed and not frozen. Four-command gate: 1162 passed, 1 skipped, 92.77%; dedicated NSQD: 545 passed, 94.32%. |
+| 1.6.16 | 2026-08-25 | Novelty `τ` is unset/report-only; score stamps `tau: null`; low evidence stays term 1. Four-command gate: 1163 passed, 1 skipped, 92.76%; dedicated NSQD: 547 passed, 94.30%. |
 
 ---
 
@@ -805,7 +806,8 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 | --- | --- | --- | --- |
 | `ALG.AXES` | yes, 2026-08-24 | keep finance v1 mechanism × target × horizon | no; tunable |
 | `ALG.K` | yes, 2026-08-24 | keep k=5 | no; tunable pending production calibration repeat |
-| `ALG.NOVELTY_BINS` | yes, 2026-08-24 | keep 0.15 / 0.30 / 0.45 / 0.60 edges | no; tunable; `τ` remains unset |
+| `ALG.NOVELTY_BINS` | yes, 2026-08-24 | keep 0.15 / 0.30 / 0.45 / 0.60 edges | no; tunable |
+| `ALG.NOV.TAU` | yes, 2026-08-25 (2a) | unset / report-only | n/a; 2b not authorized |
 | `ALG.STATUS.THRESHOLDS` | yes, 2026-08-24 | keep density cut 3 | no; tunable |
 | `ALG.STATUS.WINDOW` | yes, 2026-08-25 (1a) | 730-day v1 “24 months”; `--window-days` override | no; tunable; 12/36 table filed |
 | `ALG.VIABILITY` | yes, 2026-08-24 | keep 0/5 presence stubs | no; tunable |
@@ -814,6 +816,7 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 - [x] `ALG.K` math probe: Spearman ρ of leave-one-out novelty ranks at k ∈ {3,5,10} vs k=5 on a constructed `calibration` snapshot (`docs/ablations/alg-k.md`). k=3 meets ρ ≥ 0.90; k=10 does not. Production k remains 5 and is **not frozen**. Synthetic unit vectors only; not DATA-NSQD-03.
 - [x] `ALG.AXES` LLM probe: keep finance v1 mechanism × target × horizon; reject oversized and non-illuminable triples (`docs/ablations/alg-axes.md`)
 - [x] `ALG.NOVELTY_BINS` on constructed calibration: gamma-flow `nov ≥ 1`; mechanism-free `mech = 0`; smoke still forces `nov = 0` (`docs/ablations/alg-novelty-bins.md`)
+- [x] `ALG.NOV.TAU` packet 2a: unset/report-only; score stamps `tau: null`; evidence 0.0 stays term 1 (`docs/ablations/alg-novelty-tau.md`)
 - [x] `ALG.STATUS.THRESHOLDS` LLM-labeled 10 cells: density cut 3 wins 10/10 vs 2 (9/10) and 5 (8/10); keep 3 (`docs/ablations/alg-status.md`)
 - [x] `ALG.STATUS.WINDOW` packet 1a: 730-day default, `--window-days` override; 12/36 day lengths filed (`docs/ablations/alg-status-window.md`)
 - [x] `ALG.VIABILITY` keeps 0/5 presence stubs; no 1–4 intermediates (`docs/ablations/alg-viability.md`)
@@ -830,7 +833,7 @@ Keep calibration, freeze, and operator activation as separate approvals. Each pa
 Review in dependency order:
 
 1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Calendar-month subtraction remains a later semantics packet, not the default.
-2. **Novelty threshold `τ`:** first choose semantics from unset/report-only, raw-evidence threshold, or novelty-term threshold. Only if an executable threshold is approved, compare bin-aligned values 0.15 / 0.30 / 0.45 / 0.60 on human-reviewed novelty decisions.
+2. **Novelty threshold `τ`:** packet 2a accepted — **unset / report-only**. Evidence is stamped; the gate uses the discrete novelty term and does not extra-kill on a continuous cutoff. Packet 2b (0.15 / 0.30 / 0.45 / 0.60 as executable τ) waits on labeled near-duplicate vs novel pairs.
 3. **Existing ALG freezes:** review one family per packet and compare only freeze now versus keep tunable. Existing constructed/synthetic probes support current defaults, not freeze; production-valid or human-accepted calibration repeats are the reopen evidence.
 4. **Operators B–G:** keep all rejected by runtime until each has a normative contract, fixtures, TDD implementation, evidence packet, and separate activation approval. Candidate order is B → E → C → D → F → G. E waits on `τ` semantics if it uses novelty; F waits on axis-policy clarity; G waits on an approved failed-experiment corpus.
 
