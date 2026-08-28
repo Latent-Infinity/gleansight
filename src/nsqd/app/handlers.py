@@ -16,6 +16,7 @@ from nsqd.app.use_cases import (
     RescoreUseCase,
     ScoreUseCase,
 )
+from nsqd.domain.diverge import DEFAULT_ENABLED_OPERATORS
 from nsqd.domain.policy import DomainPolicy
 from nsqd.domain.status import require_status_window_days
 from nsqd.ports import (
@@ -56,6 +57,7 @@ class NsqdHandlerContext:
     bridge: PaperAcquisitionBridge | None = None
     policies: Mapping[str, DomainPolicy] | None = None
     embedder: ParaphraseEmbedder | None = None
+    enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS
 
 
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
@@ -128,7 +130,12 @@ def handle_diverge(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
     cell_statuses = payload.get("cell_statuses")
     if "cell_statuses" in payload and not isinstance(cell_statuses, dict):
         raise ValueError("cell_statuses must be a mapping")
-    digest = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
+    digest = DivergeUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        clock=ctx.clock,
+        enabled_operators=ctx.enabled_operators,
+    ).run(
         candidate=payload["candidate"],
         generator_run_id=str(payload["generator_run_id"]),
         axiom=str(axiom) if axiom is not None else None,

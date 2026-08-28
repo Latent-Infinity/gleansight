@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from nsqd.app.handlers import NsqdHandlerContext
+from nsqd.domain.diverge import DEFAULT_ENABLED_OPERATORS, require_enabled_operators
 from nsqd.domain.policy import POLICIES
 from nsqd.infra.lancedb.index import LanceDBCorpusIndex
 from nsqd.infra.piccolo.stores import (
@@ -58,7 +59,9 @@ def build_container(
     paper_hybrid_search: HybridPaperSearch | None = None,
     paper_bridge: PaperAcquisitionBridge | None = None,
     embedder: ParaphraseEmbedder | None = None,
+    enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS,
 ) -> NsqdContainer:
+    allowlist = require_enabled_operators(enabled_operators)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
     database = PiccoloDatabase(db_path, bind_on_init=False)
@@ -95,6 +98,7 @@ def build_container(
         bridge=paper_bridge if paper_bridge is not None else NullPaperAcquisitionBridge(),
         policies=POLICIES,
         embedder=embedder,
+        enabled_operators=allowlist,
     )
     return NsqdContainer(
         clock=resolved_clock,
