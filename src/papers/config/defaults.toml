@@ -26,6 +26,9 @@ require_open_access = true  # Only search for papers with open access PDFs (ArXi
 [ui]
 search_max_results = 10
 
+[nsqd]
+enabled_operators = ["A"]
+
 [pdf]
 unpaywall_email = ""  # Email for Unpaywall API (env: UNPAYWALL_EMAIL)
 download_rate_limit_per_second = 2.0  # Max download requests per second

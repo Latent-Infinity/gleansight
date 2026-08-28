@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from papers.config.settings import LLMSettings, load_settings
+from papers.config.settings import LLMSettings, NsqdSettings, load_settings
 from papers.domain.errors import ConfigurationError
 
 
@@ -60,6 +60,7 @@ def test_packaged_defaults_toml_loads() -> None:
     assert settings.llm.default_model == "qwen3.6:35b-a3b-q4_K_M"
     assert settings.data.db_path.name == "app.sqlite"
     assert settings.scholar.rate_limit_per_second == 1
+    assert settings.nsqd.enabled_operators == ("A",)
 
 
 def test_load_settings_missing_file_raises(tmp_path: Path) -> None:
@@ -86,6 +87,59 @@ model = "sentence-transformers/all-mpnet-base-v2"
     )
 
     assert settings.embeddings.model == "sentence-transformers/all-mpnet-base-v2"
+
+
+def test_load_settings_can_allowlist_operator_b(tmp_path: Path) -> None:
+    defaults_path = tmp_path / "defaults.toml"
+    override_path = tmp_path / "override.toml"
+    _write_defaults(defaults_path)
+    override_path.write_text(
+        """
+[nsqd]
+enabled_operators = ["A", "B"]
+""".strip()
+    )
+
+    settings = load_settings(
+        defaults_path=defaults_path,
+        override_path=override_path,
+        base_dir=tmp_path,
+    )
+
+    assert settings.nsqd.enabled_operators == ("A", "B")
+
+
+@pytest.mark.parametrize(
+    "value",
+    (
+        {"A": True, "B": True},
+        b"AB",
+        ["A", 2],
+        ["A", " "],
+    ),
+)
+def test_nsqd_settings_rejects_malformed_operator_allowlists(value: object) -> None:
+    with pytest.raises(ValueError, match="must be a list of operator ids"):
+        NsqdSettings.model_validate({"enabled_operators": value})
+
+
+def test_load_settings_rejects_operator_inline_table(tmp_path: Path) -> None:
+    defaults_path = tmp_path / "defaults.toml"
+    override_path = tmp_path / "override.toml"
+    _write_defaults(defaults_path)
+    override_path.write_text(
+        """
+[nsqd]
+enabled_operators = { A = true, B = true }
+""".strip()
+    )
+
+    with pytest.raises(ConfigurationError, match="enabled_operators must be a list"):
+        load_settings(
+            defaults_path=defaults_path,
+            override_path=override_path,
+            base_dir=tmp_path,
+        )
 
 
 def test_load_settings_scholar_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

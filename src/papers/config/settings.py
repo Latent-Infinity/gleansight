@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tomllib
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -131,6 +132,24 @@ class PdfSettings(BaseModel):
         return value if value else ""
 
 
+class NsqdSettings(BaseModel):
+    enabled_operators: tuple[str, ...] = ("A",)
+
+    @field_validator("enabled_operators", mode="before")
+    @classmethod
+    def _operator_ids(cls, value: Any) -> tuple[str, ...]:
+        if value is None:
+            return ("A",)
+        if isinstance(value, (str, bytes, Mapping)) or not isinstance(value, Sequence):
+            raise ValueError("enabled_operators must be a list of operator ids")
+        if any(not isinstance(item, str) for item in value):
+            raise ValueError("enabled_operators must be a list of operator ids")
+        items = tuple(item.strip() for item in value)
+        if any(not item for item in items):
+            raise ValueError("enabled_operators must be a list of operator ids")
+        return items
+
+
 class Settings(BaseModel):
     data: DataPaths
     embeddings: EmbeddingSettings
@@ -138,6 +157,7 @@ class Settings(BaseModel):
     scholar: ScholarSettings
     ui: UISettings
     pdf: PdfSettings = Field(default_factory=PdfSettings)
+    nsqd: NsqdSettings = Field(default_factory=NsqdSettings)
 
 
 @dataclass(frozen=True)
