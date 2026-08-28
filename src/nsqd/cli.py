@@ -13,6 +13,7 @@ import yaml
 from nsqd.app.use_cases import RankArchiveUseCase
 from nsqd.composition import build_container, build_local_ollama_embedder
 from nsqd.domain.coverage import RankGuardBlocked
+from nsqd.domain.diverge import enabled_operators_from_settings
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.status import STATUS_WINDOW_DAYS
@@ -137,10 +138,12 @@ def project(
 
 
 def _container(db: Path, index: Path, config: Path | None = None) -> Any:
+    resolved_config = config if config is not None else _cli_options["config"]
     return build_container(
         db_path=db,
         index_path=index,
-        embedder=_standalone_embedder(config if config is not None else _cli_options["config"]),
+        embedder=_standalone_embedder(resolved_config),
+        enabled_operators=enabled_operators_from_settings(_standalone_settings(resolved_config)),
     )
 
 

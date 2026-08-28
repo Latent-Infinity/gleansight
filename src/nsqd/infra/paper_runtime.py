@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from nsqd.composition import NsqdContainer, build_container
+from nsqd.domain.diverge import enabled_operators_from_settings
 from nsqd.infra.papers_bridge import (
     DRAFT_PARAPHRASE_PROMPT,
     AnalysisDefaults,
@@ -128,6 +129,7 @@ def compose_default_runtime(
         approved_projection_digests=approved_projection_digests,
         paper_bridge=bridge,
         embedder=getattr(papers, "embedder", None),
+        enabled_operators=enabled_operators_from_settings(getattr(papers, "settings", None)),
     )
     return NsqdPaperRuntime(
         nsqd=nsqd,

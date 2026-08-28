@@ -46,6 +46,12 @@ def test_skeleton_help_lists_command() -> None:
     assert "run-paper-jobs" in result.output
 
 
+def test_diverge_cli_does_not_expose_operator_switch() -> None:
+    result = CliRunner().invoke(app, ["diverge", "--help"])
+    assert result.exit_code == 0
+    assert "--operator" not in result.output
+
+
 def test_container_uses_local_qwen_embedder_contract(monkeypatch, tmp_path: Path) -> None:
     captured: dict[str, object] = {}
     fake_embedder = object()
@@ -66,6 +72,29 @@ def test_container_uses_local_qwen_embedder_contract(monkeypatch, tmp_path: Path
     assert captured["db_path"] == tmp_path / "nsqd.sqlite"
     assert captured["index_path"] == tmp_path / "index"
     assert captured["embedder"] is fake_embedder
+    assert captured["enabled_operators"] == frozenset({"A"})
+
+
+def test_container_passes_config_operator_allowlist(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_build_container(**kwargs: object) -> object:
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr(cli_module, "_standalone_embedder", lambda _config=None: object())
+    monkeypatch.setattr(cli_module, "build_container", fake_build_container)
+    monkeypatch.setattr(
+        cli_module,
+        "_standalone_settings",
+        lambda _config=None: SimpleNamespace(nsqd=SimpleNamespace(enabled_operators=("A", "B"))),
+    )
+
+    cli_module._container(tmp_path / "nsqd.sqlite", tmp_path / "index")
+
+    assert captured["enabled_operators"] == frozenset({"A", "B"})
 
 
 def test_container_uses_config_override_for_standalone_embedding_settings(

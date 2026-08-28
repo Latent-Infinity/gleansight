@@ -267,6 +267,42 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
     assert runtime.paper_runner.run_next(datetime(2024, 1, 1, tzinfo=UTC)) is False
     assert ran["count"] == 1
     assert runtime.nsqd.database.path == tmp_path / "nsqd.sqlite"
+    assert runtime.nsqd.ctx.enabled_operators == frozenset({"A"})
+
+
+def test_compose_default_runtime_reads_settings_operator_allowlist(tmp_path: Path) -> None:
+    papers = SimpleNamespace(
+        settings=SimpleNamespace(
+            data=SimpleNamespace(db_path=tmp_path / "app.sqlite"),
+            llm=SimpleNamespace(default_profile="default", default_model="runtime-model-z"),
+            nsqd=SimpleNamespace(enabled_operators=("A", "B")),
+        ),
+        candidate_store=SimpleNamespace(
+            create_candidate=lambda fields: fields["candidate_id"],
+            get_candidate=lambda _cid: None,
+            get_candidate_by_source=lambda *_a: None,
+        ),
+        paper_store=SimpleNamespace(get=lambda _pid: None),
+        job_queue=SimpleNamespace(enqueue=lambda **_k: "job"),
+        scholar_client=SimpleNamespace(search=lambda **_k: []),
+        prompt_store=_PromptStore(),
+        profile_store=_ProfileStore(),
+        analysis_store=SimpleNamespace(),
+        blob_store=SimpleNamespace(get_markdown_path=lambda _pid: None),
+        job_runner=SimpleNamespace(run_next=lambda now: False),
+        atomic_candidate_import=None,
+        project_store=None,
+        tag_store=None,
+        external_id_store=None,
+        embedder=_FakeEmbedder(),
+    )
+    runtime = compose_default_runtime(
+        papers=papers,
+        nsqd_db_path=tmp_path / "nsqd.sqlite",
+        nsqd_index_path=tmp_path / "nsqd-index",
+        llm_base_url="http://localhost:8000",
+    )
+    assert runtime.nsqd.ctx.enabled_operators == frozenset({"A", "B"})
 
 
 def test_build_container_defaults_to_no_embedder(tmp_path: Path) -> None:
