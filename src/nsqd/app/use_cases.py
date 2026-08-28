@@ -24,10 +24,13 @@ from nsqd.domain.card import (
 )
 from nsqd.domain.coverage import evaluate_rank_guard
 from nsqd.domain.diverge import (
+    DEFAULT_ENABLED_OPERATORS,
     normalize_axiom_rows,
     parent_card_id_for_target,
     require_elite_viability,
-    require_operator_a,
+    require_no_axiom_inversion,
+    require_operator,
+    require_operator_b_target,
     select_target_cell,
 )
 from nsqd.domain.elite import choose_elite
@@ -558,6 +561,7 @@ class DivergeUseCase:
     candidates: NsqdCandidateStore
     cards: FrontierCardStore
     clock: Clock
+    enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS
 
     def run(
         self,
@@ -571,7 +575,10 @@ class DivergeUseCase:
         target_cell_id: str | None = None,
         cell_statuses: dict[str, CellStatus] | None = None,
     ) -> str:
-        require_operator_a(operator)
+        validated_operator = require_operator(
+            operator,
+            enabled_operators=self.enabled_operators,
+        )
         source = axioms if axioms is not None else ([axiom] if axiom is not None else [])
         rows = normalize_axiom_rows(source)
         body = candidate_body(candidate)
@@ -584,6 +591,15 @@ class DivergeUseCase:
             cell_statuses=cell_statuses,
         )
         self._require_axiom_cells(rows=rows, universe=policy.universe(), target=resolved_target)
+        if validated_operator == "B":
+            self._require_operator_b_occupancy(
+                candidate=body,
+                source_axioms=source,
+                rows=rows,
+                policy=policy,
+                target=resolved_target,
+                cell_statuses=cell_statuses,
+            )
         actual_elite = self._elite_for_target(
             policy_id=policy.policy_id, target_cell_id=resolved_target
         )
@@ -597,7 +613,7 @@ class DivergeUseCase:
             "candidate": body,
             "axiom": rows[0]["statement"],
             "axioms": rows,
-            "operator": "A",
+            "operator": validated_operator,
             "parent_card_id": parent,
             "target_cell_id": resolved_target,
             "generator_run_id": generator_run_id,
@@ -611,6 +627,33 @@ class DivergeUseCase:
         if self._generation_semantics(existing) != self._generation_semantics(payload):
             raise ValueError("immutable artifact conflict")
         return digest
+
+    def _require_operator_b_occupancy(
+        self,
+        *,
+        candidate: dict[str, Any],
+        source_axioms: list[Any],
+        rows: list[dict[str, str]],
+        policy: DomainPolicy,
+        target: str | None,
+        cell_statuses: dict[str, CellStatus] | None,
+    ) -> None:
+        if target is None or cell_statuses is None:
+            raise ValueError("Operator B requires an ALG-SEL target and status table")
+        require_operator_b_target(
+            target,
+            cell_statuses,
+            elite_viability=self._elite_viability_for_cells(
+                policy_id=policy.policy_id,
+                cell_ids=cell_statuses,
+            ),
+        )
+        require_no_axiom_inversion(candidate=candidate, axioms=source_axioms)
+        descriptor = candidate.get("research_descriptor")
+        if not isinstance(descriptor, dict) or policy.cell_id(descriptor) != target:
+            raise ValueError("research_descriptor must resolve to the Operator B target")
+        if not any(row.get("cell_id") == target for row in rows):
+            raise ValueError("Operator B requires a target-bound axiom")
 
     @staticmethod
     def _require_axiom_cells(

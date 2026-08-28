@@ -25,7 +25,9 @@ from nsqd.app.use_cases import (
     candidate_body,
     empty_smoke_snapshot_id,
 )
+from nsqd.domain.policy import FINANCE_POLICY
 from nsqd.domain.snapshot import snapshot_id
+from nsqd.domain.status import CellStatus
 from nsqd.null_adapters import (
     FixedClock,
     NullAcquisitionCycleStore,
@@ -115,6 +117,52 @@ def test_diverge_persists_artifact_and_evaluate_reloads_by_hash() -> None:
             corpus_version=1,
             snapshot_state="smoke_only",
         )
+
+
+def test_allowlisted_operator_b_provenance_reaches_scored_card() -> None:
+    ctx = _ctx()
+    candidate = _load_card("gamma-flow.yaml")
+    descriptor = candidate["research_descriptor"]
+    assert isinstance(descriptor, dict)
+    target = FINANCE_POLICY.cell_id(descriptor)
+    statuses: dict[str, CellStatus] = {cell_id: "Unknown" for cell_id in FINANCE_POLICY.universe()}
+    statuses[target] = "Missing"
+    artifact_hash = DivergeUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        clock=ctx.clock,
+        enabled_operators=frozenset({"A", "B"}),
+    ).run(
+        candidate=candidate,
+        axioms=[{"statement": "occupy archive whitespace", "cell_id": target}],
+        operator="B",
+        generator_run_id="gen-b",
+        target_cell_id=target,
+        cell_statuses=statuses,
+    )
+    sid = empty_smoke_snapshot_id()
+    ctx.snapshots.commit(sid, [], schema_version=1)
+    GroundUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+    ).run(candidate_artifact_hash=artifact_hash, snapshot_id=sid, corpus_version=1)
+
+    scored = ScoreUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        evaluator_run_id="eval-b",
+        snapshot_id=sid,
+        corpus_version=1,
+        snapshot_state="smoke_only",
+    )
+
+    assert scored["card"]["generating_operator"] == "B"
 
 
 def test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search() -> None:
