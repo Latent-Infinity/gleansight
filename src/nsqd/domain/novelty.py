@@ -57,9 +57,12 @@ def apply_novelty_threshold(
 ) -> int:
     if tau is None:
         return term
-    if isinstance(tau, bool) or not isinstance(tau, (int, float)) or float(tau) < 0:
+    if isinstance(tau, bool) or not isinstance(tau, (int, float)):
         raise ValueError("tau must be a non-negative number or unset")
-    if evidence is not None and evidence < float(tau):
+    normalized_tau = float(tau)
+    if not math.isfinite(normalized_tau) or normalized_tau < 0:
+        raise ValueError("tau must be a non-negative number or unset")
+    if evidence is not None and evidence < normalized_tau:
         return 0
     return term
 

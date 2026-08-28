@@ -1,7 +1,7 @@
 # ALG.NOV threshold τ
 
 **Study:** `ALG.NOV.TAU`
-**Outcome:** `unset` (report-only). Packet 2a accepted 2026-08-25. Do not compare bin-aligned 0.15 / 0.30 / 0.45 / 0.60 until an executable threshold is approved.
+**Outcome:** `unset` (report-only). Packet 2a accepted 2026-08-25. Packet 2b evidence collection is authorized; no executable threshold is authorized.
 
 ## Semantics (packet 2a)
 
@@ -22,12 +22,12 @@ Command: `uv run pytest tests/nsqd/test_domain_policies.py::test_novelty_thresho
 
 ## Decision
 
-Keep **unset / report-only**. Packet 2b (bin-aligned values) is skipped until labeled near-duplicate vs novel pairs exist. Operator E stays deferred if it would use novelty as a kill.
+Keep **unset / report-only** while packet 2b collects 120 offline human-approved labels. Agent labels are pending proposals only. Evaluate bin-aligned values under the false-kill constraints in `docs/ablations/alg-novelty-tau-2b.md`; if none qualify, keep `τ` unset. Operator E stays deferred if it would use novelty as a kill.
 
 ## Human validation
 
 - **Validated:** packet 2a accepted by proceeding after the recommended unset/report-only outcome (2026-08-25).
-- **2b:** not run.
+- **2b:** evidence-only workflow approved 2026-08-27. The required repository-local pair set does not yet exist, so no executable `τ` is authorized.
 
 ## Freeze status
 

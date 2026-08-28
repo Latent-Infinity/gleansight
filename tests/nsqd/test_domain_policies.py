@@ -170,6 +170,9 @@ def test_novelty_threshold_tau_is_unset_and_report_only() -> None:
         apply_novelty_threshold(term, evidence=0.0, tau=-0.1)
     with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
         apply_novelty_threshold(term, evidence=0.0, tau=True)
+    for non_finite in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
+            apply_novelty_threshold(term, evidence=0.0, tau=non_finite)
 
 
 def test_viability_zero_paths_and_finance_presence() -> None:
