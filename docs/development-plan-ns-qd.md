@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.16 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.21 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
@@ -17,7 +17,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection upsert snapshot-scoped paraphrase vectors. Acquisition drafts and shortlists use the configured Ollama chat model and cannot self-approve. `papers analyze` / `analyze-project` omit `--model-name` to `settings.llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`). Calibration ablation probes are human-validated and remain not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
-**Outstanding Blockers**: None for continuing Operator A / acquisition work. Packets 1a/2a/3 accepted (730-day window, `τ` unset, ALG defaults tunable). Remaining optional decisions: Operators B–G, calendar-month window semantics, and executable `τ` (packet 2b).
+**Outstanding Blockers**: None for Operator A or supported, non-default Operator B work. B is composition-gated via `settings.nsqd.enabled_operators` (default `A` only); the CLI has no `--operator` switch. `τ` stays unset while packet 2b collects 120 policy-balanced, offline human-approved labels. The current repository lacks enough approved NSQD candidate-neighbor pairs. Calendar-month subtraction is rejected for v1 and is not a reopen trigger.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -84,6 +84,11 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.15 | 2026-08-25 | Status recency window v1 is 730 days, overridable with `--window-days`; 12/36 day-length probe filed and not frozen. Four-command gate: 1162 passed, 1 skipped, 92.77%; dedicated NSQD: 545 passed, 94.32%. |
 | 1.6.16 | 2026-08-25 | Novelty `τ` is unset/report-only; score stamps `tau: null`; low evidence stays term 1. Four-command gate: 1163 passed, 1 skipped, 92.76%; dedicated NSQD: 547 passed, 94.30%. |
 | 1.6.17 | 2026-08-26 | Packet 3: ALG families stay `approved_default_tunable`; no freeze. Four-command gate: 1165 passed, 1 skipped, 92.77%; dedicated NSQD: 549 passed, 94.32%. |
+| 1.6.18 | 2026-08-26 | Packet 4: Operators B–G stay deferred; ALG-OP-B archive-whitespace contract drafted, not activated. Four-command gate: 1166 passed, 1 skipped, 92.79%; dedicated NSQD: 550 passed, 94.35%. |
+| 1.6.19 | 2026-08-27 | Human decisions: retain 730-day fixed-window semantics, defer executable `τ` packet 2b, and accept ALG-OP-B as archive whitespace over the full `ALG-SEL` preferred set without activation. Four-command gate: 1166 passed, 1 skipped, 92.80%. |
+| 1.6.20 | 2026-08-27 | Operator B archive-whitespace domain policy and tests; diverge still rejects `operator=B`. Four-command gate: 1171 passed, 1 skipped, 92.81%; dedicated NSQD: 555 passed, 94.38%. |
+| 1.6.21 | 2026-08-27 | Operator B becomes supported, non-default, and composition-gated with controlled persistence and provenance. Packet 2b gains pending-only agent proposals, trusted offline human review, and constrained 120-pair evaluation; executable `τ` remains unset. Calendar-month semantics remain rejected for v1. Four-command gate: 1188 passed, 1 skipped, 92.55%. |
+| 1.6.22 | 2026-08-27 | Composition allowlist is settings-backed (`nsqd.enabled_operators`, default A only, optional A+B) and rejects deferred or malformed operator sets; CLI still has no `--operator` switch. Four-command gate: 1198 passed, 1 skipped, 92.58%; dedicated NSQD: 576 passed, 93.80%. |
 
 ---
 
@@ -127,7 +132,8 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EW approved papers | EW-V0A | Pass (2026-08-19) | — | DATA-01a/b/c approved; DATA-NSQD-04 approved separately |
 | EW atomic import | EW-V2 | Pass | — | done 2026-08-20 |
 | EW RRF | EW-V1 | Pass | — | done 2026-08-19 |
-| Operators B–G | explicitly deferred | N/A (deferred) | — | later revision |
+| Operator B | supported, non-default, config-gated | Pass | — | settings authorize A+B; internal job/use-case selects B |
+| Operators C–G | explicitly deferred | N/A (deferred) | — | later revision |
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
 | Domain-policy isolation | EV-N16 | Pass | — | Explicit policy id; pack-scoped corpus views/verdicts; no implicit `finance/1` |
 | Insufficiency acquisition fallback | EV-N17 | Pass | — | Default acquire/UI composition wires the paper runtime, workers, and analysis-metadata bootstrap; approved DATA-NSQD-03 is committed and verified |
@@ -159,7 +165,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable `ALG-SUF` failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures do not search; drafts cannot approve; default acquire/UI composition wires the paper runtime | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
 
-**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Deferred (not in baseline):** operators B–G.
+**Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Non-default:** Operator B requires configuration authorization plus internal job/use-case selection. **Deferred:** operators C–G.
 
 ---
 
@@ -835,10 +841,10 @@ Keep calibration, freeze, and operator activation as separate approvals. Each pa
 
 Review in dependency order:
 
-1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Calendar-month subtraction remains a later semantics packet, not the default.
-2. **Novelty threshold `τ`:** packet 2a accepted — **unset / report-only**. Evidence is stamped; the gate uses the discrete novelty term and does not extra-kill on a continuous cutoff. Packet 2b (0.15 / 0.30 / 0.45 / 0.60 as executable τ) waits on labeled near-duplicate vs novel pairs.
+1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Human review retained fixed-day UTC semantics and rejected calendar-month subtraction for v1 on 2026-08-27; reopening requires a separately approved, versioned semantics packet.
+2. **Novelty threshold `τ`:** packet 2a accepted — **unset / report-only**. Packet 2b evidence collection is authorized for 120 balanced pairs using agent proposals plus offline human approval. The current approved data cannot populate that packet. Threshold selection is highest admissible bin edge under 5% overall / 10% per-policy novel false-kill caps; runtime `τ` remains unset (`docs/ablations/alg-novelty-tau-2b.md`).
 3. **Existing ALG freezes:** packet 3 accepted — every numeric/default family is `approved_default_tunable`; `τ` stays `unset`. No family is frozen. Reopen freeze only after a production-valid or human-accepted calibration repeat for that family (`docs/ablations/alg-freeze.md`).
-4. **Operators B–G:** keep all rejected by runtime until each has a normative contract, fixtures, TDD implementation, evidence packet, and separate activation approval. Candidate order is B → E → C → D → F → G. E waits on `τ` semantics if it uses novelty; F waits on axis-policy clarity; G waits on an approved failed-experiment corpus.
+4. **Operators B–G:** B is **supported**, non-default, and composition-gated. The default settings allowlist is `A`; a config override may add `B`. The CLI remains without `--operator`. An allowlisted composition may persist `operator=B`, with scored cards preserving `generating_operator=B`. C–G remain deferred. E waits on executable `τ` if it uses novelty; F on axis-policy clarity; G on approved failure data (`docs/ablations/alg-operators.md`).
 
 Every packet ends with explicit sign-off on scope, current default/state, `approved_default_tunable` versus `frozen`, evidence sufficiency, reopen trigger, and exact downstream authorization. Operator packets additionally choose deferred, experimental/off-by-default, or supported; they never relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 
