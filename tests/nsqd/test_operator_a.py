@@ -13,6 +13,7 @@ from nsqd.domain.diverge import (
     select_target_cell,
 )
 from nsqd.domain.policy import FINANCE_POLICY, archive_cell_key
+from nsqd.domain.status import CellStatus
 from nsqd.null_adapters import FixedClock, NullFrontierCardStore, NullNsqdCandidateStore
 from nsqd.ports import NsqdJob
 
@@ -25,8 +26,10 @@ UNKNOWN = "mechanism=microstructure|target=slippage|horizon=event-time"
 OPT_CELL = "problem=constrained-expectation|method=first-order|setting=full-rank"
 
 
-def _finance_statuses(overrides: dict[str, str] | None = None) -> dict[str, str]:
-    table = {cell_id: "Unknown" for cell_id in FINANCE_POLICY.universe()}
+def _finance_statuses(
+    overrides: dict[str, CellStatus] | None = None,
+) -> dict[str, CellStatus]:
+    table: dict[str, CellStatus] = {cell_id: "Unknown" for cell_id in FINANCE_POLICY.universe()}
     if overrides is not None:
         table.update(overrides)
     return table
@@ -80,11 +83,39 @@ def test_select_target_rejects_empty_table() -> None:
         select_target_cell({})
 
 
-def test_require_operator_a_rejects_deferred_operators() -> None:
+def test_require_operator_a_rejects_every_non_a_operator() -> None:
     assert require_operator_a("A") == "A"
     for operator in ("B", "C", "D", "E", "F", "G", "a", ""):
         with pytest.raises(ValueError, match="baseline requires Operator A"):
             require_operator_a(operator)
+
+
+def test_operator_decisions_support_b_without_enabling_it_by_default() -> None:
+    from nsqd.domain.diverge import (
+        operator_decisions,
+        operator_is_enabled,
+    )
+
+    rows = operator_decisions()
+    assert [row.operator_id for row in rows] == ["A", "B", "C", "D", "E", "F", "G"]
+    by_id = {row.operator_id: row for row in rows}
+    assert by_id["A"].activation == "supported"
+    assert by_id["A"].runtime_enabled is True
+    assert by_id["B"].activation == "supported"
+    assert by_id["B"].runtime_enabled is True
+    assert operator_is_enabled("B") is False
+    assert operator_is_enabled("B", enabled_operators=frozenset({"A", "B"})) is True
+    assert "composition" in by_id["B"].wait_on
+    for operator_id in ("C", "D", "E", "F", "G"):
+        assert by_id[operator_id].activation == "deferred"
+        assert by_id[operator_id].runtime_enabled is False
+        assert operator_is_enabled(operator_id) is False
+    assert operator_is_enabled("A") is True
+    assert "novelty" in by_id["E"].wait_on
+    assert "axis" in by_id["F"].wait_on.lower()
+    assert "failure" in by_id["G"].wait_on.lower()
+    with pytest.raises(ValueError, match="unknown operator"):
+        operator_is_enabled("H")
 
 
 def test_normalize_axiom_rows_accepts_strings_and_structured_rows() -> None:
@@ -184,7 +215,7 @@ def test_diverge_rejects_operator_b_and_parent_on_empty_cell() -> None:
         clock=FixedClock(AS_OF),
     )
     candidate = {"title": "x", "domain_policy_id": "finance/1"}
-    with pytest.raises(ValueError, match="baseline requires Operator A"):
+    with pytest.raises(ValueError, match="not enabled by composition"):
         use_case.run(
             candidate=candidate,
             generator_run_id="gen-1",
