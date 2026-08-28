@@ -22,5 +22,6 @@ gleansight’s discovery layer is **inspired by** Novelty Search (Lehman & Stanl
 | **Grounded novelty** | Project term: corpus-relative novelty evidence after the grounding cascade | Self-assessed “this is new” |
 | **Target cell** | Cell selected for the next diverge cycle (`ALG-SEL`) | A parent card (an empty target cell has none) |
 | **Parent card** | Optional elite already in the target cell; extra context for Operator A | The target cell itself |
+| **Archive whitespace** | Empty or under-occupied cells selected by the full `ALG-SEL` rule. Supported Operator B input; non-default and composition-gated | String-whitespace edits; missing *axes* (Operator F) |
 
 **Metric name (normative):** `corpus_relative_novelty_evidence`. Do not name APIs or facts `ns_novelty` or `qd_fitness` unless the canonical definition is implemented.

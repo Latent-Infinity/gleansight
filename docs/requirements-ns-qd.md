@@ -97,8 +97,8 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 
 ### Diverge
 
-- **FR-D1** Baseline requires **Operator A** only. `generating_operator` is recorded as `A`.
-- **FR-D1-FUTURE** Operators B–G are future requirements (lifecycle: deferred; not current acceptance criteria). A later revision activates them.
+- **FR-D1** Default composition requires **Operator A** only. Operator B is supported but non-default and requires an explicit composition allowlist (`settings.nsqd.enabled_operators`, default `A`). The CLI has no `--operator` switch. Artifacts persist `operator`; scored cards persist the corresponding `generating_operator`.
+- **FR-D1-FUTURE** Operators C–G are future requirements (lifecycle: deferred; not current acceptance criteria). B support does not activate them.
 - **FR-D2** No rank/kill/score; does not call the gate.
 - **FR-D3** Output is an immutable candidate artifact (hash persisted) plus `generator_run_id`.
 - **FR-D4** Evaluator is a separate use-case that reloads by hash (`evaluator_run_id` ≠ `generator_run_id`). Session tokens alone are not sufficient (`ALG-SEP`).
@@ -186,7 +186,7 @@ Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock)
 - 12-agent runtime
 - Renaming `src/papers` in the first slices
 - Changing experimental `papers ask` synthesis (not the discovery gate)
-- Operators B–G as current acceptance criteria
+- Operators C–G as current acceptance criteria; default or CLI exposure of Operator B
 - Treating smoke snapshots as production-valid novelty or as production elites
 - Durable NS-QD work on the paper `jobs` table
 - Paper projector / DATA-NSQD-04 in N1
@@ -201,7 +201,7 @@ Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock)
 |----|--------|----------|------------------------|
 | LOCAL-NSQD-H | PRD §3 Harvest | ALG-SNAP, ALG-SUF, ALG-NOV | EV-N01, EV-N02, EV-N03, EV-N13, EV-N16, EV-N17 |
 | LOCAL-NSQD-M | PRD §4 Map | ALG-STATUS, ALG-CLOCK, ALG-SEL | EV-N06 |
-| LOCAL-NSQD-D | PRD §5 Diverge | ALG-SEP, Operator A only | EV-N05 |
+| LOCAL-NSQD-D | PRD §5 Diverge | ALG-SEP, A default, B composition-gated | EV-N05 |
 | LOCAL-NSQD-G | PRD §6 Ground | ALG-GROUND, ALG-NOV, ALG-IDX | EV-N10, EV-N11 |
 | LOCAL-NSQD-V | PRD §7 Value | ALG-VIA | EV-N04 |
 | LOCAL-NSQD-A | PRD §8 Archive | ALG-ELITE, ALG-COV | EV-N07, EV-N14, EV-N16 |

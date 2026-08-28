@@ -1,6 +1,6 @@
 # Algorithm contract — NS/QD-inspired discovery
 
-**Status:** v1.1 defaults; ALG.* probe review completed through 2026-08-26; defaults remain explicitly **not frozen** and tunable.
+**Status:** v1.1 defaults; ALG.* probe review completed through 2026-08-26; defaults remain explicitly **not frozen** and tunable. Operator B is supported, non-default, and composition-gated; C–G remain deferred.
 **Normative owner:** this file owns formulas, states, deterministic policies, schemas, and version semantics.
 **Related:** terminology in `docs/glossary-nsqd.md`; obligations in `docs/requirements-ns-qd.md`; sequencing in `docs/development-plan-ns-qd.md`.
 
@@ -255,6 +255,38 @@ v1 default (until ablation):
 - If the target cell is empty, there is **no parent card**. Operator A still runs on the pack axioms alone.
 
 Do not call the empty-cell case “parent cell.”
+
+---
+
+## ALG-OP — Divergence operators
+
+Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does not rank or score. Evaluator remains a separate use-case (`ALG-SEP`).
+
+| Id | Name | v1 activation | Runtime |
+|----|------|---------------|---------|
+| A | inversion | **supported** | enabled |
+| B | archive whitespace | **supported**, non-default | enabled only by composition allowlist |
+| C | Swanson ABC | deferred | rejected |
+| D | analogical transport | deferred | rejected |
+| E | atypical combination | deferred; waits on executable `τ` if it uses novelty as a kill | rejected |
+| F | missing dimensions | deferred; waits on axis-policy clarity | rejected |
+| G | failure resurrection | deferred; waits on an approved failed-experiment corpus | rejected |
+
+Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. The default composition and CLI remain A-only. C–G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
+
+### ALG-OP-B — Archive whitespace (supported, non-default)
+
+**Whitespace** here is **archive whitespace**: a preferred empty or under-occupied cell from `ALG-SEL` (Missing / Sparse / Code-gap / Benchmark-gap / Stalled with no elite). It is **not** a string-whitespace transform of an axiom.
+
+When explicitly allowlisted by composition, Operator B:
+
+1. Use the same `ALG-SEL` target-cell rule as Operator A.
+2. Take pack axioms registered for that cell, plus optional parent elite context when the cell has an elite.
+3. Require the candidate `research_descriptor` to resolve to the target and at least one structured axiom to bind that target. Every explicitly bound axiom must match it. B does not invert axioms; inversion remains Operator A.
+4. Persist `operator=B` on the artifact; a later scored card derives `generating_operator=B`. Grounding, value, and archive remain later stages; B does not score, rank, self-approve, or write corpus records.
+5. Remain subject to immutable-artifact identity: different operator or axioms at the same candidate hash still conflict.
+
+**Exposure boundary.** `DivergeUseCase` may persist `operator=B` only when B is present in its composition-injected allowlist. The allowlist is validated (`require_enabled_operators`): it must include `A`, may add `B`, and cannot name C–G or unknown ids. Production composition reads `settings.nsqd.enabled_operators` (default `A` only). The CLI exposes no `--operator` switch. A job may select an operator already allowed by its composition but cannot widen that allowlist. B does not invent harvest seeds or DATA records.
 
 ---
 
