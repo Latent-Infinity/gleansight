@@ -81,7 +81,7 @@ Multi-provider deep research is **optional** for the initial harvest; citation l
 ## 4–8. Map through Archive
 
 - **Map:** aggregate corpus into cell statuses + load-bearing axioms.
-- **Diverge:** operators A inversion, B whitespace, C Swanson ABC, D analogical transport, E atypical combination, F missing dimensions, G failure resurrection. No ranking. **Baseline implementation is Operator A only; B–G are deferred.**
+- **Diverge:** operators A inversion, B archive whitespace, C Swanson ABC, D analogical transport, E atypical combination, F missing dimensions, G failure resurrection. No ranking. **A is default; B is supported but non-default and composition-gated; C–G are deferred.**
 - **Ground:** four layers (exact, synonym, embedding NN, code/benchmark), corpus-first, cost cascade. Stamp corpus version. Finance clean-gap inversion.
 - **Value:** Tier-1 multiplicative kill (novelty × mechanism × falsifiability × differential-pred × domain-value). Tier-2 readiness (fixable). Finance inefficiency block required for finance survivors.
 - **Archive:** best card per cell; no global rank until 50 elites **or** 20% coverage of the domain-pack eligible universe excluding Invalid (`ALG-COV`). Unknown/uninspected cells remain in the denominator. Outer loop: experiment / corpus re-score / map update.

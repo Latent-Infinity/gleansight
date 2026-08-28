@@ -37,7 +37,7 @@ Not a ranked list of “cool ideas.” Not a paper manager that happens to have 
 | Layer | Job | Today |
 |-------|-----|--------|
 | **Evidence** | Dense, versionable **positive space**: papers (and later code, benchmarks, patents, industry, internal kills) | Implemented as `papers` CLI/UI/pipeline |
-| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A in the baseline (B–G later)**, **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline through sufficiency promotion, default paper-runtime acquisition composition, the `gleansight` CLI, and Map/Archive/Card screens is implemented; approved DATA-NSQD-03 now exercises honest finance production validity with zero `ALG-SUF` failures |
+| **Discovery** | Structured absence vs the corpus: morphospace, **Operator A by default and composition-gated Operator B** (C–G later), **corpus-relative novelty evidence**, domain-viability gate, MAP-Elites-inspired archive | Baseline through sufficiency promotion, default paper-runtime acquisition composition, the `gleansight` CLI, and Map/Archive/Card screens is implemented; approved DATA-NSQD-03 now exercises honest finance production validity with zero `ALG-SUF` failures |
 
 The paper features are not legacy to sunset. They are how Stage 0 harvests **type=paper**. An imported, converted paper should become a corpus record (mechanism paraphrase + coordinates) when harvest projection runs. Code/benchmark/patent types are additional harvest connectors, not a replacement for papers.
 
@@ -48,7 +48,7 @@ The paper features are not legacy to sunset. They are how Stage 0 harvests **typ
 1. **Build evidence** — discover and import papers, run the pipeline, extract, search (current workflows).
 2. **Snapshot a corpus** — enumerated records (from papers + other sources) versioned; novelty is undefined without a version.
 3. **Map** — see density and structured absence (cell statuses).
-4. **Diverge** — generate candidates without ranking. **Operator A in the baseline; B–G later.**
+4. **Diverge** — generate candidates without ranking. **Operator A by default; supported Operator B only through a composition allowlist; C–G later.**
 5. **Ground + value** — prove prior art; multiplicative kill gate; domain packs (finance first for calibration).
 6. **Archive** — illuminate cells before any global rank; keep elite cards.
 
