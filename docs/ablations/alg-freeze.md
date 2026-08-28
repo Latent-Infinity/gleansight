@@ -14,7 +14,7 @@ Packet 3 compared only freeze-now versus keep-tunable. Existing constructed and 
 | `ALG.NOVELTY_BINS` | approved_default_tunable | no | labeled novelty-term disagreements |
 | `ALG.NOV.TAU` | unset | no | labeled near-duplicate vs novel pairs (packet 2b) |
 | `ALG.STATUS.THRESHOLDS` | approved_default_tunable | no | production-valid map labels vs density cut 3 |
-| `ALG.STATUS.WINDOW` | approved_default_tunable | no | map uniformly Stalled/Active, or calendar-month semantics |
+| `ALG.STATUS.WINDOW` | approved_default_tunable | no | map uniformly Stalled/Active |
 | `ALG.VIABILITY` | approved_default_tunable | no | recorded 1–4 rubric |
 | `ALG.ACQUISITION_BUDGET` | approved_default_tunable | no | production acquisition logs or paging-contract change |
 

@@ -41,12 +41,13 @@ ALG-SEL with a remaining Missing cell still selects that Missing cell at every l
 
 ## Decision
 
-Keep **730 days** as the current default. File 12/36 as constructed sensitivity, not a freeze. Users may approximate alternate day lengths through `window_days`; calendar-month subtraction remains unchosen.
+Keep **730 days** as the current default. File 12/36 as constructed sensitivity, not a freeze. Users may approximate alternate day lengths through `window_days`. Calendar-month subtraction is rejected for v1; it would require a separately approved, versioned semantics packet.
 
 ## Human validation
 
 - **Validated:** packet 1a accepted 2026-08-25 (730-day default, overridable).
 - **1b:** 12/36 table filed; length stays 730 and **not frozen**.
+- **Calendar semantics:** fixed-day UTC semantics retained and calendar-month subtraction rejected for v1 on 2026-08-27.
 
 ## Freeze status
 

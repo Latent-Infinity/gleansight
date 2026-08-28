@@ -254,10 +254,7 @@ def alg_family_decisions() -> tuple[AlgFamilyDecision, ...]:
             outcome="approved_default_tunable",
             freeze_approved=False,
             current_default=f"{STATUS_WINDOW_DAYS}-day",
-            reopen=(
-                "production map looks uniformly Stalled or uniformly Active, "
-                "or calendar-month semantics are chosen"
-            ),
+            reopen="production map looks uniformly Stalled or uniformly Active",
         ),
         AlgFamilyDecision(
             family_id="ALG.VIABILITY",
