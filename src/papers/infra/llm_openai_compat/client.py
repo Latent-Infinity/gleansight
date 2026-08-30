@@ -25,6 +25,11 @@ class OpenAICompatClient(ports.LLMClient):
             "messages": [{"role": "user", "content": prompt}],
             "think": False,
         }
+        chat_options = profile.get("chat_options")
+        if isinstance(chat_options, dict):
+            for key, value in chat_options.items():
+                if isinstance(key, str):
+                    payload[key] = value
         try:
             response = self.send_func(payload, profile, timeout_s)
         except TypeError:
@@ -45,6 +50,7 @@ class OpenAICompatClient(ports.LLMClient):
             tokens_in=response.get("usage", {}).get("prompt_tokens"),
             tokens_out=response.get("usage", {}).get("completion_tokens"),
             cost_usd=response.get("cost"),
+            response_metadata=_response_metadata(response),
         )
 
 
@@ -60,7 +66,14 @@ def build_openai_compat_client(*, base_url: str, api_key: str | None = None) -> 
         timeout_s: int | None,
     ) -> dict[str, Any]:
         effective_base_url = str(profile.get("base_url") or base_url).rstrip("/")
-        effective_api_key = profile.get("api_key") or api_key
+        if "api_key" in profile:
+            profile_api_key = profile.get("api_key")
+            if profile_api_key is None:
+                effective_api_key = None
+            else:
+                effective_api_key = str(profile_api_key)
+        else:
+            effective_api_key = api_key
         headers = {"Content-Type": "application/json"}
         if effective_api_key:
             headers["Authorization"] = f"Bearer {effective_api_key}"
@@ -97,3 +110,12 @@ def _extract_text(response: dict[str, Any]) -> str:
         return response["choices"][0]["message"]["content"]
     except Exception as exc:
         raise PipelineError(ErrorCode.OUTPUT_PARSE_FAILED, "invalid LLM response") from exc
+
+
+def _response_metadata(response: dict[str, Any]) -> dict[str, Any] | None:
+    metadata: dict[str, Any] = {}
+    for key in ("model", "system_fingerprint", "service_tier", "created"):
+        value = response.get(key)
+        if value is not None:
+            metadata[key] = value
+    return metadata or None

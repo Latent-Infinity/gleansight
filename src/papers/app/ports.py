@@ -236,6 +236,7 @@ class LLMResponse:
     tokens_in: int | None
     tokens_out: int | None
     cost_usd: float | None
+    response_metadata: dict[str, Any] | None = None
 
 
 @runtime_checkable

@@ -200,6 +200,100 @@ def test_complete_uses_profile_base_url_and_api_key() -> None:
             del sys.modules["httpx"]
 
 
+def test_complete_explicit_blank_profile_api_key_suppresses_global_key() -> None:
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, Any]:
+            return {
+                "choices": [{"message": {"content": "ok"}}],
+                "usage": {},
+            }
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> FakeResponse:
+            assert url.startswith("http://profile.local/v1/chat/completions")
+            assert "Authorization" not in headers
+            return FakeResponse()
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.HTTPError = Exception
+    fake_httpx_any.TimeoutException = TimeoutError
+
+    original_httpx = sys.modules.get("httpx")
+    sys.modules["httpx"] = fake_httpx
+    try:
+        client = build_openai_compat_client(base_url="http://default.local", api_key="global-key")
+        client.complete(
+            prompt="test",
+            profile={"base_url": "http://profile.local", "api_key": ""},
+            model="gpt-4",
+        )
+    finally:
+        if original_httpx is not None:
+            sys.modules["httpx"] = original_httpx
+        elif "httpx" in sys.modules:
+            del sys.modules["httpx"]
+
+
+def test_complete_profile_api_key_none_suppresses_global_key() -> None:
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, Any]:
+            return {"choices": [{"message": {"content": "ok"}}], "usage": {}}
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, json: dict[str, Any], headers: dict[str, str]) -> FakeResponse:
+            assert "Authorization" not in headers
+            return FakeResponse()
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.HTTPError = Exception
+    fake_httpx_any.TimeoutException = TimeoutError
+
+    original_httpx = sys.modules.get("httpx")
+    sys.modules["httpx"] = fake_httpx
+    try:
+        client = build_openai_compat_client(base_url="http://default.local", api_key="global-key")
+        client.complete(
+            prompt="test",
+            profile={"base_url": "http://profile.local", "api_key": None},
+            model="gpt-4",
+        )
+    finally:
+        if original_httpx is not None:
+            sys.modules["httpx"] = original_httpx
+        elif "httpx" in sys.modules:
+            del sys.modules["httpx"]
+
+
 def test_build_client_maps_429_to_rate_limited() -> None:
     fake_httpx = types.ModuleType("httpx")
 
@@ -303,6 +397,126 @@ def test_build_client_maps_503_to_network_error() -> None:
         with pytest.raises(PipelineError) as exc:
             client.complete(prompt="x", profile={}, model="m")
         assert exc.value.code == ErrorCode.NETWORK_ERROR
+    finally:
+        if original_httpx is not None:
+            sys.modules["httpx"] = original_httpx
+        elif "httpx" in sys.modules:
+            del sys.modules["httpx"]
+
+
+def test_build_client_maps_timeout_to_llm_timeout() -> None:
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeTimeout(Exception):
+        pass
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, json: dict[str, Any], headers: dict[str, str]):
+            raise FakeTimeout("slow")
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = FakeTimeout
+    fake_httpx_any.HTTPError = Exception
+    fake_httpx_any.RequestError = Exception
+
+    original_httpx = sys.modules.get("httpx")
+    sys.modules["httpx"] = fake_httpx
+    try:
+        client = build_openai_compat_client(base_url="http://test.local")
+        with pytest.raises(PipelineError) as exc:
+            client.complete(prompt="x", profile={}, model="m")
+        assert exc.value.code == ErrorCode.LLM_TIMEOUT
+    finally:
+        if original_httpx is not None:
+            sys.modules["httpx"] = original_httpx
+        elif "httpx" in sys.modules:
+            del sys.modules["httpx"]
+
+
+def test_build_client_maps_request_error_to_network_error() -> None:
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeHTTPError(Exception):
+        pass
+
+    class FakeRequestError(Exception):
+        pass
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, json: dict[str, Any], headers: dict[str, str]):
+            raise FakeRequestError("network")
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = TimeoutError
+    fake_httpx_any.HTTPError = FakeHTTPError
+    fake_httpx_any.RequestError = FakeRequestError
+
+    original_httpx = sys.modules.get("httpx")
+    sys.modules["httpx"] = fake_httpx
+    try:
+        client = build_openai_compat_client(base_url="http://test.local")
+        with pytest.raises(PipelineError) as exc:
+            client.complete(prompt="x", profile={}, model="m")
+        assert exc.value.code == ErrorCode.NETWORK_ERROR
+    finally:
+        if original_httpx is not None:
+            sys.modules["httpx"] = original_httpx
+        elif "httpx" in sys.modules:
+            del sys.modules["httpx"]
+
+
+def test_build_client_maps_http_error_without_status_to_llm_error() -> None:
+    fake_httpx = types.ModuleType("httpx")
+
+    class FakeHTTPError(Exception):
+        pass
+
+    class FakeClient:
+        def __init__(self, timeout: float) -> None:
+            self.timeout = timeout
+
+        def post(self, url: str, json: dict[str, Any], headers: dict[str, str]):
+            raise FakeHTTPError("bad response")
+
+        def __enter__(self) -> FakeClient:
+            return self
+
+        def __exit__(self, *args: Any) -> None:
+            pass
+
+    fake_httpx_any = cast(Any, fake_httpx)
+    fake_httpx_any.Client = FakeClient
+    fake_httpx_any.TimeoutException = TimeoutError
+    fake_httpx_any.HTTPError = FakeHTTPError
+    fake_httpx_any.RequestError = Exception
+
+    original_httpx = sys.modules.get("httpx")
+    sys.modules["httpx"] = fake_httpx
+    try:
+        client = build_openai_compat_client(base_url="http://test.local")
+        with pytest.raises(PipelineError) as exc:
+            client.complete(prompt="x", profile={}, model="m")
+        assert exc.value.code == ErrorCode.LLM_ERROR
     finally:
         if original_httpx is not None:
             sys.modules["httpx"] = original_httpx
