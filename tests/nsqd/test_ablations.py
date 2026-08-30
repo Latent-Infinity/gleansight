@@ -135,21 +135,23 @@ def test_alg_family_freezes_stay_tunable() -> None:
     ]
     assert all(row.freeze_approved is False for row in rows)
     by_id = {row.family_id: row for row in rows}
-    assert by_id["ALG.NOV.TAU"].outcome == "unset"
+    assert by_id["ALG.NOV.TAU"].outcome == "approved_default_tunable"
     assert {row.family_id for row in rows if row.outcome == "approved_default_tunable"} == {
         "ALG.AXES",
         "ALG.K",
         "ALG.NOVELTY_BINS",
+        "ALG.NOV.TAU",
         "ALG.STATUS.THRESHOLDS",
         "ALG.STATUS.WINDOW",
         "ALG.VIABILITY",
         "ALG.ACQUISITION_BUDGET",
     }
     assert by_id["ALG.K"].current_default == str(NOVELTY_K) == "5"
+    assert by_id["ALG.NOV.TAU"].current_default == str(NOVELTY_THRESHOLD_TAU) == "0.45"
     assert by_id["ALG.NOVELTY_BINS"].current_default == "/".join(
         str(edge) for edge in NOVELTY_BIN_EDGES
     )
-    assert NOVELTY_THRESHOLD_TAU is None
+    assert NOVELTY_THRESHOLD_TAU == 0.45
     assert by_id["ALG.STATUS.THRESHOLDS"].current_default == str(DEFAULT_DENSITY_CUT) == "3"
     assert by_id["ALG.STATUS.WINDOW"].current_default == f"{STATUS_WINDOW_DAYS}-day"
     assert by_id["ALG.ACQUISITION_BUDGET"].current_default == (

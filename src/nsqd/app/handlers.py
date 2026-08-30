@@ -17,6 +17,7 @@ from nsqd.app.use_cases import (
     ScoreUseCase,
 )
 from nsqd.domain.diverge import DEFAULT_ENABLED_OPERATORS
+from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU
 from nsqd.domain.policy import DomainPolicy
 from nsqd.domain.status import require_status_window_days
 from nsqd.ports import (
@@ -58,6 +59,7 @@ class NsqdHandlerContext:
     policies: Mapping[str, DomainPolicy] | None = None
     embedder: ParaphraseEmbedder | None = None
     enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS
+    novelty_threshold_tau: float = NOVELTY_THRESHOLD_TAU
 
 
 def _require_job_type(job: NsqdJob, expected_type: NsqdJobType) -> None:
@@ -107,6 +109,7 @@ def handle_project(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
     result = ProjectPaperUseCase(
         harvest=ctx.harvest,
         records=ctx.records,
+        snapshots=ctx.snapshots,
         clock=ctx.clock,
         approved_projection_digests=ctx.approved_projection_digests,
         index=ctx.index,
@@ -194,6 +197,7 @@ def handle_acquire(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         project=ProjectPaperUseCase(
             harvest=ctx.harvest,
             records=ctx.records,
+            snapshots=ctx.snapshots,
             clock=ctx.clock,
             approved_projection_digests=ctx.approved_projection_digests,
             index=ctx.index,
@@ -220,6 +224,7 @@ def handle_ground(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         live_search=ctx.scholar_client,
         hybrid_search=ctx.paper_vector_index,
         embedder=ctx.embedder,
+        clock=ctx.clock,
     ).run(
         candidate_artifact_hash=str(payload["candidate_artifact_hash"]),
         snapshot_id=str(payload["snapshot_id"]),
@@ -237,6 +242,7 @@ def handle_score(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         cards=ctx.cards,
         snapshots=ctx.snapshots,
         records=ctx.records,
+        tau=ctx.novelty_threshold_tau,
     ).run(
         candidate_artifact_hash=str(payload["candidate_artifact_hash"]),
         evaluator_run_id=str(payload["evaluator_run_id"]),
@@ -266,6 +272,7 @@ def handle_rescore(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         live_search=ctx.scholar_client,
         hybrid_search=ctx.paper_vector_index,
         embedder=ctx.embedder,
+        clock=ctx.clock,
     ).run(
         card_id=str(payload["card_id"]),
         current_snapshot_id=str(payload["current_snapshot_id"]),

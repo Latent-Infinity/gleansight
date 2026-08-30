@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import tomllib
 from collections.abc import Mapping, Sequence
@@ -8,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from papers.domain.errors import ConfigurationError
 
@@ -134,6 +135,10 @@ class PdfSettings(BaseModel):
 
 class NsqdSettings(BaseModel):
     enabled_operators: tuple[str, ...] = ("A",)
+    novelty_threshold_tau: float = 0.45
+    autonomous_tau: NsqdAutonomousTauSettings = Field(
+        default_factory=lambda: NsqdAutonomousTauSettings()
+    )
 
     @field_validator("enabled_operators", mode="before")
     @classmethod
@@ -148,6 +153,155 @@ class NsqdSettings(BaseModel):
         if any(not item for item in items):
             raise ValueError("enabled_operators must be a list of operator ids")
         return items
+
+    @field_validator("novelty_threshold_tau")
+    @classmethod
+    def _novelty_threshold_tau(cls, value: Any) -> float:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError("tau must be a non-negative number or unset")
+        normalized = float(value)
+        if not math.isfinite(normalized) or normalized < 0:
+            raise ValueError("tau must be a non-negative number or unset")
+        return normalized
+
+
+class NsqdAutonomousTauRouteSettings(BaseModel):
+    agent_id: str
+    provider: str
+    model: str
+    version: str
+    profile: str
+    base_url: str = DEFAULT_OLLAMA_BASE_URL
+    api_key: str = ""
+    executable_path: str = ""
+    reasoning_effort: str = ""
+
+    @field_validator("agent_id", "provider", "profile", mode="before")
+    @classmethod
+    def _nonblank_string(cls, value: Any, info: Any) -> str:
+        if not isinstance(value, str):
+            raise ValueError(f"{info.field_name} must be a string")
+        text = value.strip()
+        if not text:
+            raise ValueError(f"{info.field_name} must not be blank")
+        if info.field_name == "provider" and text not in {
+            "ollama",
+            "frontier",
+            "codex_subscription",
+        }:
+            raise ValueError("provider must be ollama, frontier, or codex_subscription")
+        return text
+
+    @field_validator("model", "version", "executable_path", "reasoning_effort", mode="before")
+    @classmethod
+    def _optional_string(cls, value: Any, info: Any) -> str:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise ValueError(f"{info.field_name} must be a string")
+        return value.strip()
+
+    @field_validator("base_url", mode="before")
+    @classmethod
+    def _base_url_string(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise ValueError("base_url must be a string")
+        return value.strip()
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _api_key_string(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise ValueError("api_key must be a string")
+        return value.strip()
+
+    @model_validator(mode="after")
+    def _validate_route_fields(self) -> NsqdAutonomousTauRouteSettings:
+        if self.provider != "codex_subscription":
+            if not self.model:
+                raise ValueError("model must not be blank")
+            if not self.version:
+                raise ValueError("version must not be blank")
+        return self
+
+
+class NsqdAutonomousTauAuditSettings(BaseModel):
+    sample_rate: float = Field(default=0.10, ge=0.0, le=0.10)
+    policy_revision: str = "tau-audit/1"
+
+    @field_validator("policy_revision", mode="before")
+    @classmethod
+    def _audit_revision(cls, value: Any) -> str:
+        if not isinstance(value, str):
+            raise ValueError("policy_revision must be a string")
+        text = value.strip()
+        if not text:
+            raise ValueError("policy_revision must not be blank")
+        return text
+
+
+class NsqdAutonomousTauSettings(BaseModel):
+    rounds: int = Field(default=4, ge=4, le=4)
+    timeout_s: int = Field(default=300, ge=1, le=300)
+    seed: int = Field(default=17, ge=0)
+    writer: NsqdAutonomousTauRouteSettings = Field(
+        default_factory=lambda: NsqdAutonomousTauRouteSettings(
+            agent_id="tau-writer-local-v1",
+            provider="ollama",
+            model=DEFAULT_QWEN_CHAT_MODEL,
+            version="2026-08-24",
+            profile="tau-writer-local",
+            base_url=DEFAULT_OLLAMA_BASE_URL,
+            api_key="",
+            executable_path="",
+            reasoning_effort="",
+        )
+    )
+    reviewer: NsqdAutonomousTauRouteSettings = Field(
+        default_factory=lambda: NsqdAutonomousTauRouteSettings(
+            agent_id="tau-reviewer-local-v1",
+            provider="ollama",
+            model=DEFAULT_QWEN_CHAT_MODEL,
+            version="2026-08-24",
+            profile="tau-reviewer-local",
+            base_url=DEFAULT_OLLAMA_BASE_URL,
+            api_key="",
+            executable_path="",
+            reasoning_effort="",
+        )
+    )
+    adjudicator: NsqdAutonomousTauRouteSettings = Field(
+        default_factory=lambda: NsqdAutonomousTauRouteSettings(
+            agent_id="tau-adjudicator-frontier-v1",
+            provider="codex_subscription",
+            model="gpt-5.6-terra",
+            version="config-2026-08-29",
+            profile="tau-adjudicator-frontier",
+            base_url="",
+            api_key="",
+            executable_path="codex",
+            reasoning_effort="high",
+        )
+    )
+    audit: NsqdAutonomousTauAuditSettings = Field(default_factory=NsqdAutonomousTauAuditSettings)
+
+    @model_validator(mode="after")
+    def _validate_identities(self) -> NsqdAutonomousTauSettings:
+        if self.writer.agent_id == self.reviewer.agent_id:
+            raise ValueError("writer and reviewer agent_id values must differ")
+        if self.writer.profile == self.reviewer.profile:
+            raise ValueError("writer and reviewer profile values must differ")
+        adjudicator_ids = {self.writer.agent_id, self.reviewer.agent_id}
+        if self.adjudicator.agent_id in adjudicator_ids:
+            raise ValueError("adjudicator agent_id must differ from writer and reviewer")
+        adjudicator_profiles = {self.writer.profile, self.reviewer.profile}
+        if self.adjudicator.profile in adjudicator_profiles:
+            raise ValueError("adjudicator profile must differ from writer and reviewer")
+        return self
 
 
 class Settings(BaseModel):

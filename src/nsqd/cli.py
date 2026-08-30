@@ -10,13 +10,20 @@ from typing import Annotated, Any, NoReturn
 import typer
 import yaml
 
-from nsqd.app.use_cases import RankArchiveUseCase
+from nsqd.app.use_cases import (
+    AutonomousTauLabelingUseCase,
+    AutonomousTauPacketEvaluationUseCase,
+    RankArchiveUseCase,
+    TauMeasurementEvidenceUseCase,
+)
 from nsqd.composition import build_container, build_local_ollama_embedder
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.diverge import enabled_operators_from_settings
 from nsqd.domain.harvest import HarvestRejected
+from nsqd.domain.novelty import novelty_threshold_tau_from_settings
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.status import STATUS_WINDOW_DAYS
+from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
 from nsqd.ports import ParaphraseEmbedder
@@ -30,6 +37,8 @@ from papers.config.settings import (
     public_configuration_error_message,
 )
 from papers.domain.errors import ConfigurationError, PipelineError
+from papers.infra.llm_codex_subscription.client import CodexSubscriptionClient, RoutedLLMClient
+from papers.infra.llm_openai_compat.client import build_openai_compat_client
 from papers.infra.piccolo.database import PiccoloDatabase
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -139,11 +148,13 @@ def project(
 
 def _container(db: Path, index: Path, config: Path | None = None) -> Any:
     resolved_config = config if config is not None else _cli_options["config"]
+    settings = _standalone_settings(resolved_config)
     return build_container(
         db_path=db,
         index_path=index,
         embedder=_standalone_embedder(resolved_config),
-        enabled_operators=enabled_operators_from_settings(_standalone_settings(resolved_config)),
+        enabled_operators=enabled_operators_from_settings(settings),
+        novelty_threshold_tau=novelty_threshold_tau_from_settings(settings),
     )
 
 
@@ -179,6 +190,72 @@ def _fail(exc: Exception) -> NoReturn:
 def _fail_configuration(exc: ConfigurationError) -> NoReturn:
     typer.echo(f"error: {public_configuration_error_message(exc)}", err=True)
     raise typer.Exit(code=1) from exc
+
+
+def _canonical_json_text(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+MAX_AUTONOMOUS_TAU_PACKET_BYTES = 8 * 1024 * 1024
+
+
+def _load_autonomous_tau_rows(inputs: list[Path]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for path in inputs:
+        if path.stat().st_size > MAX_AUTONOMOUS_TAU_PACKET_BYTES:
+            raise ValueError(f"autonomous tau packet exceeds byte limit: {path}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"autonomous tau packet must be an object: {path}")
+        raw_rows = payload.get("rows")
+        if not isinstance(raw_rows, list) or not raw_rows:
+            raise ValueError(f"autonomous tau packet rows are required: {path}")
+        packet_rows: list[dict[str, object]] = []
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                raise ValueError(f"autonomous tau packet row must be an object: {path}")
+            packet_rows.append({str(key): value for key, value in raw_row.items()})
+        if payload.get("packet_digest") != autonomous_tau_review_packet_digest(packet_rows):
+            raise ValueError(f"autonomous tau packet digest drift: {path}")
+        rows.extend(packet_rows)
+    return rows
+
+
+def _build_autonomous_tau_use_case(
+    *,
+    db: Path,
+    index: Path,
+    config: Path | None,
+) -> AutonomousTauLabelingUseCase:
+    settings = _standalone_settings(config)
+    container = _container(db, index, config)
+    autonomous_tau = settings.nsqd.autonomous_tau
+    evidence = TauMeasurementEvidenceUseCase(
+        candidates=container.ctx.candidates,
+        approved_projection_digests=container.ctx.approved_projection_digests,
+    )
+    openai_client = build_openai_compat_client(
+        base_url=autonomous_tau.writer.base_url or DEFAULT_OLLAMA_BASE_URL,
+        api_key=None,
+    )
+    adjudicator = getattr(autonomous_tau, "adjudicator", None)
+    llm_client = RoutedLLMClient(
+        default_client=openai_client,
+        provider_clients={
+            "codex_subscription": CodexSubscriptionClient(
+                executable_path=str(getattr(adjudicator, "executable_path", "codex") or "codex"),
+                default_reasoning_effort=str(
+                    getattr(adjudicator, "reasoning_effort", "high") or "high"
+                ),
+            )
+        },
+    )
+    return AutonomousTauLabelingUseCase(
+        measurement_evidence=evidence,
+        llm_client=llm_client,
+        clock=container.clock,
+        settings=autonomous_tau,
+    )
 
 
 def _draft_review_summary(drafts: object, *, show_drafts: bool) -> tuple[int, list[dict[str, Any]]]:
@@ -324,6 +401,116 @@ def ground(
                 "grounding_class": result.get("grounding_class"),
                 "snapshot_id": snapshot_id,
             }
+        )
+    )
+
+
+@app.command("export-tau-measurements")
+def export_tau_measurements(
+    candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
+    db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
+    index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
+) -> None:
+    try:
+        container = _container(db, index)
+        payload = TauMeasurementEvidenceUseCase(
+            candidates=container.ctx.candidates,
+            approved_projection_digests=container.ctx.approved_projection_digests,
+        ).export_jsonl(candidate_artifact_hashes)
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
+        _fail(exc)
+    typer.echo(payload.decode("utf-8"), nl=False)
+
+
+@app.command("tau-measurement-inventory")
+def tau_measurement_inventory(
+    candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
+    db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
+    index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
+) -> None:
+    try:
+        container = _container(db, index)
+        inventory = TauMeasurementEvidenceUseCase(
+            candidates=container.ctx.candidates,
+            approved_projection_digests=container.ctx.approved_projection_digests,
+        ).inventory(candidate_artifact_hashes)
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
+        _fail(exc)
+    typer.echo(json.dumps(inventory, sort_keys=True))
+
+
+@app.command("autonomous-tau-review")
+def autonomous_tau_review(
+    candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
+    output: Annotated[Path, typer.Option("--output")],
+    config: Annotated[Path | None, typer.Option("--config")] = None,
+    db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
+    index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
+) -> None:
+    try:
+        result = _build_autonomous_tau_use_case(db=db, index=index, config=config).run(
+            candidate_artifact_hashes
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(_canonical_json_text(result), encoding="utf-8")
+    except ConfigurationError as exc:
+        _fail_configuration(exc)
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
+        _fail(exc)
+    typer.echo(
+        json.dumps(
+            {
+                "approved_pair_count": result["packet"]["approved_pair_count"],
+                "ambiguous_pair_count": result["packet"]["ambiguous_pair_count"],
+                "output": str(output),
+                "packet_digest": result["packet_digest"],
+            },
+            sort_keys=True,
+        )
+    )
+
+
+@app.command("evaluate-autonomous-tau-reviews")
+def evaluate_autonomous_tau_reviews(
+    candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
+    inputs: Annotated[list[Path], typer.Option("--input")],
+    output: Annotated[Path, typer.Option("--output")],
+    require_balanced: Annotated[bool, typer.Option("--require-balanced")] = False,
+    config: Annotated[Path | None, typer.Option("--config")] = None,
+    db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
+    index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
+) -> None:
+    try:
+        settings = _standalone_settings(config)
+        container = _container(db, index, config)
+        evidence = TauMeasurementEvidenceUseCase(
+            candidates=container.ctx.candidates,
+            approved_projection_digests=container.ctx.approved_projection_digests,
+        )
+        result = AutonomousTauPacketEvaluationUseCase(
+            measurement_evidence=evidence,
+            audit_policy_revision=settings.nsqd.autonomous_tau.audit.policy_revision,
+            audit_sample_rate=settings.nsqd.autonomous_tau.audit.sample_rate,
+        ).run(
+            candidate_artifact_hashes,
+            _load_autonomous_tau_rows(inputs),
+            require_balanced=require_balanced,
+        )
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(_canonical_json_text(result), encoding="utf-8")
+    except ConfigurationError as exc:
+        _fail_configuration(exc)
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
+        _fail(exc)
+    typer.echo(
+        json.dumps(
+            {
+                "approved_pair_count": result["packet"]["approved_pair_count"],
+                "ambiguous_pair_count": result["packet"]["ambiguous_pair_count"],
+                "output": str(output),
+                "packet_digest": result["packet_digest"],
+            },
+            sort_keys=True,
         )
     )
 

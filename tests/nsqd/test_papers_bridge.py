@@ -331,6 +331,7 @@ def test_real_bridge_stages_candidates_through_acquisition_use_case() -> None:
         project=ProjectPaperUseCase(
             harvest=NullHarvestStore(records, snapshots),
             records=records,
+            snapshots=snapshots,
             clock=clock,
             approved_projection_digests=frozenset(),
         ),

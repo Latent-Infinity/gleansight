@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,6 +10,7 @@ from typer.testing import CliRunner
 import nsqd.__main__ as main_module
 from nsqd import cli as cli_module
 from nsqd.cli import app
+from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
 from nsqd.null_adapters import HashParaphraseEmbedder
 from papers.domain.errors import ConfigurationError, ErrorCode, PipelineError
 from papers.infra.piccolo.database import PiccoloDatabase
@@ -39,6 +41,9 @@ def test_skeleton_help_lists_command() -> None:
     assert "map" in result.output
     assert "diverge" in result.output
     assert "ground" in result.output
+    assert "export-tau-measurements" in result.output
+    assert "tau-measurement-inventory" in result.output
+    assert "evaluate-autonomous-tau-reviews" in result.output
     assert "gate" in result.output
     assert "archive" in result.output
     assert "approve-digest" in result.output
@@ -50,6 +55,322 @@ def test_diverge_cli_does_not_expose_operator_switch() -> None:
     result = CliRunner().invoke(app, ["diverge", "--help"])
     assert result.exit_code == 0
     assert "--operator" not in result.output
+
+
+def test_score_cli_does_not_expose_tau_switch() -> None:
+    result = CliRunner().invoke(app, ["gate", "--help"])
+    assert result.exit_code == 0
+    assert "--tau" not in result.output
+
+
+def test_tau_measurement_commands_use_persisted_evidence_boundary(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    candidates = object()
+    approved = frozenset({"a" * 64})
+    container = SimpleNamespace(
+        ctx=SimpleNamespace(
+            candidates=candidates,
+            approved_projection_digests=approved,
+        )
+    )
+
+    class FakeEvidenceUseCase:
+        def __init__(self, *, candidates: object, approved_projection_digests: object) -> None:
+            captured["candidates"] = candidates
+            captured["approved"] = approved_projection_digests
+
+        def export_jsonl(self, hashes: list[str]) -> bytes:
+            captured["export_hashes"] = hashes
+            return b'{"pair_id":"pair-1"}\n'
+
+        def inventory(self, hashes: list[str]) -> dict[str, object]:
+            captured["inventory_hashes"] = hashes
+            return {"qualified_pair_count": len(hashes)}
+
+    monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
+    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    digest = "b" * 64
+
+    exported = CliRunner().invoke(
+        app,
+        ["export-tau-measurements", "--candidate-artifact-hash", digest],
+    )
+    assert exported.exit_code == 0
+    assert exported.output == '{"pair_id":"pair-1"}\n'
+
+    inventoried = CliRunner().invoke(
+        app,
+        ["tau-measurement-inventory", "--candidate-artifact-hash", digest],
+    )
+    assert inventoried.exit_code == 0
+    assert json.loads(inventoried.output) == {"qualified_pair_count": 1}
+    assert captured == {
+        "candidates": candidates,
+        "approved": approved,
+        "export_hashes": [digest],
+        "inventory_hashes": [digest],
+    }
+
+
+def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+    output = tmp_path / "tau-review.json"
+    candidates = object()
+    approved = frozenset({"a" * 64})
+    container = SimpleNamespace(
+        clock=object(),
+        ctx=SimpleNamespace(candidates=candidates, approved_projection_digests=approved),
+    )
+    settings = SimpleNamespace(
+        nsqd=SimpleNamespace(
+            autonomous_tau=SimpleNamespace(
+                writer=SimpleNamespace(base_url="http://127.0.0.1:11434"),
+            )
+        )
+    )
+
+    class FakeEvidenceUseCase:
+        def __init__(self, *, candidates: object, approved_projection_digests: object) -> None:
+            captured["candidates"] = candidates
+            captured["approved"] = approved_projection_digests
+
+    class FakeAutonomousUseCase:
+        def __init__(
+            self,
+            *,
+            measurement_evidence: object,
+            llm_client: object,
+            clock: object,
+            settings: object,
+        ) -> None:
+            captured["measurement_evidence"] = measurement_evidence.__class__.__name__
+            captured["llm_client"] = llm_client
+            captured["clock"] = clock
+            captured["settings"] = settings
+
+        def run(self, hashes: list[str]) -> dict[str, object]:
+            captured["hashes"] = hashes
+            return {
+                "packet_digest": "d" * 64,
+                "packet": {"approved_pair_count": 1, "ambiguous_pair_count": 0},
+                "rows": [{"pair_id": "finance/1:pair:1"}],
+            }
+
+    def fake_client(*, base_url: str, api_key: str | None = None) -> object:
+        captured["client_base_url"] = base_url
+        captured["client_api_key"] = api_key
+        return object()
+
+    monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
+    monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
+    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    monkeypatch.setattr(cli_module, "AutonomousTauLabelingUseCase", FakeAutonomousUseCase)
+    monkeypatch.setattr(cli_module, "build_openai_compat_client", fake_client)
+
+    digest_a = "b" * 64
+    digest_b = "c" * 64
+    result = CliRunner().invoke(
+        app,
+        [
+            "autonomous-tau-review",
+            "--candidate-artifact-hash",
+            digest_a,
+            "--candidate-artifact-hash",
+            digest_b,
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "packet_digest": "d" * 64,
+        "packet": {"approved_pair_count": 1, "ambiguous_pair_count": 0},
+        "rows": [{"pair_id": "finance/1:pair:1"}],
+    }
+    assert "frontier-key" not in result.output
+    assert captured == {
+        "candidates": candidates,
+        "approved": approved,
+        "measurement_evidence": "FakeEvidenceUseCase",
+        "llm_client": captured["llm_client"],
+        "clock": captured["clock"],
+        "settings": settings.nsqd.autonomous_tau,
+        "hashes": [digest_a, digest_b],
+        "client_base_url": "http://127.0.0.1:11434",
+        "client_api_key": None,
+    }
+
+
+def test_evaluate_autonomous_tau_reviews_cli_revalidates_and_merges_packets(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+    rows = [
+        {"candidate_artifact_hash": "b" * 64, "pair_id": "finance/1:pair:1"},
+        {"candidate_artifact_hash": "c" * 64, "pair_id": "optimization/1:pair:1"},
+    ]
+    inputs: list[Path] = []
+    for index, row in enumerate(rows):
+        path = tmp_path / f"row-{index}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "rows": [row],
+                    "packet_digest": autonomous_tau_review_packet_digest([row]),
+                }
+            ),
+            encoding="utf-8",
+        )
+        inputs.append(path)
+    output = tmp_path / "merged.json"
+    container = SimpleNamespace(
+        ctx=SimpleNamespace(candidates=object(), approved_projection_digests=frozenset())
+    )
+    settings = SimpleNamespace(
+        nsqd=SimpleNamespace(
+            autonomous_tau=SimpleNamespace(
+                audit=SimpleNamespace(policy_revision="tau-audit/1", sample_rate=0.10)
+            )
+        )
+    )
+
+    class FakeEvidenceUseCase:
+        def __init__(self, *, candidates: object, approved_projection_digests: object) -> None:
+            captured["candidates"] = candidates
+            captured["approved"] = approved_projection_digests
+
+    class FakeEvaluationUseCase:
+        def __init__(
+            self,
+            *,
+            measurement_evidence: object,
+            audit_policy_revision: str,
+            audit_sample_rate: float,
+        ) -> None:
+            captured["evidence"] = measurement_evidence.__class__.__name__
+            captured["audit_policy_revision"] = audit_policy_revision
+            captured["audit_sample_rate"] = audit_sample_rate
+
+        def run(
+            self,
+            hashes: list[str],
+            reviewed_rows: list[dict[str, object]],
+            *,
+            require_balanced: bool = False,
+        ) -> dict[str, object]:
+            captured["hashes"] = hashes
+            captured["rows"] = reviewed_rows
+            captured["require_balanced"] = require_balanced
+            return {
+                "rows": reviewed_rows,
+                "packet": {"approved_pair_count": 2, "ambiguous_pair_count": 0},
+                "packet_digest": "d" * 64,
+            }
+
+    monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
+    monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
+    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    monkeypatch.setattr(cli_module, "AutonomousTauPacketEvaluationUseCase", FakeEvaluationUseCase)
+    result = CliRunner().invoke(
+        app,
+        [
+            "evaluate-autonomous-tau-reviews",
+            "--candidate-artifact-hash",
+            "b" * 64,
+            "--candidate-artifact-hash",
+            "c" * 64,
+            "--input",
+            str(inputs[0]),
+            "--input",
+            str(inputs[1]),
+            "--output",
+            str(output),
+            "--require-balanced",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert json.loads(output.read_text(encoding="utf-8"))["packet_digest"] == "d" * 64
+    assert captured["rows"] == rows
+    assert captured["hashes"] == ["b" * 64, "c" * 64]
+    assert captured["audit_policy_revision"] == "tau-audit/1"
+    assert captured["audit_sample_rate"] == 0.10
+    assert captured["require_balanced"] is True
+
+
+def test_load_autonomous_tau_rows_rejects_oversized_packet(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    packet = tmp_path / "oversized.json"
+    packet.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(cli_module, "MAX_AUTONOMOUS_TAU_PACKET_BYTES", 1)
+
+    with pytest.raises(ValueError, match="exceeds byte limit"):
+        cli_module._load_autonomous_tau_rows([packet])
+
+
+def test_autonomous_tau_review_cli_reports_frontier_config_error_only_on_escalation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    output = tmp_path / "tau-review.json"
+    container = SimpleNamespace(
+        clock=object(),
+        ctx=SimpleNamespace(candidates=object(), approved_projection_digests=frozenset()),
+    )
+    settings = SimpleNamespace(
+        nsqd=SimpleNamespace(
+            autonomous_tau=SimpleNamespace(
+                writer=SimpleNamespace(base_url="http://127.0.0.1:11434")
+            )
+        )
+    )
+
+    class FakeEvidenceUseCase:
+        def __init__(self, *, candidates: object, approved_projection_digests: object) -> None:
+            pass
+
+    class FailingAutonomousUseCase:
+        def __init__(
+            self,
+            *,
+            measurement_evidence: object,
+            llm_client: object,
+            clock: object,
+            settings: object,
+        ) -> None:
+            pass
+
+        def run(self, hashes: list[str]) -> dict[str, object]:
+            raise ValueError("frontier adjudicator route is not configured")
+
+    monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
+    monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
+    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    monkeypatch.setattr(cli_module, "AutonomousTauLabelingUseCase", FailingAutonomousUseCase)
+    monkeypatch.setattr(cli_module, "build_openai_compat_client", lambda **_kwargs: object())
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "autonomous-tau-review",
+            "--candidate-artifact-hash",
+            "b" * 64,
+            "--output",
+            str(output),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert result.stderr == "error: frontier adjudicator route is not configured\n"
 
 
 def test_container_uses_local_qwen_embedder_contract(monkeypatch, tmp_path: Path) -> None:
@@ -73,6 +394,7 @@ def test_container_uses_local_qwen_embedder_contract(monkeypatch, tmp_path: Path
     assert captured["index_path"] == tmp_path / "index"
     assert captured["embedder"] is fake_embedder
     assert captured["enabled_operators"] == frozenset({"A"})
+    assert captured["novelty_threshold_tau"] == 0.45
 
 
 def test_container_passes_config_operator_allowlist(
@@ -89,12 +411,15 @@ def test_container_passes_config_operator_allowlist(
     monkeypatch.setattr(
         cli_module,
         "_standalone_settings",
-        lambda _config=None: SimpleNamespace(nsqd=SimpleNamespace(enabled_operators=("A", "B"))),
+        lambda _config=None: SimpleNamespace(
+            nsqd=SimpleNamespace(enabled_operators=("A", "B"), novelty_threshold_tau=0.30)
+        ),
     )
 
     cli_module._container(tmp_path / "nsqd.sqlite", tmp_path / "index")
 
     assert captured["enabled_operators"] == frozenset({"A", "B"})
+    assert captured["novelty_threshold_tau"] == 0.30
 
 
 def test_container_uses_config_override_for_standalone_embedding_settings(

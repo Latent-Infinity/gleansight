@@ -98,6 +98,7 @@ def _acquire(
         project=ProjectPaperUseCase(
             harvest=NullHarvestStore(records, snapshots),
             records=records,
+            snapshots=snapshots,
             clock=FixedClock(AS_OF),
             approved_projection_digests=approved_projection_digests,
         ),

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from nsqd.app.handlers import NsqdHandlerContext
 from nsqd.domain.diverge import DEFAULT_ENABLED_OPERATORS, require_enabled_operators
+from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU, require_novelty_threshold_tau
 from nsqd.domain.policy import POLICIES
 from nsqd.infra.lancedb.index import LanceDBCorpusIndex
 from nsqd.infra.piccolo.stores import (
@@ -60,8 +61,10 @@ def build_container(
     paper_bridge: PaperAcquisitionBridge | None = None,
     embedder: ParaphraseEmbedder | None = None,
     enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS,
+    novelty_threshold_tau: float = NOVELTY_THRESHOLD_TAU,
 ) -> NsqdContainer:
     allowlist = require_enabled_operators(enabled_operators)
+    tau = require_novelty_threshold_tau(novelty_threshold_tau)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.parent.mkdir(parents=True, exist_ok=True)
     database = PiccoloDatabase(db_path, bind_on_init=False)
@@ -99,6 +102,7 @@ def build_container(
         policies=POLICIES,
         embedder=embedder,
         enabled_operators=allowlist,
+        novelty_threshold_tau=tau,
     )
     return NsqdContainer(
         clock=resolved_clock,

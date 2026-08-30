@@ -76,6 +76,7 @@ def _project(ctx: NsqdHandlerContext) -> ProjectPaperUseCase:
     return ProjectPaperUseCase(
         harvest=ctx.harvest,
         records=ctx.records,
+        snapshots=ctx.snapshots,
         clock=ctx.clock,
         approved_projection_digests=ctx.approved_projection_digests,
     )

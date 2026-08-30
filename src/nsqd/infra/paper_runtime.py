@@ -6,6 +6,7 @@ from typing import Any
 
 from nsqd.composition import NsqdContainer, build_container
 from nsqd.domain.diverge import enabled_operators_from_settings
+from nsqd.domain.novelty import novelty_threshold_tau_from_settings
 from nsqd.infra.papers_bridge import (
     DRAFT_PARAPHRASE_PROMPT,
     AnalysisDefaults,
@@ -130,6 +131,9 @@ def compose_default_runtime(
         paper_bridge=bridge,
         embedder=getattr(papers, "embedder", None),
         enabled_operators=enabled_operators_from_settings(getattr(papers, "settings", None)),
+        novelty_threshold_tau=novelty_threshold_tau_from_settings(
+            getattr(papers, "settings", None)
+        ),
     )
     return NsqdPaperRuntime(
         nsqd=nsqd,

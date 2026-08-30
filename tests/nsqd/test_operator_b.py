@@ -273,6 +273,7 @@ def test_container_defaults_to_a_and_can_explicitly_allowlist_b(tmp_path: Path) 
         index_path=tmp_path / "default-index",
     )
     assert default_container.ctx.enabled_operators == frozenset({"A"})
+    assert default_container.ctx.novelty_threshold_tau == 0.45
 
     enabled_container = build_container(
         db_path=tmp_path / "enabled.sqlite",

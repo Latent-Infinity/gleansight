@@ -10,7 +10,7 @@ from nsqd.domain.acquisition import (
     RECHECK_CYCLE_LIMIT,
     STAGED_IMPORT_LIMIT,
 )
-from nsqd.domain.novelty import NOVELTY_BIN_EDGES, NOVELTY_K
+from nsqd.domain.novelty import NOVELTY_BIN_EDGES, NOVELTY_K, NOVELTY_THRESHOLD_TAU
 from nsqd.domain.status import DEFAULT_DENSITY_CUT, STATUS_WINDOW_DAYS, CellStatus, cell_status
 
 AXIS_KEEP_SUM = 4
@@ -237,10 +237,10 @@ def alg_family_decisions() -> tuple[AlgFamilyDecision, ...]:
         ),
         AlgFamilyDecision(
             family_id="ALG.NOV.TAU",
-            outcome="unset",
+            outcome="approved_default_tunable",
             freeze_approved=False,
-            current_default="unset_report_only",
-            reopen="labeled near-duplicate vs novel pairs for packet 2b",
+            current_default=str(NOVELTY_THRESHOLD_TAU),
+            reopen="production-valid calibration repeat or policy-specific false-kill drift",
         ),
         AlgFamilyDecision(
             family_id="ALG.STATUS.THRESHOLDS",

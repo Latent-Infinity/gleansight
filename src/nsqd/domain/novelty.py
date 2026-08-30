@@ -8,10 +8,10 @@ if TYPE_CHECKING:
     from nsqd.domain.grounding import GroundingClass
 
 SnapshotState = Literal["smoke_only", "calibration", "production_valid"]
-NOVELTY_THRESHOLD_TAU: float | None = None
+NOVELTY_THRESHOLD_TAU: float = 0.45
 NOVELTY_BIN_EDGES = (0.15, 0.30, 0.45, 0.60)
 NOVELTY_K = 5
-UNSET_TAU_SEMANTICS = "unset_report_only"
+NOVELTY_TAU_SEMANTICS = "approved_default_tunable"
 
 
 def require_snapshot_state(snapshot_state: str) -> SnapshotState:
@@ -65,6 +65,23 @@ def apply_novelty_threshold(
     if evidence is not None and evidence < normalized_tau:
         return 0
     return term
+
+
+def require_novelty_threshold_tau(tau: object) -> float:
+    if isinstance(tau, bool) or not isinstance(tau, (int, float)):
+        raise ValueError("tau must be a non-negative number or unset")
+    normalized = float(tau)
+    if not math.isfinite(normalized) or normalized < 0:
+        raise ValueError("tau must be a non-negative number or unset")
+    return normalized
+
+
+def novelty_threshold_tau_from_settings(settings: object | None) -> float:
+    nsqd = getattr(settings, "nsqd", None)
+    raw = getattr(nsqd, "novelty_threshold_tau", None)
+    if raw is None:
+        return NOVELTY_THRESHOLD_TAU
+    return require_novelty_threshold_tau(raw)
 
 
 def mean_cosine_distance(distances: list[float]) -> float | None:

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+import json
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from math import isfinite
-from typing import Any
+from typing import Any, TypedDict
 
 from nsqd.domain.acquisition import (
     CANDIDATES_PER_BATCH,
@@ -48,8 +49,8 @@ from nsqd.domain.harvest import (
 )
 from nsqd.domain.novelty import (
     NOVELTY_K,
+    NOVELTY_TAU_SEMANTICS,
     NOVELTY_THRESHOLD_TAU,
-    UNSET_TAU_SEMANTICS,
     SnapshotState,
     apply_novelty_threshold,
     mean_cosine_distance,
@@ -68,6 +69,7 @@ from nsqd.domain.policy import (
 )
 from nsqd.domain.project import (
     PROJECTOR_VERSION,
+    REVIEWED_PROJECTION_FIELDS,
     canonical_reviewed_projection_bytes,
     canonical_reviewed_projection_digest,
     is_abstract_substitution,
@@ -98,6 +100,26 @@ from nsqd.domain.sufficiency import (
     evaluate_sufficiency,
     sufficiency_search_context,
 )
+from nsqd.domain.tau_measurement import (
+    export_tau_measurements_jsonl,
+    tau_measurement_artifact_digest,
+)
+from nsqd.domain.tau_review import (
+    AUTONOMOUS_TAU_ADJUDICATOR_PROMPT_VERSION,
+    AUTONOMOUS_TAU_RATIONALE_MAX_CHARS,
+    AUTONOMOUS_TAU_REVIEWER_PROMPT_VERSION,
+    AUTONOMOUS_TAU_WRITER_PROMPT_VERSION,
+    AutonomousTauPacketResult,
+    TauMeasurementInventory,
+    TauPacketResult,
+    autonomous_tau_output_schema,
+    autonomous_tau_review_packet_digest,
+    evaluate_autonomous_tau_packet,
+    evaluate_balanced_autonomous_tau_packet,
+    qualify_tau_measurement_pair,
+    should_audit_tau_measurement,
+    tau_measurement_inventory,
+)
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 from nsqd.ports import (
     AcquisitionCycleStore,
@@ -106,6 +128,7 @@ from nsqd.ports import (
     CorpusRecordStore,
     CorpusSnapshotStore,
     FrontierCardStore,
+    HarvestCommit,
     HarvestStore,
     HybridPaperSearch,
     LivePaperSearch,
@@ -115,6 +138,8 @@ from nsqd.ports import (
     ParaphraseEmbedder,
     PolicyVerdictStore,
 )
+from papers.app.ports import LLMClient
+from papers.config.settings import NsqdAutonomousTauRouteSettings, NsqdAutonomousTauSettings
 
 
 def empty_smoke_snapshot_id() -> str:
@@ -122,6 +147,18 @@ def empty_smoke_snapshot_id() -> str:
 
 
 MAX_REVIEWED_PROJECTION_BYTES = 65_536
+
+
+class AutonomousTauLabelingResult(TypedDict):
+    rows: list[dict[str, object]]
+    packet: AutonomousTauPacketResult
+    packet_digest: str
+
+
+class BalancedAutonomousTauEvaluationResult(TypedDict):
+    rows: list[dict[str, object]]
+    packet: TauPacketResult
+    packet_digest: str
 
 
 def candidate_body(candidate: dict[str, Any]) -> dict[str, Any]:
@@ -159,6 +196,80 @@ def _string_keyed_mapping(value: object) -> dict[str, Any] | None:
         if isinstance(key, str):
             normalized[key] = item
     return normalized
+
+
+def _parse_llm_json(value: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise ValueError("LLM output must be valid JSON") from exc
+    mapping = _string_keyed_mapping(parsed)
+    if mapping is None:
+        raise ValueError("LLM output must be a JSON object")
+    return mapping
+
+
+def _require_llm_response_metadata(
+    response: Any,
+    *,
+    configured_model: str,
+    provider: str,
+    reasoning_effort: str,
+) -> dict[str, object]:
+    metadata = getattr(response, "response_metadata", None)
+    if not isinstance(metadata, dict):
+        raise ValueError("returned model metadata is required")
+    if provider == "codex_subscription":
+        requested_model = metadata.get("requested_model")
+        if not isinstance(requested_model, str) or not requested_model.strip():
+            raise ValueError("returned model metadata is required")
+        if requested_model.strip() != configured_model:
+            raise ValueError("returned model does not match configured route model")
+        cli_version = metadata.get("codex_cli_version")
+        auth_mode = metadata.get("auth_mode")
+        identity_source = metadata.get("identity_source")
+        metadata_provider = metadata.get("provider")
+        metadata_reasoning_effort = metadata.get("reasoning_effort")
+        if not isinstance(cli_version, str) or not cli_version.strip():
+            raise ValueError("codex cli version metadata is required")
+        if auth_mode != "chatgpt":
+            raise ValueError("codex auth mode must be chatgpt")
+        if identity_source != "requested_and_reroute_checked":
+            raise ValueError("codex identity source is invalid")
+        if metadata_provider != "codex_subscription":
+            raise ValueError("codex provider metadata is invalid")
+        if metadata_reasoning_effort != reasoning_effort:
+            raise ValueError("codex reasoning effort metadata is invalid")
+        return {
+            "provider": "codex_subscription",
+            "requested_model": requested_model.strip(),
+            "codex_cli_version": cli_version.strip(),
+            "reasoning_effort": reasoning_effort,
+            "auth_mode": "chatgpt",
+            "identity_source": "requested_and_reroute_checked",
+        }
+    returned_model = metadata.get("model")
+    if not isinstance(returned_model, str) or not returned_model.strip():
+        raise ValueError("returned model metadata is required")
+    normalized_model = returned_model.strip()
+    if normalized_model != configured_model:
+        raise ValueError("returned model does not match configured route model")
+    result: dict[str, object] = {"model": normalized_model}
+    system_fingerprint = metadata.get("system_fingerprint")
+    if isinstance(system_fingerprint, str) and system_fingerprint.strip():
+        result["system_fingerprint"] = system_fingerprint.strip()
+    created = metadata.get("created")
+    if isinstance(created, int) and not isinstance(created, bool):
+        result["created"] = created
+    return result
+
+
+def _schema_rationale_inconsistent(label: str, rationale: str) -> bool:
+    lower = rationale.lower()
+    mentioned = {
+        candidate for candidate in ("near_duplicate", "novel", "ambiguous") if candidate in lower
+    }
+    return bool(mentioned) and (label not in mentioned or len(mentioned) > 1)
 
 
 def _hybrid_prior_art(result: object) -> list[dict[str, Any]]:
@@ -276,7 +387,7 @@ def _measurement_stamp(
     vector: list[float] | None = None,
 ) -> dict[str, Any]:
     if embedder is not None:
-        return {
+        stamp = {
             "embedding_model_id": embedder.model_id(),
             "embedding_model_version": embedder.model_version(),
             "embedding_dimension": embedder.dimension(),
@@ -284,20 +395,41 @@ def _measurement_stamp(
             "distance_metric": "cosine_distance",
             "algorithm_contract_version": "1.1",
         }
-    return {
-        "embedding_model_id": "unconfigured",
-        "embedding_model_version": "unconfigured",
-        "embedding_dimension": 0 if vector is None else len(vector),
-        "normalization_policy": "unknown",
-        "distance_metric": "cosine_distance",
-        "algorithm_contract_version": "1.1",
-    }
+    else:
+        stamp = {
+            "embedding_model_id": "unconfigured",
+            "embedding_model_version": "unconfigured",
+            "embedding_dimension": 0 if vector is None else len(vector),
+            "normalization_policy": "unknown",
+            "distance_metric": "cosine_distance",
+            "algorithm_contract_version": "1.1",
+        }
+    return stamp
 
 
 def _persisted_measurement_stamp(value: object) -> dict[str, Any]:
     if isinstance(value, dict):
         return {str(key): item for key, item in value.items()}
     return _measurement_stamp(None)
+
+
+def _reviewed_projection_from_record(record: Mapping[str, Any]) -> dict[str, Any] | None:
+    stored = record.get("reviewed_projection")
+    if isinstance(stored, Mapping):
+        return {str(key): deepcopy(value) for key, value in stored.items()}
+    expected_digest = str(record.get("reviewed_projection_digest") or "")
+    if not expected_digest:
+        return None
+    reconstructed = {
+        field: deepcopy(record[field]) for field in REVIEWED_PROJECTION_FIELDS if field in record
+    }
+    candidates = [reconstructed]
+    if "source" in reconstructed:
+        candidates.append({key: value for key, value in reconstructed.items() if key != "source"})
+    for candidate in candidates:
+        if canonical_reviewed_projection_digest(candidate) == expected_digest:
+            return candidate
+    return None
 
 
 @dataclass(frozen=True)
@@ -360,6 +492,7 @@ class HarvestUseCase:
 class ProjectPaperUseCase:
     harvest: HarvestStore
     records: CorpusRecordStore
+    snapshots: CorpusSnapshotStore
     clock: Clock
     approved_projection_digests: frozenset[str]
     index: CorpusIndex | None = None
@@ -487,12 +620,7 @@ class ProjectPaperUseCase:
             if existing_digest != reviewed_projection_digest:
                 raise ValueError("existing projection has different reviewed projection metadata")
             committed = self.harvest.commit([existing], schema_version=1)
-            _index_paraphrases(
-                self.index,
-                self.embedder,
-                snapshot_id=committed.snapshot_id,
-                records=[existing],
-            )
+            self._index_committed_snapshot(committed)
             return {
                 "created": False,
                 "record_id": str(existing["record_id"]),
@@ -518,16 +646,16 @@ class ProjectPaperUseCase:
             "source_markdown_sha256": identity["source_markdown_sha256"],
             "paraphrase_sha256": identity["paraphrase_sha256"],
             "reviewed_projection_digest": reviewed_projection_digest,
+            "reviewed_projection": {
+                field: deepcopy(reviewed_projection[field])
+                for field in REVIEWED_PROJECTION_FIELDS
+                if field in reviewed_projection
+            },
         }
         if coordinates is not None:
             record["coordinates"] = coordinates
         committed = self.harvest.commit([record], schema_version=1)
-        _index_paraphrases(
-            self.index,
-            self.embedder,
-            snapshot_id=committed.snapshot_id,
-            records=[record],
-        )
+        self._index_committed_snapshot(committed)
         return {
             "created": True,
             "record_id": record_id,
@@ -535,6 +663,20 @@ class ProjectPaperUseCase:
             "corpus_version": committed.corpus_version,
             "reviewed_projection_digest": reviewed_projection_digest,
         }
+
+    def _index_committed_snapshot(self, committed: HarvestCommit) -> None:
+        snapshot_records: list[dict[str, Any]] = []
+        for record_id in self.snapshots.record_ids(committed.snapshot_id):
+            record = self.records.get(record_id)
+            if record is None:
+                raise RuntimeError("committed snapshot contains a missing corpus record")
+            snapshot_records.append(record)
+        _index_paraphrases(
+            self.index,
+            self.embedder,
+            snapshot_id=committed.snapshot_id,
+            records=snapshot_records,
+        )
 
     @staticmethod
     def _require_sha256(name: str, value: object) -> str:
@@ -758,6 +900,7 @@ class GroundUseCase:
     live_search: LivePaperSearch | None = None
     hybrid_search: HybridPaperSearch | None = None
     embedder: ParaphraseEmbedder | None = None
+    clock: Clock | None = None
 
     def run(
         self,
@@ -772,6 +915,9 @@ class GroundUseCase:
         if int(snapshot["corpus_version"]) != corpus_version:
             raise ValueError("corpus_version does not match snapshot")
         validated_state = _require_snapshot_state(snapshot_state)
+        measured_at = self.clock.now() if self.clock is not None else datetime.now(UTC)
+        if not is_utc_datetime(measured_at):
+            raise ValueError("measured_at must be a UTC datetime")
         policy_id = require_domain_policy_id(artifact["candidate"])
         get_policy(policy_id)
         record_ids = self.snapshots.record_ids(snapshot_id)
@@ -799,6 +945,7 @@ class GroundUseCase:
         measurement_stamp = _measurement_stamp(self.embedder, vector=query)
         evidence = mean_cosine_distance([])
         nearest_hit = None
+        hits: list[Any] = []
         if present:
             if query is not None:
                 allowed_ids = frozenset(str(row["record_id"]) for row in present)
@@ -844,18 +991,84 @@ class GroundUseCase:
             local_confidence=confidence,
             live_hits=live_hits,
         )
+        present_by_id = {str(row.get("record_id") or ""): row for row in present}
+        neighbors: list[dict[str, Any]] = []
+        for hit in hits:
+            neighbor_record = present_by_id.get(hit.record_id)
+            if neighbor_record is None:
+                raise ValueError("grounding neighbor is missing from the snapshot")
+            neighbor_source = str(neighbor_record.get("source") or "").strip()
+            neighbor_policy = str(neighbor_record.get("domain_policy_id") or "").strip()
+            neighbor_text = str(neighbor_record.get("paraphrase") or "").strip()
+            if not neighbor_source or not neighbor_policy:
+                raise ValueError("grounding neighbor provenance is incomplete")
+            neighbor = {
+                "record_id": hit.record_id,
+                "source_id": neighbor_source,
+                "domain_policy_id": neighbor_policy,
+                "distance": hit.distance,
+                "rank": hit.rank,
+            }
+            if neighbor_text:
+                neighbor["text_digest"] = sha256_hex(neighbor_text.encode("utf-8"))
+            for field in (
+                "source_paper_id",
+                "projector_version",
+                "reviewed_projection_digest",
+            ):
+                value = neighbor_record.get(field)
+                if isinstance(value, str) and value.strip():
+                    neighbor[field] = value.strip()
+            reviewed_projection = _reviewed_projection_from_record(neighbor_record)
+            if reviewed_projection is not None:
+                neighbor["reviewed_projection"] = reviewed_projection
+            neighbors.append(neighbor)
+        candidate = artifact["candidate"]
+        candidate_paraphrase = normalize_paraphrase(str(candidate.get("paraphrase") or ""))
+        candidate_provenance = {
+            "artifact_hash": candidate_artifact_hash,
+            "paraphrase": candidate_paraphrase,
+            "text_digest": sha256_hex(candidate_paraphrase.encode("utf-8")),
+        }
+        distances = [float(hit.distance) for hit in hits]
+        measurement = {
+            **measurement_stamp,
+            "measured_at": measured_at.isoformat(),
+            "distances": distances,
+            "k": NOVELTY_K,
+            "evidence_mean_distance": evidence,
+        }
+        pair_id = sha256_hex(
+            canonical_json(
+                {
+                    "candidate_artifact_hash": candidate_artifact_hash,
+                    "domain_policy_id": policy_id,
+                    "snapshot_id": snapshot_id,
+                }
+            )
+        )
         result = {
+            "pair_id": pair_id,
+            "candidate_artifact_hash": candidate_artifact_hash,
+            "domain_policy_id": policy_id,
             "grounding_class": klass,
             "confidence": confidence,
             "layers": [asdict(layer) for layer in layers],
             "evidence": evidence,
             "snapshot_id": snapshot_id,
+            "snapshot_digest": snapshot_id,
+            "snapshot_state": validated_state,
             "corpus_version": corpus_version,
             "live_call_count": len(live_calls),
+            "neighbors": neighbors,
+            "candidate": candidate_provenance,
+            "neighbor": dict(neighbors[0]) if neighbors else {},
+            "measurement": measurement,
             "live_calls": live_calls,
             "measurement_stamp": measurement_stamp,
             "closest_prior_art": live_hits[0] if live_hits else local_prior_art,
         }
+        result["measurement_artifact_digest"] = tau_measurement_artifact_digest(result)
         updated = dict(artifact)
         updated["grounding"] = result
         self.candidates.put_artifact(candidate_artifact_hash, updated)
@@ -914,11 +1127,433 @@ class GroundUseCase:
 
 
 @dataclass(frozen=True)
+class TauMeasurementEvidenceUseCase:
+    candidates: NsqdCandidateStore
+    approved_projection_digests: frozenset[str]
+
+    def export_jsonl(self, candidate_artifact_hashes: Sequence[str]) -> bytes:
+        rows, trusted_digests = self._persisted_rows(candidate_artifact_hashes)
+        return export_tau_measurements_jsonl(
+            rows,
+            approved_projection_digests=self.approved_projection_digests,
+            trusted_measurement_digests=trusted_digests,
+        )
+
+    def inventory(self, candidate_artifact_hashes: Sequence[str]) -> TauMeasurementInventory:
+        rows, trusted_digests = self._persisted_rows(candidate_artifact_hashes)
+        return tau_measurement_inventory(
+            rows,
+            approved_projection_digests=self.approved_projection_digests,
+            trusted_measurement_digests=trusted_digests,
+        )
+
+    def load_rows(
+        self,
+        candidate_artifact_hashes: Sequence[str],
+    ) -> tuple[list[dict[str, object]], frozenset[str]]:
+        return self._persisted_rows(candidate_artifact_hashes)
+
+    def _persisted_rows(
+        self,
+        candidate_artifact_hashes: Sequence[str],
+    ) -> tuple[list[dict[str, object]], frozenset[str]]:
+        hashes = [str(value).strip() for value in candidate_artifact_hashes]
+        if not hashes or any(not value for value in hashes):
+            raise ValueError("candidate artifact hashes are required")
+        if len(hashes) != len(set(hashes)):
+            raise ValueError("duplicate candidate artifact hash")
+        rows: list[dict[str, object]] = []
+        trusted_digests: set[str] = set()
+        for candidate_hash in hashes:
+            artifact = self.candidates.get_artifact(candidate_hash)
+            if artifact is None:
+                raise ValueError("unknown candidate artifact hash")
+            grounding = artifact.get("grounding")
+            if not isinstance(grounding, Mapping):
+                raise ValueError("candidate artifact has no persisted grounding")
+            row = {str(key): deepcopy(value) for key, value in grounding.items()}
+            if str(row.get("candidate_artifact_hash") or "") != candidate_hash:
+                raise ValueError("persisted grounding candidate hash does not match store key")
+            digest = str(row.get("measurement_artifact_digest") or "")
+            if not digest or tau_measurement_artifact_digest(row) != digest:
+                raise ValueError("persisted grounding measurement digest does not match row")
+            rows.append(row)
+            trusted_digests.add(digest)
+        return rows, frozenset(trusted_digests)
+
+
+@dataclass(frozen=True)
+class AutonomousTauLabelingUseCase:
+    measurement_evidence: TauMeasurementEvidenceUseCase
+    llm_client: LLMClient
+    clock: Clock
+    settings: NsqdAutonomousTauSettings
+
+    def run(self, candidate_artifact_hashes: Sequence[str]) -> AutonomousTauLabelingResult:
+        rows, trusted_digests = self.measurement_evidence.load_rows(candidate_artifact_hashes)
+        qualified_rows = [
+            qualify_tau_measurement_pair(
+                row,
+                approved_projection_digests=self.measurement_evidence.approved_projection_digests,
+                trusted_measurement_digests=trusted_digests,
+            )
+            for row in rows
+        ]
+        reviewed_rows = [self._review_row(row) for row in qualified_rows]
+        packet = evaluate_autonomous_tau_packet(
+            reviewed_rows,
+            approved_projection_digests=self.measurement_evidence.approved_projection_digests,
+            trusted_measurement_digests=trusted_digests,
+            audit_policy_revision=self.settings.audit.policy_revision,
+            audit_sample_rate=self.settings.audit.sample_rate,
+        )
+        return {
+            "rows": reviewed_rows,
+            "packet": packet,
+            "packet_digest": autonomous_tau_review_packet_digest(reviewed_rows),
+        }
+
+    def _review_row(self, row: Mapping[str, object]) -> dict[str, object]:
+        pair_input = self._pair_input(row)
+        pair_id = str(pair_input["pair_id"])
+        rounds: list[dict[str, object]] = []
+        history: list[dict[str, object]] = []
+        for round_number in range(1, self.settings.rounds + 1):
+            writer_call = self._invoke_round(
+                route=self.settings.writer,
+                role="writer",
+                round_number=round_number,
+                prompt_version_id=AUTONOMOUS_TAU_WRITER_PROMPT_VERSION,
+                input_payload={
+                    "pair": pair_input,
+                    "history": list(history),
+                    "task": "propose a pending autonomous tau label",
+                },
+                pair_id=pair_id,
+            )
+            rounds.append(writer_call)
+            history.append(
+                {
+                    "round": round_number,
+                    "role": "writer",
+                    "label": writer_call["label"],
+                    "rationale": writer_call["rationale"],
+                }
+            )
+            reviewer_call = self._invoke_round(
+                route=self.settings.reviewer,
+                role="reviewer",
+                round_number=round_number,
+                prompt_version_id=AUTONOMOUS_TAU_REVIEWER_PROMPT_VERSION,
+                input_payload={
+                    "pair": pair_input,
+                    "history": list(history),
+                    "task": "independently review the pending autonomous tau label",
+                },
+                pair_id=pair_id,
+            )
+            rounds.append(reviewer_call)
+            history.append(
+                {
+                    "round": round_number,
+                    "role": "reviewer",
+                    "label": reviewer_call["label"],
+                    "rationale": reviewer_call["rationale"],
+                }
+            )
+
+        writer_final = rounds[-2]
+        reviewer_final = rounds[-1]
+        escalation_reason = self._escalation_reason(row, rounds, writer_final, reviewer_final)
+        adjudication: dict[str, object] | None = None
+        escalation: dict[str, object] | None = None
+        final_label = str(reviewer_final["label"])
+        final_rationale = str(reviewer_final["rationale"])
+        if escalation_reason is not None:
+            adjudication = self._invoke_round(
+                route=self.settings.adjudicator,
+                role="adjudicator",
+                round_number=self.settings.rounds,
+                prompt_version_id=AUTONOMOUS_TAU_ADJUDICATOR_PROMPT_VERSION,
+                input_payload={
+                    "pair": pair_input,
+                    "rounds": rounds,
+                    "reason": escalation_reason,
+                    "task": "resolve the pending autonomous tau label",
+                },
+                pair_id=pair_id,
+            )
+            final_label = str(adjudication["label"])
+            final_rationale = str(adjudication["rationale"])
+            escalation = {"reason": escalation_reason}
+            if escalation_reason == "deterministic_audit":
+                escalation["audit_policy_revision"] = self.settings.audit.policy_revision
+
+        return {
+            **{str(key): deepcopy(value) for key, value in row.items()},
+            "rounds": rounds,
+            "final_label": final_label,
+            "final_rationale": final_rationale,
+            "adjudication": adjudication,
+            "escalation": escalation,
+        }
+
+    def _escalation_reason(
+        self,
+        row: Mapping[str, object],
+        rounds: Sequence[Mapping[str, object]],
+        writer_final: Mapping[str, object],
+        reviewer_final: Mapping[str, object],
+    ) -> str | None:
+        if any(
+            _schema_rationale_inconsistent(str(item["label"]), str(item["rationale"]))
+            for item in rounds
+        ):
+            return "schema_rationale_inconsistency"
+        if writer_final["label"] != reviewer_final["label"]:
+            return "final_disagreement"
+        if writer_final["label"] == "ambiguous":
+            return "final_ambiguity"
+        if should_audit_tau_measurement(
+            str(row["measurement_artifact_digest"]),
+            audit_policy_revision=self.settings.audit.policy_revision,
+            sample_rate=self.settings.audit.sample_rate,
+        ):
+            return "deterministic_audit"
+        return None
+
+    def _invoke_round(
+        self,
+        *,
+        route: NsqdAutonomousTauRouteSettings,
+        role: str,
+        round_number: int,
+        prompt_version_id: str,
+        input_payload: dict[str, object],
+        pair_id: str,
+    ) -> dict[str, object]:
+        self._require_route_ready(route, role=role)
+        prompt = self._render_prompt(
+            role=role,
+            round_number=round_number,
+            prompt_version_id=prompt_version_id,
+            input_payload=input_payload,
+        )
+        output_schema = autonomous_tau_output_schema(pair_id)
+        response = self.llm_client.complete(
+            prompt=prompt,
+            profile={
+                "provider": route.provider,
+                "base_url": route.base_url,
+                "api_key": route.api_key,
+                "executable_path": route.executable_path,
+                "reasoning_effort": route.reasoning_effort,
+                "chat_options": {
+                    "temperature": 0,
+                    "seed": self.settings.seed,
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "tau_label",
+                            "strict": True,
+                            "schema": output_schema,
+                        },
+                    },
+                },
+            },
+            model=route.model,
+            timeout_s=self.settings.timeout_s,
+        )
+        response_metadata = _require_llm_response_metadata(
+            response,
+            configured_model=route.model,
+            provider=route.provider,
+            reasoning_effort=route.reasoning_effort,
+        )
+        output = _parse_llm_json(response.text)
+        if str(output.get("pair_id") or "") != pair_id:
+            raise ValueError("LLM output pair_id does not match requested pair")
+        label = str(output.get("label") or "").strip()
+        if label not in {"near_duplicate", "novel", "ambiguous"}:
+            raise ValueError("LLM output label is invalid")
+        rationale = str(output.get("rationale") or "").strip()
+        if not rationale:
+            raise ValueError("LLM output rationale is required")
+        if len(rationale) > AUTONOMOUS_TAU_RATIONALE_MAX_CHARS:
+            raise ValueError("LLM output rationale exceeds the maximum length")
+        output_text = response.text.strip()
+        return {
+            "round": round_number,
+            "role": role,
+            "agent_id": route.agent_id,
+            "provider": route.provider,
+            "model": route.model
+            if route.provider == "codex_subscription"
+            else str(response_metadata["model"]),
+            "version": route.version,
+            "profile": route.profile,
+            "prompt_version_id": prompt_version_id,
+            "prompt": prompt,
+            "prompt_sha256": sha256_hex(prompt.encode()),
+            "input_payload": deepcopy(input_payload),
+            "input_sha256": sha256_hex(canonical_json(input_payload)),
+            "output_text": output_text,
+            "output_sha256": sha256_hex(output_text.encode()),
+            "label": label,
+            "rationale": rationale,
+            "called_at": self.clock.now().isoformat(),
+            "response_metadata": response_metadata,
+        }
+
+    def _render_prompt(
+        self,
+        *,
+        role: str,
+        round_number: int,
+        prompt_version_id: str,
+        input_payload: dict[str, object],
+    ) -> str:
+        return (
+            f"Prompt version: {prompt_version_id}\n"
+            f"Role: {role}\n"
+            f"Round: {round_number} of {self.settings.rounds}\n"
+            "Return one JSON object with exactly "
+            '{"pair_id":"...","label":"near_duplicate|novel|ambiguous","rationale":"..."}.\n'
+            "Keep the rationale to one evidence-specific sentence of at most 240 characters.\n"
+            f"Input:\n{json.dumps(input_payload, sort_keys=True, ensure_ascii=False)}"
+        )
+
+    def _require_route_ready(self, route: NsqdAutonomousTauRouteSettings, *, role: str) -> None:
+        if role in {"writer", "reviewer"} and not route.base_url:
+            raise ValueError(f"{role} route is not configured")
+        if role == "adjudicator" and route.provider == "codex_subscription":
+            if (
+                not route.model
+                or not route.version
+                or not route.executable_path
+                or not route.reasoning_effort
+            ):
+                raise ValueError("codex adjudicator route is not configured")
+        if role == "adjudicator" and route.provider == "frontier":
+            if not route.base_url or not route.api_key:
+                raise ValueError("frontier adjudicator route is not configured")
+
+    def _pair_input(self, row: Mapping[str, object]) -> dict[str, object]:
+        candidate = _string_keyed_mapping(row["candidate"])
+        neighbor = _string_keyed_mapping(row["neighbor"])
+        neighbors = row["neighbors"]
+        measurement = _string_keyed_mapping(row["measurement"])
+        if candidate is None or neighbor is None:
+            raise ValueError("qualified tau row candidate and neighbor must be mappings")
+        if not isinstance(neighbors, Sequence) or isinstance(neighbors, (str, bytes)):
+            raise ValueError("qualified tau row neighbors must be a sequence")
+        if measurement is None:
+            raise ValueError("qualified tau row measurement must be a mapping")
+        reviewed_projection = _string_keyed_mapping(neighbor.get("reviewed_projection"))
+        if reviewed_projection is None:
+            raise ValueError("qualified tau row neighbor projection must be a mapping")
+        ordered_neighbors = [
+            normalized
+            for item in neighbors
+            if (normalized := _string_keyed_mapping(item)) is not None
+        ]
+        return {
+            "pair_id": deepcopy(row["pair_id"]),
+            "domain_policy_id": deepcopy(row["domain_policy_id"]),
+            "snapshot_id": deepcopy(row["snapshot_id"]),
+            "snapshot_state": deepcopy(row["snapshot_state"]),
+            "candidate": {
+                "artifact_hash": deepcopy(candidate.get("artifact_hash")),
+                "paraphrase": deepcopy(candidate.get("paraphrase")),
+                "text_digest": deepcopy(candidate.get("text_digest")),
+            },
+            "closest_neighbor": {
+                "record_id": deepcopy(neighbor.get("record_id")),
+                "source_paper_id": deepcopy(neighbor.get("source_paper_id")),
+                "distance": deepcopy(neighbor.get("distance")),
+                "paraphrase": deepcopy(reviewed_projection.get("paraphrase")),
+                "text_digest": deepcopy(neighbor.get("text_digest")),
+            },
+            "ordered_neighbors": [
+                {
+                    "rank": deepcopy(item.get("rank")),
+                    "record_id": deepcopy(item.get("record_id")),
+                    "source_paper_id": deepcopy(item.get("source_paper_id")),
+                    "distance": deepcopy(item.get("distance")),
+                    "text_digest": deepcopy(item.get("text_digest")),
+                }
+                for item in ordered_neighbors
+            ],
+            "measurement": {
+                "evidence_mean_distance": deepcopy(measurement.get("evidence_mean_distance")),
+                "k": deepcopy(measurement.get("k")),
+                "distance_metric": deepcopy(measurement.get("distance_metric")),
+                "embedding_model_id": deepcopy(measurement.get("embedding_model_id")),
+                "embedding_model_version": deepcopy(measurement.get("embedding_model_version")),
+            },
+            "measurement_artifact_digest": deepcopy(row["measurement_artifact_digest"]),
+        }
+
+
+@dataclass(frozen=True)
+class AutonomousTauPacketEvaluationUseCase:
+    measurement_evidence: TauMeasurementEvidenceUseCase
+    audit_policy_revision: str
+    audit_sample_rate: float
+
+    def run(
+        self,
+        candidate_artifact_hashes: Sequence[str],
+        rows: Sequence[Mapping[str, object]],
+        *,
+        require_balanced: bool = False,
+    ) -> AutonomousTauLabelingResult | BalancedAutonomousTauEvaluationResult:
+        persisted_rows, trusted_digests = self.measurement_evidence.load_rows(
+            candidate_artifact_hashes
+        )
+        expected_hashes = {str(row["candidate_artifact_hash"]) for row in persisted_rows}
+        reviewed_rows = [{str(key): deepcopy(value) for key, value in row.items()} for row in rows]
+        reviewed_hashes = [str(row.get("candidate_artifact_hash") or "") for row in reviewed_rows]
+        if (
+            len(reviewed_hashes) != len(expected_hashes)
+            or len(reviewed_hashes) != len(set(reviewed_hashes))
+            or set(reviewed_hashes) != expected_hashes
+        ):
+            raise ValueError("reviewed candidate hashes must exactly match persisted evidence")
+        if require_balanced:
+            balanced_packet = evaluate_balanced_autonomous_tau_packet(
+                reviewed_rows,
+                approved_projection_digests=self.measurement_evidence.approved_projection_digests,
+                trusted_measurement_digests=trusted_digests,
+                audit_policy_revision=self.audit_policy_revision,
+                audit_sample_rate=self.audit_sample_rate,
+            )
+            return {
+                "rows": reviewed_rows,
+                "packet": balanced_packet,
+                "packet_digest": autonomous_tau_review_packet_digest(reviewed_rows),
+            }
+        packet = evaluate_autonomous_tau_packet(
+            reviewed_rows,
+            approved_projection_digests=self.measurement_evidence.approved_projection_digests,
+            trusted_measurement_digests=trusted_digests,
+            audit_policy_revision=self.audit_policy_revision,
+            audit_sample_rate=self.audit_sample_rate,
+        )
+        return {
+            "rows": reviewed_rows,
+            "packet": packet,
+            "packet_digest": autonomous_tau_review_packet_digest(reviewed_rows),
+        }
+
+
+@dataclass(frozen=True)
 class ScoreUseCase:
     candidates: NsqdCandidateStore
     cards: FrontierCardStore
     snapshots: CorpusSnapshotStore
     records: CorpusRecordStore
+    tau: float = NOVELTY_THRESHOLD_TAU
 
     def run(
         self,
@@ -955,7 +1590,7 @@ class ScoreUseCase:
                 grounding_class=grounding["grounding_class"],
             ),
             evidence=reported_evidence,
-            tau=NOVELTY_THRESHOLD_TAU,
+            tau=self.tau,
         )
         policy_id = require_domain_policy_id(candidate)
         policy = get_policy(policy_id)
@@ -996,8 +1631,8 @@ class ScoreUseCase:
         evaluated["novelty"] = {
             "evidence": evidence,
             "term": nov,
-            "tau": NOVELTY_THRESHOLD_TAU,
-            "tau_semantics": UNSET_TAU_SEMANTICS,
+            "tau": self.tau,
+            "tau_semantics": NOVELTY_TAU_SEMANTICS,
             "snapshot_id": snapshot_id,
             "snapshot_state": validated_snapshot_state,
             "corpus_version": corpus_version,
@@ -1008,7 +1643,7 @@ class ScoreUseCase:
         return {
             "evidence": evidence,
             "nov": nov,
-            "tau": NOVELTY_THRESHOLD_TAU,
+            "tau": self.tau,
             "mech": mech,
             "fals": fals,
             "dpred": dpred,
@@ -1174,6 +1809,7 @@ class RescoreUseCase:
     live_search: LivePaperSearch | None = None
     hybrid_search: HybridPaperSearch | None = None
     embedder: ParaphraseEmbedder | None = None
+    clock: Clock | None = None
 
     def run(
         self,
@@ -1213,6 +1849,7 @@ class RescoreUseCase:
             live_search=self.live_search,
             hybrid_search=self.hybrid_search,
             embedder=self.embedder,
+            clock=self.clock,
         ).run(
             candidate_artifact_hash=candidate_artifact_hash,
             snapshot_id=current_snapshot_id,

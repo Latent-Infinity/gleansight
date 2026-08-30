@@ -61,6 +61,7 @@ def test_packaged_defaults_toml_loads() -> None:
     assert settings.data.db_path.name == "app.sqlite"
     assert settings.scholar.rate_limit_per_second == 1
     assert settings.nsqd.enabled_operators == ("A",)
+    assert settings.nsqd.novelty_threshold_tau == 0.45
 
 
 def test_load_settings_missing_file_raises(tmp_path: Path) -> None:
@@ -107,6 +108,26 @@ enabled_operators = ["A", "B"]
     )
 
     assert settings.nsqd.enabled_operators == ("A", "B")
+
+
+def test_load_settings_can_override_novelty_threshold_tau(tmp_path: Path) -> None:
+    defaults_path = tmp_path / "defaults.toml"
+    override_path = tmp_path / "override.toml"
+    _write_defaults(defaults_path)
+    override_path.write_text(
+        """
+[nsqd]
+novelty_threshold_tau = 0.30
+""".strip()
+    )
+
+    settings = load_settings(
+        defaults_path=defaults_path,
+        override_path=override_path,
+        base_dir=tmp_path,
+    )
+
+    assert settings.nsqd.novelty_threshold_tau == 0.30
 
 
 @pytest.mark.parametrize(

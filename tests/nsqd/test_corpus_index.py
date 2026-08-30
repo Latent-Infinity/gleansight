@@ -14,7 +14,7 @@ from nsqd.app.use_cases import (
     ScoreUseCase,
     _index_paraphrases,
 )
-from nsqd.domain.novelty import novelty_term
+from nsqd.domain.novelty import apply_novelty_threshold, novelty_term
 from nsqd.domain.policy import POLICIES
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.viability import score_mech
@@ -85,6 +85,7 @@ def test_project_indexes_gamma_fragility_and_scores_gamma_flow() -> None:
     projected = ProjectPaperUseCase(
         harvest=NullHarvestStore(records, snapshots),
         records=records,
+        snapshots=snapshots,
         clock=FixedClock(AS_OF),
         approved_projection_digests=frozenset({digest}),
         index=index,
@@ -149,15 +150,45 @@ def test_project_indexes_gamma_fragility_and_scores_gamma_flow() -> None:
         corpus_version=int(projected["corpus_version"]),
         snapshot_state="production_valid",
     )
-    assert scored["nov"] == nov
+    assert scored["nov"] == apply_novelty_threshold(nov, evidence=float(evidence))
     stored_artifact = candidates.get_artifact(artifact_hash)
     assert stored_artifact is not None
     assert stored_artifact["novelty"]["measurement_stamp"] == grounding["measurement_stamp"]
-    assert stored_artifact["novelty"]["tau"] is None
-    assert stored_artifact["novelty"]["tau_semantics"] == "unset_report_only"
-    assert scored["tau"] is None
+    assert stored_artifact["novelty"]["tau"] == 0.45
+    assert stored_artifact["novelty"]["tau_semantics"] == "approved_default_tunable"
+    assert scored["tau"] == 0.45
     mechanism_free = _load_yaml("mechanism-free.yaml")
     assert score_mech(mechanism_free, domain_pack="finance/1") == 0
+
+
+def test_project_indexes_every_record_in_latest_snapshot() -> None:
+    records = NullCorpusRecordStore()
+    snapshots = NullCorpusSnapshotStore()
+    index = NullCorpusIndex()
+    projections = [_load_yaml("paper-a.yaml"), _load_yaml("gamma-fragility.yaml")]
+    digests = frozenset(canonical_reviewed_projection_digest(row) for row in projections)
+    project = ProjectPaperUseCase(
+        harvest=NullHarvestStore(records, snapshots),
+        records=records,
+        snapshots=snapshots,
+        clock=FixedClock(AS_OF),
+        approved_projection_digests=digests,
+        index=index,
+        embedder=EMBEDDER,
+    )
+
+    first = project.run(domain_policy_id="optimization/1", projection=projections[0])
+    second = project.run(domain_policy_id="finance/1", projection=projections[1])
+
+    hits = index.query(
+        str(second["snapshot_id"]),
+        EMBEDDER.embed("stochastic optimization and dealer gamma"),
+        k=5,
+    )
+    assert {hit.record_id for hit in hits} == {
+        str(first["record_id"]),
+        str(second["record_id"]),
+    }
 
 
 def test_index_paraphrases_skips_incomplete_rows() -> None:

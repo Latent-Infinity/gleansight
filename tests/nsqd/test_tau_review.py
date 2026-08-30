@@ -1,18 +1,62 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import UTC, datetime
 
 import pytest
 
+from nsqd.domain.project import PROJECTOR_VERSION, canonical_reviewed_projection_digest
+from nsqd.domain.snapshot import sha256_hex
+from nsqd.domain.tau_measurement import tau_measurement_artifact_digest
 from nsqd.domain.tau_review import (
     build_tau_label_prompt,
     evaluate_tau_packet,
     parse_tau_label_proposal,
+    qualify_tau_measurement_pair,
+    require_tau_measurement_inventory,
+    tau_measurement_inventory,
     tau_review_packet_digest,
 )
 
 POLICIES = ("finance/1", "optimization/1")
 TRUSTED_REVIEWERS = frozenset({"human-reviewer"})
+AS_OF = datetime(2026, 8, 28, tzinfo=UTC)
+
+
+def _approved_neighbor(*, policy_id: str, rank: int) -> dict[str, object]:
+    paraphrase = f"approved {policy_id} neighbor {rank}"
+    projection: dict[str, object] = {
+        "domain_policy_id": policy_id,
+        "paraphrase": paraphrase,
+        "paraphrase_source": "model_assisted",
+        "source_paper_id": f"paper-{policy_id}-{rank}",
+        "source": f"doi:10.1/{policy_id}-{rank}",
+        "source_abstract_sha256": sha256_hex(f"abstract {policy_id} {rank}".encode()),
+        "source_markdown_sha256": sha256_hex(f"markdown {policy_id} {rank}".encode()),
+        "paraphrase_sha256": sha256_hex(paraphrase.encode()),
+        "human_reviewer": "human-reviewer",
+        "human_approved_at": AS_OF.isoformat(),
+        "review_status": "approved",
+    }
+    return {
+        "record_id": f"record-{policy_id}-{rank}",
+        "source_id": projection["source"],
+        "source_paper_id": projection["source_paper_id"],
+        "domain_policy_id": policy_id,
+        "text_digest": projection["paraphrase_sha256"],
+        "projector_version": PROJECTOR_VERSION,
+        "reviewed_projection_digest": canonical_reviewed_projection_digest(projection),
+        "reviewed_projection": projection,
+        "distance": (rank + 1) / 10,
+        "rank": rank,
+    }
+
+
+APPROVED_PROJECTION_DIGESTS = frozenset(
+    str(_approved_neighbor(policy_id=policy_id, rank=rank)["reviewed_projection_digest"])
+    for policy_id in POLICIES
+    for rank in range(1, 6)
+)
 
 
 def _row(
@@ -218,3 +262,187 @@ def test_tau_packet_rejects_model_or_profile_as_human_reviewer() -> None:
             manifest=manifest,
             trusted_reviewers=frozenset({model_name}),
         )
+
+
+def _measurement_row(
+    *,
+    policy_id: str,
+    index: int,
+    snapshot_state: str = "production_valid",
+    evidence: float = 0.40,
+    **overrides: object,
+) -> dict[str, object]:
+    pair_id = f"{policy_id}-measure-{index}"
+    candidate_hash = sha256_hex(pair_id.encode("utf-8"))
+    candidate_text = f"candidate text {pair_id}"
+    neighbors = [_approved_neighbor(policy_id=policy_id, rank=rank) for rank in range(1, 6)]
+    distances = [float(neighbor["distance"]) for neighbor in neighbors]
+    snapshot_digest = sha256_hex(f"snapshot-{policy_id}".encode())
+    row: dict[str, object] = {
+        "pair_id": pair_id,
+        "candidate_artifact_hash": candidate_hash,
+        "domain_policy_id": policy_id,
+        "snapshot_id": snapshot_digest,
+        "snapshot_digest": snapshot_digest,
+        "snapshot_state": snapshot_state,
+        "corpus_version": 1,
+        "candidate": {
+            "artifact_hash": candidate_hash,
+            "paraphrase": candidate_text,
+            "text_digest": sha256_hex(candidate_text.encode("utf-8")),
+        },
+        "neighbor": dict(neighbors[0]),
+        "neighbors": neighbors,
+        "measurement": {
+            "evidence_mean_distance": evidence,
+            "k": 5,
+            "distances": distances,
+            "embedding_model_id": "qwen3-embedding:latest",
+            "embedding_model_version": "latest",
+            "embedding_dimension": 4096,
+            "normalization_policy": "l2",
+            "distance_metric": "cosine_distance",
+            "algorithm_contract_version": "1.1",
+            "measured_at": AS_OF.isoformat(),
+        },
+    }
+    row.update(overrides)
+    row["measurement_artifact_digest"] = tau_measurement_artifact_digest(row)
+    return row
+
+
+def _trusted_measurements(rows: list[dict[str, object]]) -> frozenset[str]:
+    digests: set[str] = set()
+    for row in rows:
+        digest = tau_measurement_artifact_digest(row)
+        row["measurement_artifact_digest"] = digest
+        digests.add(digest)
+    return frozenset(digests)
+
+
+def _enough_measurements() -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for policy_id in POLICIES:
+        state = "production_valid" if policy_id == "finance/1" else "calibration"
+        rows.extend(
+            _measurement_row(policy_id=policy_id, index=index, snapshot_state=state)
+            for index in range(60)
+        )
+    return rows
+
+
+def test_qualify_tau_measurement_rejects_smoke_synthetic_and_unapproved() -> None:
+    valid = _measurement_row(policy_id="finance/1", index=0)
+    ok = qualify_tau_measurement_pair(
+        valid,
+        approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+        trusted_measurement_digests=_trusted_measurements([valid]),
+    )
+    assert ok["domain_policy_id"] == "finance/1"
+    assert ok["measurement"]["k"] == 5
+    with pytest.raises(ValueError, match="calibration or production_valid"):
+        qualify_tau_measurement_pair(
+            _measurement_row(policy_id="finance/1", index=1, snapshot_state="smoke_only"),
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=frozenset(),
+        )
+    with pytest.raises(ValueError, match="synthetic"):
+        qualify_tau_measurement_pair(
+            _measurement_row(policy_id="finance/1", index=2, synthetic=True),
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=frozenset(),
+        )
+    with pytest.raises(ValueError, match="unapproved"):
+        qualify_tau_measurement_pair(
+            _measurement_row(
+                policy_id="finance/1",
+                index=3,
+                source_class="requirement_card",
+            ),
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=frozenset(),
+        )
+
+
+def test_measurement_inventory_is_not_ready_until_sixty_pairs_per_policy() -> None:
+    short = [_measurement_row(policy_id="finance/1", index=0)]
+    inventory = tau_measurement_inventory(
+        short,
+        approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+        trusted_measurement_digests=_trusted_measurements(short),
+    )
+    assert inventory["ready_for_label_proposals"] is False
+    assert inventory["counts_by_policy"]["finance/1"] == 1
+    assert inventory["counts_by_policy"]["optimization/1"] == 0
+    assert "do not fabricate" in inventory["shortfall"].lower()
+    with pytest.raises(ValueError, match="do not fabricate"):
+        require_tau_measurement_inventory(
+            short,
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=_trusted_measurements(short),
+        )
+
+    enough = _enough_measurements()
+    trusted_enough = _trusted_measurements(enough)
+    ready = tau_measurement_inventory(
+        enough,
+        approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+        trusted_measurement_digests=trusted_enough,
+    )
+    assert ready["ready_for_label_proposals"] is True
+    assert ready["qualified_pair_count"] == 120
+    require_tau_measurement_inventory(
+        enough,
+        approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+        trusted_measurement_digests=trusted_enough,
+    )
+
+
+def test_measurement_inventory_rejects_invented_or_duplicate_candidate_rows() -> None:
+    invented = {
+        "pair_id": "invented",
+        "domain_policy_id": "finance/1",
+        "snapshot_id": "snapshot",
+        "snapshot_state": "calibration",
+        "candidate": {},
+        "neighbor": {},
+        "measurement": {"evidence_mean_distance": 0.4, "k": 5},
+    }
+    with pytest.raises(ValueError, match="measurement_artifact_digest"):
+        tau_measurement_inventory(
+            [invented],
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=frozenset(),
+        )
+
+    first = _measurement_row(policy_id="finance/1", index=0)
+    second = _measurement_row(policy_id="finance/1", index=1)
+    second["candidate_artifact_hash"] = first["candidate_artifact_hash"]
+    second["candidate"] = deepcopy(first["candidate"])
+    with pytest.raises(ValueError, match="duplicate candidate"):
+        tau_measurement_inventory(
+            [first, second],
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=_trusted_measurements([first, second]),
+        )
+
+    fabricated_inventory = _enough_measurements()
+    _trusted_measurements(fabricated_inventory)
+    with pytest.raises(ValueError, match="trusted persisted grounding"):
+        tau_measurement_inventory(
+            fabricated_inventory,
+            approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+            trusted_measurement_digests=frozenset(),
+        )
+
+
+def test_measurement_inventory_does_not_mutate_runtime_tau() -> None:
+    from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU
+
+    rows = _enough_measurements()
+    tau_measurement_inventory(
+        rows,
+        approved_projection_digests=APPROVED_PROJECTION_DIGESTS,
+        trusted_measurement_digests=_trusted_measurements(rows),
+    )
+    assert NOVELTY_THRESHOLD_TAU == 0.45

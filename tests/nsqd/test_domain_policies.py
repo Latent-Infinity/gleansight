@@ -149,23 +149,23 @@ def test_novelty_term_bins(
     )
 
 
-def test_novelty_threshold_tau_is_unset_and_report_only() -> None:
+def test_novelty_threshold_tau_is_active_and_tunable() -> None:
     from nsqd.domain.novelty import (
         NOVELTY_THRESHOLD_TAU,
         apply_novelty_threshold,
         novelty_term,
     )
 
-    assert NOVELTY_THRESHOLD_TAU is None
+    assert NOVELTY_THRESHOLD_TAU == 0.45
     term = novelty_term(
         evidence=0.0,
         snapshot_state="calibration",
         grounding_class="orthogonal",
     )
     assert term == 1
-    assert apply_novelty_threshold(term, evidence=0.0) == 1
+    assert apply_novelty_threshold(term, evidence=0.0) == 0
     assert apply_novelty_threshold(term, evidence=0.0, tau=None) == 1
-    assert apply_novelty_threshold(term, evidence=0.0, tau=0.15) == 0
+    assert apply_novelty_threshold(term, evidence=0.45) == term
     with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
         apply_novelty_threshold(term, evidence=0.0, tau=-0.1)
     with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
@@ -173,6 +173,27 @@ def test_novelty_threshold_tau_is_unset_and_report_only() -> None:
     for non_finite in (float("nan"), float("inf"), float("-inf")):
         with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
             apply_novelty_threshold(term, evidence=0.0, tau=non_finite)
+
+
+def test_novelty_threshold_tau_reads_settings_without_cli_switch() -> None:
+    from types import SimpleNamespace
+
+    from nsqd.domain.novelty import (
+        NOVELTY_THRESHOLD_TAU,
+        novelty_threshold_tau_from_settings,
+        require_novelty_threshold_tau,
+    )
+
+    assert require_novelty_threshold_tau(0.45) == 0.45
+    assert novelty_threshold_tau_from_settings(None) == NOVELTY_THRESHOLD_TAU
+    assert (
+        novelty_threshold_tau_from_settings(
+            SimpleNamespace(nsqd=SimpleNamespace(novelty_threshold_tau=0.30))
+        )
+        == 0.30
+    )
+    with pytest.raises(ValueError, match="tau must be a non-negative number or unset"):
+        require_novelty_threshold_tau(-0.1)
 
 
 def test_viability_zero_paths_and_finance_presence() -> None:
