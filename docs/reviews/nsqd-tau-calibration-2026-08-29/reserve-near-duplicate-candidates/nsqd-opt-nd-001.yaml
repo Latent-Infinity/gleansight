@@ -1,0 +1,28 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-opt-nd-001
+domain_policy_id: optimization/1
+title: Replication candidate for N11-OPT-01, variant 1
+one_sentence_claim: 'A direct replication candidate restates the finding as follows:
+  The paper applies clipping to stochastic first-order methods, including clipped-SGD
+  and clipped extragradient variants, so individual noisy updates remain controlled.
+  It proves high-probability convergence under bounded central alpha-th moments, including
+  heavy-tailed regimes with potentially unbounded variance, for unconstrained minimization
+  and variational inequalities.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-OPT-01.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  problem: unconstrained
+  method: first-order
+  setting: full-rank
+paraphrase: 'A direct replication candidate restates the finding as follows: The paper
+  applies clipping to stochastic first-order methods, including clipped-SGD and clipped
+  extragradient variants, so individual noisy updates remain controlled. It proves
+  high-probability convergence under bounded central alpha-th moments, including heavy-tailed
+  regimes with potentially unbounded variance, for unconstrained minimization and
+  variational inequalities.'

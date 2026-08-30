@@ -1,0 +1,33 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-fin-nd-020
+domain_policy_id: finance/1
+title: Replication candidate for N11-FIN-04, variant 5
+one_sentence_claim: 'The candidate checks the reported relationship in this form:
+  EXFormer forecasts day-ahead FX returns by applying parallel convolutional receptive
+  fields before self-attention to align local slopes across scales, dynamically weighting
+  28 exogenous covariates, and recalibrating channels with squeeze-and-excitation
+  before a GRU decoder. The design targets return dynamics driven jointly by short-term
+  noise and slower cross-market factors.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-FIN-04.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  mechanism: institutional
+  target: returns
+  horizon: daily
+paraphrase: 'The candidate checks the reported relationship in this form: EXFormer
+  forecasts day-ahead FX returns by applying parallel convolutional receptive fields
+  before self-attention to align local slopes across scales, dynamically weighting
+  28 exogenous covariates, and recalibrating channels with squeeze-and-excitation
+  before a GRU decoder. The design targets return dynamics driven jointly by short-term
+  noise and slower cross-market factors.'
+inefficiency: Use the same market friction identified by the approved source.
+counterparty: Retain the source paper's stated counterparties.
+persistence: Test persistence only over the source paper's stated horizon.
+capacity: Estimate capacity under the same liquidity assumptions.
+regime_dependence: Preserve the source paper's stated regime conditions.

@@ -1,0 +1,26 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-opt-nd-009
+domain_policy_id: optimization/1
+title: Replication candidate for N11-OPT-02, variant 3
+one_sentence_claim: 'The replication hypothesis preserves the reported scope: Choco-SGD
+  alternates local stochastic-gradient steps with compressed gossip updates over a
+  fixed neighbor graph. Each node keeps an auxiliary state tracking the compressed
+  information already shared with its neighbors, allowing biased or unbiased compression
+  while recovering centralized mini-batch SGD''s leading convergence term.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-OPT-02.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  problem: unconstrained
+  method: first-order
+  setting: full-rank
+paraphrase: 'The replication hypothesis preserves the reported scope: Choco-SGD alternates
+  local stochastic-gradient steps with compressed gossip updates over a fixed neighbor
+  graph. Each node keeps an auxiliary state tracking the compressed information already
+  shared with its neighbors, allowing biased or unbiased compression while recovering
+  centralized mini-batch SGD''s leading convergence term.'

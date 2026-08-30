@@ -1,0 +1,29 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-opt-nd-019
+domain_policy_id: optimization/1
+title: Replication candidate for N11-OPT-04, variant 1
+one_sentence_claim: 'A direct replication candidate restates the finding as follows:
+  At each iteration, the stochastic SQO scheme combines a feasibility-oriented component
+  based on the local constraint linearization with an objective-improving component
+  restricted to directions annihilated by the current Jacobian. Stochastic objective
+  derivatives feed the latter component, while adaptive merit and protected step-length
+  rules preserve its stated guarantees for deficient-rank Jacobians and infeasible
+  cases.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-OPT-04.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  problem: constrained-expectation
+  method: sequential-quadratic
+  setting: rank-deficient
+paraphrase: 'A direct replication candidate restates the finding as follows: At each
+  iteration, the stochastic SQO scheme combines a feasibility-oriented component based
+  on the local constraint linearization with an objective-improving component restricted
+  to directions annihilated by the current Jacobian. Stochastic objective derivatives
+  feed the latter component, while adaptive merit and protected step-length rules
+  preserve its stated guarantees for deficient-rank Jacobians and infeasible cases.'

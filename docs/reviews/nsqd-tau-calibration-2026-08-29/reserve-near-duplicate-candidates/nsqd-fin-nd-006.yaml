@@ -1,0 +1,37 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-fin-nd-006
+domain_policy_id: finance/1
+title: Replication candidate for N11-FIN-02, variant 1
+one_sentence_claim: 'A direct replication candidate restates the finding as follows:
+  CET separately encodes minute-level price-volume sequences and quarterly earnings
+  features, combines the resulting stock-context and earnings-context representations
+  into a joint context vector, and trains that representation stage with InfoNCE-based
+  contrastive predictive coding to maximize agreement with future price-volume latents
+  while using negatives drawn from periods at least five days before announcements.
+  A supervised head is then fine-tuned to predict next-minute up/down/hold movement
+  during the five business days after earnings releases.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-FIN-02.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  mechanism: behavioral
+  target: returns
+  horizon: daily
+paraphrase: 'A direct replication candidate restates the finding as follows: CET separately
+  encodes minute-level price-volume sequences and quarterly earnings features, combines
+  the resulting stock-context and earnings-context representations into a joint context
+  vector, and trains that representation stage with InfoNCE-based contrastive predictive
+  coding to maximize agreement with future price-volume latents while using negatives
+  drawn from periods at least five days before announcements. A supervised head is
+  then fine-tuned to predict next-minute up/down/hold movement during the five business
+  days after earnings releases.'
+inefficiency: Use the same market friction identified by the approved source.
+counterparty: Retain the source paper's stated counterparties.
+persistence: Test persistence only over the source paper's stated horizon.
+capacity: Estimate capacity under the same liquidity assumptions.
+regime_dependence: Preserve the source paper's stated regime conditions.

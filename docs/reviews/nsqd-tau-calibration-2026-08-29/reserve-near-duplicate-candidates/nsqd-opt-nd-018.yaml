@@ -1,0 +1,26 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-opt-nd-018
+domain_policy_id: optimization/1
+title: Replication candidate for N11-OPT-03, variant 6
+one_sentence_claim: 'An independent reproduction evaluates the following claim: DMFW
+  solves constrained stochastic objectives over a network without Euclidean projections.
+  Each agent combines consensus and gradient-tracking updates with recursive and Nesterov
+  momentum, then solves a Frank-Wolfe linear minimization subproblem over the shared
+  convex compact feasible set; fixed-size stochastic batches are allowed.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-OPT-03.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  problem: constrained-expectation
+  method: first-order
+  setting: full-rank
+paraphrase: 'An independent reproduction evaluates the following claim: DMFW solves
+  constrained stochastic objectives over a network without Euclidean projections.
+  Each agent combines consensus and gradient-tracking updates with recursive and Nesterov
+  momentum, then solves a Frank-Wolfe linear minimization subproblem over the shared
+  convex compact feasible set; fixed-size stochastic batches are allowed.'

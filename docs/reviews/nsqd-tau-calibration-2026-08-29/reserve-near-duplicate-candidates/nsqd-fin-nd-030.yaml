@@ -1,0 +1,32 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-fin-nd-030
+domain_policy_id: finance/1
+title: Replication candidate for DATA-NSQD-03, variant 5
+one_sentence_claim: 'The candidate checks the reported relationship in this form:
+  For mechanism=flow-driven|target=drawdown|horizon=intraday, negative aggregate ex-ante
+  dealer gamma imbalance, especially under illiquidity, is associated with intraday
+  momentum. In flash-crash episodes, negative gamma states are associated with deeper
+  drawdowns. The paper discusses dealer delta-hedging/order-flow feedback as a possible
+  mechanism, without supporting a causal claim.'
+mechanism: Re-evaluate the mechanism reported by approved projection DATA-NSQD-03.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  mechanism: flow-driven
+  target: drawdown
+  horizon: intraday
+paraphrase: 'The candidate checks the reported relationship in this form: For mechanism=flow-driven|target=drawdown|horizon=intraday,
+  negative aggregate ex-ante dealer gamma imbalance, especially under illiquidity,
+  is associated with intraday momentum. In flash-crash episodes, negative gamma states
+  are associated with deeper drawdowns. The paper discusses dealer delta-hedging/order-flow
+  feedback as a possible mechanism, without supporting a causal claim.'
+inefficiency: Use the same market friction identified by the approved source.
+counterparty: Retain the source paper's stated counterparties.
+persistence: Test persistence only over the source paper's stated horizon.
+capacity: Estimate capacity under the same liquidity assumptions.
+regime_dependence: Preserve the source paper's stated regime conditions.

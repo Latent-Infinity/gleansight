@@ -1,0 +1,26 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-opt-nd-025
+domain_policy_id: optimization/1
+title: Replication candidate for N11-OPT-05, variant 1
+one_sentence_claim: 'A direct replication candidate restates the finding as follows:
+  Adam uses bias-corrected exponential moving averages of first and second raw gradient
+  moments to assign coordinate-wise adaptive steps for stochastic objectives. It requires
+  only first-order gradients and little memory while remaining invariant to diagonal
+  gradient rescaling.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-OPT-05.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  problem: unconstrained
+  method: first-order
+  setting: full-rank
+paraphrase: 'A direct replication candidate restates the finding as follows: Adam
+  uses bias-corrected exponential moving averages of first and second raw gradient
+  moments to assign coordinate-wise adaptive steps for stochastic objectives. It requires
+  only first-order gradients and little memory while remaining invariant to diagonal
+  gradient rescaling.'

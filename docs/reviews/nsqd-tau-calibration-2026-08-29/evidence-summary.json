@@ -1,0 +1,94 @@
+{
+  "adjudication_count": 15,
+  "ambiguous_pair_count": 0,
+  "approved_pair_count": 120,
+  "artifact_sha256": {
+    "balanced_evaluation": "584e96d96bf6bf53993d3f5b2840896cca01df3cbf7362484e516905bdde10e5",
+    "balanced_selection": "3117af36cd550d77ea43afbca1dfd1425e6ab9b72a7165328fed0f4cb6b47afc",
+    "candidate_hashes": "e74e6abeb433eda7e8398a274329c1f7dbcd6374c3c4718af1c69650d1239704",
+    "candidate_packet": "ac01c344973175e0c3270711403fe5bdb0a80977eb5781717a40cf729ca509f0",
+    "measurement_inventory": "2fbb481bedad664a8284da1b7da84d663dda3bdac02eea848a94b0546b233191",
+    "measurements": "0af46ae4aa2404c29b92af375228bcc2e20b3ad816b9bd5fdce4fe3cb9456bf6",
+    "reserve_acquisition": "9197ce82ae9f328e0429d34b38d881b243d3990455f4660c901f832877bcb4e5",
+    "reserve_manifest": "6f6c4a3aede9dcc4842550199fea75ef949d789e5ec2c96088377ff58bdc059a"
+  },
+  "call_count": 975,
+  "counts_by_policy": {
+    "finance/1": {
+      "near_duplicate": 30,
+      "novel": 30
+    },
+    "optimization/1": {
+      "near_duplicate": 30,
+      "novel": 30
+    }
+  },
+  "escalations": {
+    "deterministic_audit": 13,
+    "final_ambiguity": 1,
+    "final_disagreement": 1
+  },
+  "models": {
+    "gpt-5.6-terra": 15,
+    "qwen3:8b": 960
+  },
+  "packet_digest": "ad46a6e9838288d2175bf287524af92d5a01d572b081c85899819f7dbd647075",
+  "prompt_versions": {
+    "tau-adjudicator/2": 1,
+    "tau-adjudicator/3": 14,
+    "tau-reviewer/2": 40,
+    "tau-reviewer/3": 440,
+    "tau-writer/2": 40,
+    "tau-writer/3": 440
+  },
+  "providers": {
+    "codex_subscription": 15,
+    "ollama": 960
+  },
+  "runtime_tau": null,
+  "schema_version": 1,
+  "selected_tau_recommendation": 0.45,
+  "selection_rows_sha256": "0bac568c30227615d91635cc2dae7b7a6399a6f4a7d40329b113ecdc8cf17f7b",
+  "thresholds": [
+    {
+      "admissible": true,
+      "near_duplicate_false_pass_rate": 1.0,
+      "novel_false_kill_rate": 0.0,
+      "novel_false_kill_rate_by_policy": {
+        "finance/1": 0.0,
+        "optimization/1": 0.0
+      },
+      "tau": 0.15
+    },
+    {
+      "admissible": true,
+      "near_duplicate_false_pass_rate": 1.0,
+      "novel_false_kill_rate": 0.0,
+      "novel_false_kill_rate_by_policy": {
+        "finance/1": 0.0,
+        "optimization/1": 0.0
+      },
+      "tau": 0.3
+    },
+    {
+      "admissible": true,
+      "near_duplicate_false_pass_rate": 0.21666666666666667,
+      "novel_false_kill_rate": 0.03333333333333333,
+      "novel_false_kill_rate_by_policy": {
+        "finance/1": 0.0,
+        "optimization/1": 0.06666666666666667
+      },
+      "tau": 0.45
+    },
+    {
+      "admissible": false,
+      "near_duplicate_false_pass_rate": 0.0,
+      "novel_false_kill_rate": 0.8333333333333334,
+      "novel_false_kill_rate_by_policy": {
+        "finance/1": 0.6666666666666666,
+        "optimization/1": 1.0
+      },
+      "tau": 0.6
+    }
+  ]
+}

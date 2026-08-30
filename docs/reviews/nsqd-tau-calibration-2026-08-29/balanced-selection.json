@@ -1,0 +1,968 @@
+{
+  "rows": [
+    {
+      "candidate_artifact_hash": "04cb7559f98e7179976dad2adefdacb69e668d035cde767f2f2d11be924711b2",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/04cb7559f98e7179976dad2adefdacb69e668d035cde767f2f2d11be924711b2.json",
+      "measurement_artifact_digest": "e9a0686433d07123fb6375bc1a8c3c70c47f2f5bf4d82bbe95b591c4eef15705",
+      "source_packet_digest": "c358e9379a2a330522dace3727960bc08e2f15c1dfa84b8bb2d68f6fa744c2dd"
+    },
+    {
+      "candidate_artifact_hash": "0e0c78a757d1a25677796ca57136e9c83756991e5b1e21d55c2ac3e6afd74805",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/0e0c78a757d1a25677796ca57136e9c83756991e5b1e21d55c2ac3e6afd74805.json",
+      "measurement_artifact_digest": "04134bc2e2d953260a5dcbd1fdc43d638241bee5855e5f1337f91edf4dc43446",
+      "source_packet_digest": "411b685b2a3b69eb2c88fbbf0479f87c1d6d396549f3278cd498f1f783d213e0"
+    },
+    {
+      "candidate_artifact_hash": "3230dc0f07c5c8ff715c1148329d3ff9e69ecc49effc0c972a4c1ee2190f2f6e",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/3230dc0f07c5c8ff715c1148329d3ff9e69ecc49effc0c972a4c1ee2190f2f6e.json",
+      "measurement_artifact_digest": "b37a6e009df108da9a0625095a29ac46554f79446a2c43537c1765fdd4a52444",
+      "source_packet_digest": "ab0757adb3b6dfa7666a4795f42ba86ba10e4c835f9eb9e5692596a31f88bfed"
+    },
+    {
+      "candidate_artifact_hash": "35df97acd78e6e19fb7cb5b33c2b19a5d4694399c73b8d5740999a0f80f3d03d",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/35df97acd78e6e19fb7cb5b33c2b19a5d4694399c73b8d5740999a0f80f3d03d.json",
+      "measurement_artifact_digest": "ae0fb6973702438a3c7ce3db097d87d7c75d26eed3de39b4b7fae377aab05733",
+      "source_packet_digest": "ac7e27e81cafd4d17d4bc3d94e19f738d134d479c0721a542e2caa128bcc8c16"
+    },
+    {
+      "candidate_artifact_hash": "445b7b99f304f975a67a9053386c5d6dfa336db24d0f4843aafd4f2df12e6380",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/445b7b99f304f975a67a9053386c5d6dfa336db24d0f4843aafd4f2df12e6380.json",
+      "measurement_artifact_digest": "beb1f3700a695b6fb575f6f566cafd2fc54a7340d984c4aeadc54d911195bf2b",
+      "source_packet_digest": "bcff6c027938607c97940d0d57db89f80ebcf7e8fab0eba3efde67faf9cacd91"
+    },
+    {
+      "candidate_artifact_hash": "445f3741c7b94662ff457d1b3c8dd8ace9efcd02bd6c8aa5f8cbc39933da372b",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/445f3741c7b94662ff457d1b3c8dd8ace9efcd02bd6c8aa5f8cbc39933da372b.json",
+      "measurement_artifact_digest": "b502af9672ba172b6ecd805dbb169c6aa84b0ed2289c561c74bc825f356a8915",
+      "source_packet_digest": "0b8f7f8469c2dbf7d6885f66f55dd50db2d95d811d66e993c6f5faab0ddc328a"
+    },
+    {
+      "candidate_artifact_hash": "5cd1b003b5ba55116e5945a92b670a51061134277ee09df89c86c3b08cd91122",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/5cd1b003b5ba55116e5945a92b670a51061134277ee09df89c86c3b08cd91122.json",
+      "measurement_artifact_digest": "e85440cb6b4a492fd100a8e3f9031efd600ee3188cf01966cd61b3087148a737",
+      "source_packet_digest": "be5aad8313d10ad30b97fb66b38d2c5737b4111325c7cd25a72c10ae8d211f29"
+    },
+    {
+      "candidate_artifact_hash": "5ce2a72bb1e3a008c732d9d7537d1b248914e938d481bbecfcba5627a54c0eda",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/5ce2a72bb1e3a008c732d9d7537d1b248914e938d481bbecfcba5627a54c0eda.json",
+      "measurement_artifact_digest": "4d151de4312b05d3420d950c44c6663a6160469f3720e127af42be4b6677e204",
+      "source_packet_digest": "db409dff9bf7608dce391cc3667a6bd7f85f3f02c00c42c63f158bd9823b66c9"
+    },
+    {
+      "candidate_artifact_hash": "5ffa1d74d285802bcdb0ea14765313e0d5cf97af6fc337b701e72eb65d01de9b",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/5ffa1d74d285802bcdb0ea14765313e0d5cf97af6fc337b701e72eb65d01de9b.json",
+      "measurement_artifact_digest": "4f03a93bc7b538bc752637290f06affba2d7037473fbed581f1cd193c30675b5",
+      "source_packet_digest": "d69520d8711e92ab2d0afc9097f2d5ef8ff386188fd3556e034d19ecd645efbb"
+    },
+    {
+      "candidate_artifact_hash": "65f04a6331ac68a34a7d6a36546950663097666885bead3ea36b789663160386",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/65f04a6331ac68a34a7d6a36546950663097666885bead3ea36b789663160386.json",
+      "measurement_artifact_digest": "b0e479a7571cae6396062e2d354133dbf965bb2d013a7e5a3a6a2b5fe8abbeab",
+      "source_packet_digest": "636deb08db1c4f7121ef1b5df346e2719c837d2a930e1c43e3aa9b649be644f7"
+    },
+    {
+      "candidate_artifact_hash": "69cc107dd057b7ceb64bb3250d923b8db2d221b75ed2f2501cf99f876fe1e552",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/69cc107dd057b7ceb64bb3250d923b8db2d221b75ed2f2501cf99f876fe1e552.json",
+      "measurement_artifact_digest": "5cd19abe9788d8db71d022d1ac6a31a3ff556064dee6a5474f4d29adc453a458",
+      "source_packet_digest": "40293b4f179cd67e9442d8ccc69c8beacb4e9c8c8f90261a1809f1971f181593"
+    },
+    {
+      "candidate_artifact_hash": "72b255e56eb26a147cc278b83d8b2235f1cfeb478fbd7851c702e30b983c95b1",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/72b255e56eb26a147cc278b83d8b2235f1cfeb478fbd7851c702e30b983c95b1.json",
+      "measurement_artifact_digest": "3a0ffff44d23a13a273c8bc935da97cbdbefb035a494415f6055de8f32b77d74",
+      "source_packet_digest": "30fa0a8e2433da9ddc6257dedadfd9dea9de3fee344d2f911d105d4a00dde5b1"
+    },
+    {
+      "candidate_artifact_hash": "7483ff884d1dbaa3911df164b14e85a08a1a2b1393e17725d438dde45c2842ae",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7483ff884d1dbaa3911df164b14e85a08a1a2b1393e17725d438dde45c2842ae.json",
+      "measurement_artifact_digest": "85360314bd5dd6ef95ea4409bb274df5053c34092af325e5a5cfa6dc5a1232c0",
+      "source_packet_digest": "cf951d80a8a5eaca1a108afafd6d452218d3ccf0c281fb6102f7768e5e712c6b"
+    },
+    {
+      "candidate_artifact_hash": "7f05c2fd67af3b6094208dcde02a2bad027d77dec6050f2a805823c124cda7f2",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7f05c2fd67af3b6094208dcde02a2bad027d77dec6050f2a805823c124cda7f2.json",
+      "measurement_artifact_digest": "6297331326bd925646c48781f58435bbc0f9e72e60c3390938aff5ac2c5c4848",
+      "source_packet_digest": "a7daebc15e622e222f5252f0793aaad12a7eca7e572ca10861919c92fd830059"
+    },
+    {
+      "candidate_artifact_hash": "7faf35a9df9c1e635d148e64892301ef912ea953a8545cc8b24e7cbfd5771357",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7faf35a9df9c1e635d148e64892301ef912ea953a8545cc8b24e7cbfd5771357.json",
+      "measurement_artifact_digest": "3d6776a0cfd236cea31cc9d8e4c78b5a5b1a0d87f00005147b3e0a474e62018c",
+      "source_packet_digest": "4661fc204b7803d0c1a6436445eefb038c0131fb189fdf75444395abc27ea590"
+    },
+    {
+      "candidate_artifact_hash": "889a17548109efbfe2969c55398d145a14cad8583be60831db62af4fb098d423",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/889a17548109efbfe2969c55398d145a14cad8583be60831db62af4fb098d423.json",
+      "measurement_artifact_digest": "b076694dec42f25a46259ad49d628eea02691e477ce87184d964c5ab7970780a",
+      "source_packet_digest": "c298cef56a688f8eccd65f760bfa0987e08a72d4da3be1eae5912535fae8b3ad"
+    },
+    {
+      "candidate_artifact_hash": "8ec8449a68e8e6978847b999aeb7762bf642b9166c518856183b1e872b27d3d7",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/8ec8449a68e8e6978847b999aeb7762bf642b9166c518856183b1e872b27d3d7.json",
+      "measurement_artifact_digest": "b1c5194c138d632517cd416ee53554419aef7596d331bd16da4e7a4e15589752",
+      "source_packet_digest": "aa2a23cc522323273a2126cf2b2761c9674907c41053af3a38298c6b780de872"
+    },
+    {
+      "candidate_artifact_hash": "9086374c452e753a98ae28e909882f139dc0239153301311369a1c4782df5679",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/9086374c452e753a98ae28e909882f139dc0239153301311369a1c4782df5679.json",
+      "measurement_artifact_digest": "1a61b992ad09e6a6dd43f9d47ee45a4a8228b7f4c85b3059c64e649b7e617089",
+      "source_packet_digest": "df1a49578539be2fc10c5d71bb40bab6e42f98a3cf11ef9cee7d8664d6eff94a"
+    },
+    {
+      "candidate_artifact_hash": "9686a0fd4722ee384212497a6824f458187a819e1c1f31b54f774d1c32be475e",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/9686a0fd4722ee384212497a6824f458187a819e1c1f31b54f774d1c32be475e.json",
+      "measurement_artifact_digest": "3f444af9e9c7f0be8be2a954c252932543e5a0fe21b3162a7dad013bde818d85",
+      "source_packet_digest": "295c9daf8128be0b1e6058ace3be27b2c0c16c1bc4898372ee6a74339f515046"
+    },
+    {
+      "candidate_artifact_hash": "9b4ec6220cea3131f6352754ef371f0a5418187f6f2f7805cd60a064763718ed",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/9b4ec6220cea3131f6352754ef371f0a5418187f6f2f7805cd60a064763718ed.json",
+      "measurement_artifact_digest": "7982115f2b424755869ccef76489a247ef26134db6cf1e47dd7cb5879a9d1223",
+      "source_packet_digest": "5388dfd330270c4aec75e1dade8a3278c2201bc86843f244ef0741c2a928f0a1"
+    },
+    {
+      "candidate_artifact_hash": "a6d2c75a9a0a588d1221418ddf90a67e3fa0a4c5ff388b702cc385a7b8548395",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/a6d2c75a9a0a588d1221418ddf90a67e3fa0a4c5ff388b702cc385a7b8548395.json",
+      "measurement_artifact_digest": "bdfb0e50bec239fc525832432cf5a92b73516a6bd16864269ebef14e2424d1a7",
+      "source_packet_digest": "dbe9b33dcd88181ca7ec0a669034942e3a4ca11fffa93671958220b55d4d5d98"
+    },
+    {
+      "candidate_artifact_hash": "a91617665bca82ac16939e2fbcb238b1c8dd584f99219dbc24de9cb56ba2d610",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/a91617665bca82ac16939e2fbcb238b1c8dd584f99219dbc24de9cb56ba2d610.json",
+      "measurement_artifact_digest": "64f728723ac4a9aa9a1af1431c1a84133425c7f685b607714248e73f6c45cece",
+      "source_packet_digest": "9fc7005735936f2818e42eb6050ddab61bab1e53e0ebacf7d8483280d6f1773b"
+    },
+    {
+      "candidate_artifact_hash": "ab40ae0f0d2b2a2eae5fa6d4c673d0c9cf4847b9f5ef0d8e8048c8ab806b71d3",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/ab40ae0f0d2b2a2eae5fa6d4c673d0c9cf4847b9f5ef0d8e8048c8ab806b71d3.json",
+      "measurement_artifact_digest": "c3aacab441eb94faa2c9a4367dd16231b12168bfe136214eed0634bcdb660ce0",
+      "source_packet_digest": "f9d33ee406576544b23681f3c887ddaa6197181fee84036b9a5655688bf1a6c4"
+    },
+    {
+      "candidate_artifact_hash": "bcddd614624ace461c7d0cf898470ef0085ca828b61d4f3e233575051eb48e28",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/bcddd614624ace461c7d0cf898470ef0085ca828b61d4f3e233575051eb48e28.json",
+      "measurement_artifact_digest": "74175711f7953f3af3ce790e93a1f59112dd0ca1ed1c011b17b89d5867f15bbf",
+      "source_packet_digest": "46ae1aab9815703e1956ef2abbb2ef9ff86742416faa7f46d3b137db8ef1788a"
+    },
+    {
+      "candidate_artifact_hash": "c827a96d099a278a1d33bae4c11aea1e378bc82b01262fb386319e7b1eeed914",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/c827a96d099a278a1d33bae4c11aea1e378bc82b01262fb386319e7b1eeed914.json",
+      "measurement_artifact_digest": "53b89952e281930cf5ad2100b904b50ef5eb22afb101a6c1c8894bf78ab292e1",
+      "source_packet_digest": "4355f4759ffc9e63314e58fe6aeea9ba623464ce4bd0fc9e2dd342078fa3c96a"
+    },
+    {
+      "candidate_artifact_hash": "cd7e705f0220b864d3f3b2e6cd923addb27d7265a8d0d42984eff3e590796aab",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/cd7e705f0220b864d3f3b2e6cd923addb27d7265a8d0d42984eff3e590796aab.json",
+      "measurement_artifact_digest": "a84fd5361ddda447765597dad646f05f3ccbfbd9145d4dee0a9371100104bd16",
+      "source_packet_digest": "485814a88393ad31c2e625fcaac0d8a1cea1c66b6275d2ccabcdb747fb585616"
+    },
+    {
+      "candidate_artifact_hash": "d0676252f72e5f7ff6f556d4ca678ea2044dc33b44df6804b92826e27bf0c169",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/d0676252f72e5f7ff6f556d4ca678ea2044dc33b44df6804b92826e27bf0c169.json",
+      "measurement_artifact_digest": "660e8b8164592ded8fb142e5a441d0ef00a383831e00c9a1a4f36dfc139a38ea",
+      "source_packet_digest": "34a4432428fe8e50a8661052db034000f7fa24eaa9b4ebd58c510738a114b0d4"
+    },
+    {
+      "candidate_artifact_hash": "db19aa18dee4fac7d11feb093330aa185d92a632aacf26dfb3d59618e832cc20",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/db19aa18dee4fac7d11feb093330aa185d92a632aacf26dfb3d59618e832cc20.json",
+      "measurement_artifact_digest": "ff8ce95d0fcaf792456d9261d2f60128257eb2568405d05589d05b69bc156024",
+      "source_packet_digest": "301c069025fd7c397118b7f3a45a6ed372eee043feaba7028aa388a33e0d10af"
+    },
+    {
+      "candidate_artifact_hash": "dc096470b5aa339efa9665e6cdd34c266d553910db041a2af483e5ce7ef34445",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/dc096470b5aa339efa9665e6cdd34c266d553910db041a2af483e5ce7ef34445.json",
+      "measurement_artifact_digest": "7b2d81292219ab663bd389fb61945e502a771921f5560a7be4c479f700cc883a",
+      "source_packet_digest": "2608fc5ff81c45a8f537ed8276536402045017ccf4e3be7d609508272bdce8db"
+    },
+    {
+      "candidate_artifact_hash": "f44a9f85264c9e170a39de818b291bc22536fa9004463a78d5dd46238c37f8ad",
+      "domain_policy_id": "finance/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f44a9f85264c9e170a39de818b291bc22536fa9004463a78d5dd46238c37f8ad.json",
+      "measurement_artifact_digest": "1862f339227cfae27bdbe9818b86760a7f1c45e2a6e565451fc65f1374102102",
+      "source_packet_digest": "cc3da3eec0874697199e7e77580c7692686af94a28129aa148b5e06c1d3c1562"
+    },
+    {
+      "candidate_artifact_hash": "04332e9cc84ae62239a4ea6c7a6ebc2aaf1fa96fce5b4d78f7e0f7d2c879f4ed",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/04332e9cc84ae62239a4ea6c7a6ebc2aaf1fa96fce5b4d78f7e0f7d2c879f4ed.json",
+      "measurement_artifact_digest": "68cf2c471a74da1c83d15539e4a58e4edbbfb31914fe03a2084f388712639a6c",
+      "source_packet_digest": "f6e22a8c0ccc12a107b27e9636b44f77ba4bb60acaabeba9a2c7e7cb86dbcc19"
+    },
+    {
+      "candidate_artifact_hash": "09d2ea55cb3ecf9b374c1411e786a163cc2591caabdf993b5a43bc3f70a50eec",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/09d2ea55cb3ecf9b374c1411e786a163cc2591caabdf993b5a43bc3f70a50eec.json",
+      "measurement_artifact_digest": "5bd2f350319bbde3f71d03cb8cc33c37ed1128b522acdf4525ccdd47e95c9ae1",
+      "source_packet_digest": "5f5d45cdd8232a04110bc55dab97f4a978385f6741bac33690ae054dd92507ab"
+    },
+    {
+      "candidate_artifact_hash": "1b665aeccdccde103eb20722b6052cad56120bfd2c939b973ae49d01e46b8eba",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/1b665aeccdccde103eb20722b6052cad56120bfd2c939b973ae49d01e46b8eba.json",
+      "measurement_artifact_digest": "79a01fa47dc653d573236c54a15cfaeea5499666f2d5b53ea9a4dd8087fe606b",
+      "source_packet_digest": "203442ed0c9f6c0fa162fd6e3989f08733e71f90fa8def32a734ca8b5199e610"
+    },
+    {
+      "candidate_artifact_hash": "260389b1f1255ecf06f1a7800deed27d4a49a05b6ec9f9e5c1776f6934d13d50",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/260389b1f1255ecf06f1a7800deed27d4a49a05b6ec9f9e5c1776f6934d13d50.json",
+      "measurement_artifact_digest": "9d94bfcd81e2a3d3ce203a67703483d684f4bbf4dd33e994725acdb08b6f5cad",
+      "source_packet_digest": "05d14a101c837cf9b4824cf11fdda2b3811115f1dac73026bba2790e84f8a8f8"
+    },
+    {
+      "candidate_artifact_hash": "26b925c207420080b939d944783447f77fc6b6b739a50e6a3c3efb5365de0c90",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/26b925c207420080b939d944783447f77fc6b6b739a50e6a3c3efb5365de0c90.json",
+      "measurement_artifact_digest": "1ffd1ea27ad844024bd834816dbfef6295add032b594e498ebc3677da0c9c85f",
+      "source_packet_digest": "3c4ea78891dcb89de5a7b7a942aeec752b09031bd5e46f563234450317d7597d"
+    },
+    {
+      "candidate_artifact_hash": "294b54f470ea0759c97b262f0d4fe33a671623945ea08972d32da826e8ba6156",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/294b54f470ea0759c97b262f0d4fe33a671623945ea08972d32da826e8ba6156.json",
+      "measurement_artifact_digest": "85cc16cb6fac8fd006ee703632ee189b18d417814a1312c33e321fe5e8c47f36",
+      "source_packet_digest": "f343827ad082077ad3a90fb2375492ee643acd53a47761668360a675cca86f95"
+    },
+    {
+      "candidate_artifact_hash": "3936909d1edeb9782cc65831a157d6bb1d8ff468c3b3b5a0d97e7ada3038d8ba",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/3936909d1edeb9782cc65831a157d6bb1d8ff468c3b3b5a0d97e7ada3038d8ba.json",
+      "measurement_artifact_digest": "c8e9990957daec72780aa58b0030407885fd170d27ddc02f151ce4eeca5e85df",
+      "source_packet_digest": "49f7cc651b4d54af5306ba281415ab3c2494792237087bc04be89b53331e8a4a"
+    },
+    {
+      "candidate_artifact_hash": "395808007dff8e815b5aec1d728077184a552e44b86b1c4a8bc765ce3ca28b23",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/395808007dff8e815b5aec1d728077184a552e44b86b1c4a8bc765ce3ca28b23.json",
+      "measurement_artifact_digest": "6d8ef4819cc5634f752a1b43aaafc1ff8cc8514d667ee4255ea82f67dc9fc9d8",
+      "source_packet_digest": "cac61eea2d08079f2f9201295a5573d4a892a167a60b009533fc8d143ccca741"
+    },
+    {
+      "candidate_artifact_hash": "3a3ad25ec41fd7928a4c97704f129b74fd3a816133734239034a2b1b9d24d20a",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/3a3ad25ec41fd7928a4c97704f129b74fd3a816133734239034a2b1b9d24d20a.json",
+      "measurement_artifact_digest": "9bbe05764764e4db9053448770d9231c4e897220e193d049e1ef47a6be80e1c7",
+      "source_packet_digest": "61a268d831b3d9a7031d872d586859f4dec4f9fc808648267aea96b62260a095"
+    },
+    {
+      "candidate_artifact_hash": "428ea3006ac8d57788d7b5871fc8f4cab02813995267d2621cc85afd83a03367",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/428ea3006ac8d57788d7b5871fc8f4cab02813995267d2621cc85afd83a03367.json",
+      "measurement_artifact_digest": "d0372050f59f08dd1d0e3fac47b79496a519753c7acd9b9d6a8a23d1cbeabaa0",
+      "source_packet_digest": "abf0d98230a202cbcf2bda574b9287e62ec3465a260ed4d8ec15697eb5968ded"
+    },
+    {
+      "candidate_artifact_hash": "459cae22d560cd8f98d593de7ce3b6bf2017a2ee5fbd5073e5dfa565ce3a9aa3",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/459cae22d560cd8f98d593de7ce3b6bf2017a2ee5fbd5073e5dfa565ce3a9aa3.json",
+      "measurement_artifact_digest": "691d567e1d628e7d37f5ed177b5fd018004e12de8bedb463b5974bcaa254958f",
+      "source_packet_digest": "7bfae8c96777fd21d6cb9804fe363e81509aa89fa27d8ab54c6167c26b03c9d0"
+    },
+    {
+      "candidate_artifact_hash": "47a41c09c9f0ffed632d8cf5adfd2686111b8f4c51c280ce4de5b56cfb986eae",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/47a41c09c9f0ffed632d8cf5adfd2686111b8f4c51c280ce4de5b56cfb986eae.json",
+      "measurement_artifact_digest": "126a82a56a0a5211b431dee3867740b353498eb0e1b8af9c81852dda367df4c7",
+      "source_packet_digest": "c86ac93325ddaf6191cebcf246ffee25565ffda869fef4e5fc4138a065388b67"
+    },
+    {
+      "candidate_artifact_hash": "4e0f32bc006f7824e57f1bc60627eaa8cd37af524679b2211c33faff942db66e",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4e0f32bc006f7824e57f1bc60627eaa8cd37af524679b2211c33faff942db66e.json",
+      "measurement_artifact_digest": "69709c7105732a41f7f0954956437bc2d57d25cfe4d4e10a817b3a6c985e054a",
+      "source_packet_digest": "edcd55d88309855823d5751bb840d308308b64086b7d74c4b5edd901b1686868"
+    },
+    {
+      "candidate_artifact_hash": "54f0b89fff20d933f3c65d6db83336f9003a425377be7687e44b4f6cf5d0e2b3",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/54f0b89fff20d933f3c65d6db83336f9003a425377be7687e44b4f6cf5d0e2b3.json",
+      "measurement_artifact_digest": "62efea6e8a43f113cba2edac548d10f62a11fe2fdc8b00a25be3944aa18108a1",
+      "source_packet_digest": "a3a408fd78f9d55d8092c10820b4c03dab15bd4eceadbf26a93074c362180a94"
+    },
+    {
+      "candidate_artifact_hash": "553f7cdb179afeff7a221e3d7ef198614b034e6f94e0ac34e44c0196fd74a113",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/553f7cdb179afeff7a221e3d7ef198614b034e6f94e0ac34e44c0196fd74a113.json",
+      "measurement_artifact_digest": "1fde48fb887b9b9ff92e2fa472e55e54655e369b5519abc1b8525491fb485934",
+      "source_packet_digest": "954afe9167cd5f343f7066f977a535a32d2df30697cec60077e97bc5dad1e7f5"
+    },
+    {
+      "candidate_artifact_hash": "5a25380242dd3f523f8b38b9ad707e48f267120ec45995fe6fc00605f820e8bc",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/5a25380242dd3f523f8b38b9ad707e48f267120ec45995fe6fc00605f820e8bc.json",
+      "measurement_artifact_digest": "3904a528f6c5e8ca8cea9cca4cdccfdff7603657bda74bacf73c48669e041fcf",
+      "source_packet_digest": "f3c122592d1ff060d72bb2fccec6a8f1ec585277a742bfedb688fc974381740f"
+    },
+    {
+      "candidate_artifact_hash": "68615e2e09792a612db23f5c0e140fa8c056927e358ebc45a7ec7252d968a22b",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/68615e2e09792a612db23f5c0e140fa8c056927e358ebc45a7ec7252d968a22b.json",
+      "measurement_artifact_digest": "e8897693c44fcf121c26794fc675709563330982557c6dff5f86dc6f9a7180fa",
+      "source_packet_digest": "5d20bd9a02d1bb75fbe50c9ee4f0b3f7490cf35abd9edb7e45b203865986ba4d"
+    },
+    {
+      "candidate_artifact_hash": "6f5913f76ba9d6c06799b312c2ff80cfc9179495edc6b281a24ed1b18bfed7c9",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/6f5913f76ba9d6c06799b312c2ff80cfc9179495edc6b281a24ed1b18bfed7c9.json",
+      "measurement_artifact_digest": "e9f8e49c9d3415817286679a0160abcd2cb8cc44fbb3b5584de9ad29a0583644",
+      "source_packet_digest": "d93912be7f1ee934e8c78886df27be7a36d27bf778eae783f062ec9e34d6272d"
+    },
+    {
+      "candidate_artifact_hash": "84bc4b0d22ee06228f7125334ea492e40ea95e8440c7235bcfc58cdcd1e238ce",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/84bc4b0d22ee06228f7125334ea492e40ea95e8440c7235bcfc58cdcd1e238ce.json",
+      "measurement_artifact_digest": "5f6c5363ca81ba3c284324ad771cbca49f359a0099d2d5159a13d7a2abc37e2a",
+      "source_packet_digest": "23d7931ccff039a27cc9270004040e5536b95be815aca764ff5dcab482c7a446"
+    },
+    {
+      "candidate_artifact_hash": "93ecc5bf45f59a2d373c1788623b949a49e8bccf982f0956bdfeef3327fed9bf",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/93ecc5bf45f59a2d373c1788623b949a49e8bccf982f0956bdfeef3327fed9bf.json",
+      "measurement_artifact_digest": "d478589795bc03fc94ce81138c6f394a5cb2c1e37f9ea8f7d51110ccba2cb3ea",
+      "source_packet_digest": "9d4bd90230001e7f2f0fa218cb4d686e04680445b219a784cc3567dcdec8734c"
+    },
+    {
+      "candidate_artifact_hash": "94440081a054a3f7e99ebd7d826d856fdce084e4542d41102bf3955a92f6d289",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/94440081a054a3f7e99ebd7d826d856fdce084e4542d41102bf3955a92f6d289.json",
+      "measurement_artifact_digest": "38db68212c73e857b763b7afb4fce63c31f8baae1f73995d5cc30d480071f916",
+      "source_packet_digest": "211a2d5ab68b14e85cf2d39ed9539b6f2c2c3f0c42dc37bc19aa6e5ff36d2d23"
+    },
+    {
+      "candidate_artifact_hash": "a6875b3cdbc1310454dfdeafbf638fcb6dd90dc7809be69c4940bd1ed0ac6dc0",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/a6875b3cdbc1310454dfdeafbf638fcb6dd90dc7809be69c4940bd1ed0ac6dc0.json",
+      "measurement_artifact_digest": "2e4ee0760a38de051e79c1cfe6088482568f0f8d031b5f4650c1d3c37c0d35c3",
+      "source_packet_digest": "37d6ce967f97a95eb33e772b7bc28d99fe9e0f642bbeca5f2e019ea2f29cedcd"
+    },
+    {
+      "candidate_artifact_hash": "ab3e37430721b8384aa4f1818b44eda13a253663a274071a759e343a4234d571",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/ab3e37430721b8384aa4f1818b44eda13a253663a274071a759e343a4234d571.json",
+      "measurement_artifact_digest": "ccd1502dd66622a1fa3f5337ecceebfafc56dd2d4d10c2b22c87a4ca5d18b8d8",
+      "source_packet_digest": "15700fad42798c0ceca203b9a60dbe66c43e6f62e37d661f46a623fb9a888570"
+    },
+    {
+      "candidate_artifact_hash": "b4dea060566722c90898ed8a8b7ff817d7733b25e5e5e89b71203ec6e32a6a1d",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/b4dea060566722c90898ed8a8b7ff817d7733b25e5e5e89b71203ec6e32a6a1d.json",
+      "measurement_artifact_digest": "11425c500cf2a8caf09897b5a71ec4e32ee583bb4431c080cdbd9d00f1a040cc",
+      "source_packet_digest": "6fca5743337649f8eded905dfb2bdcdfc5eab054fc8d89361c43a2f15c5e1a8a"
+    },
+    {
+      "candidate_artifact_hash": "b54f1e1f5445637536027694065367f5559bd214e14d0ab76c6961196aed67d0",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/b54f1e1f5445637536027694065367f5559bd214e14d0ab76c6961196aed67d0.json",
+      "measurement_artifact_digest": "eca4681edb963bdd97658b05eb2c4df2cfa5cfaa49fd33e713eec642d494ae15",
+      "source_packet_digest": "0ef3c9fc954dce8eb1086a86f043fa7c469e87cde98507ab2f37eda284a3b4d7"
+    },
+    {
+      "candidate_artifact_hash": "d4dd2b8ef86757cb97ebafda04c8abd2a50eab70c963cbf145a1ee3ce0d48a00",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/d4dd2b8ef86757cb97ebafda04c8abd2a50eab70c963cbf145a1ee3ce0d48a00.json",
+      "measurement_artifact_digest": "b6acc6956386878364a2f2fc120b6cd6880d9c405aa720594e454ed27f5169cd",
+      "source_packet_digest": "7aefd846344c2ec58c17a5c7d26cb5dcb1e1ccd5c72d4d9cf82b4909aa2cca67"
+    },
+    {
+      "candidate_artifact_hash": "e5f1f2364d3dd1182b6147b30fc056ea46963b6163e53ae67ede2e47aaec2056",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/e5f1f2364d3dd1182b6147b30fc056ea46963b6163e53ae67ede2e47aaec2056.json",
+      "measurement_artifact_digest": "06412e08e80e1130d20ce1d188767b14ea387628ed09855120fd19ba64ad296a",
+      "source_packet_digest": "2498083039fb3fe2649b3ee167ede2eb548e34dcbf5fea8b394a929360692a19"
+    },
+    {
+      "candidate_artifact_hash": "e7fa42c5ecca37909d83344336f32d10bb5204c208eb27d4912e934ba47a9174",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/e7fa42c5ecca37909d83344336f32d10bb5204c208eb27d4912e934ba47a9174.json",
+      "measurement_artifact_digest": "764ceabfa7dea2dc4abca4c3677541b322497b65505bdf2347951aebbf410b54",
+      "source_packet_digest": "6b7d280a4aa7b76fc0c41079367fa5f02d00f3abe17530a3ba520949158553ed"
+    },
+    {
+      "candidate_artifact_hash": "edf336f7aa634a405068ef2ed7d719126817b21265364d80c62024a10c624a7c",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/edf336f7aa634a405068ef2ed7d719126817b21265364d80c62024a10c624a7c.json",
+      "measurement_artifact_digest": "33bc48b0b7b1e179a09facfbd7057a2b6a04a2f6dc48dfdd73fefa8b082b0969",
+      "source_packet_digest": "98fa48d7669d373aeae05b96dbbaed794fd72b0d29156d954077f772ed9f5635"
+    },
+    {
+      "candidate_artifact_hash": "fb5682db64091af7c0954aac243405b57033537d3835a03b817414a5205f21dc",
+      "domain_policy_id": "finance/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/fb5682db64091af7c0954aac243405b57033537d3835a03b817414a5205f21dc.json",
+      "measurement_artifact_digest": "a0198d7068de57501df1f983e4dcf326fa8c2112b9f142d5225fbe5853b20418",
+      "source_packet_digest": "eacd02b75e2d60394811573df37b6858017429cf3ca0e14f52ddee8eea3dc473"
+    },
+    {
+      "candidate_artifact_hash": "0058bcb42149117ce176d202703f11fc241f94e54d7a297bd3e6cf645c2284f3",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/0058bcb42149117ce176d202703f11fc241f94e54d7a297bd3e6cf645c2284f3.json",
+      "measurement_artifact_digest": "d93c418b29e43f7fc3c14d96521c3914d5ac065adff93a954f95fed7a0ea16b0",
+      "source_packet_digest": "5674e283efab7a1a39c8022a3e8050bf7bc33e8ef208363cafb9f5a64ba82cf6"
+    },
+    {
+      "candidate_artifact_hash": "03551e903b556b569dbc2706d6b9967c454d3c3161e304bc04b4a8ba919f3892",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/03551e903b556b569dbc2706d6b9967c454d3c3161e304bc04b4a8ba919f3892.json",
+      "measurement_artifact_digest": "9a681408b648d792118842c32c9f08d56c5a035984ccffb948bdf0fede6291ab",
+      "source_packet_digest": "0eab3374da6feb675ddd86d675059335145b04210c11599483a66c8b5f786c96"
+    },
+    {
+      "candidate_artifact_hash": "09c47a21611f632a62304ca7c0cf3b3d63261c6db185432401dd8436c4a7f528",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/09c47a21611f632a62304ca7c0cf3b3d63261c6db185432401dd8436c4a7f528.json",
+      "measurement_artifact_digest": "25a10dcedd4550c6634d432b64ebf94ae95ec50bf53d42573b68b4f1e6aeb14e",
+      "source_packet_digest": "6b7acb073ff88b714a8c00a8f1c27731568283e79498ac2ae4faf4344906bfb0"
+    },
+    {
+      "candidate_artifact_hash": "1014db9f8082eaab0ee87cf62b324688ce9cb9cebd837d0d02743764562aa880",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/1014db9f8082eaab0ee87cf62b324688ce9cb9cebd837d0d02743764562aa880.json",
+      "measurement_artifact_digest": "013e531b44294320084fccd4ccee6ed12f8db559d86cf76907ada9e1517faf64",
+      "source_packet_digest": "cf82b64469e5cfabfd5b01292b1b5342e8a8b2de47f28066b043b4001742d98c"
+    },
+    {
+      "candidate_artifact_hash": "1a73d34d3fdc06021386356c28b5b8ff14b728c0cb074342f069a90331177483",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/1a73d34d3fdc06021386356c28b5b8ff14b728c0cb074342f069a90331177483.json",
+      "measurement_artifact_digest": "f29670d8fb40e1fd60fe94559c6dcf74543a8be9cc1d66978c4ce4ea6b45c4a6",
+      "source_packet_digest": "2acef27e60f9a3bb17cccb70bcb30ec5f4bec498103348eef4c97f742d467b8a"
+    },
+    {
+      "candidate_artifact_hash": "2451f1e894b4bdc4266a9d959584003ca166a88615146e8c3b629f2d68387053",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2451f1e894b4bdc4266a9d959584003ca166a88615146e8c3b629f2d68387053.json",
+      "measurement_artifact_digest": "e2a8f03eb3715b63d5de0620964cadc6d7d8cd7f1d38efb862647eb1f2c814a4",
+      "source_packet_digest": "dc815e20cb57ec1adf5bcfca3a77089b64496eeecd50b78ea1ed949c4b28c44f"
+    },
+    {
+      "candidate_artifact_hash": "24870813a17c4772d1b88893b020ec6ca77394b36ee541c1286b74b923647fbc",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/24870813a17c4772d1b88893b020ec6ca77394b36ee541c1286b74b923647fbc.json",
+      "measurement_artifact_digest": "46d86a31cff54dcea86aba47817dba8b0a6295a00c4ea86204af5d262ec93fd9",
+      "source_packet_digest": "30aa1a52d821ab053cf568cc89cdfb99bfe00c34d3b240f18469605b67374f63"
+    },
+    {
+      "candidate_artifact_hash": "2b696f535c079443e0c9eac5790c36bd7c7511ea1e17761295e6969da21d6f0d",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2b696f535c079443e0c9eac5790c36bd7c7511ea1e17761295e6969da21d6f0d.json",
+      "measurement_artifact_digest": "9c405d23409a1bbfefb4036e71c714efc155b8b6eaaa42115d1bf370eb7222cf",
+      "source_packet_digest": "1b943a1b594b3397f3bbe0f71a0e6f2731013fed4c2a06dffe1c71f0606fc39b"
+    },
+    {
+      "candidate_artifact_hash": "2f1e0fcfe8512bbcd572d7fa2acc4b690fe0055a3f41d74b4ac4f503e7cdc1ce",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2f1e0fcfe8512bbcd572d7fa2acc4b690fe0055a3f41d74b4ac4f503e7cdc1ce.json",
+      "measurement_artifact_digest": "736b35ff61699db43f08f5fa1727eae2412fe31ce202cc3198565f233ce312a7",
+      "source_packet_digest": "ec8aa60838d4615a0b9cafe193686fb7ac1c6e8d6d4f4fde1565bd54b1443b9b"
+    },
+    {
+      "candidate_artifact_hash": "3293058ced07ac6efec5a3f7bb0167cd1a72f00b32a4ed1b11ee1545d80475ba",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/3293058ced07ac6efec5a3f7bb0167cd1a72f00b32a4ed1b11ee1545d80475ba.json",
+      "measurement_artifact_digest": "eabb61168e37fd2dc4be8255a42b836920b37e604da09f8dd2eaec714013355e",
+      "source_packet_digest": "5c626f73bb062cfc1806d8a79e3a124b2047e744cd89ce2f1acfbe6bc6728b3b"
+    },
+    {
+      "candidate_artifact_hash": "374d7757f9c95770e0b2fcd61a2c4f17fec11e5b29a4d00ae2d232f5f81423fa",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/374d7757f9c95770e0b2fcd61a2c4f17fec11e5b29a4d00ae2d232f5f81423fa.json",
+      "measurement_artifact_digest": "8de3e4b8a6349a4560b09b07b3db410eace08ea7e983f4e95f51d036cff6c1b7",
+      "source_packet_digest": "90d05abf2e69adfb035498bcfd574c5c3ceb6ae6a97e3c6e686147aab1858307"
+    },
+    {
+      "candidate_artifact_hash": "45e4ee06de59e33f6e11e081ac35d3b9d5e1bd9670cc2899ca2e8330d7ae1690",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/45e4ee06de59e33f6e11e081ac35d3b9d5e1bd9670cc2899ca2e8330d7ae1690.json",
+      "measurement_artifact_digest": "90db8272d7aaa678b74afc0d7992cf80f73ef88a9e7da74251af860b47cac466",
+      "source_packet_digest": "ead1881e10117a3ec43edaf95b85f3c6c4c55c049396e55230d1614f59ef2127"
+    },
+    {
+      "candidate_artifact_hash": "49c6c2cb66c9f47159e240aa000e24e736d7bc7586501090568e4212d18d636a",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/49c6c2cb66c9f47159e240aa000e24e736d7bc7586501090568e4212d18d636a.json",
+      "measurement_artifact_digest": "60f85959e36b01b6f2832a98f705f3bd07ab28ed9b31b94da095195bfb333ef7",
+      "source_packet_digest": "07740a7efa314767821f043ff10b39e6c59a9547742189acef6c17ccd22ba400"
+    },
+    {
+      "candidate_artifact_hash": "4bcda2070bf8b00c1a5877c35bb23fe1041605923b483c806877508cf031a9a7",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4bcda2070bf8b00c1a5877c35bb23fe1041605923b483c806877508cf031a9a7.json",
+      "measurement_artifact_digest": "8e658bf4ab98c6dd06e7ce816cc9127b435da524208d591ac932c3670ae3a0e3",
+      "source_packet_digest": "e6e70204ab0cd4dc5982e42df786e91466430ceaa1491bdab477a3bbdd6933b7"
+    },
+    {
+      "candidate_artifact_hash": "4bfd3dd9ce941497c2c3c4437e927e6b6e12f076079e9b97271bc1636ea2cbd9",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4bfd3dd9ce941497c2c3c4437e927e6b6e12f076079e9b97271bc1636ea2cbd9.json",
+      "measurement_artifact_digest": "dda6f5967891219ac17c00ad1b6ee94e8b8aae84cb6d095479ec1a9fdd5d32fa",
+      "source_packet_digest": "662aeceffda3dee01fdf2a144af9475822475b074556b457963f502f409b1923"
+    },
+    {
+      "candidate_artifact_hash": "4edb2d7c775b942df6cab7d6ea4a5fefb81560763b20657c58c29d10ff452c2f",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4edb2d7c775b942df6cab7d6ea4a5fefb81560763b20657c58c29d10ff452c2f.json",
+      "measurement_artifact_digest": "8ee1dca9611dd70f2fc4b9950ed8652385c028f23621ad968232ac80d074cca6",
+      "source_packet_digest": "3be1c325066812a0a4ea1624a2987f6102cec1575fc6937a96ceff99e7b87779"
+    },
+    {
+      "candidate_artifact_hash": "62587274b9e2487417c9ce03ba99bcde30790192d7b958d5352294f6ceefd755",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/62587274b9e2487417c9ce03ba99bcde30790192d7b958d5352294f6ceefd755.json",
+      "measurement_artifact_digest": "79d1b1b21ba6c345d1354e1e6fde43f97cb3fd28cfb30d14c839ac3e6d8e66e7",
+      "source_packet_digest": "08a3fb6726a653a38ed5c346ac31353b0c3c8d4787301416fdcbcb979a4bde38"
+    },
+    {
+      "candidate_artifact_hash": "6ba3cd1572b46df2a67bb3a0fac6a962db5f4d80a4e37473ef4040e7899d80a4",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/6ba3cd1572b46df2a67bb3a0fac6a962db5f4d80a4e37473ef4040e7899d80a4.json",
+      "measurement_artifact_digest": "930986e1b4dd5b45af50ebdb5800ad0e0d954db11be4f3f522d5f6c2324e469d",
+      "source_packet_digest": "b941d0f780fe4c8b25fc2e85607301ace4b66ceec23bf3ed013c2dc3f3c6acbc"
+    },
+    {
+      "candidate_artifact_hash": "6d6acd2f4a01411b81c7696ad35b8533221015bda58ce41b3166b3368b109f6c",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/6d6acd2f4a01411b81c7696ad35b8533221015bda58ce41b3166b3368b109f6c.json",
+      "measurement_artifact_digest": "9453ba2af2593782bc0cd8d7e43216d57bd920f3301f0dae5b65eb09da6b2f57",
+      "source_packet_digest": "527feb1eef8b9de3934c06a4f0df3143d016f111ec2f56ae9f12354a4114103b"
+    },
+    {
+      "candidate_artifact_hash": "759c4cbba4021483291bc7577cd3a1e705dd0534d3343695b25fa06153b7673b",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/759c4cbba4021483291bc7577cd3a1e705dd0534d3343695b25fa06153b7673b.json",
+      "measurement_artifact_digest": "23b7c6dc0fed5a4d61ccbff247d238e77db919d4412040180605da294face946",
+      "source_packet_digest": "bd78a37d976f1f6662f3e3409014ee5aa52a5a3367befee22a6cdff6c7214978"
+    },
+    {
+      "candidate_artifact_hash": "7628745c6f7af9b0c72138eca34cf5bc54760686501e0c3efcee5482a3128393",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7628745c6f7af9b0c72138eca34cf5bc54760686501e0c3efcee5482a3128393.json",
+      "measurement_artifact_digest": "3d9336e6e30bf96c12b5639a8117c0dc9226654d523c41478026f99b7bdb0882",
+      "source_packet_digest": "5585f0c10ce9e06fa11842a07798232470f98c24d9d889e630e71d1429e65089"
+    },
+    {
+      "candidate_artifact_hash": "860e2f8f31c5d50e45bf45f5444775095175143b4e9c5d60f8b86565af1d8e9e",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/860e2f8f31c5d50e45bf45f5444775095175143b4e9c5d60f8b86565af1d8e9e.json",
+      "measurement_artifact_digest": "53f3472af9b15ab0a0bdb506bce5b675861c3158397229e9a407ebd1135c34c7",
+      "source_packet_digest": "8a0bd4f2385527be624a6ef735628fe50fdc1f287f54a4f6573dc62f32e2f946"
+    },
+    {
+      "candidate_artifact_hash": "8c41385d97f47b27beef7c46562a32ac1ff1190891384893e44a0d60569deae0",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/8c41385d97f47b27beef7c46562a32ac1ff1190891384893e44a0d60569deae0.json",
+      "measurement_artifact_digest": "985c1edd9da6f47fd69a21764b65eb94c47241e04989d7b523e9cc2d65106f9a",
+      "source_packet_digest": "ef04708ea70cba61eb51090b7f7ff3e67115e7b7a9c0176ff706c6e200a2daa8"
+    },
+    {
+      "candidate_artifact_hash": "9647cce4340f25a564d614d0b80611793657f31129c5f5bfa33e7b47fa0cffe8",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/9647cce4340f25a564d614d0b80611793657f31129c5f5bfa33e7b47fa0cffe8.json",
+      "measurement_artifact_digest": "190e238ae58b1ed4d11fd044227457b77a5e9d5c757ebb824b8584c7c13d33bd",
+      "source_packet_digest": "4e608caff7546335352a8fef0651c319f0c25700aa9651881963e6fda843178f"
+    },
+    {
+      "candidate_artifact_hash": "96f837b3332a2744f8e3d912b8443581ad107ea30ace8024ec4f675bb5a14627",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/96f837b3332a2744f8e3d912b8443581ad107ea30ace8024ec4f675bb5a14627.json",
+      "measurement_artifact_digest": "77ee44a641c05b284c9381c4b8b1c2d59135401c4c46c30a19e47fe3023b0ada",
+      "source_packet_digest": "b82089bb85aa0cddd973dada7d4407de20f438c1871db250bafa2da63c8fe05e"
+    },
+    {
+      "candidate_artifact_hash": "a91e070ba2f60b78fa6c079705656924bedbf3e422de01c12a9a56440d654918",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/a91e070ba2f60b78fa6c079705656924bedbf3e422de01c12a9a56440d654918.json",
+      "measurement_artifact_digest": "2f0bc5030f24da4e78aeabdb19fbc1db77259464568cd0619309912111ffd176",
+      "source_packet_digest": "9d37bb608d9a04409cc0905367c1c4113b29397dd161b237ca6e6610b629a1c4"
+    },
+    {
+      "candidate_artifact_hash": "c0120b98649d4670c0706b7b6374e66de3fddf49d858a73ce03e9588fd4fe400",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/c0120b98649d4670c0706b7b6374e66de3fddf49d858a73ce03e9588fd4fe400.json",
+      "measurement_artifact_digest": "9d2008006ba9a780d992785021a1fa4670cd1dc2dd57c959f00827693f0c1732",
+      "source_packet_digest": "685440c8579233a9c0e00720ebcd593904a34b2c349b6557c2beb7a094498061"
+    },
+    {
+      "candidate_artifact_hash": "c132188e5d6716f4bae421a3bb3652941ece0b677a63777cba041d29524ddc7d",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/c132188e5d6716f4bae421a3bb3652941ece0b677a63777cba041d29524ddc7d.json",
+      "measurement_artifact_digest": "742087d031ea8b86ba4cd83823aff95c7eac5c1df7f07c3e1259e385634e83e0",
+      "source_packet_digest": "8289f4ab2d091b8ea10db5d848186ed4b23d61819da8c4e982ad77d29abbc16e"
+    },
+    {
+      "candidate_artifact_hash": "c499566b8a37bee22a42e34916cf339f0ac61c8df4913f236f8b4bb68fa0161c",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/c499566b8a37bee22a42e34916cf339f0ac61c8df4913f236f8b4bb68fa0161c.json",
+      "measurement_artifact_digest": "df757f2a6d8945ba3c4e19abc690d6fd16f5772fc8e3a61258577392b7582d04",
+      "source_packet_digest": "dacc0828ae3ba024086bb3d905a301ce9ce3e898a14fbd6d2be7cb6d2d7c81d2"
+    },
+    {
+      "candidate_artifact_hash": "ca7a9819a1df5f63258a9efca759efb28dcf7ac05c7496a0c77d27aba14d77a9",
+      "domain_policy_id": "optimization/1",
+      "final_label": "near_duplicate",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/ca7a9819a1df5f63258a9efca759efb28dcf7ac05c7496a0c77d27aba14d77a9.json",
+      "measurement_artifact_digest": "7460c838b801405350ef68e2d6ab3770994260efa195657526b668a7ada216a1",
+      "source_packet_digest": "4c1e0b33f5d346404515f903e6bccfbafe1ac6464dea492e0accfafde201203e"
+    },
+    {
+      "candidate_artifact_hash": "0543de861bfcd054e5f0db4042b4af3c8c1b082291aa58688a228c010c86705c",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/0543de861bfcd054e5f0db4042b4af3c8c1b082291aa58688a228c010c86705c.json",
+      "measurement_artifact_digest": "a95ba6f1885ac08cd175a61e4fee9b7ced215d10cb2ffa8087c9869e0a0316ab",
+      "source_packet_digest": "eb72f5e58d29576674ea7b4ca11b6639e5a75d37405689df3367ef882e40e8f2"
+    },
+    {
+      "candidate_artifact_hash": "065f9cec7d326be6fa0fb04cd32afc1c3af0c3b26c8e83fc26996db57877827b",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/065f9cec7d326be6fa0fb04cd32afc1c3af0c3b26c8e83fc26996db57877827b.json",
+      "measurement_artifact_digest": "0f52fcd52f8a1c0d0bec9473c1bf877550bc8b812f082f7098082125a79bf0f1",
+      "source_packet_digest": "47c2e2a0e367a34c2d96dcd9c3baa343e98b998da02e5123c049bcd0a221c460"
+    },
+    {
+      "candidate_artifact_hash": "08d2ca260ff38bc41783949b5e1be86694c945161395423541d465153f094c56",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/08d2ca260ff38bc41783949b5e1be86694c945161395423541d465153f094c56.json",
+      "measurement_artifact_digest": "f22ac02f22bcafaa2fe3862a9d4e223fa1dfb94709ea2ae4a1d7610330d80447",
+      "source_packet_digest": "e8014484518396e80c966c197bbc8cb72152b185b7f2796711234bbb52edb3cb"
+    },
+    {
+      "candidate_artifact_hash": "151f8478f344a6c47563ce8286507433ad366fcb3e109543265d27281f45c9b4",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/151f8478f344a6c47563ce8286507433ad366fcb3e109543265d27281f45c9b4.json",
+      "measurement_artifact_digest": "e37df27a1850f71d74573520b718f885367b748199e47b9f130a5ba171573cf1",
+      "source_packet_digest": "ab307409040a2e018e2dd0adbf3cee8621c4632ee553ccab9d98fc2118711b4c"
+    },
+    {
+      "candidate_artifact_hash": "22ece85ba1832c8e7907998c7a6948301332d316d63955609e690c60b6ca5210",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/22ece85ba1832c8e7907998c7a6948301332d316d63955609e690c60b6ca5210.json",
+      "measurement_artifact_digest": "bafe4f89bc0336b292f3954f90a1dca10df0d9bbc50c179eb53d9a2bc3788be5",
+      "source_packet_digest": "83289afb8c8b2aacbc72cec73b68d88e2c94d81e8870c250cebec006384b36a8"
+    },
+    {
+      "candidate_artifact_hash": "22f8d0d939a005001d12e228d2a3a2b26affb80d1fcdeff9bb731f1bfb30e1a6",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/22f8d0d939a005001d12e228d2a3a2b26affb80d1fcdeff9bb731f1bfb30e1a6.json",
+      "measurement_artifact_digest": "54352d80481cff790137ee788da6ea9445f4cbb746ba9ebe873acbc5aad95a58",
+      "source_packet_digest": "21798a6f6a9223dfa3ef35f96dd9671e9581a2495f85ad829f0aed7a823c5c43"
+    },
+    {
+      "candidate_artifact_hash": "23966733ee72c36769cca3bb5d803ac1e7917fc518feabbbb9ffa676daa69614",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/23966733ee72c36769cca3bb5d803ac1e7917fc518feabbbb9ffa676daa69614.json",
+      "measurement_artifact_digest": "9fd5690567f8a29ec6d1c8faf61a16e6fcfad9707c3fdf3d7e285624172cf737",
+      "source_packet_digest": "c06ec425c607d6b4df7034377cb46230d7c57756c5afabdb4c52d28530ddc7fe"
+    },
+    {
+      "candidate_artifact_hash": "2a8a7bac66484ce552aa174a9c691fe8e00e6fe5a7d71898066965672a9a6b1c",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2a8a7bac66484ce552aa174a9c691fe8e00e6fe5a7d71898066965672a9a6b1c.json",
+      "measurement_artifact_digest": "eb8d181f6127519b1d70b17aacd416de7bf73889cd5173912f5bca8dd8835a69",
+      "source_packet_digest": "c741529b65fdf3f3f29e014508198e1e25a952a48af58f42652f733eee7d3d8d"
+    },
+    {
+      "candidate_artifact_hash": "2e42ead53e17864bfdb5667c6ffd206dd79f6a96d70249257c29873833ec82a0",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2e42ead53e17864bfdb5667c6ffd206dd79f6a96d70249257c29873833ec82a0.json",
+      "measurement_artifact_digest": "cc845821766a6f99a98410e0cebc6c542908e82fd38ed1129ef67673b7fffc78",
+      "source_packet_digest": "9aa6f804757150686d2e5c9446dfd38a2c04ba3928a3dc07b143301af0d30c00"
+    },
+    {
+      "candidate_artifact_hash": "2e84278e4c2cea2c35873813a43d67f2b319a30b583213da339d767ea3cf5e3f",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/2e84278e4c2cea2c35873813a43d67f2b319a30b583213da339d767ea3cf5e3f.json",
+      "measurement_artifact_digest": "2615965ba506d56d6d3559964945c37f4829e02cf1b6cdeca50e9918288b74c5",
+      "source_packet_digest": "1ff236707b66185c6352381a993e7456199b509e27ed9f784a092942bab5be97"
+    },
+    {
+      "candidate_artifact_hash": "415f7c7accc2cb8970f9458eed6d0b30239107282255aa74abcc52c1a59e897a",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/415f7c7accc2cb8970f9458eed6d0b30239107282255aa74abcc52c1a59e897a.json",
+      "measurement_artifact_digest": "210ec7526cde07dcb7e920f0258f1608ae3763ed7840290e95140f320e44d3ba",
+      "source_packet_digest": "09f6fa700be5b803187e42a4a1974b10b2fea7a4d3f5fa486a57e70011069767"
+    },
+    {
+      "candidate_artifact_hash": "4284af16db746afd01b9aa7153744af16fb614772aba8ea3fc8d4ef22f544bf9",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4284af16db746afd01b9aa7153744af16fb614772aba8ea3fc8d4ef22f544bf9.json",
+      "measurement_artifact_digest": "3b9b4aab8ef64ad4a09f1bc91b201a2537d10e3040bf6305a14f0ab56b98ca46",
+      "source_packet_digest": "95855826b713e2a224caadca705cd430e10a21881d83d44c155e0f5bc38886c7"
+    },
+    {
+      "candidate_artifact_hash": "4a1b0ab7634f67ff27533cd0c0541091f961776d90ec35e942e46fbd2f07d144",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4a1b0ab7634f67ff27533cd0c0541091f961776d90ec35e942e46fbd2f07d144.json",
+      "measurement_artifact_digest": "bec586b7108aafa06ec6d73b72bb69a54f3ab61591248aca5d011b01278f850c",
+      "source_packet_digest": "fa4935085e458b415bd9a547b80cb608ac9adf3c9182d244bc6f3e40aef017d6"
+    },
+    {
+      "candidate_artifact_hash": "4ceb050c859177b092090e23395b796f09fc778964c2cd4cb47083a5a4e4c75a",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/4ceb050c859177b092090e23395b796f09fc778964c2cd4cb47083a5a4e4c75a.json",
+      "measurement_artifact_digest": "bacb54d372db751d41bf939226bcca29c45805c6e32b1e581e9151945917716d",
+      "source_packet_digest": "6e91725a3359c85f9e2d606a6ad936e3b6a7c0bfee57b1644cafd9dc8c121983"
+    },
+    {
+      "candidate_artifact_hash": "6257015b5178402df0adb1246d419da7e7685d24daa9359dd09e84d17a479122",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/6257015b5178402df0adb1246d419da7e7685d24daa9359dd09e84d17a479122.json",
+      "measurement_artifact_digest": "5465d86a849d9b36eb2cf13fedf002ddefb6fe7ba444035a356632209828a675",
+      "source_packet_digest": "670fbcfa5af76551aba76bdbd68eb4aa50e64ae129834f73f38a66492a4e5b6d"
+    },
+    {
+      "candidate_artifact_hash": "742a90b8ee8dde5a462158a7ed14a6d34e42c00a57f47436fcb313619eb261c4",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/742a90b8ee8dde5a462158a7ed14a6d34e42c00a57f47436fcb313619eb261c4.json",
+      "measurement_artifact_digest": "fec05ba6225649175843e79199d61721dda774d6038f76c4c49fefcf536b2ee1",
+      "source_packet_digest": "c43e70b9b2b99f9762ec941af4021aa976579a7223baf0f8bdcafcc6a70d6801"
+    },
+    {
+      "candidate_artifact_hash": "7bd86332c573cb450d0041cf5efabca22fad241760ed88d46659ec8caa04bc41",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7bd86332c573cb450d0041cf5efabca22fad241760ed88d46659ec8caa04bc41.json",
+      "measurement_artifact_digest": "f4aa4f5d5895ea1f487bfef67f38805c3b48976af912a14804ae91626ecc36e3",
+      "source_packet_digest": "1cb6ee185d5c22efaf9093cdc1f273b965ac426a9fb727c45b438c72e446078c"
+    },
+    {
+      "candidate_artifact_hash": "7c0cd8a40111d063e3316d34df2cc7d410f3c7255e7b15c066989f081172a2fa",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/7c0cd8a40111d063e3316d34df2cc7d410f3c7255e7b15c066989f081172a2fa.json",
+      "measurement_artifact_digest": "751f8539006f354c842ea23573d05159b1f4587d1f823159314da80f0c982311",
+      "source_packet_digest": "7d5ac7cd29c29250dbf52ca6d9d5f7dbe67b93f2046c7b035ca19fa7c21d5c7d"
+    },
+    {
+      "candidate_artifact_hash": "855830d76e2bc5a63a54898b0981a88b3cb3cb65e42f0d864b09eac56e35fa49",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/855830d76e2bc5a63a54898b0981a88b3cb3cb65e42f0d864b09eac56e35fa49.json",
+      "measurement_artifact_digest": "95f5751b4305d6a9b972298ac898cbe949c05fdb072f53fd816b2010790d6c4b",
+      "source_packet_digest": "fb0491a17dcefa5a4f3e369d5a6e193066c6e07d57bb8caced9221a94cf2cf9c"
+    },
+    {
+      "candidate_artifact_hash": "909170716f21cf626d7556fd5b5ef734a4714cba6a234b2e2ca5120c86c191eb",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/909170716f21cf626d7556fd5b5ef734a4714cba6a234b2e2ca5120c86c191eb.json",
+      "measurement_artifact_digest": "0490a8111dfc86bb4d3b5479a68d79683570a1906adebc2f69e770a0c3c5e41d",
+      "source_packet_digest": "095e2560a5f91535a77a95cc8b934b698505ce895d61a051555d6c8617418b58"
+    },
+    {
+      "candidate_artifact_hash": "a94b0425abc99c8944a5bc1330a8a8e78c09d3924bbadb2c791c78d893411e39",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/a94b0425abc99c8944a5bc1330a8a8e78c09d3924bbadb2c791c78d893411e39.json",
+      "measurement_artifact_digest": "35a8b27890cdcdd798144070cf3a0ebb88f5a5be930b16e68540b843f243bd50",
+      "source_packet_digest": "950e2b16d39f5af1b7acbdffb27729173ddbb07aaf72fe39a404ec643486af2e"
+    },
+    {
+      "candidate_artifact_hash": "ac10b3312234c29c172cf9556937ee776203d416e5a6d131e17ae72a6c806d44",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/ac10b3312234c29c172cf9556937ee776203d416e5a6d131e17ae72a6c806d44.json",
+      "measurement_artifact_digest": "1a0ffda5a93da11b4d3ae8779ed05405ab498001b4a34add4dcc17e703f6e160",
+      "source_packet_digest": "4cf7dad7c0b8658394245a42f7731f445a34303d473160db77f4e0bb08346cbf"
+    },
+    {
+      "candidate_artifact_hash": "d4d537df4ca768e6fdfca5f2560a1081ed40d580b89171753e3dbaa35caafa47",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/d4d537df4ca768e6fdfca5f2560a1081ed40d580b89171753e3dbaa35caafa47.json",
+      "measurement_artifact_digest": "3897bd3215d4722f6e945a61f94a0df605d40f932ef4aae3605ba59e5df1db44",
+      "source_packet_digest": "4e6572847659bf3db24827b5cb4fc315766bfe7cfe7c4d49df89b99e0b11ed17"
+    },
+    {
+      "candidate_artifact_hash": "dab332a44b64fc8cf24b8a36092579fe9600e88fba1b4a2253ad908b0d80ec38",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/dab332a44b64fc8cf24b8a36092579fe9600e88fba1b4a2253ad908b0d80ec38.json",
+      "measurement_artifact_digest": "a50bd687d1c0b335b30c1fb698727f987579409da8f6f4d50c8b3971a7299c47",
+      "source_packet_digest": "ab67aad52a2c303b66f9c8213557a4ef5ac7715f393f1f66f964f9a0a2b05562"
+    },
+    {
+      "candidate_artifact_hash": "dc53145c2d23fbe270c16c1e46c1aa6a309ba509384536912c05d0f31a64b693",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/dc53145c2d23fbe270c16c1e46c1aa6a309ba509384536912c05d0f31a64b693.json",
+      "measurement_artifact_digest": "5c5db0298ef17bc411c9213f2619322531b194f03498bee428a3522a50cec3d5",
+      "source_packet_digest": "e4295b251f1341ad838389d19dfde78f48c9790afcf700498ff9989492453bc7"
+    },
+    {
+      "candidate_artifact_hash": "f2e30c8f8b45d41894a1e4bd81dd46a079ec5cf98240b021933c5bb0c01de9e4",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f2e30c8f8b45d41894a1e4bd81dd46a079ec5cf98240b021933c5bb0c01de9e4.json",
+      "measurement_artifact_digest": "b8fa6ffcdb2b44fab7edca874710689345ae66422cf1bda381e404b629fb939d",
+      "source_packet_digest": "c16a17c1b548f966d0ef5bb14cbc198211a06322246626028826cba1102ca7f1"
+    },
+    {
+      "candidate_artifact_hash": "f2f355441cb44964035f24847a730826ef599211b894d767d3bbc6f2336fd6b9",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f2f355441cb44964035f24847a730826ef599211b894d767d3bbc6f2336fd6b9.json",
+      "measurement_artifact_digest": "e81032fe9fcfe0bfd72ff223780486ff465ae2c5b7ade2ed110fc898627d139b",
+      "source_packet_digest": "ad1b04df85294bf1c70d8d40b6c22f94ba26decbd22388b718217172661fc490"
+    },
+    {
+      "candidate_artifact_hash": "f59612d4da438b613062bb0f0b74791c2d7bbc1d79e536286487b8f26ed8ea59",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f59612d4da438b613062bb0f0b74791c2d7bbc1d79e536286487b8f26ed8ea59.json",
+      "measurement_artifact_digest": "b0968c4bd58309432722cfcf35b60c1a20dae5fbbff4c2a7288691202a082ef9",
+      "source_packet_digest": "bef916c6b973e7f8f05514ebcc08273ac5a5681c564f493272c1443fec134f1c"
+    },
+    {
+      "candidate_artifact_hash": "f72bfd2534517bc1fb24d733aa420ea9745ce41b24f1daae9c69d1f837e28e6f",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f72bfd2534517bc1fb24d733aa420ea9745ce41b24f1daae9c69d1f837e28e6f.json",
+      "measurement_artifact_digest": "4f1873507a4e011832fad1b056f016def9160dcadfead2c38432c845e6191158",
+      "source_packet_digest": "70074db6195033bc846832759537a46a48af0ba6c2f28f6555063b78b5d668e3"
+    },
+    {
+      "candidate_artifact_hash": "f8e2ff1ed576fe135e5bc1a723c58d197ba19c9a2d1fca092b7cb4a5fd8b3f76",
+      "domain_policy_id": "optimization/1",
+      "final_label": "novel",
+      "input": "docs/reviews/nsqd-tau-calibration-2026-08-29/autonomous-label-rows/f8e2ff1ed576fe135e5bc1a723c58d197ba19c9a2d1fca092b7cb4a5fd8b3f76.json",
+      "measurement_artifact_digest": "75842287d51436706a229dba44d198f0c089633e45e3d078422acf03148b45f5",
+      "source_packet_digest": "7ea42ededbd32113bb6ffe5d908f3dbd6924d18b596ebf13f4813f88480728e4"
+    }
+  ],
+  "rows_sha256": "0bac568c30227615d91635cc2dae7b7a6399a6f4a7d40329b113ecdc8cf17f7b",
+  "schema_version": 1,
+  "selection_rule": "policy then label then candidate artifact hash; first 30",
+  "target_per_class_per_policy": 30
+}

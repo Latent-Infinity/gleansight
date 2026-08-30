@@ -1,0 +1,35 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-fin-nd-015
+domain_policy_id: finance/1
+title: Replication candidate for N11-FIN-03, variant 5
+one_sentence_claim: 'The candidate checks the reported relationship in this form:
+  The study forecasts 10-minute closing-bid returns for EUR/USD, USD/JPY, and GBP/USD
+  with a Transformer encoder that concatenates multivariate FX and cross-asset technical
+  and fundamental inputs with positional encoding and Time2Vec embeddings before self-attention
+  and pooled prediction layers. Its comparison against LSTM and ARIMA tests whether
+  richer multivariate inputs help the Transformer exploit intraday cross-market linkages
+  better than univariate setups.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-FIN-03.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  mechanism: shock-propagation
+  target: returns
+  horizon: daily
+paraphrase: 'The candidate checks the reported relationship in this form: The study
+  forecasts 10-minute closing-bid returns for EUR/USD, USD/JPY, and GBP/USD with a
+  Transformer encoder that concatenates multivariate FX and cross-asset technical
+  and fundamental inputs with positional encoding and Time2Vec embeddings before self-attention
+  and pooled prediction layers. Its comparison against LSTM and ARIMA tests whether
+  richer multivariate inputs help the Transformer exploit intraday cross-market linkages
+  better than univariate setups.'
+inefficiency: Use the same market friction identified by the approved source.
+counterparty: Retain the source paper's stated counterparties.
+persistence: Test persistence only over the source paper's stated horizon.
+capacity: Estimate capacity under the same liquidity assumptions.
+regime_dependence: Preserve the source paper's stated regime conditions.

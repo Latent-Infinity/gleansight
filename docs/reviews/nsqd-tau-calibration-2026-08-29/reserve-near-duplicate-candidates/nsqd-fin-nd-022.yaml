@@ -1,0 +1,33 @@
+schema_version: 1
+kind: candidate-requirement-card
+id: nsqd-fin-nd-022
+domain_policy_id: finance/1
+title: Replication candidate for N11-FIN-05, variant 2
+one_sentence_claim: 'For an independently rerun test, the claim is: The pretext stage
+  feeds a denoising autoencoder a corrupted input formed by repeating the raw price
+  series across channels and trains it to reconstruct a smoother moving-average feature
+  matrix. Up/stationary/down labels are then recomputed from the reconstructed price
+  series and evaluated with a downstream SVM and binary trading strategies on daily
+  S&P 500, one-minute Bitcoin, and limit-order datasets.'
+mechanism: Re-evaluate the mechanism reported by approved projection N11-FIN-05.
+differential_prediction: The reproduced test should preserve the approved claim's
+  direction and scope.
+cheapest_falsifier: Repeat the source paper's reported comparison on an independent
+  held-out sample.
+kill_criteria: Reject the replication candidate if the reported relationship does
+  not reproduce.
+research_descriptor:
+  mechanism: behavioral
+  target: returns
+  horizon: daily
+paraphrase: 'For an independently rerun test, the claim is: The pretext stage feeds
+  a denoising autoencoder a corrupted input formed by repeating the raw price series
+  across channels and trains it to reconstruct a smoother moving-average feature matrix.
+  Up/stationary/down labels are then recomputed from the reconstructed price series
+  and evaluated with a downstream SVM and binary trading strategies on daily S&P 500,
+  one-minute Bitcoin, and limit-order datasets.'
+inefficiency: Use the same market friction identified by the approved source.
+counterparty: Retain the source paper's stated counterparties.
+persistence: Test persistence only over the source paper's stated horizon.
+capacity: Estimate capacity under the same liquidity assumptions.
+regime_dependence: Preserve the source paper's stated regime conditions.
