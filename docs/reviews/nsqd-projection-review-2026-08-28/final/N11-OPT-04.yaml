@@ -1,0 +1,32 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-OPT-04
+source_fixture_id: N11-OPT-04-SOURCE
+domain_policy_id: optimization/1
+paper_id: 7dbcef75-2d52-49a6-86a3-471be71f0fd7
+source_paper_id: ae1b92291bc040828371378a5f7610000771be0f
+title: "A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians"
+source_excerpt_path: excerpts/optimization-rank-deficient-sqo.md
+source_markdown_sha256: aaa642544e5785335a73d9dfebcf914f54729babd5e0225324ece4bcdb3aad12
+source_abstract_sha256: ba3133818970667e1f730dee49a5b65774cae84c1b41b7991cbca92bdda0fb00
+paraphrase: >-
+  At each iteration, the stochastic SQO scheme combines a feasibility-oriented component
+  based on the local constraint linearization with an objective-improving component
+  restricted to directions annihilated by the current Jacobian. Stochastic objective
+  derivatives feed the latter component, while adaptive merit and protected step-length
+  rules preserve its stated guarantees for deficient-rank Jacobians and infeasible cases.
+paraphrase_sha256: 1c5d1cc4315a40c8fd4eaad6784ee40243a8da6729dcaac16c4879fee12d577b
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+coordinates:
+  problem: constrained-expectation
+  method: sequential-quadratic
+  setting: rank-deficient
+overlap_check:
+  max_contiguous_source_tokens: 2
+  limit: 8

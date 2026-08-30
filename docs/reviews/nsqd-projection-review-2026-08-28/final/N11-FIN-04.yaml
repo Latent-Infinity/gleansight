@@ -1,0 +1,32 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-FIN-04
+source_fixture_id: N11-FIN-04-SOURCE
+domain_policy_id: finance/1
+paper_id: af235cb4-5d6d-4ce3-a3d1-a52d3d07bb84
+source_paper_id: arxiv:2512.12727
+title: "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction"
+source_excerpt_path: excerpts/finance-exformer.md
+source_markdown_sha256: a03a700f8944c2eea86ef1da143daec03f0368c8eef9d30dc0bed8ee20d36944
+source_abstract_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+paraphrase: >-
+  EXFormer forecasts day-ahead FX returns by applying parallel convolutional receptive
+  fields before self-attention to align local slopes across scales, dynamically weighting
+  28 exogenous covariates, and recalibrating channels with squeeze-and-excitation before a
+  GRU decoder. The design targets return dynamics driven jointly by short-term noise and
+  slower cross-market factors.
+paraphrase_sha256: c92e2343719fdb0e87450e72e9eb3d85a9fb238d6b754c66aeb3e156578776f9
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+coordinates:
+  mechanism: flow-driven
+  target: returns
+  horizon: daily
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

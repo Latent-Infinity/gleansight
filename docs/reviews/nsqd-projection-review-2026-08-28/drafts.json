@@ -1,0 +1,90 @@
+{
+  "status": "semantic_review_approved",
+  "note": "Product approved all ten semantic drafts at 2026-08-28T23:46:44Z. Exact-byte digest approval remains pending. Coordinates are omitted when the source does not support every axis in the policy tuple.",
+  "projections": [
+    {
+      "key": "finance-fin-jepa",
+      "paper_id": "9c872816-159c-4300-84ab-93ba8b21f7dd",
+      "title": "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series",
+      "domain_policy_id": "finance/1",
+      "source_paper_id": "doi:10.2139/ssrn.6855118",
+      "paraphrase": "Fin-JEPA maps 22 daily price-and-volume features into 64-dimensional latents with a three-layer MLP, then uses a causally masked Transformer to predict a 10-step future latent window from a 30-step context while SIGReg regularizes the embedding distribution against collapse. Its latent predictions improve on an identity baseline, but a separate evaluation finds that prediction error does not reliably discriminate forward returns."
+    },
+    {
+      "key": "finance-cet",
+      "paper_id": "416297a1-11d4-403a-8f76-53f1be15d7af",
+      "title": "Trading through Earnings Seasons using Self-Supervised Contrastive Representation Learning",
+      "domain_policy_id": "finance/1",
+      "source_paper_id": "arxiv:2409.17392",
+      "coordinates": {"mechanism": "shock-propagation", "target": "signal-decay", "horizon": "event-time"},
+      "paraphrase": "CET separately encodes minute-level price-volume sequences and quarterly earnings features, combines the resulting stock-context and earnings-context representations into a joint context vector, and trains that representation stage with InfoNCE-based contrastive predictive coding to maximize agreement with future price-volume latents while using negatives drawn from periods at least five days before announcements. A supervised head is then fine-tuned to predict next-minute up/down/hold movement during the five business days after earnings releases."
+    },
+    {
+      "key": "finance-fx-transformer",
+      "paper_id": "e247cc84-de90-4d94-aa03-21ea4031c5ab",
+      "title": "Fx-spot predictions with state-of-the-art transformer and time embeddings",
+      "domain_policy_id": "finance/1",
+      "source_paper_id": "doi:10.1016/j.eswa.2024.123538",
+      "coordinates": {"mechanism": "flow-driven", "target": "returns", "horizon": "intraday"},
+      "paraphrase": "The study forecasts 10-minute closing-bid returns for EUR/USD, USD/JPY, and GBP/USD with a Transformer encoder that concatenates multivariate FX and cross-asset technical and fundamental inputs with positional encoding and Time2Vec embeddings before self-attention and pooled prediction layers. Its comparison against LSTM and ARIMA tests whether richer multivariate inputs help the Transformer exploit intraday cross-market linkages better than univariate setups."
+    },
+    {
+      "key": "finance-exformer",
+      "paper_id": "af235cb4-5d6d-4ce3-a3d1-a52d3d07bb84",
+      "title": "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction",
+      "domain_policy_id": "finance/1",
+      "source_paper_id": "arxiv:2512.12727",
+      "coordinates": {"mechanism": "flow-driven", "target": "returns", "horizon": "daily"},
+      "paraphrase": "EXFormer forecasts day-ahead FX returns by applying parallel convolutional receptive fields before self-attention to align local slopes across scales, dynamically weighting 28 exogenous covariates, and recalibrating channels with squeeze-and-excitation before a GRU decoder. The design targets return dynamics driven jointly by short-term noise and slower cross-market factors."
+    },
+    {
+      "key": "finance-denoised-labels",
+      "paper_id": "72a11ef7-b299-4c73-92b7-bdcc8d673c52",
+      "title": "Denoised Labels for Financial Time-Series Data via Self-Supervised Learning",
+      "domain_policy_id": "finance/1",
+      "source_paper_id": "doi:10.1145/3533271.3561687",
+      "paraphrase": "The pretext stage feeds a denoising autoencoder a corrupted input formed by repeating the raw price series across channels and trains it to reconstruct a smoother moving-average feature matrix. Up/stationary/down labels are then recomputed from the reconstructed price series and evaluated with a downstream SVM and binary trading strategies on daily S&P 500, one-minute Bitcoin, and limit-order datasets."
+    },
+    {
+      "key": "optimization-heavy-tail",
+      "paper_id": "f9ca035f-6ac9-4b94-8030-672875485ffd",
+      "title": "High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance",
+      "domain_policy_id": "optimization/1",
+      "source_paper_id": "4dabfd108c13cd730d3cc583e474b5d8bdf4685f",
+      "paraphrase": "The paper applies clipping to stochastic first-order methods, including clipped-SGD and clipped extragradient variants, so individual noisy updates remain controlled. It proves high-probability convergence under bounded central alpha-th moments, including heavy-tailed regimes with potentially unbounded variance, for unconstrained minimization and variational inequalities."
+    },
+    {
+      "key": "optimization-choco-sgd",
+      "paper_id": "835225e2-ec68-487a-842f-20455a95f1ad",
+      "title": "Decentralized Stochastic Optimization and Gossip Algorithms with Compressed Communication",
+      "domain_policy_id": "optimization/1",
+      "source_paper_id": "44b3b3bb40a9055eccdf86ea1702f6ae8b38934c",
+      "paraphrase": "Choco-SGD alternates local stochastic-gradient steps with compressed gossip updates over a fixed neighbor graph. Each node keeps an auxiliary state tracking the compressed information already shared with its neighbors, allowing biased or unbiased compression while recovering centralized mini-batch SGD's leading convergence term."
+    },
+    {
+      "key": "optimization-dmfw",
+      "paper_id": "ebd81b51-736f-43e9-8338-2ee5cc287565",
+      "title": "Distributed Momentum-Based Frank-Wolfe Algorithm for Stochastic Optimization",
+      "domain_policy_id": "optimization/1",
+      "source_paper_id": "08f8241c666e58b7dcda27a4aaf506138d32910c",
+      "paraphrase": "DMFW solves constrained stochastic objectives over a network without Euclidean projections. Each agent combines consensus and gradient-tracking updates with recursive and Nesterov momentum, then solves a Frank-Wolfe linear minimization subproblem over the shared convex compact feasible set; fixed-size stochastic batches are allowed."
+    },
+    {
+      "key": "optimization-rank-deficient-sqo",
+      "paper_id": "7dbcef75-2d52-49a6-86a3-471be71f0fd7",
+      "title": "A Stochastic Sequential Quadratic Optimization Algorithm for Nonlinear-Equality-Constrained Optimization with Rank-Deficient Jacobians",
+      "domain_policy_id": "optimization/1",
+      "source_paper_id": "ae1b92291bc040828371378a5f7610000771be0f",
+      "coordinates": {"problem": "constrained-expectation", "method": "sequential-quadratic", "setting": "rank-deficient"},
+      "paraphrase": "At each iteration, the stochastic SQO scheme combines a feasibility-oriented component based on the local constraint linearization with an objective-improving component restricted to directions annihilated by the current Jacobian. Stochastic objective derivatives feed the latter component, while adaptive merit and protected step-length rules preserve its stated guarantees for deficient-rank Jacobians and infeasible cases."
+    },
+    {
+      "key": "optimization-adam",
+      "paper_id": "05795fc8-60bd-43b9-81d8-2ac8419d8a34",
+      "title": "Adam: A Method for Stochastic Optimization",
+      "domain_policy_id": "optimization/1",
+      "source_paper_id": "a6cb366736791bcccc5c8639de5a8f9636bf87e8",
+      "paraphrase": "Adam uses bias-corrected exponential moving averages of first and second raw gradient moments to assign coordinate-wise adaptive steps for stochastic objectives. It requires only first-order gradients and little memory while remaining invariant to diagonal gradient rescaling."
+    }
+  ]
+}

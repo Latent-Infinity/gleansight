@@ -1,0 +1,28 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-OPT-01
+source_fixture_id: N11-OPT-01-SOURCE
+domain_policy_id: optimization/1
+paper_id: f9ca035f-6ac9-4b94-8030-672875485ffd
+source_paper_id: 4dabfd108c13cd730d3cc583e474b5d8bdf4685f
+title: "High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance"
+source_excerpt_path: excerpts/optimization-heavy-tail.md
+source_markdown_sha256: 9ff82b8b308efd613d89b8c622a4e26950407c3694ae69a0898187cff29fbbba
+source_abstract_sha256: 159fa4992192e0964aa7ca715e05da9bb74ba57224b26f1763438a710d2dfc2f
+paraphrase: >-
+  The paper applies clipping to stochastic first-order methods, including clipped-SGD and
+  clipped extragradient variants, so individual noisy updates remain controlled. It proves
+  high-probability convergence under bounded central alpha-th moments, including
+  heavy-tailed regimes with potentially unbounded variance, for unconstrained minimization
+  and variational inequalities.
+paraphrase_sha256: 502bc437c2fbe44cb9f454ff4b7bdfcfd2e1b3fec3a581798278677015018c24
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

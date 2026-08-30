@@ -1,0 +1,28 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-FIN-01
+source_fixture_id: N11-FIN-01-SOURCE
+domain_policy_id: finance/1
+paper_id: 9c872816-159c-4300-84ab-93ba8b21f7dd
+source_paper_id: doi:10.2139/ssrn.6855118
+title: "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series"
+source_excerpt_path: excerpts/finance-fin-jepa.md
+source_markdown_sha256: d7a85481038ba3a52dbb713656cb98837479ee402b3732a637279934ced40dd2
+source_abstract_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+paraphrase: >-
+  Fin-JEPA maps 22 daily price-and-volume features into 64-dimensional latents with a
+  three-layer MLP, then uses a causally masked Transformer to predict a 10-step future
+  latent window from a 30-step context while SIGReg regularizes the embedding distribution
+  against collapse. Its latent predictions improve on an identity baseline, but a separate
+  evaluation finds that prediction error does not reliably discriminate forward returns.
+paraphrase_sha256: 1454db16620dfcff58b25b93b6c153bb0332bdf586160e9f4c3d2a05a3b9510d
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

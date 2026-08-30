@@ -1,0 +1,27 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-OPT-02
+source_fixture_id: N11-OPT-02-SOURCE
+domain_policy_id: optimization/1
+paper_id: 835225e2-ec68-487a-842f-20455a95f1ad
+source_paper_id: 44b3b3bb40a9055eccdf86ea1702f6ae8b38934c
+title: "Decentralized Stochastic Optimization and Gossip Algorithms with Compressed Communication"
+source_excerpt_path: excerpts/optimization-choco-sgd.md
+source_markdown_sha256: f81eaf2f03755d5a205d659d03e27705e4e61282c82104246f2428b8ba851ba7
+source_abstract_sha256: 88cf5cab61f9bbc6009fe2cef4c3419d46e039cdaa9b010e8164be58d0650da3
+paraphrase: >-
+  Choco-SGD alternates local stochastic-gradient steps with compressed gossip updates over
+  a fixed neighbor graph. Each node keeps an auxiliary state tracking the compressed
+  information already shared with its neighbors, allowing biased or unbiased compression
+  while recovering centralized mini-batch SGD's leading convergence term.
+paraphrase_sha256: fde7f479da0582d12358ffaf34c3f18db08fe95228be436af3af9e1031fc18f0
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 2
+  limit: 8
