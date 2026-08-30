@@ -115,7 +115,7 @@ evidence(q, snapshot) =
 | distance | `1 - cosine_similarity` | [0, 2] theoretically; expect [0, 1] for unit vectors |
 | k | 5 | if `\|snapshot\| < k`, use `\|snapshot\|`; if 0, `evidence` is **undefined** (`null`) |
 | tie | smaller `record_id` first | deterministic |
-| threshold `τ` | **unset** (report-only) | packet 2a 2026-08-25: report `evidence`; do **not** extra-kill on `evidence < τ`. The gate’s novelty **term** is the discrete map below. Bin-aligned τ values are packet 2b and are not authorized. |
+| threshold `τ` | **0.45** (`approved_default_tunable`) | packet 2b plus explicit human activation 2026-08-29: compute the discrete novelty term below, then zero it when `evidence < 0.45`. Override via `settings.nsqd.novelty_threshold_tau`; the CLI has no `--tau` switch. The value is active but not frozen. |
 
 **0–5 novelty term**
 
@@ -268,7 +268,7 @@ Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does n
 | B | archive whitespace | **supported**, non-default | enabled only by composition allowlist |
 | C | Swanson ABC | deferred | rejected |
 | D | analogical transport | deferred | rejected |
-| E | atypical combination | deferred; waits on executable `τ` if it uses novelty as a kill | rejected |
+| E | atypical combination | deferred; executable `τ` does not authorize this operator | rejected |
 | F | missing dimensions | deferred; waits on axis-policy clarity | rejected |
 | G | failure resurrection | deferred; waits on an approved failed-experiment corpus | rejected |
 
@@ -493,7 +493,7 @@ Labels and scores for `ALG.AXES`, `ALG.NOVELTY_BINS`, `ALG.STATUS.THRESHOLDS`, a
 | `ALG.VIABILITY` | same calibration pair + 5 extra cards | introduce 1–4 intermediates only with a recorded rubric; otherwise keep 0/5 presence stubs | LLM probe | keep stubs **or** recorded rubric | `docs/ablations/alg-viability.md` |
 | `ALG.ACQUISITION_BUDGET` | constructed searchable-failure worlds; synthetic candidates | smallest (batches/pass, imports/pass, candidates/call) that stages a useful record; approved recheck 1 vs 2 | grid {1,2,3}×{1,2,3}×{1,5,25} | keep 3 / 25 / 3 / 2 as compatibility defaults; 3/3/25 loses the page-2 world | `docs/ablations/alg-acquisition-budget.md` (human-validated 2026-08-25; `approved_default_tunable`; **not frozen**) |
 | `ALG.STATUS.WINDOW` | constructed harvest ages at fixed UTC `as_of` | lifecycle + Active/Unknown under 365/730/1095 days | 10 ages; two dense cells | keep 730-day v1 “24 months”; overridable | `docs/ablations/alg-status-window.md` (packet 1a 2026-08-25; **not frozen**) |
-| `ALG.NOV.TAU` | existing novelty-term table + scored artifact stamp | `τ` is None; evidence 0.0 stays term 1 on calibration | report-only | unset | `docs/ablations/alg-novelty-tau.md` (packet 2a 2026-08-25) |
+| `ALG.NOV.TAU` | 120 balanced accepted autonomous labels over persisted measurements | overall novel false-kill ≤5% and each policy ≤10%; choose highest admissible staged edge | 30 near-duplicate + 30 novel per policy | `0.45`, `approved_default_tunable` | `docs/ablations/alg-novelty-tau.md` and packet 2b (activated 2026-08-29; **not frozen**) |
 | `ALG.FREEZE` | existing ALG.* probes | freeze-now vs keep-tunable | all families | keep tunable | `docs/ablations/alg-freeze.md` (packet 3 2026-08-26; **not frozen**) |
 
-Human review validated the five ALG.* geometry/status/viability artifacts and the acquisition-budget math/state probe but did not approve a numeric/default freeze. The acquisition-budget outcome is `approved_default_tunable`: retain 3 / 25 / 3 / 2 for compatibility, not as a demonstrated optimum. Keep every reviewed knob tunable. Packet 1a records v1 “24 months” as **730 days**, overridable via `window_days`; 12/36 day-length sensitivity is filed and not frozen. Packet 2a records novelty threshold `τ` as **unset / report-only**; bin-aligned executable values are not authorized. Packet 3 records every numeric/default family as `approved_default_tunable` with **no freeze** (`docs/ablations/alg-freeze.md`).
+Human review validated the five ALG.* geometry/status/viability artifacts and the acquisition-budget math/state probe but did not approve a numeric/default freeze. The acquisition-budget outcome is `approved_default_tunable`: retain 3 / 25 / 3 / 2 for compatibility, not as a demonstrated optimum. Keep every reviewed knob tunable. Packet 1a records v1 “24 months” as **730 days**, overridable via `window_days`; 12/36 day-length sensitivity is filed and not frozen. Packet 2a established report-only novelty-threshold semantics; packet 2b plus the separate human decision subsequently activated **`τ = 0.45` as `approved_default_tunable`**. Packet 3's no-freeze decision remains in force (`docs/ablations/alg-freeze.md`).

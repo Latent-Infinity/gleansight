@@ -11,7 +11,7 @@
 | B | archive whitespace | supported | composition-gated | settings `nsqd.enabled_operators`; no CLI `--operator` switch |
 | C | Swanson ABC | deferred | rejected | two named literatures after B |
 | D | analogical transport | deferred | rejected | source/target `domain_policy_id` after C |
-| E | atypical combination | deferred | rejected | packet 2b if E uses novelty as a kill |
+| E | atypical combination | deferred | rejected | separate operator-specific evidence and explicit human activation; executable `τ` alone is insufficient |
 | F | missing dimensions | deferred | rejected | axis-policy clarity |
 | G | failure resurrection | deferred | rejected | approved failed-experiment corpus; do not invent it |
 

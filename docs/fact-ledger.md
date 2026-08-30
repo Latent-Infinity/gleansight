@@ -39,6 +39,7 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to calibration or production_valid is evaluated independently by (snapshot_id, domain_policy_id) under ALG-SUF; every SufficiencyFailure code is tested; honest finance/1 production_valid requires approved DATA-NSQD-03 and now passes with the approved fixture | N6 promotion | Behavior | LOCAL-NSQD-H | product | Active | EV-N13 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable ALG-SUF failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures stop; drafts cannot approve; default CLI/UI composition wires the paper runtime and persists approved projection digests while lightweight composition remains fail-closed | N6 acquisition fallback | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | product | Active | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | Given the discovery use-cases, when a user runs `gleansight` or the desktop app, then harvest/map/diverge/ground/gate/archive are available without breaking `papers`, and Map/Archive/Card screens sit beside the evidence screens | Product surfaces | Behavior | LOCAL-NSQD-U | product | Active | EV-N18 |
+| NSQD.NOVELTY.TAU_PACKET.v1 | Packet 2b contains 120 trusted policy-balanced autonomous labels over persisted real measurements, with four writer/reviewer rounds, distinct frontier adjudication, and digest-bound provenance; staged evaluation recommended `τ = 0.45`, and a separate explicit human decision activated it as `approved_default_tunable` without authorizing Operator E or adjacent operator/window/CLI changes | Novelty calibration | Data Contract, Behavior | LOCAL-NSQD-G | product | Active | EV-N19 |
 
 ### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.7)
 
@@ -66,3 +67,4 @@ See that plan’s ledger for full statements. Completed facts are **Active** wit
 | NSQD.SURFACE.UNIFIED.v1 | N10 | Active; `gleansight` CLI and Map/Archive/Card screens |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
 | NSQD.RESCORE.REPLAY.v1 | N8 | Active; retry-safe archive reconciliation |
+| NSQD.NOVELTY.TAU_PACKET.v1 | N11 | Active; 30 near-duplicate + 30 novel labels per policy; runtime `τ = 0.45` is `approved_default_tunable` |

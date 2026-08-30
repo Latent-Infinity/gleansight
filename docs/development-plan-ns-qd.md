@@ -8,16 +8,16 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.21 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.29 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
-**Real Data Policy**: Approved fixtures only. DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records. DATA-NSQD-04 is approved optimization evidence and receives no `finance/1` sufficiency credit. DATA-NSQD-03 is approved finance evidence bound to its primary-source excerpt and reviewed projection.
-**Generated Data Authorization**: `None` for evidence claims and approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. A passing unit test may evidence algorithm correctness; the synthetic values themselves are not empirical/domain evidence, approved fixtures, or corpus data, and EV-N00 never persists them.
+**Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
+**Generated Data Authorization**: `None` for measurements, evidence claims, or approved corpus data. **Synthetic / in-memory values are allowed for pure unit tests** of math and state policy. Autonomous agent labels are generated judgments over real measurements, not generated measurements, and may never replace source, snapshot, embedding, or neighbor provenance.
 **Provider Policy**: `src/nsqd/` orchestrates through existing `src/papers/` application ports. Paper discovery/import/download/convert/embed/analyze remains paper-owned; durable NS-QD coordination remains in **`nsqd_jobs`**, not paper `jobs`.
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
-**Slice Ordering**: Preserve completed N1–N10 including N6 default paper-runtime composition. Harvest and projection upsert snapshot-scoped paraphrase vectors. Acquisition drafts and shortlists use the configured Ollama chat model and cannot self-approve. `papers analyze` / `analyze-project` omit `--model-name` to `settings.llm.default_model` (`qwen3.6:35b-a3b-q4_K_M`). Calibration ablation probes are human-validated and remain not frozen. DATA-NSQD-03 is approved and the honest `finance/1 production_valid` path is complete.
-**Outstanding Blockers**: None for Operator A or supported, non-default Operator B work. B is composition-gated via `settings.nsqd.enabled_operators` (default `A` only); the CLI has no `--operator` switch. `τ` stays unset while packet 2b collects 120 policy-balanced, offline human-approved labels. The current repository lacks enough approved NSQD candidate-neighbor pairs. Calendar-month subtraction is rejected for v1 and is not a reopen trigger.
+**Slice Ordering**: Preserve completed N1–N10 and completed N11.1–N11.4 corpus, measurement, autonomous-label, staged-threshold evaluation, and runtime-activation work. Packet 2b recommended `τ = 0.45`; the separate human decision activated it as `approved_default_tunable`. Corpus approval remains separate from label adjudication.
+**Outstanding Blockers**: None for Operator A, supported non-default Operator B, or N11.4 threshold activation. B is composition-gated via `settings.nsqd.enabled_operators` (default `A` only); the CLI has no `--operator` switch. Calendar-month subtraction is rejected for v1; operators C–G remain deferred, including Operator E.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -89,6 +89,14 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.20 | 2026-08-27 | Operator B archive-whitespace domain policy and tests; diverge still rejects `operator=B`. Four-command gate: 1171 passed, 1 skipped, 92.81%; dedicated NSQD: 555 passed, 94.38%. |
 | 1.6.21 | 2026-08-27 | Operator B becomes supported, non-default, and composition-gated with controlled persistence and provenance. Packet 2b gains pending-only agent proposals, trusted offline human review, and constrained 120-pair evaluation; executable `τ` remains unset. Calendar-month semantics remain rejected for v1. Four-command gate: 1188 passed, 1 skipped, 92.55%. |
 | 1.6.22 | 2026-08-27 | Composition allowlist is settings-backed (`nsqd.enabled_operators`, default A only, optional A+B) and rejects deferred or malformed operator sets; CLI still has no `--operator` switch. Four-command gate: 1198 passed, 1 skipped, 92.58%; dedicated NSQD: 576 passed, 93.80%. |
+| 1.6.23 | 2026-08-27 | Packet 2b measurement inventory is fail-closed: smoke/synthetic/unapproved rows cannot count; 60 measured pairs per policy are required before label proposals; executable `τ` stays unset. Four-command gate: 1201 passed, 1 skipped, 92.54%; dedicated NSQD: 579 passed, 93.70%. |
+| 1.6.24 | 2026-08-27 | Plan N11 for real measurement acquisition and autonomous agent labels: local writer/reviewer loop first, GPT-5.6 Sol-class frontier adjudication for disagreement/audit, and a separate human runtime-activation decision. Plan only; no `τ` activation or operator/calendar change. |
+| 1.6.25 | 2026-08-28 | N11.2 measurement export: one grounded candidate is one row; persist ordered k-NN provenance; JSONL export is deterministic and fail-closed. Paper pipeline corpus is present locally; NSQD projections remain empty so real 2b rows are still short. Runtime `τ` stays unset. Four-command gate: 1214 passed, 1 skipped, 92.21%; dedicated NSQD: 592 passed, 92.94%. |
+| 1.6.26 | 2026-08-29 | N11.1/N11.2 data close: digest-approved projections plus DATA-NSQD-03 form snapshot `bb63826c…e8a5` with 6 finance and 5 optimization records; 120 unique persisted candidates export as 60 qualified measurements per policy with ordered k=5 provenance. Sequential projection now indexes every record in the committed snapshot. Runtime `τ` remains unset. Four-command gate: 1215 passed, 1 skipped, 92.20%; dedicated NSQD: 593 passed, 92.92%. |
+| 1.6.27 | 2026-08-29 | N11.3 autonomous labeling workflow: candidate-hash application boundary reuses trusted measurement evidence, four writer/reviewer pairs bind digests and UTC call metadata, disagreement/ambiguity/schema-inconsistency/audit escalate to a distinct adjudicator, ambiguous rows stay out of class counts, and runtime `τ` remains unset. Four-command gate: 1233 passed, 1 skipped, 91.95%; dedicated NSQD: 608 passed, 92.57%. |
+| 1.6.28 | 2026-08-29 | N11.4 packet 2b close: 180 trusted measurements support deterministic selection of 30 near-duplicate and 30 novel autonomous labels per policy; 15 frontier adjudications are bound into packet `ad46a6e9…7075`; the highest admissible staged edge is `τ = 0.45`. Runtime `τ` remains unset pending a separate human activation decision. Four-command gate: 1292 passed, 2 skipped, 91.94%. |
+| 1.6.29 | 2026-08-29 | Human runtime decision: activate `τ = 0.45` as `approved_default_tunable`, not frozen. Operator E, operators C–G, calendar-month semantics, and CLI `--operator` remain unchanged. Four-command gate: 1303 passed, 2 skipped, 91.90%. |
+| 1.6.30 | 2026-08-29 | Runtime `τ` is settings-backed (`nsqd.novelty_threshold_tau`, default 0.45) with no CLI `--tau` switch; the value stays `approved_default_tunable`. Four-command gate: 1302 passed, 2 skipped, 91.91%; dedicated NSQD: 630 passed, 92.04%. |
 
 ---
 
@@ -137,6 +145,8 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
 | Domain-policy isolation | EV-N16 | Pass | — | Explicit policy id; pack-scoped corpus views/verdicts; no implicit `finance/1` |
 | Insufficiency acquisition fallback | EV-N17 | Pass | — | Default acquire/UI composition wires the paper runtime, workers, and analysis-metadata bootstrap; approved DATA-NSQD-03 is committed and verified |
+| Packet 2b real measurements | EV-N19 | Pass | Executable `τ` | Acquire at least `k=5` approved source records and 60 unique measured candidates per policy; export full neighbor provenance |
+| Packet 2b autonomous labels | EV-N19 | Pass | Executable `τ` | 30/30 accepted classes per policy, independent agent roles, four rounds, frontier adjudication/audit, immutable model/prompt manifests, and no human-label claim |
 
 ---
 
@@ -164,6 +174,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor axes/universe and dval compatibility resolve by explicit `domain_policy_id`; grounding, corpus filtering, cards/elites/rank are policy-scoped; verdict identity is reserved/validated by `(snapshot_id, domain_policy_id)` schema; records from one policy cannot satisfy, ground, rank, or archive under another | N2a | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | EV-N16 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable `ALG-SUF` failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures do not search; drafts cannot approve; default acquire/UI composition wires the paper runtime | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
+| NSQD.NOVELTY.TAU_PACKET.v1 | Packet 2b contains policy-balanced real measurements from unique candidate artifacts against approved k-complete corpus snapshots; autonomous writer/reviewer labels and frontier adjudications are role-separated, model/prompt/digest bound, and never described as human labels; importing or evaluating the packet cannot mutate runtime `τ` | N11 | Data Contract, Behavior | LOCAL-NSQD-G | EV-N19 |
 
 **Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Non-default:** Operator B requires configuration authorization plus internal job/use-case selection. **Deferred:** operators C–G.
 
@@ -192,6 +203,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EV-N16 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | `uv run pytest tests/facts/test_nsqd_domain_policy_isolation.py -q --no-cov` | N2a | Required |
 | EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py tests/nsqd/test_papers_bridge.py tests/nsqd/test_paper_runtime.py -q --no-cov` | N6 | Required |
 | EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py tests/ui/test_ui_main.py -q --no-cov` | N10 | Required |
+| EV-N19 | NSQD.NOVELTY.TAU_PACKET.v1 | `uv run pytest tests/nsqd/test_tau_measurement_export.py tests/nsqd/test_tau_review.py tests/nsqd/test_autonomous_tau_review.py tests/nsqd/test_domain_policies.py::test_novelty_threshold_tau_is_active_and_tunable -q --no-cov` | N11 | Required |
 
 Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 
@@ -803,6 +815,75 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 **Close note (2026-08-22):** `gleansight` is the product CLI and reuses the discovery Typer app (`python -m nsqd` still works). Map/diverge/ground/gate/archive are thin wrappers over persisted jobs and rank evaluation. The desktop app adds Map, Archive, and Card screens beside the evidence screens. DATA-NSQD-03 was not invented. Four-command gate: 1021 passed, 1 skipped, 91.91% repository coverage; dedicated NSQD command: 434 passed, 92.99% coverage.
 
+### NSQD-N11 Packet 2b real measurements and autonomous labels
+
+**Role:** Evidence acquisition and offline calibration
+**Depends On:** N5 grounding, N6 acquisition/promotion, staged 1.6.23 fail-closed measurement inventory
+**Facts:** NSQD.NOVELTY.TAU_PACKET.v1 → EV-N19
+**Status:** N11.1–N11.4 complete; human runtime activation approved at `τ = 0.45` as `approved_default_tunable`
+**Runtime boundary:** Packet production and evaluation do not mutate runtime state. The separate explicit human authorization activates only `NOVELTY_THRESHOLD_TAU = 0.45`; it does not enable Operator E, change the 730-day status window, or enable operators C–G.
+
+#### NSQD-N11.1 Acquire a k-complete real corpus
+
+Reuse `nsqd acquire` and `run-paper-jobs`; do not create a parallel paper-ingestion path. Repeat bounded acquisition cycles until each in-scope policy has at least `NOVELTY_K = 5` unique approved source-paper projections in one `calibration` or `production_valid` snapshot. Source approval remains the existing manifest/hash trust boundary; autonomous tau labelers cannot approve corpus records.
+
+**Acceptance Criteria:**
+- [x] `finance/1` and `optimization/1` each contain at least five unique approved source ids in the measured snapshot
+- [x] Every projection binds source text, paraphrase, policy, reviewer, UTC approval, and content digests
+- [x] Zero requirement-card, smoke-only, synthetic, LLM-invented, or unapproved records count
+- [x] Acquisition may stop and report a shortfall; it never duplicates a source to satisfy `k`
+
+**Close note (2026-08-29):** Snapshot `bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5` / corpus version 11 contains six approved `finance/1` records, including the required DATA-NSQD-03 recall source, and five approved `optimization/1` records. The ten new projections are bound by approved manifest SHA-256 `d461960c6d62364614e81fbabc9cb8d85b37044c5e72c5f733d4e4587b47ab7a`.
+
+#### NSQD-N11.2 Persist and export auditable measurements
+
+Treat one grounded candidate artifact as one statistical measurement. Persist the complete ordered `k`-neighbor set and distances used to compute the mean, plus the designated closest neighbor already shown to reviewers. Do not turn one candidate into five nominally independent rows. Add a deterministic read-only JSONL export accepted by `qualify_tau_measurement_pair` and `tau_measurement_inventory`.
+
+**Required row provenance:** `pair_id`, unique `candidate_artifact_hash`, `domain_policy_id`, snapshot id/state/digest, corpus version, candidate text digest, ordered neighbor record/source ids and text digests, each cosine distance, mean distance, `k`, embedding model/version/dimension, normalization and metric, algorithm-contract version, UTC measurement timestamp, and a persisted `measurement_artifact_digest` trusted out of band from the candidate store.
+
+**Trust boundary:** `export-tau-measurements` and `tau-measurement-inventory` call `TauMeasurementEvidenceUseCase` with candidate artifact hashes; that use case loads persisted grounding from `NsqdCandidateStore` and derives trusted measurement digests internally. Caller-supplied row arrays or caller-supplied trusted-digest sets are not accepted by the application boundary.
+
+**Acceptance Criteria:**
+- [x] Export contains at most one row per `(domain_policy_id, candidate_artifact_hash)` and rejects duplicate candidate or pair ids
+- [x] Recomputing the mean from the exported neighbor distances matches `evidence_mean_distance`
+- [x] Every neighbor belongs to the same policy-bound approved snapshot and the list contains exactly `k=5` unique records
+- [x] Repeated export over unchanged state is byte-identical and digest-identical
+- [x] Smoke, synthetic, incomplete, non-finite, cross-policy, or caller-invented measurements fail closed
+- [x] Grounding persists the ordered k-neighbor set used for the mean; live paper-side vectors still do not count as NSQD evidence
+
+**Close note (2026-08-29):** `docs/reviews/nsqd-tau-calibration-2026-08-29/` binds the deterministic 120-candidate packet (`ac01c344973175e0c3270711403fe5bdb0a80977eb5781717a40cf729ca509f0`), final candidate/measurement manifest (`e74e6abeb433eda7e8398a274329c1f7dbcd6374c3c4718af1c69650d1239704`), ready inventory (`2fbb481bedad664a8284da1b7da84d663dda3bdac02eea848a94b0546b233191`), and deterministic JSONL export (`0af46ae4aa2404c29b92af375228bcc2e20b3ad816b9bd5fdce4fe3cb9456bf6`). Inventory reports 60 qualified rows per policy and 120 total; every row has exactly five unique ordered approved neighbors. A regression test now ensures sequential projection indexes every record in the committed snapshot without adding a corpus-wide idempotency scan.
+
+#### NSQD-N11.3 Run autonomous agent labeling
+
+Replace the planned human row-label boundary with an offline autonomous agent workflow. Use one writer agent and one independent reviewer agent for four refinement rounds with separate role identities and context. Prefer the configured local agent/model for first-pass labels. Escalate unresolved disagreement, `ambiguous` outcomes, schema/rationale inconsistency, and a deterministic audit sample to a distinct adjudicator. Local writer/reviewer routes use the Ollama OpenAI-compatible path; `codex_subscription` adjudication uses the official `codex exec` CLI and keeps ChatGPT subscription OAuth fully Codex-owned.
+
+Each proposal or adjudication records role, agent id, model id/version, profile, prompt version, round, label, rationale, input digest, output digest, and UTC timestamp. Agent identities are trusted through a dedicated allowlist that is separate from source/corpus approvers. Writer, reviewer, and adjudicator identities must be distinct. These rows are **autonomous agent labels**, never “human-approved labels.” A model may label a measured pair but may not approve its source paper, projection, measurement, packet manifest, or runtime activation. ChatGPT subscription access through Codex CLI is **not** general API access, and `gleansight` must not read, copy, persist, or emit Codex OAuth/token files.
+
+**Acceptance Criteria:**
+- [x] Tests fail when writer and reviewer identities overlap, a role/model is missing, fewer than four rounds are recorded, or prompt/input/output digests drift
+- [x] Agreement after four rounds yields a pending autonomous label; disagreement routes to the configured frontier adjudicator
+- [x] Frontier adjudication cannot repair missing measurement provenance or relabel blocked source classes
+- [x] `ambiguous` rows never count toward either class and remain available for audit
+- [x] Packet digest binds measurements, all agent rounds, adjudication, and exact model metadata
+- [x] Import/evaluation with autonomous labels does not mutate runtime `τ`
+
+**Close note (2026-08-29):** `AutonomousTauLabelingUseCase` is callable through `nsqd autonomous-tau-review`, accepts only candidate artifact hashes through `TauMeasurementEvidenceUseCase`, validates trusted persisted measurement provenance before any model call, runs exactly four writer/reviewer pairs with distinct identities and separate prompt/context, records role/agent/provider/model/version/profile/prompt/round/label/rationale/input/output digests plus UTC timestamps for every call, escalates disagreement/ambiguity/schema-rationale inconsistency/deterministic audit to a distinct adjudicator, and binds the full row set with `autonomous_tau_review_packet_digest(...)`. For `codex_subscription`, the packet records the requested model plus Codex CLI version and `identity_source=requested_and_reroute_checked` honestly rather than claiming a backend-attested model/version; the configured `version` field is the adjudicator route revision, not backend model attestation. Codex CLI owns ChatGPT subscription OAuth, `gleansight` never handles tokens, a real subprocess smoke passed with `gpt-5.6-terra`, the legacy human `evaluate_tau_packet(...)` compatibility path remains intact, and packet evaluation does not mutate runtime `τ`.
+
+#### NSQD-N11.4 Fill, balance, and evaluate packet 2b
+
+Run a small real-measurement pilot in both policies, measure the non-ambiguous yield, then acquire additional unique candidates in bounded batches until each policy has 30 accepted `near_duplicate` and 30 accepted `novel` labels. The inventory target is therefore 60 accepted rows per policy, not 60 rows globally. Rejected and ambiguous rows create shortfall; they do not lower or rebalance the target. Use the staged bin edges only and retain the existing 5% overall / 10% per-policy novel false-kill caps.
+
+**TDD order:** measurement schema/uniqueness tests → deterministic export tests → role-separation and four-round workflow tests → frontier escalation tests → balanced packet evaluation tests → CLI/application implementation → full gate.
+
+**Phase Acceptance:**
+- [x] At least 120 accepted unique real measurements, including 30 near-duplicate and 30 novel rows for each policy, with any reserve rows retained separately
+- [x] Zero provenance gaps, duplicate candidates, cross-policy neighbors, role-overlap violations, or digest mismatches
+- [x] The highest admissible bin edge is reported, or the result explicitly recommends `τ = None`
+- [x] A human received the complete summary and chose runtime activation at `τ = 0.45` as `approved_default_tunable`
+- [x] Four-command and dedicated NSQD gates pass at required coverage; EV-N19 is now Required for the implemented N11.1–N11.3 boundary
+
+**Close note (2026-08-29):** The original 120-candidate pool plus a deterministic 60-candidate semantic-replication reserve produce 180 unique persisted and qualified measurements, 90 per policy. Adaptive local labeling selected exactly 30 `near_duplicate` and 30 `novel` rows per policy after four writer/reviewer rounds; 15 rows received distinct Codex subscription adjudication (13 deterministic audits, one final ambiguity, one final disagreement). `balanced-selection.json` binds the chosen rows with digest `0bac568c…7f7b`; trusted re-evaluation against persisted measurements produced packet digest `ad46a6e9…7075`, zero ambiguous selected rows, and recommends the highest admissible staged edge `τ = 0.45`. At `0.45`, overall novel false-kill is 3.33%, finance is 0%, and optimization is 6.67%; `0.60` is inadmissible. `evidence-summary.json` SHA-256 is `f76a5de36d621ef13682223a2a7ebe4404cc9c3e71840f51e1a081f24a920f73`; its `runtime_tau: null` records the immutable evidence-generation state. A separate human decision subsequently activated `NOVELTY_THRESHOLD_TAU = 0.45` as `approved_default_tunable`, not frozen.
+
 ---
 
 ## Ablations (before freeze)
@@ -814,22 +895,22 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 | `ALG.AXES` | yes, 2026-08-24 | keep finance v1 mechanism × target × horizon | no; tunable |
 | `ALG.K` | yes, 2026-08-24 | keep k=5 | no; tunable pending production calibration repeat |
 | `ALG.NOVELTY_BINS` | yes, 2026-08-24 | keep 0.15 / 0.30 / 0.45 / 0.60 edges | no; tunable |
-| `ALG.NOV.TAU` | yes, 2026-08-25 (2a) | unset / report-only | n/a; 2b not authorized |
+| `ALG.NOV.TAU` | yes, 2026-08-29 (2b + activation) | `0.45` | no; `approved_default_tunable` |
 | `ALG.STATUS.THRESHOLDS` | yes, 2026-08-24 | keep density cut 3 | no; tunable |
 | `ALG.STATUS.WINDOW` | yes, 2026-08-25 (1a) | 730-day v1 “24 months”; `--window-days` override | no; tunable; 12/36 table filed |
 | `ALG.VIABILITY` | yes, 2026-08-24 | keep 0/5 presence stubs | no; tunable |
 | `ALG.ACQUISITION_BUDGET` | yes, 2026-08-25 | keep 3 batches/pass / 25 candidates/call / 3 imports/pass / 2 approved rechecks as compatibility defaults | no; `approved_default_tunable` |
-| `ALG.FREEZE` | yes, 2026-08-26 (packet 3) | keep all numeric/default families tunable; `τ` unset | **no** |
+| `ALG.FREEZE` | yes, 2026-08-26 (packet 3), superseded for `τ` only on 2026-08-29 | keep all numeric/default families tunable; `τ = 0.45` tunable | **no** |
 
 - [x] `ALG.K` math probe: Spearman ρ of leave-one-out novelty ranks at k ∈ {3,5,10} vs k=5 on a constructed `calibration` snapshot (`docs/ablations/alg-k.md`). k=3 meets ρ ≥ 0.90; k=10 does not. Production k remains 5 and is **not frozen**. Synthetic unit vectors only; not DATA-NSQD-03.
 - [x] `ALG.AXES` LLM probe: keep finance v1 mechanism × target × horizon; reject oversized and non-illuminable triples (`docs/ablations/alg-axes.md`)
 - [x] `ALG.NOVELTY_BINS` on constructed calibration: gamma-flow `nov ≥ 1`; mechanism-free `mech = 0`; smoke still forces `nov = 0` (`docs/ablations/alg-novelty-bins.md`)
-- [x] `ALG.NOV.TAU` packet 2a: unset/report-only; score stamps `tau: null`; evidence 0.0 stays term 1 (`docs/ablations/alg-novelty-tau.md`)
+- [x] `ALG.NOV.TAU`: packet 2a established report-only semantics; packet 2b plus explicit human activation set tunable `τ = 0.45`; score stamps the value and suppresses evidence below it (`docs/ablations/alg-novelty-tau.md`)
 - [x] `ALG.STATUS.THRESHOLDS` LLM-labeled 10 cells: density cut 3 wins 10/10 vs 2 (9/10) and 5 (8/10); keep 3 (`docs/ablations/alg-status.md`)
 - [x] `ALG.STATUS.WINDOW` packet 1a: 730-day default, `--window-days` override; 12/36 day lengths filed (`docs/ablations/alg-status-window.md`)
 - [x] `ALG.VIABILITY` keeps 0/5 presence stubs; no 1–4 intermediates (`docs/ablations/alg-viability.md`)
 - [x] `ALG.ACQUISITION_BUDGET` math probe: dense first-page useful-at-rank-2 has smallest winner (1, 2, 5); page-2 winners require one candidate per discover call and spare import capacity (`docs/ablations/alg-acquisition-budget.md`). Current 3 / 25 / 3 / 2 is an approved tunable compatibility default and an explicit page-2 counterexample, not an optimum or freeze.
-- [x] `ALG.FREEZE` packet 3: freeze-now vs keep-tunable; all families `approved_default_tunable` except `τ` unset (`docs/ablations/alg-freeze.md`)
+- [x] `ALG.FREEZE` packet 3: freeze-now vs keep-tunable; no family frozen. Packet 2b later activated `τ = 0.45` as `approved_default_tunable` (`docs/ablations/alg-freeze.md`)
 
 **Close note (2026-08-24):** Human validation is complete for the ALG.K math artifact and the four recorded LLM prompts/results. The review keeps the current defaults without freezing them: axes remain the finance v1 triple, k remains 5, novelty edges remain 0.15 / 0.30 / 0.45 / 0.60, the density cut remains 3, and viability remains 0/5 presence stubs. At this close, the 24-month status window had not yet been reviewed; packet 1a accepted the 730-day overridable default on 2026-08-25 without freezing it. Novelty threshold `τ` remains unset, and no second labeling panel is required. Final four-command gate evidence for the completed close is 1131 passed, 1 skipped, 92.28% coverage; format, lint, and type checks passed.
 
@@ -837,14 +918,14 @@ Execute as probes **after N6** (they need a `calibration` snapshot): `ALG.AXES`,
 
 ### Remaining optional decision packets
 
-Keep calibration, freeze, and operator activation as separate approvals. Each packet uses one writer and one independent reviewer for four refinement rounds, then asks the human to choose one explicit outcome: `approved_default_tunable`, `frozen`, `deferred`, `unset`, or `rejected`. No packet implies approval of an adjacent knob or operator.
+Keep calibration, freeze, and operator activation as separate approvals. Evidence packets prefer one autonomous writer agent and one independent autonomous reviewer agent for four refinement rounds, with a frontier model such as GPT-5.6 Sol used for disagreement adjudication or deterministic audit. Exact model identities and prompt/input/output digests are recorded. The human chooses the final runtime-impacting outcome: `approved_default_tunable`, `frozen`, `deferred`, `unset`, or `rejected`. No packet implies approval of an adjacent knob or operator.
 
 Review in dependency order:
 
 1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Human review retained fixed-day UTC semantics and rejected calendar-month subtraction for v1 on 2026-08-27; reopening requires a separately approved, versioned semantics packet.
-2. **Novelty threshold `τ`:** packet 2a accepted — **unset / report-only**. Packet 2b evidence collection is authorized for 120 balanced pairs using agent proposals plus offline human approval. The current approved data cannot populate that packet. Threshold selection is highest admissible bin edge under 5% overall / 10% per-policy novel false-kill caps; runtime `τ` remains unset (`docs/ablations/alg-novelty-tau-2b.md`).
-3. **Existing ALG freezes:** packet 3 accepted — every numeric/default family is `approved_default_tunable`; `τ` stays `unset`. No family is frozen. Reopen freeze only after a production-valid or human-accepted calibration repeat for that family (`docs/ablations/alg-freeze.md`).
-4. **Operators B–G:** B is **supported**, non-default, and composition-gated. The default settings allowlist is `A`; a config override may add `B`. The CLI remains without `--operator`. An allowlisted composition may persist `operator=B`, with scored cards preserving `generating_operator=B`. C–G remain deferred. E waits on executable `τ` if it uses novelty; F on axis-policy clarity; G on approved failure data (`docs/ablations/alg-operators.md`).
+2. **Novelty threshold `τ`:** packet 2a established report-only behavior. N11 packet 2b contains 120 policy-balanced, autonomous-agent-labeled real measurements: 30 near-duplicate and 30 novel for each of `finance/1` and `optimization/1`. Trusted evaluation recommended the highest admissible edge, `τ = 0.45`, under the 5% overall / 10% per-policy novel false-kill caps. The separate human decision activated `0.45` as `approved_default_tunable`, not frozen.
+3. **Existing ALG freezes:** packet 3 historically kept every then-active numeric/default family tunable and left `τ` unset. The later packet 2b activation supersedes only the `τ` state: it is now `approved_default_tunable`. No family is frozen. Reopen freeze only after a production-valid or human-accepted calibration repeat for that family (`docs/ablations/alg-freeze.md`).
+4. **Operators B–G:** B is **supported**, non-default, and composition-gated. The default settings allowlist is `A`; a config override may add `B`. The CLI remains without `--operator`. An allowlisted composition may persist `operator=B`, with scored cards preserving `generating_operator=B`. C–G remain deferred. E requires separate operator-specific evidence and explicit human activation; executable `τ` alone is insufficient. F waits on axis-policy clarity; G on approved failure data (`docs/ablations/alg-operators.md`).
 
 Every packet ends with explicit sign-off on scope, current default/state, `approved_default_tunable` versus `frozen`, evidence sufficiency, reopen trigger, and exact downstream authorization. Operator packets additionally choose deferred, experimental/off-by-default, or supported; they never relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 
