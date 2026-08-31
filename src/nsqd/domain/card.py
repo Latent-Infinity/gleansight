@@ -40,5 +40,36 @@ def card_decision(viability: int) -> str:
     return "rejected" if viability <= 0 else "accepted"
 
 
-def needs_re_score(*, card_snapshot_id: str, current_snapshot_id: str) -> bool:
-    return card_snapshot_id != current_snapshot_id
+def needs_re_score(
+    *,
+    card_snapshot_id: str,
+    current_snapshot_id: str,
+    card_tau: float | None = None,
+    current_tau: float | None = None,
+    compare_tau: bool = False,
+) -> bool:
+    if card_snapshot_id != current_snapshot_id:
+        return True
+    if not compare_tau:
+        return False
+    return _novelty_tau_mismatch(card_tau=card_tau, current_tau=current_tau)
+
+
+def _novelty_tau_mismatch(*, card_tau: float | None, current_tau: float | None) -> bool:
+    if current_tau is None:
+        return False
+    if card_tau is None:
+        return True
+    return float(card_tau) != float(current_tau)
+
+
+def novelty_tau_stamp(artifact: dict[str, Any] | None) -> tuple[bool, float | None]:
+    if artifact is None:
+        return False, None
+    novelty = artifact.get("novelty")
+    if not isinstance(novelty, dict) or "tau" not in novelty:
+        return False, None
+    tau = novelty["tau"]
+    if tau is None or isinstance(tau, bool) or not isinstance(tau, (int, float)):
+        return True, None
+    return True, float(tau)

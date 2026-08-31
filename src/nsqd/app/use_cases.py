@@ -22,6 +22,7 @@ from nsqd.domain.card import (
     corpus_ingest_rejection,
     missing_card_fields,
     needs_re_score,
+    novelty_tau_stamp,
 )
 from nsqd.domain.coverage import evaluate_rank_guard
 from nsqd.domain.diverge import (
@@ -1830,9 +1831,14 @@ class RescoreUseCase:
             raise ValueError("unknown current_snapshot_id")
         if int(snapshot["corpus_version"]) != current_corpus_version:
             raise ValueError("current_corpus_version does not match snapshot")
+        artifact = self.candidates.get_artifact(str(card["candidate_artifact_hash"]))
+        compare_tau, card_tau = novelty_tau_stamp(artifact if isinstance(artifact, dict) else None)
         if not needs_re_score(
             card_snapshot_id=str(card["snapshot_id"]),
             current_snapshot_id=current_snapshot_id,
+            card_tau=card_tau,
+            current_tau=self.tau,
+            compare_tau=compare_tau,
         ):
             archived, elite, normalized_card = _reconcile_archive(self.cards, card)
             return {

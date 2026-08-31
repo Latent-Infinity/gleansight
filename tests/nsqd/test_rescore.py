@@ -16,7 +16,7 @@ from nsqd.app.use_cases import (
     ScoreUseCase,
 )
 from nsqd.composition import build_container
-from nsqd.domain.card import needs_re_score
+from nsqd.domain.card import needs_re_score, novelty_tau_stamp
 from nsqd.null_adapters import (
     FixedClock,
     HashParaphraseEmbedder,
@@ -147,6 +147,79 @@ def _score_on(
 def test_needs_re_score_when_snapshot_ids_differ() -> None:
     assert needs_re_score(card_snapshot_id="snap-a", current_snapshot_id="snap-b") is True
     assert needs_re_score(card_snapshot_id="snap-a", current_snapshot_id="snap-a") is False
+
+
+def test_needs_re_score_when_stamped_tau_differs_on_same_snapshot() -> None:
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-a",
+            card_tau=None,
+            current_tau=0.45,
+            compare_tau=True,
+        )
+        is True
+    )
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-a",
+            card_tau=0.30,
+            current_tau=0.45,
+            compare_tau=True,
+        )
+        is True
+    )
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-a",
+            card_tau=0.45,
+            current_tau=0.45,
+            compare_tau=True,
+        )
+        is False
+    )
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-a",
+            card_tau=None,
+            current_tau=0.45,
+            compare_tau=False,
+        )
+        is False
+    )
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-a",
+            card_tau=None,
+            current_tau=None,
+            compare_tau=True,
+        )
+        is False
+    )
+    assert (
+        needs_re_score(
+            card_snapshot_id="snap-a",
+            current_snapshot_id="snap-b",
+            card_tau=0.45,
+            current_tau=0.45,
+            compare_tau=True,
+        )
+        is True
+    )
+
+
+def test_novelty_tau_stamp_requires_explicit_tau_key() -> None:
+    assert novelty_tau_stamp(None) == (False, None)
+    assert novelty_tau_stamp({"novelty": {"tau": 0.45}}) == (True, 0.45)
+    assert novelty_tau_stamp({"novelty": {"tau": None}}) == (True, None)
+    assert novelty_tau_stamp({"novelty": {"tau": True}}) == (True, None)
+    assert novelty_tau_stamp({"novelty": {"tau": "0.45"}}) == (True, None)
+    assert novelty_tau_stamp({"novelty": {}}) == (False, None)
+    assert novelty_tau_stamp({"novelty": "missing"}) == (False, None)
 
 
 def test_rescore_is_noop_when_card_matches_current_snapshot() -> None:
@@ -585,6 +658,91 @@ def test_rescore_applies_injected_tau_instead_of_ignoring_composition() -> None:
     assert stored["novelty"]["tau"] == 0.45
     assert stored["novelty"]["term"] == 0
     assert result["needs_re_score"] is True
+
+
+def test_rescore_replays_when_stamped_tau_differs_on_same_snapshot() -> None:
+    embedder = HashParaphraseEmbedder()
+    ctx = _ctx()
+    harvest = HarvestUseCase(
+        harvest=NullHarvestStore(ctx.records, ctx.snapshots),
+        clock=ctx.clock,
+        index=ctx.index,
+        embedder=embedder,
+    ).run(
+        {
+            "records": [
+                {
+                    "type": "paper",
+                    "paraphrase": f"Approved finance paraphrase {index}",
+                    "source": f"doi:10.1/rescore-same-snap-tau-{index}",
+                    "domain_policy_id": "finance/1",
+                }
+                for index in range(1, 6)
+            ]
+        }
+    )
+    snapshot_id = str(harvest["snapshot_id"])
+    candidate = _candidate()
+    candidate["paraphrase"] = "Approved finance paraphrase 1"
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
+        candidate=candidate, axiom="x", generator_run_id="gen-tau-same"
+    )
+    GroundUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        embedder=embedder,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        snapshot_id=snapshot_id,
+        corpus_version=int(harvest["corpus_version"]),
+        snapshot_state="calibration",
+    )
+    ScoreUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        tau=None,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        evaluator_run_id="eval-unset",
+        snapshot_id=snapshot_id,
+        corpus_version=int(harvest["corpus_version"]),
+        snapshot_state="calibration",
+    )
+    stored = ctx.candidates.get_artifact(artifact_hash)
+    assert stored is not None
+    evidence = stored["grounding"]["evidence"]
+    assert isinstance(evidence, float)
+    assert evidence < 0.45
+    assert stored["novelty"]["tau"] is None
+    unset_term = stored["novelty"]["term"]
+    assert isinstance(unset_term, int)
+    assert unset_term > 0
+
+    result = RescoreUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        embedder=embedder,
+        tau=0.45,
+    ).run(
+        card_id=artifact_hash,
+        current_snapshot_id=snapshot_id,
+        current_corpus_version=int(harvest["corpus_version"]),
+        snapshot_state="calibration",
+        evaluator_run_id="eval-activated",
+    )
+    stored = ctx.candidates.get_artifact(artifact_hash)
+    assert stored is not None
+    assert result["needs_re_score"] is True
+    assert stored["novelty"]["tau"] == 0.45
+    assert stored["novelty"]["term"] == 0
+    assert stored["novelty"]["snapshot_id"] == snapshot_id
 
 
 def test_handle_rescore_uses_context_tau() -> None:
