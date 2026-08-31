@@ -1,0 +1,55 @@
+schema_version: 1
+packet_kind: evidence_plan
+operator: F
+name: missing dimensions
+authorization_state: report_only
+runtime_authorized: false
+evidence_sufficient: false
+created_at_utc: "2026-08-31T09:09:18Z"
+algorithm_identity: not_run
+prompt_identity: not_run
+input_snapshot_ids: []
+input_bindings:
+  - policy: ../../../tests/fixtures/approved/nsqd/policies/finance-1.toml
+  - policy: ../../../tests/fixtures/approved/nsqd/policies/optimization-1.toml
+candidate_outputs: []
+nearest_prior_art: []
+known_limitations:
+  - no candidate axis has been proposed or measured
+  - no axis-admission decision or archive ablation exists
+proposal_policy: At most one measurable candidate axis per report-only packet.
+current_axis_inventory:
+  finance/1:
+    - mechanism
+    - target
+    - horizon
+  optimization/1:
+    - problem
+    - method
+    - setting
+candidate_axes: []
+ablations:
+  - id: axis_value
+    choices:
+      - current_registered_axes
+      - current_axes_plus_one_candidate
+      - current_axes_plus_shuffled_candidate_negative_control
+    primary_metric: held_out_archive_coverage_gain
+    secondary_metrics:
+      - cell_density
+      - quality_weighted_diversity
+      - stability_across_resamples
+      - redundancy_with_existing_axes
+      - interpretability_review
+selection_rule: Admit no axis automatically; recommend human schema review only when the real candidate is stable, nonredundant, and beats both current axes and shuffled control without unacceptable density loss.
+required_before_review:
+  - approve an axis-admission policy that cannot self-modify production schemas
+  - define a measurable candidate axis and protocol
+  - measure stability, residual variation, redundancy, confounds, and quality or failure association
+  - compare coverage, density, diversity, and dimensionality cost against current policies
+  - obtain a separate human schema-version decision
+forbidden_inferences:
+  - unexplained embedding variation is an admissible axis
+  - adding dimensions necessarily improves archive illumination
+  - Operator F may mutate a registered policy
+  - a learned latent factor is admissible without a measurable semantic protocol

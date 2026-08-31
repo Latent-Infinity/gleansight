@@ -266,13 +266,13 @@ Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does n
 |----|------|---------------|---------|
 | A | inversion | **supported** | enabled |
 | B | archive whitespace | **supported**, non-default | enabled only by composition allowlist |
-| C | Swanson ABC | deferred | rejected |
+| C | Swanson ABC | deferred; B support is not C authorization | rejected |
 | D | analogical transport | deferred | rejected |
 | E | atypical combination | deferred; executable `τ` does not authorize this operator | rejected |
 | F | missing dimensions | deferred; waits on axis-policy clarity | rejected |
 | G | failure resurrection | deferred; waits on an approved failed-experiment corpus | rejected |
 
-Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. The default composition and CLI remain A-only. C–G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
+Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. The default composition remains A-only. The divergence CLI may request A or B, but cannot widen composition authorization. C–G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 
 ### ALG-OP-B — Archive whitespace (supported, non-default)
 
@@ -286,7 +286,7 @@ When explicitly allowlisted by composition, Operator B:
 4. Persist `operator=B` on the artifact; a later scored card derives `generating_operator=B`. Grounding, value, and archive remain later stages; B does not score, rank, self-approve, or write corpus records.
 5. Remain subject to immutable-artifact identity: different operator or axioms at the same candidate hash still conflict.
 
-**Exposure boundary.** `DivergeUseCase` may persist `operator=B` only when B is present in its composition-injected allowlist. The allowlist is validated (`require_enabled_operators`): it must include `A`, may add `B`, and cannot name C–G or unknown ids. Production composition reads `settings.nsqd.enabled_operators` (default `A` only). The CLI exposes no `--operator` switch. A job may select an operator already allowed by its composition but cannot widen that allowlist. B does not invent harvest seeds or DATA records.
+**Exposure boundary.** `DivergeUseCase` may persist `operator=B` only when B is present in its composition-injected allowlist. The allowlist is validated (`require_enabled_operators`): it must include `A`, may add `B`, and cannot name C–G or unknown ids. Production composition reads `settings.nsqd.enabled_operators` (default `A` only). `gleansight diverge --operator` is selection-only and accepts A/B; B requires `--target-cell-id` plus a matching `--axiom-cell-id`. A CLI request never mutates or widens the allowlist. B does not invent harvest seeds or DATA records.
 
 ---
 
@@ -351,8 +351,8 @@ Monotonic integer **local to a store instance**. It increments when that store c
 ### Change rule (replaces minor/major)
 
 - Grounding that appends prior art **creates a new snapshot** (new `snapshot_id`, `corpus_version += 1`). Existing snapshots are never mutated.
-- A card needs re-score iff `card.snapshot_id != current_snapshot_id`.
-- Re-score recomputes evidence, viability, and elite replacement against the new snapshot.
+- A card needs re-score iff `card.snapshot_id != current_snapshot_id` **or** a persisted novelty object contains a `tau` key whose value differs from the composition `τ` (`tau: null` differs once `τ` is executable). Cards without that key still follow snapshot identity only. Same-snapshot retries with a matching stamp skip ground/score and still reconcile archive state.
+- Re-score recomputes evidence, viability, and elite replacement against the current snapshot and composition `τ`.
 
 ---
 

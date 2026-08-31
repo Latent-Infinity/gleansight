@@ -119,6 +119,31 @@ def test_operator_decisions_support_b_without_enabling_it_by_default() -> None:
         operator_is_enabled("H")
 
 
+def test_executable_tau_does_not_authorize_operator_e() -> None:
+    from nsqd.domain.diverge import require_operator
+    from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU
+
+    assert NOVELTY_THRESHOLD_TAU == 0.45
+    with pytest.raises(ValueError, match="operator E is not supported"):
+        require_operator("E", enabled_operators=frozenset({"A", "B"}))
+
+
+def test_operator_c_wait_on_does_not_require_b_activation() -> None:
+    from nsqd.domain.diverge import operator_decisions, operator_is_enabled, require_operator
+
+    by_id = {row.operator_id: row for row in operator_decisions()}
+    wait_on = by_id["C"].wait_on.lower()
+    assert by_id["C"].activation == "deferred"
+    assert by_id["C"].runtime_enabled is False
+    assert "b is activated" not in wait_on
+    assert "after b" not in wait_on
+    assert "literature" in wait_on
+    assert "activation" in wait_on
+    assert operator_is_enabled("C", enabled_operators=frozenset({"A", "B"})) is False
+    with pytest.raises(ValueError, match="operator C is not supported"):
+        require_operator("C", enabled_operators=frozenset({"A", "B"}))
+
+
 def test_normalize_axiom_rows_accepts_strings_and_structured_rows() -> None:
     rows = normalize_axiom_rows(
         [

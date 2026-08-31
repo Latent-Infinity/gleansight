@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.30 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.33 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -17,7 +17,7 @@
 **Fact Policy**: Append `NSQD.*`. Smoke snapshots must **not** activate production novelty facts and must **not** produce a production archive elite. LLM selection or analysis must never self-approve corpus evidence or a promoted state.
 **Data & Provider Readiness**: DATA-NSQD-01/02/03/04 committed. DATA-NSQD-03 is approved and its `finance/1 production_valid` path is verified with zero `ALG-SUF` failures. Evidence closeout **EW-V0.11**, **EW-V0.3**, **EW-V0B**, **EW-V0A**, **EW-V1**, and **EW-V2** done.
 **Slice Ordering**: Preserve completed N1–N10 and completed N11.1–N11.4 corpus, measurement, autonomous-label, staged-threshold evaluation, and runtime-activation work. Packet 2b recommended `τ = 0.45`; the separate human decision activated it as `approved_default_tunable`. Corpus approval remains separate from label adjudication.
-**Outstanding Blockers**: None for Operator A, supported non-default Operator B, or N11.4 threshold activation. B is composition-gated via `settings.nsqd.enabled_operators` (default `A` only); the CLI has no `--operator` switch. Calendar-month subtraction is rejected for v1; operators C–G remain deferred, including Operator E.
+**Outstanding Blockers**: None for Operator A, supported non-default Operator B, or N11.4 threshold activation. B is composition-gated via `settings.nsqd.enabled_operators` (default `A` only); `diverge --operator` may request A/B but cannot widen authorization. Calendar-month subtraction is report-only pending an approved-snapshot replay and separate activation; operators C–G remain runtime-deferred, including Operator E.
 **N8 Status**: Re-score is done for the historical finance-calibrated baseline; later N2a/N2b completion now makes snapshot, corpus, archive, and rank inputs explicitly policy-aware without weakening EV-N15.
 
 ```bash
@@ -98,6 +98,9 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.29 | 2026-08-29 | Human runtime decision: activate `τ = 0.45` as `approved_default_tunable`, not frozen. Operator E, operators C–G, calendar-month semantics, and CLI `--operator` remain unchanged. Four-command gate: 1303 passed, 2 skipped, 91.90%. |
 | 1.6.30 | 2026-08-29 | Runtime `τ` is settings-backed (`nsqd.novelty_threshold_tau`, default 0.45) with no CLI `--tau` switch; the value stays `approved_default_tunable`. Four-command gate: 1302 passed, 2 skipped, 91.91%; dedicated NSQD: 630 passed, 92.04%. |
 | 1.6.31 | 2026-08-30 | Rescore uses the composition `τ`; Operator E wait-on records that executable `τ` is not authorization. Four-command gate: 1305 passed, 2 skipped, 91.90%; dedicated NSQD: 633 passed, 92.02%. |
+| 1.6.32 | 2026-08-30 | Same-snapshot cards whose persisted novelty `tau` key is null or differs from composition `τ` replay ground+score; cards without that key, and matching stamps, still skip. Operator E and C–G remain deferred. Four-command gate: 1308 passed, 2 skipped, 91.93%; dedicated NSQD: 636 passed, 92.07%. |
+| 1.6.33 | 2026-08-30 | Packet 1c adds report-only 24-calendar-month UTC comparison with month-end clamping while runtime stays 730 days. `diverge --operator` may request A/B only; composition remains authoritative and B requires target-bound proof. E targets a separate experimental/config-gated evidence packet and remains unauthorized; C–G remain deferred. Evidence plans bind provenance and empty/not-run state, with baseline and negative-control ablations. Four-command gate: 1325 passed, 2 skipped, 92.00%. |
+| 1.6.34 | 2026-08-31 | Operator C wait-on no longer requires B activation; C stays deferred until named-literature evidence and explicit human activation. Four-command gate: pending. |
 
 ---
 
@@ -171,7 +174,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.JOBS.OWNED.v1 | Harvest/project/map/diverge/ground/score/rescore and reserved acquire work persist as `nsqd_jobs` with `NsqdJobType`; paper `jobs` rejects discovery types | Durable work | Architecture Contract | LOCAL-NSQD-E | EV-N12 |
 | NSQD.SNAPSHOT.PROMOTION.v1 | Promotion to `calibration` / `production_valid` is evaluated independently by `(snapshot_id, domain_policy_id)` under `ALG-SUF`; every `SufficiencyFailure` code is tested. Honest `finance/1 production_valid` requires approved DATA-NSQD-03 and now passes with zero failures | N6 | Behavior | LOCAL-NSQD-H | EV-N13 |
 | NSQD.ARCHIVE.RANK_GUARD.v1 | Global rank fails below 50 elites and below 20% of `U \\ {Invalid}`; both thresholds and the below-threshold case are tested | N7 | Behavior | LOCAL-NSQD-A | EV-N14 |
-| NSQD.RESCORE.REPLAY.v1 | Stale cards re-ground and re-score against the current snapshot; current-card retries skip those operations but reconcile archive state; rejected current elites are removed | N8 | Behavior | LOCAL-NSQD-A | EV-N15 |
+| NSQD.RESCORE.REPLAY.v1 | Stale cards re-ground and re-score against the current snapshot and composition `τ`; a persisted novelty `tau` key that is null or differs from composition `τ` also replays on the same snapshot; cards without that key, and matching stamps, skip ground/score but reconcile archive state; rejected current elites are removed | N8 | Behavior | LOCAL-NSQD-A | EV-N15 |
 | NSQD.DOMAIN.POLICY_ISOLATION.v1 | Registered descriptor axes/universe and dval compatibility resolve by explicit `domain_policy_id`; grounding, corpus filtering, cards/elites/rank are policy-scoped; verdict identity is reserved/validated by `(snapshot_id, domain_policy_id)` schema; records from one policy cannot satisfy, ground, rank, or archive under another | N2a | Architecture Contract | LOCAL-NSQD-H, LOCAL-NSQD-A | EV-N16 |
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable `ALG-SUF` failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures do not search; drafts cannot approve; default acquire/UI composition wires the paper runtime | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
@@ -779,9 +782,11 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 **Depends On:** N7
 **Facts:** NSQD.RESCORE.REPLAY.v1 → EV-N15
-**Acceptance:** `card.snapshot_id != current snapshot_id` → `needs_re_score` → elite replay.
+**Acceptance:** snapshot mismatch, or an explicit persisted novelty `tau` stamp that is null/differs from composition `τ`, triggers `needs_re_score` → ground/score → elite replay.
 
 - [x] Equal snapshot ids skip ground/score
+- [x] Equal snapshot ids with a matching `tau` stamp, or legacy artifacts without a `tau` key, skip ground/score
+- [x] Equal snapshot ids with an explicit null/different `tau` stamp replay against composition `τ`
 - [x] Current-snapshot retries reconcile archive state without rerunning ground/score
 - [x] Stale snapshot re-grounds, re-scores, and stamps the current snapshot
 - [x] Elite replay: a rescored elite with viability 0 is cleared
@@ -789,7 +794,9 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 - [x] Skeleton runner dispatches claimed `rescore` jobs through `handle_rescore`
 - [x] Handler validates persisted corpus version and owns baseline `smoke_only` state plus evaluator provenance; N6 will own promoted snapshot state
 
-**Close note (2026-08-21):** `needs_re_score` is `card.snapshot_id != current_snapshot_id`. Stale cards re-ground and re-score against the current snapshot; current-card retries skip those operations but still reconcile archive state. Archive replay and its returned elite are idempotent, and a current elite that scores viability 0 is removed. Claimed `rescore` jobs dispatch through the skeleton runner; the handler rejects corpus-version mismatch and derives baseline state/provenance instead of trusting those payload fields. This note records the historical N8 close before later DATA-NSQD-04 acquisition and N2a/N2b completion. Four-command gate: 794 passed, 1 skipped, 92.91% repository coverage; dedicated NSQD coverage 95.25%.
+**Close note (2026-08-21):** At the historical N8 close, `needs_re_score` was `card.snapshot_id != current_snapshot_id`. Stale cards re-grounded and re-scored against the current snapshot; current-card retries skipped those operations but still reconciled archive state. Archive replay and its returned elite were idempotent, and a current elite that scored viability 0 was removed. Claimed `rescore` jobs dispatched through the skeleton runner; the handler rejected corpus-version mismatch and derived baseline state/provenance instead of trusting those payload fields. Four-command gate: 794 passed, 1 skipped, 92.91% repository coverage; dedicated NSQD coverage 95.25%.
+
+**Follow-up note (2026-08-30):** Runtime `τ` activation extends current replay semantics: same-snapshot artifacts with an explicit novelty `tau` key replay when that stamp is null or differs from composition `τ`. Matching stamps and legacy artifacts without the key retain the retry-safe skip path. Snapshot mismatch remains independently sufficient to replay.
 
 ### NSQD-N9 Hardening
 
@@ -923,10 +930,10 @@ Keep calibration, freeze, and operator activation as separate approvals. Evidenc
 
 Review in dependency order:
 
-1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Human review retained fixed-day UTC semantics and rejected calendar-month subtraction for v1 on 2026-08-27; reopening requires a separately approved, versioned semantics packet.
+1. **Status recency window:** packet 1a accepted — v1 “24 months” is **730 days**, overridable with `window_days`. 12/36 (365/1095 day) sensitivity is filed and not frozen. Packet 1c reopens 24-calendar-month semantics for report-only comparison using UTC time preservation and month-end clamping. Runtime remains fixed-day pending an approved-snapshot replay and separate human activation.
 2. **Novelty threshold `τ`:** packet 2a established report-only behavior. N11 packet 2b contains 120 policy-balanced, autonomous-agent-labeled real measurements: 30 near-duplicate and 30 novel for each of `finance/1` and `optimization/1`. Trusted evaluation recommended the highest admissible edge, `τ = 0.45`, under the 5% overall / 10% per-policy novel false-kill caps. The separate human decision activated `0.45` as `approved_default_tunable`, not frozen.
 3. **Existing ALG freezes:** packet 3 historically kept every then-active numeric/default family tunable and left `τ` unset. The later packet 2b activation supersedes only the `τ` state: it is now `approved_default_tunable`. No family is frozen. Reopen freeze only after a production-valid or human-accepted calibration repeat for that family (`docs/ablations/alg-freeze.md`).
-4. **Operators B–G:** B is **supported**, non-default, and composition-gated. The default settings allowlist is `A`; a config override may add `B`. The CLI remains without `--operator`. An allowlisted composition may persist `operator=B`, with scored cards preserving `generating_operator=B`. C–G remain deferred. E requires separate operator-specific evidence and explicit human activation; executable `τ` alone is insufficient. F waits on axis-policy clarity; G on approved failure data (`docs/ablations/alg-operators.md`).
+4. **Operators B–G:** B is **supported**, non-default, and composition-gated. The default settings allowlist is `A`; a config override may add `B`. `diverge --operator` may request A/B only and cannot widen the allowlist; B also requires explicit target and target-bound axiom proof. An allowlisted composition may persist `operator=B`, with scored cards preserving `generating_operator=B`. C–G remain deferred. Report-only scope is fixed: C starts `N11-OPT-02 → N11-FIN-04`; D evaluates `optimization/1 → finance/1` after C; E compares same-policy and explicit cross-policy tracks separately while targeting experimental/config-gated status; F permits one candidate axis per packet; G collects typed human-approved failures under a new admission contract. Every track requires a baseline and negative-control ablation. None of these evidence choices authorize runtime C–G, and executable `τ` alone remains insufficient for E (`docs/ablations/alg-operators.md`).
 
 Every packet ends with explicit sign-off on scope, current default/state, `approved_default_tunable` versus `frozen`, evidence sufficiency, reopen trigger, and exact downstream authorization. Operator packets additionally choose deferred, experimental/off-by-default, or supported; they never relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 

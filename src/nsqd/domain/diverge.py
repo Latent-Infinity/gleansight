@@ -59,7 +59,10 @@ def operator_decisions() -> tuple[OperatorDecision, ...]:
             "C",
             "deferred",
             False,
-            "two named literatures after B is activated",
+            (
+                "two named literatures plus explicit human activation; "
+                "B composition-gating is not C authorization"
+            ),
         ),
         OperatorDecision(
             "D",

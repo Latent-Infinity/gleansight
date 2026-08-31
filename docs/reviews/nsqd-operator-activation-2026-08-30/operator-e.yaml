@@ -1,0 +1,79 @@
+schema_version: 1
+packet_kind: evidence_plan
+operator: E
+name: atypical combination
+target_state: experimental_config_gated
+authorization_state: report_only
+runtime_authorized: false
+evidence_sufficient: false
+created_at_utc: "2026-08-31T09:09:18Z"
+algorithm_identity: not_run
+prompt_identity: not_run
+input_snapshot_ids: []
+input_bindings:
+  - manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
+    record_ids: [N11-FIN-01, N11-FIN-02, N11-FIN-03, N11-FIN-04, N11-FIN-05, N11-OPT-01, N11-OPT-02, N11-OPT-03, N11-OPT-04, N11-OPT-05]
+  - manifest: ../../../tests/fixtures/approved/nsqd/manifest.toml
+    record_ids: [DATA-NSQD-03, DATA-NSQD-04]
+candidate_outputs: []
+nearest_prior_art: []
+known_limitations:
+  - the inventory spans approved manifests and is not bound to one executable snapshot
+  - no component combination, co-occurrence analysis, or prior-art search has run
+scope_decision: same_policy_and_cross_policy_separate_tracks
+approved_component_inventory:
+  finance/1:
+    - DATA-NSQD-03
+    - N11-FIN-01
+    - N11-FIN-02
+    - N11-FIN-03
+    - N11-FIN-04
+    - N11-FIN-05
+  optimization/1:
+    - DATA-NSQD-04
+    - N11-OPT-01
+    - N11-OPT-02
+    - N11-OPT-03
+    - N11-OPT-04
+    - N11-OPT-05
+candidate_combinations: []
+tracks:
+  same_policy:
+    policy_rule: Every component and candidate target share one domain_policy_id.
+  cross_policy:
+    policy_rule: Bind source_domain_policy_id and target_domain_policy_id; source evidence cannot satisfy target-policy sufficiency.
+ablations:
+  - id: component_scope
+    choices:
+      - same_policy
+      - cross_policy
+    scoring_rule: Score and review independently; do not pool thresholds or class counts.
+  - id: generation_method
+    choices:
+      - co_occurrence_atypicality_plus_mechanistic_bridge
+      - mechanistic_bridge_only
+      - rarity_only_negative_control
+    primary_metric: independently_reviewed_bridge_valid_usefulness
+    secondary_metrics:
+      - prior_art_duplicate_rate
+      - unsupported_bridge_rate
+      - policy_violation_count
+  - id: operator_baseline
+    choices:
+      - operator_E_candidate
+      - operator_A_candidate
+      - operator_B_candidate
+    primary_metric: reviewed_usefulness_at_matched_candidate_count
+selection_rule: Require zero policy violations and reject rarity-only gains; prefer E only if bridge-valid usefulness improves without a duplicate-rate regression.
+required_before_review:
+  - bind a component and co-occurrence snapshot by policy and track
+  - measure atypicality and nearest prior combinations
+  - require a provenance-bound mechanistic bridge
+  - compare bridge-valid usefulness and duplication against Operators A and B
+  - obtain separate human activation after evidence review
+forbidden_inferences:
+  - low co-occurrence is a useful combination
+  - novelty tau is Operator E evidence
+  - executable tau authorizes Operator E
+  - inventory membership authorizes combination generation
+  - scores or thresholds from one component-scope track transfer to the other
