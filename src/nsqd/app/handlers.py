@@ -273,6 +273,7 @@ def handle_rescore(ctx: NsqdHandlerContext, job: NsqdJob) -> dict[str, Any]:
         hybrid_search=ctx.paper_vector_index,
         embedder=ctx.embedder,
         clock=ctx.clock,
+        tau=ctx.novelty_threshold_tau,
     ).run(
         card_id=str(payload["card_id"]),
         current_snapshot_id=str(payload["current_snapshot_id"]),

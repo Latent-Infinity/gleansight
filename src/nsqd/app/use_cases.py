@@ -1810,6 +1810,7 @@ class RescoreUseCase:
     hybrid_search: HybridPaperSearch | None = None
     embedder: ParaphraseEmbedder | None = None
     clock: Clock | None = None
+    tau: float = NOVELTY_THRESHOLD_TAU
 
     def run(
         self,
@@ -1861,6 +1862,7 @@ class RescoreUseCase:
             cards=self.cards,
             snapshots=self.snapshots,
             records=self.records,
+            tau=self.tau,
         ).run(
             candidate_artifact_hash=candidate_artifact_hash,
             evaluator_run_id=evaluator_run_id,

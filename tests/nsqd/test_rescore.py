@@ -11,6 +11,7 @@ from nsqd.app.use_cases import (
     ArchiveInsertUseCase,
     DivergeUseCase,
     GroundUseCase,
+    HarvestUseCase,
     RescoreUseCase,
     ScoreUseCase,
 )
@@ -18,6 +19,7 @@ from nsqd.composition import build_container
 from nsqd.domain.card import needs_re_score
 from nsqd.null_adapters import (
     FixedClock,
+    HashParaphraseEmbedder,
     NullCorpusIndex,
     NullCorpusRecordStore,
     NullCorpusSnapshotStore,
@@ -499,3 +501,116 @@ def test_rescore_unknown_card_raises() -> None:
             snapshot_state="smoke_only",
             evaluator_run_id="eval-2",
         )
+
+
+def test_rescore_applies_injected_tau_instead_of_ignoring_composition() -> None:
+    embedder = HashParaphraseEmbedder()
+    ctx = _ctx()
+    harvest = HarvestUseCase(
+        harvest=NullHarvestStore(ctx.records, ctx.snapshots),
+        clock=ctx.clock,
+        index=ctx.index,
+        embedder=embedder,
+    ).run(
+        {
+            "records": [
+                {
+                    "type": "paper",
+                    "paraphrase": f"Approved finance paraphrase {index}",
+                    "source": f"doi:10.1/rescore-tau-{index}",
+                    "domain_policy_id": "finance/1",
+                }
+                for index in range(1, 6)
+            ]
+        }
+    )
+    old_snapshot = str(harvest["snapshot_id"])
+    record_ids = [str(item) for item in harvest["record_ids"]]
+    candidate = _candidate()
+    candidate["paraphrase"] = "Approved finance paraphrase 1"
+    artifact_hash = DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
+        candidate=candidate, axiom="x", generator_run_id="gen-tau"
+    )
+    GroundUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        embedder=embedder,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        snapshot_id=old_snapshot,
+        corpus_version=int(harvest["corpus_version"]),
+        snapshot_state="calibration",
+    )
+    ScoreUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        tau=None,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        evaluator_run_id="eval-old",
+        snapshot_id=old_snapshot,
+        corpus_version=int(harvest["corpus_version"]),
+        snapshot_state="calibration",
+    )
+    new_version = ctx.snapshots.commit("snap-new", record_ids, schema_version=1)
+    for record_id in record_ids:
+        record = ctx.records.get(record_id)
+        assert record is not None
+        ctx.index.upsert("snap-new", record_id, embedder.embed(str(record["paraphrase"])))
+
+    result = RescoreUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        embedder=embedder,
+        tau=0.45,
+    ).run(
+        card_id=artifact_hash,
+        current_snapshot_id="snap-new",
+        current_corpus_version=new_version,
+        snapshot_state="calibration",
+        evaluator_run_id="eval-new",
+    )
+    stored = ctx.candidates.get_artifact(artifact_hash)
+    assert stored is not None
+    evidence = stored["grounding"]["evidence"]
+    assert isinstance(evidence, float)
+    assert evidence < 0.45
+    assert stored["novelty"]["tau"] == 0.45
+    assert stored["novelty"]["term"] == 0
+    assert result["needs_re_score"] is True
+
+
+def test_handle_rescore_uses_context_tau() -> None:
+    ctx = _ctx()
+    ctx.novelty_threshold_tau = 0.30
+    scored = _score_on(ctx, snapshot_id="snap-old", corpus_version=1, evaluator_run_id="eval-1")
+    card = scored["card"]
+    assert isinstance(card, dict)
+    ctx.snapshots.commit("snap-new", [], schema_version=1)
+    handle_rescore(
+        ctx,
+        NsqdJob(
+            job_id="jr-tau",
+            type="rescore",
+            status="running",
+            payload={
+                "card_id": card["card_id"],
+                "current_snapshot_id": "snap-new",
+                "current_corpus_version": 2,
+                "snapshot_state": "smoke_only",
+            },
+            attempts=1,
+            max_attempts=3,
+            run_after=None,
+        ),
+    )
+    stored = ctx.candidates.get_artifact(str(card["candidate_artifact_hash"]))
+    assert stored is not None
+    assert stored["novelty"]["tau"] == 0.30
