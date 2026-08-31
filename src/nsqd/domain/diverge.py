@@ -71,7 +71,7 @@ def operator_decisions() -> tuple[OperatorDecision, ...]:
             "E",
             "deferred",
             False,
-            "packet 2b executable novelty threshold if E uses novelty as a kill",
+            "separate operator-specific evidence and explicit human activation",
         ),
         OperatorDecision(
             "F",

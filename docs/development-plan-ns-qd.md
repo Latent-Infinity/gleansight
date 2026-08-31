@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.29 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.30 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -97,6 +97,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.28 | 2026-08-29 | N11.4 packet 2b close: 180 trusted measurements support deterministic selection of 30 near-duplicate and 30 novel autonomous labels per policy; 15 frontier adjudications are bound into packet `ad46a6e9…7075`; the highest admissible staged edge is `τ = 0.45`. Runtime `τ` remains unset pending a separate human activation decision. Four-command gate: 1292 passed, 2 skipped, 91.94%. |
 | 1.6.29 | 2026-08-29 | Human runtime decision: activate `τ = 0.45` as `approved_default_tunable`, not frozen. Operator E, operators C–G, calendar-month semantics, and CLI `--operator` remain unchanged. Four-command gate: 1303 passed, 2 skipped, 91.90%. |
 | 1.6.30 | 2026-08-29 | Runtime `τ` is settings-backed (`nsqd.novelty_threshold_tau`, default 0.45) with no CLI `--tau` switch; the value stays `approved_default_tunable`. Four-command gate: 1302 passed, 2 skipped, 91.91%; dedicated NSQD: 630 passed, 92.04%. |
+| 1.6.31 | 2026-08-30 | Rescore uses the composition `τ`; Operator E wait-on records that executable `τ` is not authorization. Four-command gate: 1305 passed, 2 skipped, 91.90%; dedicated NSQD: 633 passed, 92.02%. |
 
 ---
 

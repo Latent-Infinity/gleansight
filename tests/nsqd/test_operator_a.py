@@ -111,7 +111,8 @@ def test_operator_decisions_support_b_without_enabling_it_by_default() -> None:
         assert by_id[operator_id].runtime_enabled is False
         assert operator_is_enabled(operator_id) is False
     assert operator_is_enabled("A") is True
-    assert "novelty" in by_id["E"].wait_on
+    assert "separate" in by_id["E"].wait_on
+    assert "activation" in by_id["E"].wait_on
     assert "axis" in by_id["F"].wait_on.lower()
     assert "failure" in by_id["G"].wait_on.lower()
     with pytest.raises(ValueError, match="unknown operator"):
