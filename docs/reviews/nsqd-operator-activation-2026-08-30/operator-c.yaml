@@ -1,0 +1,74 @@
+schema_version: 1
+packet_kind: evidence_plan
+operator: C
+name: Swanson ABC
+authorization_state: report_only
+runtime_authorized: false
+evidence_sufficient: false
+created_at_utc: "2026-08-31T09:09:18Z"
+algorithm_identity: not_run
+prompt_identity: not_run
+input_snapshot_ids:
+  - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
+input_bindings:
+  - manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
+    record_ids: [N11-OPT-02, N11-FIN-04, N11-OPT-01, N11-FIN-01]
+candidate_outputs: []
+nearest_prior_art: []
+known_limitations:
+  - no bridge extraction or candidate generation has run
+  - bibliographic noninteraction and direct A-to-C prior art are unverified
+input_manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
+seed_decision: selected
+preferred_pair:
+  literature_a:
+    record_id: N11-OPT-02
+    domain_policy_id: optimization/1
+    title: Decentralized Stochastic Optimization and Gossip Algorithms with Compressed Communication
+  literature_c:
+    record_id: N11-FIN-04
+    domain_policy_id: finance/1
+    title: "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction"
+  candidate_bridges:
+    - graph-mediated information propagation
+    - compression and sparsification
+    - adaptive weighting of correlated variables
+    - regime-sensitive signal selection
+backup_pair:
+  literature_a:
+    record_id: N11-OPT-01
+    domain_policy_id: optimization/1
+  literature_c:
+    record_id: N11-FIN-01
+    domain_policy_id: finance/1
+  candidate_bridges:
+    - heavy-tailed stochastic signals
+    - robust update control
+    - latent prediction error under noisy time series
+ablations:
+  - id: bridge_pair
+    choices:
+      - N11-OPT-02_to_N11-FIN-04
+      - N11-OPT-01_to_N11-FIN-01
+    primary_metric: independently_reviewed_bridge_relevance_at_k
+    secondary_metrics:
+      - noninteraction_score
+      - direct_A_to_C_prior_art_rate
+      - polarity_or_direction_error_rate
+  - id: bridge_extraction
+    choices:
+      - normalized_shared_terms
+      - typed_predication_paths
+      - shuffled_literature_negative_control
+    primary_metric: time_sliced_rediscovery_precision_at_k
+selection_rule: Prefer the smallest method that improves reviewed relevance over the shuffled control without increasing leakage or direction errors.
+required_before_review:
+  - verify citation, co-citation, author, and direct-mention noninteraction
+  - bind external bibliographic identifiers for both literatures
+  - extract full-text A-to-B and B-to-C evidence with polarity and direction
+  - search for direct A-to-C prior art under a fixed UTC cutoff
+  - record relevance-at-k, support counts, leakage checks, and reviewer decision
+forbidden_inferences:
+  - approved projections alone prove a Swanson bridge
+  - absence of cross-reference in local paraphrases proves noninteraction
+  - a report-only bridge authorizes Operator C

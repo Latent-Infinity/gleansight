@@ -1,0 +1,51 @@
+schema_version: 1
+packet_kind: evidence_plan
+operator: D
+name: analogical transport
+authorization_state: report_only
+runtime_authorized: false
+evidence_sufficient: false
+created_at_utc: "2026-08-31T09:09:18Z"
+algorithm_identity: not_run
+prompt_identity: not_run
+input_snapshot_ids:
+  - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
+input_bindings:
+  - manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
+    record_ids: [N11-OPT-02, N11-FIN-04]
+candidate_outputs: []
+nearest_prior_art: []
+known_limitations:
+  - upstream C evidence is incomplete
+  - typed source and target relational graphs do not exist
+depends_on: operator-c.yaml
+direction_decision: selected
+selected_direction:
+  source_domain_policy_id: optimization/1
+  target_domain_policy_id: finance/1
+  source_record_id: N11-OPT-02
+  target_record_id: N11-FIN-04
+ablations:
+  - id: mapping_method
+    choices:
+      - typed_structure_mapping
+      - graph_relational_alignment
+      - surface_similarity_negative_control
+    primary_metric: held_out_analogy_recovery
+    secondary_metrics:
+      - role_consistency
+      - target_contradiction_rate
+      - human_plausibility_at_k
+      - domain_policy_violation_count
+selection_rule: Require zero policy violations, then choose the simplest method with the best held-out recovery and no contradiction-rate regression.
+required_before_review:
+  - complete and approve the upstream C evidence packet without runtime activation
+  - define typed source and target relational graphs
+  - define allowed relation mappings and forbidden surface-attribute mappings
+  - bind target-domain constraints and contradiction checks
+  - measure structural consistency, role consistency, contradiction rate, and held-out analogy recovery
+  - demonstrate zero domain-policy leakage
+forbidden_inferences:
+  - shared bridge terms are a structure-preserving mapping
+  - an Operator C candidate authorizes Operator D
+  - transported candidate inferences are approved facts or actions
