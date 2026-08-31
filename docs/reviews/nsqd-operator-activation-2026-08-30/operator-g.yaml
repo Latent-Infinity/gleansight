@@ -1,0 +1,54 @@
+schema_version: 1
+packet_kind: evidence_plan
+operator: G
+name: failure resurrection
+authorization_state: report_only
+runtime_authorized: false
+evidence_sufficient: false
+created_at_utc: "2026-08-31T09:09:18Z"
+algorithm_identity: not_run
+prompt_identity: not_run
+input_snapshot_ids: []
+input_bindings: []
+candidate_outputs: []
+nearest_prior_art: []
+known_limitations:
+  - no approved failed-experiment corpus or records exist
+  - no resurrection proposal or ablation may run
+approved_failure_corpus: null
+approved_failure_record_ids: []
+audit_conclusion: No approved failed-experiment corpus exists in the repository.
+collection_decision: Define the admission schema and collect human-approved records; keep Operator G disabled.
+failure_record_contract: failure-record-contract.yaml
+not_qualifying:
+  - test failures
+  - job failure codes
+  - sufficiency failures
+  - absence of successful results
+required_before_review:
+  - admit immutable human-approved failure records with original conditions and evidence
+  - classify implementation, measurement, method, hypothesis, regime-bound, and inconclusive failures
+  - require a measurable changed-condition trigger and restart condition
+  - measure attribution confidence, trigger strength, constraint gain, duplicate-failure avoidance, and corpus limits
+  - require independent human resurrection approval
+future_ablations_after_corpus_admission:
+  - id: memory_representation
+    choices:
+      - typed_approved_failure_records
+      - raw_failure_logs
+      - no_failure_memory_baseline
+    primary_metric: nonduplicate_actionable_proposals_at_k
+    secondary_metrics:
+      - invalid_resurrection_rate
+      - repeated_failure_rate
+      - reviewer_acceptance_rate
+  - id: trigger_policy
+    choices:
+      - explicit_changed_condition_required
+      - similarity_only_negative_control
+    primary_metric: independently_reviewed_restart_justification_rate
+ablation_blocker: No ablation may run until a human-approved failure corpus exists.
+forbidden_inferences:
+  - the system may invent or infer failed experiments from missing success
+  - the agent that produced a failure may approve its resurrection
+  - a resurrection proposal is evidence of success

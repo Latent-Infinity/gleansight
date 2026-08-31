@@ -1,0 +1,58 @@
+schema_version: 1
+record_type: approved_failed_experiment
+template_only: true
+operator_g_eligible_by_default: false
+required_fields:
+  identity:
+    - failure_record_id
+    - domain_policy_id
+    - experiment_id
+    - immutable_source_artifact_digests
+  original_conditions:
+    - code_revision
+    - data_snapshot_ids
+    - configuration_digest
+    - model_or_method_identity
+    - started_at_utc
+    - completed_at_utc
+  outcome:
+    - failure_class
+    - bounded_observation
+    - measured_results
+    - evidence_artifact_digests
+  review:
+    - review_status
+    - human_reviewer
+    - human_approved_at_utc
+    - approved_record_digest
+failure_class_values:
+  - implementation
+  - measurement
+  - method
+  - hypothesis
+  - regime_bound
+  - inconclusive
+admission_rules:
+  - all timestamps are timezone-aware UTC
+  - source and evidence artifacts are immutable and digest-bound
+  - measured failure evidence exists; absence of success is insufficient
+  - review_status is approved by a human who did not generate the record autonomously
+  - approved records are immutable; corrections create a new record and supersession link
+operator_g_eligibility_rules:
+  - record admission and resurrection eligibility are separate decisions
+  - original conditions are complete enough for comparison
+  - at least one measurable changed_condition_triggers entry is provenance-bound
+  - at least one explicit restart_conditions entry is present
+  - an independent human authorizes inclusion in an Operator G evidence packet
+optional_fields:
+  - known_confounds
+  - supersedes_failure_record_id
+  - changed_condition_triggers
+  - restart_conditions
+  - scope
+forbidden_sources:
+  - test failures without experiment evidence
+  - job error codes
+  - sufficiency failures
+  - inferred or invented failures
+  - absence of published or successful results

@@ -100,7 +100,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.31 | 2026-08-30 | Rescore uses the composition `τ`; Operator E wait-on records that executable `τ` is not authorization. Four-command gate: 1305 passed, 2 skipped, 91.90%; dedicated NSQD: 633 passed, 92.02%. |
 | 1.6.32 | 2026-08-30 | Same-snapshot cards whose persisted novelty `tau` key is null or differs from composition `τ` replay ground+score; cards without that key, and matching stamps, still skip. Operator E and C–G remain deferred. Four-command gate: 1308 passed, 2 skipped, 91.93%; dedicated NSQD: 636 passed, 92.07%. |
 | 1.6.33 | 2026-08-30 | Packet 1c adds report-only 24-calendar-month UTC comparison with month-end clamping while runtime stays 730 days. `diverge --operator` may request A/B only; composition remains authoritative and B requires target-bound proof. E targets a separate experimental/config-gated evidence packet and remains unauthorized; C–G remain deferred. Evidence plans bind provenance and empty/not-run state, with baseline and negative-control ablations. Four-command gate: 1325 passed, 2 skipped, 92.00%. |
-| 1.6.34 | 2026-08-31 | Operator C wait-on no longer requires B activation; C stays deferred until named-literature evidence and explicit human activation. Four-command gate: pending. |
+| 1.6.34 | 2026-08-31 | Operator C wait-on no longer requires B activation; C stays deferred until named-literature evidence and explicit human activation. Four-command gate: 1326 passed, 2 skipped, 92.00%; dedicated NSQD: 654 passed, 92.22%. |
 
 ---
 
