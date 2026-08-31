@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from calendar import monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Literal
@@ -11,10 +12,38 @@ from nsqd.domain.acquisition import (
     STAGED_IMPORT_LIMIT,
 )
 from nsqd.domain.novelty import NOVELTY_BIN_EDGES, NOVELTY_K, NOVELTY_THRESHOLD_TAU
+from nsqd.domain.snapshot import is_utc_datetime
 from nsqd.domain.status import DEFAULT_DENSITY_CUT, STATUS_WINDOW_DAYS, CellStatus, cell_status
 
 AXIS_KEEP_SUM = 4
 DENSITY_CUTS = (2, 3, 5)
+CALENDAR_WINDOW_MONTHS = 24
+
+
+def calendar_month_cutoff(
+    as_of: datetime,
+    *,
+    months: object = CALENDAR_WINDOW_MONTHS,
+) -> datetime:
+    if not is_utc_datetime(as_of):
+        raise ValueError("as_of must be a UTC datetime")
+    if isinstance(months, bool) or not isinstance(months, int) or months < 1:
+        raise ValueError("months must be a positive int")
+    month_index = as_of.year * 12 + as_of.month - 1 - months
+    year, zero_based_month = divmod(month_index, 12)
+    if year < 1:
+        raise ValueError("calendar-month cutoff is outside the supported datetime range")
+    month = zero_based_month + 1
+    day = min(as_of.day, monthrange(year, month)[1])
+    return as_of.replace(year=year, month=month, day=day)
+
+
+def calendar_month_window(
+    as_of: datetime,
+    *,
+    months: object = CALENDAR_WINDOW_MONTHS,
+) -> timedelta:
+    return as_of - calendar_month_cutoff(as_of, months=months)
 
 
 @dataclass(frozen=True)

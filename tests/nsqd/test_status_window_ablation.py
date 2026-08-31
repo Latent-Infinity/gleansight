@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
+from nsqd.domain.ablation import calendar_month_cutoff, calendar_month_window
 from nsqd.domain.diverge import select_target_cell
 from nsqd.domain.status import cell_status, record_lifecycle, status_window
 
@@ -75,3 +78,63 @@ def test_keep_730_day_default_after_window_length_probe() -> None:
 
     assert STATUS_WINDOW_DAYS == 730
     assert WINDOW_CHOICES_DAYS[1] == STATUS_WINDOW_DAYS
+
+
+@pytest.mark.parametrize(
+    ("as_of", "months", "expected"),
+    [
+        (
+            datetime(2024, 3, 31, 15, 30, tzinfo=UTC),
+            1,
+            datetime(2024, 2, 29, 15, 30, tzinfo=UTC),
+        ),
+        (
+            datetime(2023, 3, 31, 15, 30, tzinfo=UTC),
+            1,
+            datetime(2023, 2, 28, 15, 30, tzinfo=UTC),
+        ),
+        (
+            datetime(2024, 2, 29, 15, 30, tzinfo=UTC),
+            12,
+            datetime(2023, 2, 28, 15, 30, tzinfo=UTC),
+        ),
+        (
+            datetime(2024, 1, 31, 15, 30, tzinfo=UTC),
+            1,
+            datetime(2023, 12, 31, 15, 30, tzinfo=UTC),
+        ),
+    ],
+)
+def test_calendar_month_cutoff_clamps_month_end_in_utc(
+    as_of: datetime,
+    months: int,
+    expected: datetime,
+) -> None:
+    assert calendar_month_cutoff(as_of, months=months) == expected
+
+
+def test_calendar_month_window_is_report_only_and_differs_at_leap_boundary() -> None:
+    as_of = datetime(2024, 3, 31, tzinfo=UTC)
+    boundary_record = {"type": "paper", "harvested_at": datetime(2022, 3, 31, tzinfo=UTC)}
+
+    assert record_lifecycle(boundary_record, as_of=as_of, window=status_window()) == "stale"
+    assert (
+        record_lifecycle(boundary_record, as_of=as_of, window=calendar_month_window(as_of))
+        == "current"
+    )
+
+
+@pytest.mark.parametrize(
+    ("as_of", "months"),
+    [
+        (datetime(2024, 3, 31), 24),
+        (datetime(2024, 3, 31, tzinfo=UTC), 0),
+        (datetime(2024, 3, 31, tzinfo=UTC), True),
+    ],
+)
+def test_calendar_month_cutoff_rejects_invalid_report_inputs(
+    as_of: datetime,
+    months: object,
+) -> None:
+    with pytest.raises(ValueError):
+        calendar_month_cutoff(as_of, months=months)
