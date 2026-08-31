@@ -51,8 +51,124 @@ def test_skeleton_help_lists_command() -> None:
     assert "run-paper-jobs" in result.output
 
 
-def test_diverge_cli_does_not_expose_operator_switch() -> None:
+def test_diverge_cli_exposes_operator_selection_without_tau() -> None:
     result = CliRunner().invoke(app, ["diverge", "--help"])
+    assert result.exit_code == 0
+    assert "--operator" in result.output
+    assert "--target-cell-id" in result.output
+    assert "--axiom-cell-id" in result.output
+    assert "--tau" not in result.output
+
+
+def test_diverge_cli_passes_operator_b_proof_without_widening_composition(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+    container = SimpleNamespace(clock=SimpleNamespace(now=lambda: object()))
+
+    def fake_run_job(
+        _container: object,
+        job_type: str,
+        payload: dict[str, object],
+        _now: object,
+    ) -> dict[str, object]:
+        calls.append((job_type, payload))
+        if job_type == "map":
+            return {"cell_statuses": {"finance/target": "Missing"}}
+        return {"candidate_artifact_hash": "artifact"}
+
+    monkeypatch.setattr(cli_module, "_container", lambda _db, _index: container)
+    monkeypatch.setattr(cli_module, "run_job", fake_run_job)
+    fixture = tmp_path / "candidate.yaml"
+    fixture.write_text("domain_policy_id: finance/1\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "diverge",
+            "--candidate-fixture",
+            str(fixture),
+            "--axiom",
+            "target evidence",
+            "--axiom-cell-id",
+            "finance/target",
+            "--target-cell-id",
+            "finance/target",
+            "--operator",
+            "B",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls[1] == (
+        "diverge",
+        {
+            "candidate": {"domain_policy_id": "finance/1"},
+            "axiom": "target evidence",
+            "axioms": [{"statement": "target evidence", "cell_id": "finance/target"}],
+            "operator": "B",
+            "target_cell_id": "finance/target",
+            "generator_run_id": calls[1][1]["generator_run_id"],
+            "cell_statuses": {"finance/target": "Missing"},
+        },
+    )
+
+
+def test_diverge_cli_rejects_operator_b_without_structured_proof(tmp_path: Path) -> None:
+    fixture = tmp_path / "candidate.yaml"
+    fixture.write_text("domain_policy_id: finance/1\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "diverge",
+            "--candidate-fixture",
+            str(fixture),
+            "--axiom",
+            "target evidence",
+            "--operator",
+            "B",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Operator B requires --target-cell-id and --axiom-cell-id" in result.output
+
+
+def test_diverge_cli_does_not_expose_deferred_operator_e(tmp_path: Path) -> None:
+    fixture = tmp_path / "candidate.yaml"
+    fixture.write_text("domain_policy_id: finance/1\n", encoding="utf-8")
+    result = CliRunner().invoke(
+        app,
+        [
+            "diverge",
+            "--candidate-fixture",
+            str(fixture),
+            "--axiom",
+            "x",
+            "--operator",
+            "E",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+        ],
+    )
+    assert result.exit_code != 0
+    assert "Invalid value for '--operator'" in result.output
+
+
+def test_acquire_cli_does_not_expose_operator_selection() -> None:
+    result = CliRunner().invoke(app, ["acquire", "--help"])
     assert result.exit_code == 0
     assert "--operator" not in result.output
 

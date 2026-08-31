@@ -4,6 +4,7 @@ import json
 import uuid
 from collections import Counter
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, NoReturn
 
@@ -46,6 +47,11 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 DEFAULT_NSQD_DB = Path("data/nsqd/nsqd.sqlite")
 DEFAULT_NSQD_INDEX = Path("data/nsqd/corpus.lancedb")
 _cli_options: dict[str, Path | None] = {"config": None}
+
+
+class DivergeOperator(StrEnum):
+    A = "A"
+    B = "B"
 
 
 @app.callback()
@@ -335,6 +341,15 @@ def diverge(
     axiom: Annotated[str, typer.Option("--axiom")],
     snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
     domain_policy_id: Annotated[str, typer.Option("--domain-policy-id")],
+    operator: Annotated[
+        DivergeOperator,
+        typer.Option(
+            "--operator",
+            help="Requested supported operator; composition remains authoritative",
+        ),
+    ] = DivergeOperator.A,
+    target_cell_id: Annotated[str | None, typer.Option("--target-cell-id")] = None,
+    axiom_cell_id: Annotated[str | None, typer.Option("--axiom-cell-id")] = None,
     snapshot_state: Annotated[str, typer.Option("--snapshot-state")] = "calibration",
     db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
     index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
@@ -343,6 +358,8 @@ def diverge(
         payload = yaml.safe_load(candidate_fixture.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("candidate fixture must be a mapping")
+        if operator is DivergeOperator.B and (target_cell_id is None or axiom_cell_id is None):
+            raise ValueError("Operator B requires --target-cell-id and --axiom-cell-id")
         container = _container(db, index)
         now = container.clock.now()
         mapped = run_job(
@@ -355,15 +372,21 @@ def diverge(
             },
             now,
         )
+        diverge_payload: dict[str, object] = {
+            "candidate": payload,
+            "axiom": axiom,
+            "operator": operator.value,
+            "generator_run_id": str(uuid.uuid4()),
+            "cell_statuses": mapped["cell_statuses"],
+        }
+        if target_cell_id is not None:
+            diverge_payload["target_cell_id"] = target_cell_id
+        if axiom_cell_id is not None:
+            diverge_payload["axioms"] = [{"statement": axiom, "cell_id": axiom_cell_id}]
         result = run_job(
             container,
             "diverge",
-            {
-                "candidate": payload,
-                "axiom": axiom,
-                "generator_run_id": str(uuid.uuid4()),
-                "cell_statuses": mapped["cell_statuses"],
-            },
+            diverge_payload,
             now,
         )
     except (ImportError, OSError, PipelineError, ValueError, yaml.YAMLError) as exc:
