@@ -1,8 +1,8 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.6 (NS/QD)
-**As of:** 2026-08-23
+**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.36 (NS/QD)
+**As of:** 2026-09-01
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
 
@@ -48,4 +48,4 @@ Do not treat smoke fixtures as `calibration`. Smoke E2E (EV-N00) uses an empty s
 | EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py tests/nsqd/test_papers_bridge.py tests/nsqd/test_paper_runtime.py -q --no-cov` | N6 | Required |
 | EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py tests/ui/test_ui_main.py -q --no-cov` | N10 | Required |
 | EV-N19 | NSQD.NOVELTY.TAU_PACKET.v1 | `uv run pytest tests/nsqd/test_tau_measurement_export.py tests/nsqd/test_tau_review.py tests/nsqd/test_autonomous_tau_review.py tests/nsqd/test_tau_candidate_generation.py tests/nsqd/test_tau_packet_scripts.py tests/nsqd/test_domain_policies.py::test_novelty_threshold_tau_is_active_and_tunable -q --no-cov` | N11 | Required |
-| EV-N20 | NSQD.STATUS.CALENDAR_REPORT.v1, NSQD.OPERATOR.ACTIVATION_PLAN.v1 | `uv run pytest tests/nsqd/test_operator_activation_packets.py tests/nsqd/test_status_window_ablation.py tests/nsqd/test_cli.py tests/nsqd/test_operator_a.py tests/nsqd/test_operator_b.py -q --no-cov` | Optional packets 1c/5 | Required |
+| EV-N20 | NSQD.STATUS.CALENDAR_REPORT.v1, NSQD.OPERATOR.ACTIVATION_PLAN.v1 | `uv run pytest tests/nsqd/test_operator_activation_packets.py tests/nsqd/test_operator_c.py tests/nsqd/test_operator_c_evidence_packet.py tests/nsqd/test_operator_e.py tests/nsqd/test_status_window_ablation.py tests/nsqd/test_cli.py tests/nsqd/test_operator_a.py tests/nsqd/test_operator_b.py -q --no-cov` | Optional packets 1c/5 | Required |

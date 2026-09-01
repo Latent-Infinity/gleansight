@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.33 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.35 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -101,6 +101,8 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.32 | 2026-08-30 | Same-snapshot cards whose persisted novelty `tau` key is null or differs from composition `τ` replay ground+score; cards without that key, and matching stamps, still skip. Operator E and C–G remain deferred. Four-command gate: 1308 passed, 2 skipped, 91.93%; dedicated NSQD: 636 passed, 92.07%. |
 | 1.6.33 | 2026-08-30 | Packet 1c adds report-only 24-calendar-month UTC comparison with month-end clamping while runtime stays 730 days. `diverge --operator` may request A/B only; composition remains authoritative and B requires target-bound proof. E targets a separate experimental/config-gated evidence packet and remains unauthorized; C–G remain deferred. Evidence plans bind provenance and empty/not-run state, with baseline and negative-control ablations. Four-command gate: 1325 passed, 2 skipped, 92.00%. |
 | 1.6.34 | 2026-08-31 | Operator C wait-on no longer requires B activation; C stays deferred until named-literature evidence and explicit human activation. Four-command gate: 1326 passed, 2 skipped, 92.00%; dedicated NSQD: 654 passed, 92.22%. |
+| 1.6.35 | 2026-08-31 | Operator C identifiers bind from approved N11 projections. A digest-bound external evidence audit checked both pairs, seven bridge concepts, direct prior art, two extraction methods, and shuffled controls; no two-sided bridge was supported, so candidate outputs remain empty, evidence is insufficient, noninteraction stays unverified, and runtime stays disabled. Independent review approved the negative conclusion, not activation. Four-command gate: 1345 passed, 2 skipped, 92.08%. |
+| 1.6.36 | 2026-09-01 | Operator E binds approved finance/optimization inventory on unpooled tracks; combinations stay empty and executable `τ` still does not authorize E. Four-command gate: 1349 passed, 2 skipped, 92.16%; dedicated NSQD: 677 passed, 92.51%. |
 
 ---
 
@@ -179,6 +181,8 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.ACQUISITION.FALLBACK.v1 | Searchable `ALG-SUF` failures run a bounded discover → shortlist → stage → analyze → pending draft → human approval → projection → recheck loop; integrity failures do not search; drafts cannot approve; default acquire/UI composition wires the paper runtime | N6 | Behavior | LOCAL-NSQD-H, LOCAL-NSQD-E | EV-N17 |
 | NSQD.SURFACE.UNIFIED.v1 | `gleansight` exposes harvest, map, diverge, ground, gate, and archive without breaking `papers`; the desktop app keeps evidence screens and adds Map, Archive, and Card | N10 | Behavior | LOCAL-NSQD-U | EV-N18 |
 | NSQD.NOVELTY.TAU_PACKET.v1 | Packet 2b contains policy-balanced real measurements from unique candidate artifacts against approved k-complete corpus snapshots; autonomous writer/reviewer labels and frontier adjudications are role-separated, model/prompt/digest bound, and never described as human labels; importing or evaluating the packet cannot mutate runtime `τ` | N11 | Data Contract, Behavior | LOCAL-NSQD-G | EV-N19 |
+| NSQD.STATUS.CALENDAR_REPORT.v1 | Packet 1c defines a report-only 730-day versus 24-calendar-month UTC comparison with month-end clamping; runtime remains the overridable 730-day window pending separate replay and human activation | Optional packet 1c | Data Contract | LOCAL-NSQD-M | EV-N20 |
+| NSQD.OPERATOR.ACTIVATION_PLAN.v1 | CLI selection remains A/B-only. C's external evidence report rejects all seven proposed bridges across both approved pairs and extraction/control runs; candidate outputs remain empty, evidence is insufficient, noninteraction is unverified, and C-G remain runtime-disabled | Optional packet 5 | Data Contract, Behavior | LOCAL-NSQD-D | EV-N20 |
 
 **Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Non-default:** Operator B requires configuration authorization plus internal job/use-case selection. **Deferred:** operators C–G.
 
@@ -208,6 +212,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EV-N17 | NSQD.ACQUISITION.FALLBACK.v1 | `uv run pytest tests/facts/test_nsqd_acquisition_fallback.py tests/nsqd/test_acquisition.py tests/nsqd/test_papers_bridge.py tests/nsqd/test_paper_runtime.py -q --no-cov` | N6 | Required |
 | EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py tests/ui/test_ui_main.py -q --no-cov` | N10 | Required |
 | EV-N19 | NSQD.NOVELTY.TAU_PACKET.v1 | `uv run pytest tests/nsqd/test_tau_measurement_export.py tests/nsqd/test_tau_review.py tests/nsqd/test_autonomous_tau_review.py tests/nsqd/test_domain_policies.py::test_novelty_threshold_tau_is_active_and_tunable -q --no-cov` | N11 | Required |
+| EV-N20 | NSQD.STATUS.CALENDAR_REPORT.v1, NSQD.OPERATOR.ACTIVATION_PLAN.v1 | `uv run pytest tests/nsqd/test_operator_activation_packets.py tests/nsqd/test_operator_c.py tests/nsqd/test_operator_c_evidence_packet.py tests/nsqd/test_operator_e.py tests/nsqd/test_status_window_ablation.py tests/nsqd/test_cli.py tests/nsqd/test_operator_a.py tests/nsqd/test_operator_b.py -q --no-cov` | Optional packets 1c/5 | Required |
 
 Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 

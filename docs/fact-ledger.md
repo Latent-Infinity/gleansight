@@ -2,7 +2,7 @@
 
 **Plan Set:** gleansight
 **Authority:** project register. Closeout: `docs/development-plan-open-work.md`. NS-QD: `docs/development-plan-ns-qd.md`.
-**As of:** 2026-08-23
+**As of:** 2026-09-01
 
 Facts are append-only. Lifecycle is not a test result. Evidence results live in `docs/evidence-index.md`.
 
@@ -41,9 +41,9 @@ Facts are append-only. Lifecycle is not a test result. Evidence results live in 
 | NSQD.SURFACE.UNIFIED.v1 | Given the discovery use-cases, when a user runs `gleansight` or the desktop app, then harvest/map/diverge/ground/gate/archive are available without breaking `papers`, and Map/Archive/Card screens sit beside the evidence screens | Product surfaces | Behavior | LOCAL-NSQD-U | product | Active | EV-N18 |
 | NSQD.NOVELTY.TAU_PACKET.v1 | Packet 2b contains 120 trusted policy-balanced autonomous labels over persisted real measurements, with four writer/reviewer rounds, distinct frontier adjudication, and digest-bound provenance; staged evaluation recommended `τ = 0.45`, and a separate explicit human decision activated it as `approved_default_tunable` without authorizing Operator E or adjacent operator/window/CLI changes | Novelty calibration | Data Contract, Behavior | LOCAL-NSQD-G | product | Active | EV-N19 |
 | NSQD.STATUS.CALENDAR_REPORT.v1 | Packet 1c defines a report-only 730-day versus 24-calendar-month UTC comparison with invalid destination days clamped to month-end; runtime status remains the overridable 730-day window pending a separate approved-snapshot replay and human activation | Status-window calibration | Data Contract | LOCAL-NSQD-M | product | Active | EV-N20 |
-| NSQD.OPERATOR.ACTIVATION_PLAN.v1 | Divergence CLI may request A/B without widening composition; B requires target-bound proof. Provenance-bound evidence plans keep C-G runtime-disabled, bind empty/not-run state honestly, and require per-track baselines plus negative controls; executable tau remains unrelated to E authorization | Operator activation planning | Data Contract, Behavior | LOCAL-NSQD-D | product | Active | EV-N20 |
+| NSQD.OPERATOR.ACTIVATION_PLAN.v1 | Divergence CLI may request A/B without widening composition; B requires target-bound proof. Provenance-bound evidence plans keep D-G runtime-disabled and require per-track baselines plus negative controls. Operator C's digest-bound evidence report rejected all seven proposed bridges across both pairs and all extraction/control runs, so its candidate outputs remain empty, evidence is insufficient, noninteraction is unverified, and generation stays unauthorized. Operator E may bind approved components on separate same-policy and cross-policy tracks without generating combinations or treating executable tau as authorization | Operator activation planning | Data Contract, Behavior | LOCAL-NSQD-D | product | Active | EV-N20 |
 
-### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.7)
+### NS/QD-inspired discovery (`docs/development-plan-ns-qd.md` v1.6.36)
 
 See that plan’s ledger for full statements. Completed facts are **Active** with Required evidence. Approved DATA-NSQD-03 now satisfies the non-empty `finance/1` policy and exercises `production_valid` with zero `ALG-SUF` failures. No Active fact requires novelty term > 0 on smoke_only, and no Active fact says a smoke card became a production elite. DATA-NSQD-04 remains optimization-only evidence.
 
@@ -70,5 +70,5 @@ See that plan’s ledger for full statements. Completed facts are **Active** wit
 | NSQD.ARCHIVE.RANK_GUARD.v1 | N7 | Active |
 | NSQD.RESCORE.REPLAY.v1 | N8 | Active; retry-safe archive reconciliation; same-snapshot tau-stamp mismatch also replays |
 | NSQD.NOVELTY.TAU_PACKET.v1 | N11 | Active; 30 near-duplicate + 30 novel labels per policy; runtime `τ = 0.45` is `approved_default_tunable` |
-| NSQD.STATUS.CALENDAR_REPORT.v1 | Optional packet 1c | Active report-only contract; runtime remains 730 fixed UTC days |
+| NSQD.STATUS.CALENDAR_REPORT.v1 | Optional packet 1c | Active report-only contract; runtime remains an overridable 730 UTC days |
 | NSQD.OPERATOR.ACTIVATION_PLAN.v1 | Optional packet 5 | Active evidence-plan contract; C-G remain runtime-disabled |
