@@ -228,6 +228,7 @@ Thumbs.db
 # Local agent/session state
 .serena/
 .mdcrdt/
+.sisyphus/
 
 # Local document backups
 /docs/project-design_backup.md
