@@ -16,7 +16,7 @@ input_bindings:
 candidate_outputs: []
 nearest_prior_art: []
 known_limitations:
-  - upstream C evidence is incomplete
+  - upstream C evidence report is complete but insufficient and has no selected bridge
   - typed source and target relational graphs do not exist
 depends_on: operator-c.yaml
 direction_decision: selected
@@ -39,7 +39,7 @@ ablations:
       - domain_policy_violation_count
 selection_rule: Require zero policy violations, then choose the simplest method with the best held-out recovery and no contradiction-rate regression.
 required_before_review:
-  - complete and approve the upstream C evidence packet without runtime activation
+  - obtain an evidence-sufficient, human-accepted upstream C bridge without runtime activation
   - define typed source and target relational graphs
   - define allowed relation mappings and forbidden surface-attribute mappings
   - bind target-domain constraints and contradiction checks

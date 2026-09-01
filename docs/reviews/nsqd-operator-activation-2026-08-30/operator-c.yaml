@@ -1,23 +1,38 @@
 schema_version: 1
-packet_kind: evidence_plan
+packet_kind: evidence_report
 operator: C
 name: Swanson ABC
 authorization_state: report_only
 runtime_authorized: false
 evidence_sufficient: false
 created_at_utc: "2026-08-31T09:09:18Z"
-algorithm_identity: not_run
-prompt_identity: not_run
+executed_at_utc: "2026-08-31T16:44:06Z"
+algorithm_identity: operator-c-evidence-audit/1
+prompt_identity: operator-c-full-text-extraction/1
 input_snapshot_ids:
   - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
 input_bindings:
   - manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
     record_ids: [N11-OPT-02, N11-FIN-04, N11-OPT-01, N11-FIN-01]
 candidate_outputs: []
-nearest_prior_art: []
+nearest_prior_art:
+  - openalex:W4390426820
+  - openalex:W4414475397
+  - openalex:W4388963597
 known_limitations:
-  - no bridge extraction or candidate generation has run
-  - bibliographic noninteraction and direct A-to-C prior art are unverified
+  - no proposed bridge has direct full-text support on both A-to-B and B-to-C sides
+  - bibliographic noninteraction remains unverified; zero query results are absence of evidence only
+  - Semantic Scholar citation queries were rate-limited with HTTP 429
+  - time-sliced rediscovery is not measurable without an accepted bridge and held-out benchmark
+  - identifiers are bound from approved projection source_paper_id values only
+  - local paraphrases do not supply author or citation graphs
+evidence_report: ../nsqd-operator-c-evidence-2026-08-31/review-summary.json
+evidence_artifact_sha256:
+  evidence-ledger.json: 878f5b050c0fc69eb9b416be06fa15a2274097419c8a67580d64d03879ebcd5b
+  claim-extractions.jsonl: c9162a5816ba0bec69c7989c2f832237600a62c9ba4bb88bc082536e978dde41
+  direct-a-to-c-prior-art.jsonl: 924e4dbbe41f2afa0ffe8766f911e5a1b44ab57e9ef856441839d79de19f812f
+  ablation-results.json: 43275438278a049d6b3235a5e3595309afcc603e30210f16c2ac6aac63217a75
+review_decision: insufficient_evidence
 input_manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
 seed_decision: selected
 preferred_pair:
@@ -25,10 +40,14 @@ preferred_pair:
     record_id: N11-OPT-02
     domain_policy_id: optimization/1
     title: Decentralized Stochastic Optimization and Gossip Algorithms with Compressed Communication
+    source_paper_id: 44b3b3bb40a9055eccdf86ea1702f6ae8b38934c
+    identifier_scheme: s2
   literature_c:
     record_id: N11-FIN-04
     domain_policy_id: finance/1
     title: "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction"
+    source_paper_id: arxiv:2512.12727
+    identifier_scheme: arxiv
   candidate_bridges:
     - graph-mediated information propagation
     - compression and sparsification
@@ -38,9 +57,13 @@ backup_pair:
   literature_a:
     record_id: N11-OPT-01
     domain_policy_id: optimization/1
+    source_paper_id: 4dabfd108c13cd730d3cc583e474b5d8bdf4685f
+    identifier_scheme: s2
   literature_c:
     record_id: N11-FIN-01
     domain_policy_id: finance/1
+    source_paper_id: doi:10.2139/ssrn.6855118
+    identifier_scheme: doi
   candidate_bridges:
     - heavy-tailed stochastic signals
     - robust update control
@@ -62,6 +85,14 @@ ablations:
       - shuffled_literature_negative_control
     primary_metric: time_sliced_rediscovery_precision_at_k
 selection_rule: Prefer the smallest method that improves reviewed relevance over the shuffled control without increasing leakage or direction errors.
+ablation_result: no pair or extraction method outperformed the shuffled control; no selection
+required_check_results:
+  bibliographic_noninteraction: unverified_absence_of_evidence_only
+  full_text_A_to_B_and_B_to_C: completed_zero_two_sided_bridges
+  direct_A_to_C_prior_art: completed_no_exact_pair_result
+  relevance_support_leakage: completed_zero_relevance_zero_support_zero_leakage
+  pair_and_extraction_ablation: completed_no_selection
+  independent_review: approved_negative_conclusion
 required_before_review:
   - verify citation, co-citation, author, and direct-mention noninteraction
   - bind external bibliographic identifiers for both literatures
