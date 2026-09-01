@@ -1,0 +1,35 @@
+{
+  "candidate_output_count": 0,
+  "cutoff_utc": "2026-08-31T00:00:00Z",
+  "metric_definitions": {
+    "bridge_relevance_at_k": "two-sided supported bridge candidates divided by k",
+    "direction_error_rate": "wrong-direction accepted candidates divided by accepted candidates; null when none accepted",
+    "leakage_count": "candidates relying on post-cutoff, local-paraphrase-only, or cross-policy corpus facts",
+    "support_count": "candidates with direct full-text support on both A-to-B and B-to-C sides"
+  },
+  "negative_control": {
+    "id": "shuffled_literature_negative_control/1",
+    "permutation": {
+      "backup": ["latent prediction error under noisy time series", "heavy-tailed stochastic signals", "robust update control"],
+      "preferred": ["regime-sensitive signal selection", "adaptive weighting of correlated variables", "graph-mediated information propagation", "compression and sparsification"]
+    },
+    "seed_material": "operator-c-shuffle/1|2026-08-31T00:00:00Z"
+  },
+  "pair_aggregate": [
+    {"bridge_relevance_at_k": 0.0, "k": 4, "pair": "preferred", "support_count": 0},
+    {"bridge_relevance_at_k": 0.0, "k": 3, "pair": "backup", "support_count": 0}
+  ],
+  "runs": [
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 4, "direction_error_rate": null, "k": 4, "leakage_count": 0, "method": "normalized_shared_terms", "pair": "preferred", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0},
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 4, "direction_error_rate": null, "k": 4, "leakage_count": 0, "method": "typed_predication_paths", "pair": "preferred", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0},
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 4, "direction_error_rate": null, "k": 4, "leakage_count": 0, "method": "shuffled_literature_negative_control", "pair": "preferred", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0},
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 3, "direction_error_rate": null, "k": 3, "leakage_count": 0, "method": "normalized_shared_terms", "pair": "backup", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0},
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 3, "direction_error_rate": null, "k": 3, "leakage_count": 0, "method": "typed_predication_paths", "pair": "backup", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0},
+    {"bridge_relevance_at_k": 0.0, "candidate_count": 3, "direction_error_rate": null, "k": 3, "leakage_count": 0, "method": "shuffled_literature_negative_control", "pair": "backup", "support_count": 0, "time_sliced_rediscovery_precision_at_k": null, "two_sided_supported_count": 0}
+  ],
+  "schema_version": 1,
+  "selected_extraction_method": null,
+  "selected_pair": null,
+  "selection_decision": "no method improved reviewed relevance over the shuffled control; no pair produced a two-sided bridge",
+  "time_sliced_rediscovery_limitation": "not measurable because no candidate bridge was accepted and no held-out rediscovery benchmark exists"
+}

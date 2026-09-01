@@ -1,0 +1,42 @@
+{
+  "artifact_sha256": {
+    "ablation-results.json": "43275438278a049d6b3235a5e3595309afcc603e30210f16c2ac6aac63217a75",
+    "claim-extractions.jsonl": "c9162a5816ba0bec69c7989c2f832237600a62c9ba4bb88bc082536e978dde41",
+    "direct-a-to-c-prior-art.jsonl": "924e4dbbe41f2afa0ffe8766f911e5a1b44ab57e9ef856441839d79de19f812f",
+    "evidence-ledger.json": "878f5b050c0fc69eb9b416be06fa15a2274097419c8a67580d64d03879ebcd5b"
+  },
+  "authorization_state": "report_only",
+  "candidate_output_count": 0,
+  "cutoff_utc": "2026-08-31T00:00:00Z",
+  "evidence_sufficient": false,
+  "human_acceptance": "not_requested",
+  "independent_review": {
+    "initial_decision": "rejected_for_packet_defects",
+    "initial_reviewed_at_utc": "2026-08-31T16:52:35Z",
+    "final_decision": "approve_insufficient_evidence",
+    "final_reviewed_at_utc": "2026-08-31T18:25:20Z",
+    "review_status": "approved_negative_conclusion",
+    "reviewer_id": "openai/gpt-5.4 / Sisyphus-Junior",
+    "resolved_findings": [
+      "created the referenced review summary",
+      "updated stale plan-state tests for the executed C report",
+      "replaced the graph bridge compression quote with fixed-graph and gossip evidence",
+      "added per-check bibliographic provenance and immutable full-text source bindings",
+      "bound section evidence to versioned PDFs, exact quotes, and live query-ranked prior art",
+      "preserved exact LaTeX math delimiters in the Fin-JEPA training-objective quote",
+      "removed unverifiable generated-keyword support from the robust-update candidate"
+    ],
+    "review_rounds": 6
+  },
+  "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "packet_digest": "bb8cf2473f2ab8a23dd61c93ac2493b309643553ee1331554f8e585883e160d4",
+  "packet_digest_algorithm": "sha256(canonical_json(artifact_sha256))",
+  "review_decision": "insufficient_evidence",
+  "runtime_activation": "not_authorized",
+  "schema_version": 1,
+  "selection": {
+    "extraction_method": null,
+    "pair": null,
+    "reason": "no method or pair produced a two-sided supported bridge or outperformed the shuffled control"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "authorization_state": "report_only",
+  "cutoff_utc": "2026-08-31T00:00:00Z",
+  "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "queried_at_utc": "2026-08-31T16:44:06Z",
+  "query_provider_limitations": [
+    "Semantic Scholar Graph API returned HTTP 429, so its citation graph was not available",
+    "OpenAlex referenced_works arrays were empty for all four records and may be incomplete",
+    "SSRN full text returned HTTP 403; Fin-JEPA extraction uses a commit-pinned author repository source"
+  ],
+  "records": [
+    {
+      "approved_record_id": "N11-OPT-02",
+      "authors": ["Anastasia Koloskova", "Sebastian U. Stich", "Martin Jaggi"],
+      "canonical_ids": {"arxiv": "1902.00340v1", "doi": "10.48550/arxiv.1902.00340", "openalex": "W2911327153", "semantic_scholar": "44b3b3bb40a9055eccdf86ea1702f6ae8b38934c"},
+      "full_text_url": "https://proceedings.mlr.press/v97/koloskova19a.html",
+      "metadata_url": "https://api.openalex.org/works/W2911327153?select=id,doi,title,publication_date,authorships,referenced_works,cited_by_count",
+      "publication_date": "2019-02-01",
+      "title": "Decentralized Stochastic Optimization and Gossip Algorithms with Compressed Communication",
+      "versioned_source_url": "https://arxiv.org/abs/1902.00340v1",
+      "versioned_full_text_url": "https://arxiv.org/pdf/1902.00340v1"
+    },
+    {
+      "approved_record_id": "N11-FIN-04",
+      "authors": ["Dinggao Liu", "Robert Ślepaczuk", "Zhenpeng Tang"],
+      "canonical_ids": {"arxiv": "2512.12727v2", "doi": "10.48550/arxiv.2512.12727", "openalex": "W4417449985"},
+      "full_text_url": "https://ar5iv.labs.arxiv.org/html/2512.12727",
+      "metadata_url": "https://api.openalex.org/works/W4417449985?select=id,doi,title,publication_date,authorships,referenced_works,cited_by_count",
+      "publication_date": "2025-12-14",
+      "title": "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction",
+      "versioned_source_url": "https://arxiv.org/abs/2512.12727v2",
+      "versioned_full_text_url": "https://arxiv.org/pdf/2512.12727v2"
+    },
+    {
+      "approved_record_id": "N11-OPT-01",
+      "authors": ["Abdurakhmon Sadiev", "Marina Danilova", "Eduard Gorbunov", "Samuel Horváth", "Gauthier Gidel", "Pavel Dvurechensky", "Alexander Gasnikov", "Peter Richtárik"],
+      "canonical_ids": {"arxiv": "2302.00999v2", "doi": "10.48550/arxiv.2302.00999", "openalex": "W4320814031", "semantic_scholar": "4dabfd108c13cd730d3cc583e474b5d8bdf4685f"},
+      "full_text_url": "https://ar5iv.labs.arxiv.org/html/2302.00999",
+      "metadata_url": "https://api.openalex.org/works/W4320814031?select=id,doi,title,publication_date,authorships,referenced_works,cited_by_count",
+      "publication_date": "2023-02-02",
+      "title": "High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance",
+      "versioned_source_url": "https://arxiv.org/abs/2302.00999v2",
+      "versioned_full_text_url": "https://arxiv.org/pdf/2302.00999v2"
+    },
+    {
+      "approved_record_id": "N11-FIN-01",
+      "authors": ["Yihan Wang"],
+      "canonical_ids": {"doi": "10.2139/ssrn.6855118", "openalex": "W7171672173", "software_doi": "10.5281/zenodo.20470971"},
+      "full_text_url": "https://raw.githubusercontent.com/cedricwyh/fin-jepa/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "metadata_url": "https://api.openalex.org/works/W7171672173?select=id,doi,title,publication_date,authorships,referenced_works,cited_by_count",
+      "publication_date": "2026-01-01",
+      "title": "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series",
+      "versioned_source_url": "https://github.com/cedricwyh/fin-jepa/blob/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "versioned_full_text_url": "https://raw.githubusercontent.com/cedricwyh/fin-jepa/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex"
+    }
+  ],
+  "schema_version": 1,
+  "interaction_checks": [
+    {
+      "checks": {
+        "author_overlap": {
+          "count": 0,
+          "method": "intersection of OpenAlex author IDs",
+          "source_urls": [
+            "https://api.openalex.org/works/W2911327153?select=id,authorships",
+            "https://api.openalex.org/works/W4417449985?select=id,authorships"
+          ],
+          "status": "checked"
+        },
+        "co_citation": {
+          "count": 0,
+          "query_url": "https://api.openalex.org/works?filter=referenced_works:W2911327153,referenced_works:W4417449985,publication_date:%3C2026-08-31&per-page=10&select=id,title,publication_date",
+          "status": "checked_absence_of_evidence"
+        },
+        "direct_citation": {
+          "a_cites_c": false,
+          "a_record_url": "https://api.openalex.org/works/W2911327153?select=id,referenced_works",
+          "c_cites_a": false,
+          "c_record_url": "https://api.openalex.org/works/W4417449985?select=id,referenced_works",
+          "status": "checked_openalex_records_with_incomplete_graph_caveat"
+        },
+        "direct_mention": {
+          "count": 0,
+          "query_url": "https://api.openalex.org/works?search=%22CHOCO-SGD%22%20%22EXFormer%22&filter=publication_date:%3C2026-08-31&per-page=10&select=id,title,doi,publication_date",
+          "status": "checked_absence_of_evidence"
+        }
+      },
+      "pair": "preferred",
+      "status": "absence_of_evidence_only"
+    },
+    {
+      "checks": {
+        "author_overlap": {
+          "count": 0,
+          "method": "intersection of OpenAlex author IDs",
+          "source_urls": [
+            "https://api.openalex.org/works/W4320814031?select=id,authorships",
+            "https://api.openalex.org/works/W7171672173?select=id,authorships"
+          ],
+          "status": "checked"
+        },
+        "co_citation": {
+          "count": 0,
+          "query_url": "https://api.openalex.org/works?filter=referenced_works:W4320814031,referenced_works:W7171672173,publication_date:%3C2026-08-31&per-page=10&select=id,title,publication_date",
+          "status": "checked_absence_of_evidence"
+        },
+        "direct_citation": {
+          "a_cites_c": false,
+          "a_record_url": "https://api.openalex.org/works/W4320814031?select=id,referenced_works",
+          "c_cites_a": false,
+          "c_record_url": "https://api.openalex.org/works/W7171672173?select=id,referenced_works",
+          "status": "checked_openalex_records_with_incomplete_graph_caveat"
+        },
+        "direct_mention": {
+          "count": 0,
+          "query_url": "https://api.openalex.org/works?search=%22High-Probability%20Bounds%20for%20Stochastic%20Optimization%22%20%22Fin-JEPA%22&filter=publication_date:%3C2026-08-31&per-page=10&select=id,title,doi,publication_date",
+          "status": "checked_absence_of_evidence"
+        }
+      },
+      "pair": "backup",
+      "status": "absence_of_evidence_only"
+    }
+  ]
+}
