@@ -20,6 +20,7 @@ nearest_prior_art: []
 known_limitations:
   - the inventory spans approved manifests and is not bound to one executable snapshot
   - no component combination, co-occurrence analysis, or prior-art search has run
+  - inventory membership is not a co-occurrence snapshot and does not authorize generation
 scope_decision: same_policy_and_cross_policy_separate_tracks
 approved_component_inventory:
   finance/1:
