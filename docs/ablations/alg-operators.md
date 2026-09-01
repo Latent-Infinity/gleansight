@@ -61,7 +61,7 @@ Every executed deferred-operator packet binds an immutable input snapshot, polic
 
 ### C — Swanson ABC literature discovery
 
-C takes two named, plausibly noninteracting literatures and produces auditable `A → B` plus `B → C` paths. Each bridge binds normalized concepts, supporting citations, query/corpus snapshot and cutoff, polarity/direction, an explicit `A → C` prior-art search, and a noninteraction check. The evidence packet reports precision/relevance at K, bridge specificity, support counts, time-sliced rediscovery, and leakage or hidden-interaction flags. It never promotes the inferred `A → C` relation to fact.
+C takes two named, plausibly noninteracting literatures and produces auditable `A → B` plus `B → C` paths. Preferred `N11-OPT-02` (`s2:44b3b3bb…f6ae8b38934c`) and `N11-FIN-04` (`arxiv:2512.12727`) bind from approved projections; that binding is not noninteraction evidence and does not authorize generation. The executed external audit compared that pair with the approved backup across normalized terms, typed predicates, and shuffled controls. None of seven proposed concepts had direct support on both sides, so no pair or method was selected and candidate outputs remain empty. Zero citation/search results remain absence of evidence, not proof of noninteraction. Each future bridge must still bind normalized concepts, supporting citations, query/corpus snapshot and cutoff, polarity/direction, an explicit `A → C` prior-art search, and a noninteraction check. It never promotes an inferred `A → C` relation to fact.
 
 ### D — analogical transport
 
@@ -69,7 +69,7 @@ D follows C but has a different input contract: explicit `source_domain_policy_i
 
 ### E — atypical combination
 
-E combines approved, provenance-bound components only. A report row includes component sources, corpus/co-occurrence snapshot, atypicality, nearest prior combinations, and a required mechanistic bridge explaining why the combination is not arbitrary. Low co-occurrence or downstream novelty score alone is insufficient. Evaluation compares bridge-valid usefulness and duplication rates against A/B proposals. `τ = 0.45` may score a grounded artifact later; it is not E evidence or authorization.
+E combines approved, provenance-bound components only. Current inventory binds DATA-NSQD-03/N11 finance records and DATA-NSQD-04/N11 optimization records on unpooled tracks; inventory membership is not a combination and does not authorize generation. A report row includes component sources, corpus/co-occurrence snapshot, atypicality, nearest prior combinations, and a required mechanistic bridge explaining why the combination is not arbitrary. Low co-occurrence or downstream novelty score alone is insufficient. Evaluation compares bridge-valid usefulness and duplication rates against A/B proposals. `τ = 0.45` may score a grounded artifact later; it is not E evidence or authorization.
 
 ### F — missing dimensions
 

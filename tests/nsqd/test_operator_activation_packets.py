@@ -21,17 +21,23 @@ def _load(name: str) -> dict[str, Any]:
     return payload
 
 
-def test_deferred_operator_packets_bind_report_only_plan_metadata() -> None:
+def test_deferred_operator_packets_bind_report_only_metadata() -> None:
     for operator_id in PACKET_IDS:
         packet = _load(f"operator-{operator_id}.yaml")
-        assert packet["packet_kind"] == "evidence_plan"
         assert packet["authorization_state"] == "report_only"
         assert packet["runtime_authorized"] is False
         assert packet["evidence_sufficient"] is False
-        assert packet["algorithm_identity"] == "not_run"
-        assert packet["prompt_identity"] == "not_run"
         assert packet["candidate_outputs"] == []
-        assert packet["nearest_prior_art"] == []
+        if operator_id == "c":
+            assert packet["packet_kind"] == "evidence_report"
+            assert packet["algorithm_identity"] == "operator-c-evidence-audit/1"
+            assert packet["prompt_identity"] == "operator-c-full-text-extraction/1"
+            assert isinstance(packet["nearest_prior_art"], list)
+        else:
+            assert packet["packet_kind"] == "evidence_plan"
+            assert packet["algorithm_identity"] == "not_run"
+            assert packet["prompt_identity"] == "not_run"
+            assert packet["nearest_prior_art"] == []
         assert isinstance(packet["input_bindings"], list)
         assert isinstance(packet["known_limitations"], list)
         created_at = datetime.fromisoformat(str(packet["created_at_utc"]).replace("Z", "+00:00"))
