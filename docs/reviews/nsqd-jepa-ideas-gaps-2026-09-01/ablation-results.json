@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "track": "same_policy:finance/1",
+  "candidate_count": 3,
+  "controls": [
+    "single_paper_future_work",
+    "rarity_only_negative_control"
+  ],
+  "operator_a_baseline_status": "not_executed",
+  "operator_b_baseline_status": "not_executed",
+  "evaluation_kind": "bounded structural evidence screen; no model training or candidate scoring",
+  "runs": [
+    {
+      "method": "cross_paper_mechanistic_bridge",
+      "candidate_ids": ["JEPA-IDEA-01", "JEPA-IDEA-02", "JEPA-IDEA-03"],
+      "mechanistic_bridge_count": 3,
+      "falsifiable_test_count": 3,
+      "prior_art_screened_count": 3,
+      "accepted_for_report_count": 3
+    },
+    {
+      "method": "single_paper_future_work",
+      "candidate_ids": ["JEPA-IDEA-01-near-duplicate-control"],
+      "mechanistic_bridge_count": 1,
+      "falsifiable_test_count": 1,
+      "prior_art_screened_count": 1,
+      "accepted_for_report_count": 0,
+      "limitation": "PELT regimes plus multi-horizon training rephrase explicit Fin-JEPA future work; the control excludes the reportable distributional-uncertainty and abstention distinction."
+    },
+    {
+      "method": "rarity_only_negative_control",
+      "candidate_ids": [],
+      "mechanistic_bridge_count": 0,
+      "falsifiable_test_count": 0,
+      "prior_art_screened_count": 0,
+      "accepted_for_report_count": 0,
+      "limitation": "Zero co-occurrence alone is rejected as a reason to generate or recommend an idea."
+    }
+  ],
+  "method_recommendation": "report_only_cross_paper_mechanistic_bridge",
+  "selection_reason": "It yields provenance-linked mechanisms and falsifiable tests that rarity alone cannot provide; no claim is made that it beats executable Operator A/B baselines.",
+  "runtime_authorized": false,
+  "evidence_sufficient_for_operator_e": false,
+  "remaining_before_operator_e_evidence": [
+    "execute matched-count Operator A and B baselines",
+    "broaden prior-art review beyond the bounded screening corpus",
+    "measure usefulness and duplication on generated artifacts",
+    "obtain separate human activation if runtime use is later desired"
+  ]
+}
