@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "packet_kind": "research_result_report",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "evidence_sufficient": false,
+  "corpus_fact_writes": 0,
+  "operator_activation_requested": false,
+  "cutoff_utc": "2026-09-01T00:00:00Z",
+  "sealed_at_utc": "2026-09-01T17:26:09Z",
+  "input_bindings": {
+    "manifest": "../nsqd-projection-review-2026-08-28/final/manifest.toml",
+    "record_ids": ["N11-FIN-01", "N11-FIN-02", "N11-FIN-03", "N11-FIN-04", "N11-FIN-05"]
+  },
+  "result_counts": {
+    "extracted_facts": 10,
+    "inferred_gaps": 4,
+    "proposed_ideas": 3,
+    "candidate_axis_hypotheses": 1
+  },
+  "artifact_sha256": {
+    "ablation-results.json": "fa6269da09fb823617681300632e317b9ab953d594a56be839d4275f0947f6a7",
+    "prior-art-checks.jsonl": "62874a678b571a515a4ba8a7a100ee4ffe0dabdca0e3d650cd6dec28eda2f0d6",
+    "results.json": "cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2",
+    "source-ledger.json": "12889d817f4a6e13e2187c7d28bd0059c1a2c08d0a33b453012dc8b2cbf451ae"
+  },
+  "packet_digest_algorithm": "sha256(canonical_json(artifact_sha256))",
+  "packet_digest": "c8547b8ffea8192f62085c627d34743d6659d54dc6f20d195796b0cf5a799bb8",
+  "independent_review": {
+    "workflow": "writer-reviewer/1",
+    "reviewer_id": "openai/gpt-5.4 / Sisyphus-Junior",
+    "required_rounds": 4,
+    "completed_rounds": 4,
+    "current_decision": "approve_report_only",
+    "final_reviewed_at_utc": "2026-09-01T16:25:59Z",
+    "resolved_findings": [
+      "removed unsupported macro-release language from JEPA-FACT-06",
+      "bound every co-occurrence feature tag to extracted fact ids",
+      "completed bounded manual prior-art review for JEPA-IDEA-03",
+      "narrowed JEPA-IDEA-01 to calibrated latent uncertainty and abstention beyond Fin-JEPA future work",
+      "attributed JEPA-IDEA-02 causal gating to external prior art",
+      "removed unsupported macro-context language from the gap and idea narratives",
+      "removed residual macro dependencies from JEPA-IDEA-02 test and prior-art scope",
+      "bound JEPA-FACT-04 earnings decay to the approved CET excerpt",
+      "replaced primary-source-only facts 6, 8, and 10 with approved local projection facts",
+      "bound every approved local excerpt to a verified SHA-256 digest"
+    ]
+  },
+  "review_decision": "approved_report_only",
+  "known_limitations": [
+    "only one of five approved records is a direct JEPA paper",
+    "co-occurrence is measured only within five approved finance projections",
+    "prior-art checks are bounded and do not establish novelty",
+    "Operator A and B matched-count baselines were not executed",
+    "the validation_target axis is unstable at this corpus size"
+  ],
+  "forbidden_inferences": [
+    "report inclusion is a novelty finding",
+    "report inclusion is a corpus fact",
+    "the packet authorizes Operator E or F",
+    "the packet authorizes runtime generation or schema mutation"
+  ]
+}
