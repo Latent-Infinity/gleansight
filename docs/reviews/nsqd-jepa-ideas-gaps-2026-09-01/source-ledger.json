@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "cutoff_utc": "2026-09-01T00:00:00Z",
+  "domain_policy_id": "finance/1",
+  "scope": "one direct financial JEPA paper plus four approved adjacent finance representation and forecasting papers",
+  "records": [
+    {
+      "record_id": "N11-FIN-01",
+      "corpus_role": "direct_jepa",
+      "domain_policy_id": "finance/1",
+      "review_status": "approved",
+      "title": "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series",
+      "source_paper_id": "doi:10.2139/ssrn.6855118",
+      "projection_path": "N11-FIN-01.yaml",
+      "projection_sha256": "a53a3709784dc063af81e969f9e006497f4913634c2d3f9c5eee8eb9fae7f0cb",
+      "approved_excerpt": "excerpts/finance-fin-jepa.md",
+      "approved_excerpt_sha256": "d7a85481038ba3a52dbb713656cb98837479ee402b3732a637279934ced40dd2",
+      "primary_full_text_url": "https://github.com/cedricwyh/fin-jepa/blob/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_full_draft.md",
+      "source_limitations": [
+        "prediction error did not reliably discriminate forward returns",
+        "SIGReg ablation, PELT regime detection, multi-horizon training, and several baselines were not run"
+      ]
+    },
+    {
+      "record_id": "N11-FIN-02",
+      "corpus_role": "adjacent_finance_evidence",
+      "domain_policy_id": "finance/1",
+      "review_status": "approved",
+      "title": "Trading through Earnings Seasons using Self-Supervised Contrastive Representation Learning",
+      "source_paper_id": "arxiv:2409.17392",
+      "projection_path": "N11-FIN-02.yaml",
+      "projection_sha256": "c2b1566e4bcde1ca7795a850cd2e2c173d36fa5a7dab6302d7c41d4ad54b8ec9",
+      "approved_excerpt": "excerpts/finance-cet.md",
+      "approved_excerpt_sha256": "8899b360fd7093286af98a343bf13a2f8529beef2786e6eadbfde00da942cfef",
+      "primary_full_text_url": "https://arxiv.org/pdf/2409.17392",
+      "source_limitations": [
+        "earnings usefulness decays rapidly after release",
+        "the source uses contrastive predictive coding rather than JEPA"
+      ]
+    },
+    {
+      "record_id": "N11-FIN-03",
+      "corpus_role": "adjacent_finance_evidence",
+      "domain_policy_id": "finance/1",
+      "review_status": "approved",
+      "title": "Fx-spot predictions with state-of-the-art transformer and time embeddings",
+      "source_paper_id": "doi:10.1016/j.eswa.2024.123538",
+      "projection_path": "N11-FIN-03.yaml",
+      "projection_sha256": "6cb8c419012687cf59234d898665ed6a5f9001809a570638530f4b5caa045620",
+      "approved_excerpt": "excerpts/finance-fx-transformer.md",
+      "approved_excerpt_sha256": "74382586d45e0dc0353dd695f95bddfe3e6664ce9337f7f1392a11aa43636389",
+      "primary_full_text_url": "https://edoc.hu-berlin.de/server/api/core/bitstreams/f58750a2-b37c-4657-a50d-96908685a3c3/content",
+      "source_limitations": [
+        "the approved projection is limited to three FX pairs at a ten-minute horizon"
+      ]
+    },
+    {
+      "record_id": "N11-FIN-04",
+      "corpus_role": "adjacent_finance_evidence",
+      "domain_policy_id": "finance/1",
+      "review_status": "approved",
+      "title": "EXFormer: A Multi-Scale Trend-Aware Transformer with Dynamic Variable Selection for Foreign Exchange Returns Prediction",
+      "source_paper_id": "arxiv:2512.12727",
+      "projection_path": "N11-FIN-04.yaml",
+      "projection_sha256": "5e72b16c73c9d80d90805f65ec8e5445a6aabbfa7af54e9e9327086ad893daef",
+      "approved_excerpt": "excerpts/finance-exformer.md",
+      "approved_excerpt_sha256": "a03a700f8944c2eea86ef1da143daec03f0368c8eef9d30dc0bed8ee20d36944",
+      "primary_full_text_url": "https://arxiv.org/pdf/2512.12727v2",
+      "source_limitations": [
+        "the approved projection covers day-ahead FX returns and does not establish other horizons or asset classes"
+      ]
+    },
+    {
+      "record_id": "N11-FIN-05",
+      "corpus_role": "adjacent_finance_evidence",
+      "domain_policy_id": "finance/1",
+      "review_status": "approved",
+      "title": "Denoised Labels for Financial Time-Series Data via Self-Supervised Learning",
+      "source_paper_id": "doi:10.1145/3533271.3561687",
+      "projection_path": "N11-FIN-05.yaml",
+      "projection_sha256": "cdfc67f7ff9c8ff8f39139df3e2906f6a6229d818418ce834868911f76edb6e9",
+      "approved_excerpt": "excerpts/finance-denoised-labels.md",
+      "approved_excerpt_sha256": "1347adc049591baac68831c9ce2a50817f7fd8feb116c51e2f26e5ab57bd634d",
+      "primary_full_text_url": "https://arxiv.org/pdf/2112.10139",
+      "source_limitations": [
+        "the approved projection covers daily S&P 500, one-minute Bitcoin, and one limit-order dataset"
+      ]
+    }
+  ],
+  "interpretation_boundary": "Only N11-FIN-01 is a direct JEPA paper. N11-FIN-02 through N11-FIN-05 are approved adjacent evidence and are not relabeled as JEPA."
+}
