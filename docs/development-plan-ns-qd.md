@@ -103,6 +103,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.34 | 2026-08-31 | Operator C wait-on no longer requires B activation; C stays deferred until named-literature evidence and explicit human activation. Four-command gate: 1326 passed, 2 skipped, 92.00%; dedicated NSQD: 654 passed, 92.22%. |
 | 1.6.35 | 2026-08-31 | Operator C identifiers bind from approved N11 projections. A digest-bound external evidence audit checked both pairs, seven bridge concepts, direct prior art, two extraction methods, and shuffled controls; no two-sided bridge was supported, so candidate outputs remain empty, evidence is insufficient, noninteraction stays unverified, and runtime stays disabled. Independent review approved the negative conclusion, not activation. Four-command gate: 1345 passed, 2 skipped, 92.08%. |
 | 1.6.36 | 2026-09-01 | Operator E binds approved finance/optimization inventory on unpooled tracks; combinations stay empty and executable `τ` still does not authorize E. Four-command gate: 1349 passed, 2 skipped, 92.16%; dedicated NSQD: 677 passed, 92.51%. |
+| 1.6.37 | 2026-09-01 | A digest-bound, four-round-reviewed finance report uses one direct JEPA paper plus four approved adjacent papers to record ten facts, four inferred corpus gaps, three report-only ideas, and one non-admitted axis hypothesis. Bounded prior-art absence does not establish novelty; Operators E/F remain unauthorized. Four-command gate: 1354 passed, 2 skipped, 92.16%; dedicated NSQD: 682 passed, 92.51%. |
 
 ---
 
@@ -183,6 +184,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | NSQD.NOVELTY.TAU_PACKET.v1 | Packet 2b contains policy-balanced real measurements from unique candidate artifacts against approved k-complete corpus snapshots; autonomous writer/reviewer labels and frontier adjudications are role-separated, model/prompt/digest bound, and never described as human labels; importing or evaluating the packet cannot mutate runtime `τ` | N11 | Data Contract, Behavior | LOCAL-NSQD-G | EV-N19 |
 | NSQD.STATUS.CALENDAR_REPORT.v1 | Packet 1c defines a report-only 730-day versus 24-calendar-month UTC comparison with month-end clamping; runtime remains the overridable 730-day window pending separate replay and human activation | Optional packet 1c | Data Contract | LOCAL-NSQD-M | EV-N20 |
 | NSQD.OPERATOR.ACTIVATION_PLAN.v1 | CLI selection remains A/B-only. C's external evidence report rejects all seven proposed bridges across both approved pairs and extraction/control runs; candidate outputs remain empty, evidence is insufficient, noninteraction is unverified, and C-G remain runtime-disabled | Optional packet 5 | Data Contract, Behavior | LOCAL-NSQD-D | EV-N20 |
+| NSQD.JEPA.IDEAS_GAPS_REPORT.v1 | Given the five approved finance projections, the bounded report distinguishes one direct JEPA paper from four adjacent papers and emits ten source-bound facts, four inferred corpus gaps, three report-only testable ideas, bounded prior-art caveats, and one non-admitted axis hypothesis without writing corpus facts or authorizing Operators E/F | JEPA finance report | Data Contract | LOCAL-NSQD-D | EV-N21 |
 
 **Not activated on smoke:** any “production novelty term > 0” fact; any “smoke card became a production elite” fact. **Non-default:** Operator B requires configuration authorization plus internal job/use-case selection. **Deferred:** operators C–G.
 
@@ -213,6 +215,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EV-N18 | NSQD.SURFACE.UNIFIED.v1 | `uv run pytest tests/cli/test_gleansight.py tests/nsqd/test_cli.py tests/ui/test_discovery_screens.py tests/ui/test_app.py tests/ui/test_ui_main.py -q --no-cov` | N10 | Required |
 | EV-N19 | NSQD.NOVELTY.TAU_PACKET.v1 | `uv run pytest tests/nsqd/test_tau_measurement_export.py tests/nsqd/test_tau_review.py tests/nsqd/test_autonomous_tau_review.py tests/nsqd/test_domain_policies.py::test_novelty_threshold_tau_is_active_and_tunable -q --no-cov` | N11 | Required |
 | EV-N20 | NSQD.STATUS.CALENDAR_REPORT.v1, NSQD.OPERATOR.ACTIVATION_PLAN.v1 | `uv run pytest tests/nsqd/test_operator_activation_packets.py tests/nsqd/test_operator_c.py tests/nsqd/test_operator_c_evidence_packet.py tests/nsqd/test_operator_e.py tests/nsqd/test_status_window_ablation.py tests/nsqd/test_cli.py tests/nsqd/test_operator_a.py tests/nsqd/test_operator_b.py -q --no-cov` | Optional packets 1c/5 | Required |
+| EV-N21 | NSQD.JEPA.IDEAS_GAPS_REPORT.v1 | `uv run pytest tests/nsqd/test_jepa_ideas_gaps_packet.py -q --no-cov` | JEPA finance report | Required |
 
 Phase close: evidence Required + facts Active (`test_fact_surface.py`).
 
