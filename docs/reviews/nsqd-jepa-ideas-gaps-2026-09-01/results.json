@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "packet_kind": "jepa_ideas_gaps_results",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "track": "same_policy:finance/1",
+  "cooccurrence_snapshot": {
+    "method": "exact co-occurrence of approved claim-feature tags across five finance projections",
+    "record_ids": [
+      "N11-FIN-01",
+      "N11-FIN-02",
+      "N11-FIN-03",
+      "N11-FIN-04",
+      "N11-FIN-05"
+    ],
+    "feature_matrix": {
+      "N11-FIN-01": ["anti_collapse", "daily_equity", "forward_latent_prediction", "latent_fidelity_evaluation"],
+      "N11-FIN-02": ["contrastive_prediction", "earnings_context", "event_time", "price_volume_fusion"],
+      "N11-FIN-03": ["cross_asset_inputs", "intraday", "returns_target", "time_embeddings"],
+      "N11-FIN-04": ["daily_fx", "dynamic_variable_selection", "multiscale_trends", "regime_sensitivity", "returns_target"],
+      "N11-FIN-05": ["denoised_targets", "downstream_labels", "multi_frequency", "noise_robustness"]
+    },
+    "feature_evidence": {
+      "N11-FIN-01:anti_collapse": ["JEPA-FACT-01"],
+      "N11-FIN-01:daily_equity": ["JEPA-FACT-01"],
+      "N11-FIN-01:forward_latent_prediction": ["JEPA-FACT-01"],
+      "N11-FIN-01:latent_fidelity_evaluation": ["JEPA-FACT-02"],
+      "N11-FIN-02:contrastive_prediction": ["JEPA-FACT-03"],
+      "N11-FIN-02:earnings_context": ["JEPA-FACT-03"],
+      "N11-FIN-02:event_time": ["JEPA-FACT-04"],
+      "N11-FIN-02:price_volume_fusion": ["JEPA-FACT-03"],
+      "N11-FIN-03:cross_asset_inputs": ["JEPA-FACT-05"],
+      "N11-FIN-03:intraday": ["JEPA-FACT-05"],
+      "N11-FIN-03:returns_target": ["JEPA-FACT-05"],
+      "N11-FIN-03:time_embeddings": ["JEPA-FACT-05"],
+      "N11-FIN-04:daily_fx": ["JEPA-FACT-07"],
+      "N11-FIN-04:dynamic_variable_selection": ["JEPA-FACT-07"],
+      "N11-FIN-04:multiscale_trends": ["JEPA-FACT-07"],
+      "N11-FIN-04:regime_sensitivity": ["JEPA-FACT-07"],
+      "N11-FIN-04:returns_target": ["JEPA-FACT-07"],
+      "N11-FIN-05:denoised_targets": ["JEPA-FACT-09"],
+      "N11-FIN-05:downstream_labels": ["JEPA-FACT-09"],
+      "N11-FIN-05:multi_frequency": ["JEPA-FACT-09"],
+      "N11-FIN-05:noise_robustness": ["JEPA-FACT-09"]
+    },
+    "snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+    "limitation": "Feature tags are bounded to approved projections; zero co-occurrence is corpus rarity only and is not evidence of global novelty or usefulness."
+  },
+  "extracted_facts": [
+    {
+      "fact_id": "JEPA-FACT-01",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-01",
+      "source_location": "excerpts/finance-fin-jepa.md:5-9",
+      "claim": "Fin-JEPA predicts ten future 64-dimensional latents from a thirty-step daily context and uses SIGReg against collapse."
+    },
+    {
+      "fact_id": "JEPA-FACT-02",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-01",
+      "source_location": "N11-FIN-01.yaml:12-17",
+      "claim": "Latent prediction improves over identity, while prediction error does not reliably discriminate forward returns."
+    },
+    {
+      "fact_id": "JEPA-FACT-03",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-02",
+      "source_location": "excerpts/finance-cet.md:5-9",
+      "claim": "CET combines price-volume and earnings contexts and contrastively predicts future price-volume latents."
+    },
+    {
+      "fact_id": "JEPA-FACT-04",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-02",
+      "source_location": "excerpts/finance-cet.md:5; N11-FIN-02.yaml:12-19",
+      "claim": "CET targets event-time next-minute movement because earnings information decays after release."
+    },
+    {
+      "fact_id": "JEPA-FACT-05",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-03",
+      "source_location": "N11-FIN-03.yaml:12-18",
+      "claim": "The FX Transformer uses multivariate cross-asset technical and fundamental inputs for ten-minute return prediction."
+    },
+    {
+      "fact_id": "JEPA-FACT-06",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-03",
+      "source_location": "excerpts/finance-fx-transformer.md:7",
+      "claim": "The study compares Transformer, LSTM, and ARIMA across three FX spot rates using financial and statistical metrics."
+    },
+    {
+      "fact_id": "JEPA-FACT-07",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-04",
+      "source_location": "excerpts/finance-exformer.md:5-9",
+      "claim": "EXFormer uses multiscale trends, dynamic exogenous-variable selection, and regime-sensitive attention for daily FX returns."
+    },
+    {
+      "fact_id": "JEPA-FACT-08",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-04",
+      "source_location": "N11-FIN-04.yaml:12-17",
+      "claim": "EXFormer forecasts day-ahead FX returns using multiscale receptive fields and 28 dynamically weighted exogenous covariates."
+    },
+    {
+      "fact_id": "JEPA-FACT-09",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-05",
+      "source_location": "excerpts/finance-denoised-labels.md:5-7",
+      "claim": "A denoising autoencoder reconstructs smoother series, recomputes labels, and improves downstream classification on daily and high-frequency data."
+    },
+    {
+      "fact_id": "JEPA-FACT-10",
+      "result_class": "extracted_fact",
+      "source_basis": "approved_projection",
+      "source_record_id": "N11-FIN-05",
+      "source_location": "N11-FIN-05.yaml:12-17",
+      "claim": "The study evaluates denoised labels with an SVM and binary trading strategies on daily S&P 500, one-minute Bitcoin, and limit-order data."
+    }
+  ],
+  "inferred_gaps": [
+    {
+      "gap_id": "JEPA-GAP-01",
+      "result_class": "inferred_gap",
+      "title": "Representation fidelity is not aligned with economic utility",
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-02", "JEPA-FACT-09"],
+      "inference": "The corpus lacks a validated link from improved latent prediction to calibrated, actionable return or risk decisions.",
+      "uncertainty": "This is a gap in the five-paper approved corpus, not proof that the broader literature lacks such a link."
+    },
+    {
+      "gap_id": "JEPA-GAP-02",
+      "result_class": "inferred_gap",
+      "title": "Event and regime conditioning are separated from latent prediction",
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-03", "JEPA-FACT-04", "JEPA-FACT-07", "JEPA-FACT-08"],
+      "inference": "No approved paper jointly trains a JEPA latent predictor across event-time, regime, and multiple forecast horizons.",
+      "uncertainty": "General time-series JEPA and financial regime models partially overlap this direction outside the approved corpus."
+    },
+    {
+      "gap_id": "JEPA-GAP-03",
+      "result_class": "inferred_gap",
+      "title": "Cross-asset, earnings, and exogenous context are not integrated into a financial JEPA objective",
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-03", "JEPA-FACT-05", "JEPA-FACT-07"],
+      "inference": "The approved corpus separates JEPA latent prediction from event, cross-asset, and dynamically selected exogenous context.",
+      "uncertainty": "External multimodal finance models cover much of the context machinery without using JEPA."
+    },
+    {
+      "gap_id": "JEPA-GAP-04",
+      "result_class": "inferred_gap",
+      "title": "Target construction and evaluation protocols are not comparable",
+      "supporting_fact_ids": ["JEPA-FACT-02", "JEPA-FACT-04", "JEPA-FACT-05", "JEPA-FACT-08", "JEPA-FACT-09", "JEPA-FACT-10"],
+      "inference": "Latent MSE, movement classification, return forecasts, trading metrics, and denoised labels are evaluated under incompatible targets and horizons.",
+      "uncertainty": "A larger corpus may reveal an existing normalization benchmark; none is present in the approved set."
+    }
+  ],
+  "proposed_ideas": [
+    {
+      "candidate_id": "JEPA-IDEA-01",
+      "result_class": "proposed_idea",
+      "title": "Calibrated latent-distribution Fin-JEPA for regime-specific abstention",
+      "track": "same_policy:finance/1",
+      "component_record_ids": ["N11-FIN-01", "N11-FIN-04"],
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-02", "JEPA-FACT-07", "JEPA-FACT-08"],
+      "cooccurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "atypicality": {
+        "combination": ["forward_latent_prediction", "regime_sensitivity", "multiscale_trends"],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Replace point latent prediction with a calibrated latent distribution and use context-only regime strata to test whether uncertainty supports abstention. Regime detection and multi-horizon prediction are controls inherited from Fin-JEPA future work; the distinct hypothesis is calibrated distributional uncertainty tied to risk-coverage.",
+      "distinct_from_source_future_work": "Fin-JEPA proposes PELT regimes and multi-horizon training but does not propose or evaluate calibrated latent distributions, abstention, or risk-coverage.",
+      "falsifiable_test": {
+        "design": "Walk-forward equity and FX evaluation with regime labels fit inside each training fold; compare point JEPA, the paper's regime and multi-horizon future-work baseline, distributional JEPA, and calibrated abstention.",
+        "primary_metric": "out-of-sample latent negative log likelihood with calibration error",
+        "secondary_metrics": ["identity-relative latent MSE", "return-signal risk-coverage", "maximum drawdown at matched turnover"],
+        "failure_condition": "Reject if calibration or risk-coverage does not improve over point Fin-JEPA in held-out regimes."
+      },
+      "prior_art_status": "partial_overlap",
+      "decision": "review",
+      "runtime_authorized": false
+    },
+    {
+      "candidate_id": "JEPA-IDEA-02",
+      "result_class": "proposed_idea",
+      "title": "Event-conditioned financial JEPA with causal relevance gating",
+      "track": "same_policy:finance/1",
+      "component_record_ids": ["N11-FIN-01", "N11-FIN-02", "N11-FIN-03", "N11-FIN-04"],
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-03", "JEPA-FACT-04", "JEPA-FACT-05", "JEPA-FACT-06", "JEPA-FACT-07"],
+      "cooccurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "atypicality": {
+        "combination": ["forward_latent_prediction", "earnings_context", "cross_asset_inputs", "dynamic_variable_selection"],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Encode timestamp-safe earnings and dynamically selected exogenous context separately, open a relevance gate only when that context adds predictive information beyond price history, and train the gated context to predict future market latents across event-time windows. The causal relevance gate is imported from external GS-FUSE/CAMEF prior art and is not an approved-corpus fact.",
+      "external_mechanism_refs": ["arxiv:2605.28520", "arxiv:2502.04592"],
+      "falsifiable_test": {
+        "design": "Pre-register earnings and exogenous-data availability timestamps; compare price-only JEPA, unconditional fusion, relevance-gated fusion, and shuffled-event controls with purged walk-forward folds.",
+        "primary_metric": "event-window future-latent prediction gain over price-only JEPA",
+        "secondary_metrics": ["day-by-day signal decay", "directional accuracy", "timestamp leakage violations", "duplicate prior-art rate"],
+        "failure_condition": "Reject if gains disappear against shuffled events or if the gate uses information unavailable at decision time."
+      },
+      "prior_art_status": "partial_overlap",
+      "decision": "review",
+      "runtime_authorized": false
+    },
+    {
+      "candidate_id": "JEPA-IDEA-03",
+      "result_class": "proposed_idea",
+      "title": "Dual-target Fin-JEPA for raw dynamics and denoised market state",
+      "track": "same_policy:finance/1",
+      "component_record_ids": ["N11-FIN-01", "N11-FIN-05"],
+      "supporting_fact_ids": ["JEPA-FACT-01", "JEPA-FACT-02", "JEPA-FACT-09", "JEPA-FACT-10"],
+      "cooccurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "atypicality": {
+        "combination": ["forward_latent_prediction", "denoised_targets", "noise_robustness"],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Train one predictor against the ordinary future encoder latent and a second head against a denoised, volatility-aware state target, forcing shared context features to preserve fast dynamics while exposing a smoother decision-relevant state.",
+      "falsifiable_test": {
+        "design": "Compare raw-target JEPA, denoised-target-only JEPA, dual-target JEPA, and shuffled-denoising controls on equities, Bitcoin, and FX with identical walk-forward splits.",
+        "primary_metric": "held-out downstream state classification at matched latent prediction error",
+        "secondary_metrics": ["forward-return rank correlation", "turnover-adjusted Sharpe", "maximum drawdown", "latent collapse metrics"],
+        "failure_condition": "Reject if denoised targets improve labels but not held-out economic metrics, or if raw-latent fidelity materially degrades."
+      },
+      "prior_art_status": "partial_overlap",
+      "decision": "review",
+      "runtime_authorized": false
+    }
+  ],
+  "candidate_axis_hypothesis": {
+    "axis_id": "validation_target",
+    "status": "needs_more_corpus",
+    "definition": "The primary level at which a representation is validated: representation fidelity, predictive task, economic utility, or calibrated risk.",
+    "measurement_protocol": "Two reviewers independently assign one primary validation target from the paper's declared primary metric; disagreements are adjudicated and multi-target studies retain a secondary tag.",
+    "observed_values": {
+      "N11-FIN-01": "representation_fidelity",
+      "N11-FIN-02": "predictive_task",
+      "N11-FIN-03": "economic_utility",
+      "N11-FIN-04": "economic_utility",
+      "N11-FIN-05": "predictive_task"
+    },
+    "residual_value": "Distinguishes whether a method stops at latent fidelity or validates decision/risk utility, which current mechanism/target/horizon axes do not encode directly.",
+    "known_confounds": ["papers often report multiple metric families", "economic metrics use incomparable costs and horizons", "five records are insufficient for stability"],
+    "schema_admission_recommended": false
+  },
+  "forbidden_inferences": [
+    "all five records are JEPA papers",
+    "zero corpus co-occurrence proves global novelty",
+    "a proposed idea is a corpus fact",
+    "novelty tau authorizes Operator E",
+    "this report authorizes runtime generation or schema mutation"
+  ]
+}
