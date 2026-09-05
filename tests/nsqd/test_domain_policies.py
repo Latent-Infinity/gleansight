@@ -642,6 +642,17 @@ def test_card_schema_rejects_each_required_field() -> None:
         assert missing_card_fields(broken) == [field]
 
 
+def test_generating_operator_accepts_runtime_operators_only() -> None:
+    from nsqd.domain.card import require_generating_operator
+
+    assert require_generating_operator("A") == "A"
+    assert require_generating_operator("B") == "B"
+    assert require_generating_operator("E") == "E"
+    for operator in ("C", "D", "F", "G", "a", "", None):
+        with pytest.raises(ValueError, match="runtime operator"):
+            require_generating_operator(operator)
+
+
 def test_requirement_card_is_rejected_as_corpus_record() -> None:
     assert corpus_ingest_rejection({"kind": "candidate-requirement-card"}) == (
         "requirement-card is not a corpus record"

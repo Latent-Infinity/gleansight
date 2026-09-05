@@ -23,6 +23,7 @@ from nsqd.domain.card import (
     missing_card_fields,
     needs_re_score,
     novelty_tau_stamp,
+    require_generating_operator,
 )
 from nsqd.domain.coverage import evaluate_rank_guard
 from nsqd.domain.diverge import (
@@ -1636,7 +1637,7 @@ class ScoreUseCase:
             "cell_id": cell_id,
             "archive_cell_key": archive_cell_key(domain_policy_id=policy_id, cell_id=cell_id),
             "title": candidate.get("title") or "",
-            "generating_operator": artifact["operator"],
+            "generating_operator": require_generating_operator(artifact["operator"]),
             "snapshot_id": snapshot_id,
             "corpus_version": corpus_version,
             "viability": via,
@@ -1823,6 +1824,10 @@ def _normalize_archive_card(
 
     normalized["domain_policy_id"] = policy.policy_id
     normalized["archive_cell_key"] = derived_archive_key
+    if "generating_operator" in normalized:
+        normalized["generating_operator"] = require_generating_operator(
+            normalized.get("generating_operator")
+        )
     return normalized
 
 

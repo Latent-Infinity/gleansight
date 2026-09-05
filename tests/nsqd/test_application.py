@@ -21,10 +21,12 @@ from nsqd.app.use_cases import (
     ArchiveInsertUseCase,
     DivergeUseCase,
     GroundUseCase,
+    RescoreUseCase,
     ScoreUseCase,
     candidate_body,
     empty_smoke_snapshot_id,
 )
+from nsqd.domain.operator_e import OPERATOR_E_ATYPICALITY_INTERPRETATION
 from nsqd.domain.policy import FINANCE_POLICY
 from nsqd.domain.snapshot import snapshot_id
 from nsqd.domain.status import CellStatus
@@ -163,6 +165,113 @@ def test_allowlisted_operator_b_provenance_reaches_scored_card() -> None:
     )
 
     assert scored["card"]["generating_operator"] == "B"
+
+
+def _operator_e_candidate() -> dict[str, Any]:
+    candidate = _load_card("gamma-flow.yaml")
+    candidate.update(
+        {
+            "combination_track": "same_policy",
+            "components": [
+                {
+                    "id": "N11-FIN-01",
+                    "kind": "corpus-paper-paraphrase",
+                    "review_status": "approved",
+                    "domain_policy_id": "finance/1",
+                },
+                {
+                    "id": "N11-FIN-04",
+                    "kind": "corpus-paper-paraphrase",
+                    "review_status": "approved",
+                    "domain_policy_id": "finance/1",
+                },
+            ],
+            "mechanistic_bridge": (
+                "Replace point latent prediction with a calibrated latent distribution "
+                "and use context-only regime strata to test whether uncertainty "
+                "supports abstention."
+            ),
+            "atypicality": {
+                "interpretation": OPERATOR_E_ATYPICALITY_INTERPRETATION,
+                "score": 1.0,
+            },
+            "nearest_prior_combinations": [],
+            "co_occurrence_snapshot_id": "8" * 64,
+        }
+    )
+    return candidate
+
+
+def test_allowlisted_operator_e_provenance_reaches_scored_card_and_rescore() -> None:
+    ctx = _ctx()
+    candidate = _operator_e_candidate()
+    descriptor = candidate["research_descriptor"]
+    assert isinstance(descriptor, dict)
+    target = FINANCE_POLICY.cell_id(descriptor)
+    statuses: dict[str, CellStatus] = {cell_id: "Unknown" for cell_id in FINANCE_POLICY.universe()}
+    statuses[target] = "Missing"
+    with pytest.raises(ValueError, match="not enabled by composition"):
+        DivergeUseCase(candidates=ctx.candidates, cards=ctx.cards, clock=ctx.clock).run(
+            candidate=candidate,
+            axioms=[{"statement": "combine approved components", "cell_id": target}],
+            operator="E",
+            generator_run_id="gen-e-default",
+            target_cell_id=target,
+            cell_statuses=statuses,
+        )
+    artifact_hash = DivergeUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        clock=ctx.clock,
+        enabled_operators=frozenset({"A", "E"}),
+    ).run(
+        candidate=candidate,
+        axioms=[{"statement": "combine approved components", "cell_id": target}],
+        operator="E",
+        generator_run_id="gen-e",
+        target_cell_id=target,
+        cell_statuses=statuses,
+    )
+    sid = empty_smoke_snapshot_id()
+    ctx.snapshots.commit(sid, [], schema_version=1)
+    GroundUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+    ).run(candidate_artifact_hash=artifact_hash, snapshot_id=sid, corpus_version=1)
+
+    scored = ScoreUseCase(
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+    ).run(
+        candidate_artifact_hash=artifact_hash,
+        evaluator_run_id="eval-e",
+        snapshot_id=sid,
+        corpus_version=1,
+        snapshot_state="smoke_only",
+    )
+    assert scored["card"]["generating_operator"] == "E"
+
+    later = "later-snap"
+    later_version = ctx.snapshots.commit(later, ["later"], schema_version=1)
+    rescored = RescoreUseCase(
+        snapshots=ctx.snapshots,
+        records=ctx.records,
+        index=ctx.index,
+        candidates=ctx.candidates,
+        cards=ctx.cards,
+    ).run(
+        card_id=str(scored["card"]["card_id"]),
+        current_snapshot_id=later,
+        current_corpus_version=later_version,
+        snapshot_state="smoke_only",
+        evaluator_run_id="eval-e-rescore",
+    )
+    assert rescored["needs_re_score"] is True
+    assert rescored["card"]["generating_operator"] == "E"
 
 
 def test_local_grounding_empty_snapshot_is_unevaluated_and_ignores_live_search() -> None:

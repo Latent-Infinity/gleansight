@@ -296,7 +296,7 @@ When explicitly allowlisted by composition, Operator E:
 2. Keep same-policy and cross-policy tracks unpooled. Same-policy combinations share one `domain_policy_id` and bind a co-occurrence snapshot. Cross-policy combinations bind distinct source and target policies; source evidence cannot satisfy target-policy sufficiency.
 3. Require a provenance-bound mechanistic bridge. Rarity-only generation (`generation_method=rarity_only_negative_control` or a rarity-only bridge) is rejected. Low co-occurrence or downstream novelty score alone is insufficient. Executable `τ` is not authorization.
 4. Record atypicality as corpus rarity only, plus `nearest_prior_combinations` (possibly empty).
-5. Occupy an `ALG-SEL` target without axiom inversion. Persist `operator=E`; a later scored card derives `generating_operator=E`. E does not score, rank, self-approve, or write corpus records.
+5. Occupy an `ALG-SEL` target without axiom inversion. Persist `operator=E`; a later scored or rescored card derives `generating_operator=E`. Deferred operators cannot appear on cards. E does not score, rank, self-approve, or write corpus records.
 6. Leave report-only JEPA E artifacts ungenerated until a caller submits a validated combination through `DivergeUseCase`.
 
 **Exposure boundary.** `DivergeUseCase` may persist `operator=E` only when E is explicitly present in the composition allowlist. Default composition is `A`. The CLI remains A/B-only; application callers enabling E must supply target-bound proof. E does not invent harvest seeds or DATA records.

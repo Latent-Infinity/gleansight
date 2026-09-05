@@ -20,6 +20,7 @@ REQUIRED_CARD_FIELDS = (
     "candidate_artifact_hash",
     "card_decision",
 )
+RUNTIME_GENERATING_OPERATORS = frozenset({"A", "B", "E"})
 
 
 def missing_card_fields(card: dict[str, Any]) -> list[str]:
@@ -28,6 +29,12 @@ def missing_card_fields(card: dict[str, Any]) -> list[str]:
         if field not in card or card[field] is None or card[field] == "":
             missing.append(field)
     return missing
+
+
+def require_generating_operator(operator: object) -> str:
+    if not isinstance(operator, str) or operator not in RUNTIME_GENERATING_OPERATORS:
+        raise ValueError("generating_operator is not a runtime operator")
+    return operator
 
 
 def corpus_ingest_rejection(payload: dict[str, Any]) -> str | None:
