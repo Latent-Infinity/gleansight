@@ -106,13 +106,18 @@ def test_operator_decisions_support_b_without_enabling_it_by_default() -> None:
     assert operator_is_enabled("B") is False
     assert operator_is_enabled("B", enabled_operators=frozenset({"A", "B"})) is True
     assert "composition" in by_id["B"].wait_on
-    for operator_id in ("C", "D", "E", "F", "G"):
+    assert by_id["E"].activation == "experimental"
+    assert by_id["E"].runtime_enabled is True
+    assert operator_is_enabled("E") is False
+    assert operator_is_enabled("E", enabled_operators=frozenset({"A", "E"})) is True
+    assert operator_is_enabled("E", enabled_operators=frozenset({"A"})) is False
+    assert "composition" in by_id["E"].wait_on
+    assert "tau" in by_id["E"].wait_on
+    for operator_id in ("C", "D", "F", "G"):
         assert by_id[operator_id].activation == "deferred"
         assert by_id[operator_id].runtime_enabled is False
         assert operator_is_enabled(operator_id) is False
     assert operator_is_enabled("A") is True
-    assert "separate" in by_id["E"].wait_on
-    assert "activation" in by_id["E"].wait_on
     assert "axis" in by_id["F"].wait_on.lower()
     assert "failure" in by_id["G"].wait_on.lower()
     with pytest.raises(ValueError, match="unknown operator"):
@@ -124,7 +129,7 @@ def test_executable_tau_does_not_authorize_operator_e() -> None:
     from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU
 
     assert NOVELTY_THRESHOLD_TAU == 0.45
-    with pytest.raises(ValueError, match="operator E is not supported"):
+    with pytest.raises(ValueError, match="not enabled by composition"):
         require_operator("E", enabled_operators=frozenset({"A", "B"}))
 
 

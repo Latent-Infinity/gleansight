@@ -35,7 +35,8 @@ def select_target_cell(
 OPERATOR_IDS = ("A", "B", "C", "D", "E", "F", "G")
 DEFAULT_ENABLED_OPERATORS = frozenset({"A"})
 OperatorActivation = Literal["supported", "experimental", "deferred"]
-SupportedOperator = Literal["A", "B"]
+SupportedOperator = Literal["A", "B", "E"]
+_RUNTIME_OPERATORS = frozenset({"A", "B", "E"})
 
 
 @dataclass(frozen=True)
@@ -72,9 +73,12 @@ def operator_decisions() -> tuple[OperatorDecision, ...]:
         ),
         OperatorDecision(
             "E",
-            "deferred",
-            False,
-            "separate operator-specific evidence and explicit human activation",
+            "experimental",
+            True,
+            (
+                "experimental off-by-default; enabled only by the composition allowlist; "
+                "executable tau is not authorization"
+            ),
         ),
         OperatorDecision(
             "F",
@@ -117,7 +121,7 @@ def require_enabled_operators(
         row = decisions.get(operator_id)
         if row is None:
             raise ValueError(f"unknown operator: {operator_id}")
-        if operator_id not in {"A", "B"} or not row.runtime_enabled:
+        if operator_id not in _RUNTIME_OPERATORS or not row.runtime_enabled:
             raise ValueError(f"operator {operator_id} is not supported")
     return unique
 
@@ -142,15 +146,17 @@ def require_operator(
     enabled_operators: frozenset[str] = DEFAULT_ENABLED_OPERATORS,
 ) -> SupportedOperator:
     allowlist = require_enabled_operators(enabled_operators)
-    if operator not in {"A", "B"}:
-        if operator not in OPERATOR_IDS:
-            raise ValueError(f"unknown operator: {operator}")
+    if operator not in OPERATOR_IDS:
+        raise ValueError(f"unknown operator: {operator}")
+    if operator not in _RUNTIME_OPERATORS:
         raise ValueError(f"operator {operator} is not supported")
     if not operator_is_enabled(operator, enabled_operators=allowlist):
         raise ValueError(f"operator {operator} is not enabled by composition")
     if operator == "A":
         return "A"
-    return "B"
+    if operator == "B":
+        return "B"
+    return "E"
 
 
 def whitespace_cells(
@@ -184,12 +190,14 @@ def require_no_axiom_inversion(
     *,
     candidate: Mapping[str, Any] | None = None,
     axioms: list[Any] | None = None,
+    operator: str = "B",
 ) -> None:
+    message = f"Operator {operator} cannot invert axioms"
     if candidate is not None and candidate.get("inversion") is True:
-        raise ValueError("Operator B cannot invert axioms")
+        raise ValueError(message)
     for item in axioms or []:
         if isinstance(item, dict) and item.get("inverted") is True:
-            raise ValueError("Operator B cannot invert axioms")
+            raise ValueError(message)
 
 
 def normalize_axiom_rows(axioms: list[Any]) -> list[dict[str, str]]:

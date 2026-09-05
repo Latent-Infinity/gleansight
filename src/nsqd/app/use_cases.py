@@ -58,6 +58,7 @@ from nsqd.domain.novelty import (
     novelty_term,
     require_snapshot_state,
 )
+from nsqd.domain.operator_e import require_operator_e_combination
 from nsqd.domain.policy import (
     FINANCE_POLICY,
     DomainPolicy,
@@ -743,6 +744,15 @@ class DivergeUseCase:
                 target=resolved_target,
                 cell_statuses=cell_statuses,
             )
+        if validated_operator == "E":
+            require_operator_e_combination(body)
+            self._require_operator_e_occupancy(
+                candidate=body,
+                source_axioms=source,
+                policy=policy,
+                target=resolved_target,
+                cell_statuses=cell_statuses,
+            )
         actual_elite = self._elite_for_target(
             policy_id=policy.policy_id, target_cell_id=resolved_target
         )
@@ -797,6 +807,22 @@ class DivergeUseCase:
             raise ValueError("research_descriptor must resolve to the Operator B target")
         if not any(row.get("cell_id") == target for row in rows):
             raise ValueError("Operator B requires a target-bound axiom")
+
+    def _require_operator_e_occupancy(
+        self,
+        *,
+        candidate: dict[str, Any],
+        source_axioms: list[Any],
+        policy: DomainPolicy,
+        target: str | None,
+        cell_statuses: dict[str, CellStatus] | None,
+    ) -> None:
+        if target is None or cell_statuses is None:
+            raise ValueError("Operator E requires an ALG-SEL target and status table")
+        require_no_axiom_inversion(candidate=candidate, axioms=source_axioms, operator="E")
+        descriptor = candidate.get("research_descriptor")
+        if not isinstance(descriptor, dict) or policy.cell_id(descriptor) != target:
+            raise ValueError("research_descriptor must resolve to the Operator E target")
 
     @staticmethod
     def _require_axiom_cells(
