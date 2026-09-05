@@ -10,10 +10,10 @@ These packets inventory the smallest evidence currently available for Operators 
 
 | Operator | Packet | Current conclusion | Next gate |
 | --- | --- | --- | --- |
-| C | `operator-c.yaml` | evidence audit and independent negative review completed; both pairs and all extraction methods produced zero two-sided bridges; noninteraction remains unverified | new evidence or pair cycle; human acceptance is not requested |
+| C | `operator-c.yaml` | a second provenance-bound evidence cycle rejected the preferred pair for semantic-object mismatch and the backup for direct prior art; candidate outputs remain empty, evidence remains insufficient, and noninteraction remains unverified | independent technical review of the second negative cycle; human acceptance is not requested |
 | D | `operator-d.yaml` | `optimization/1 → finance/1` selected; blocked because C has no evidence-sufficient, human-accepted bridge | wait for a successful C evidence cycle, then run structure-mapping ablation |
 | E | `operator-e.yaml` | experimental atypical-combination algorithm is executable off by default through the composition allowlist; CLI remains A/B-only; report-only JEPA artifacts remain ungenerated | explicitly configure E for runtime use; do not default-enable B or enable C, D, F, or G; do not treat JEPA report-only artifacts as generated combinations |
-| F | `operator-f.yaml` | one-axis report policy selected; no candidate axis is admissible | candidate-versus-current-and-shuffled ablation |
-| G | `operator-g.yaml` | no approved failure corpus exists; collection contract defined | collect records under `failure-record-contract.yaml`, then ablate memory/trigger policies |
+| F | `operator-f.yaml` | executable fail-closed proposal contract defined; no candidate axis is admitted | collect one valid proposal, then run candidate-versus-current-and-shuffled ablation |
+| G | `operator-g.yaml` | executable fail-closed failure-record contract defined; no approved failure records exist | collect approved records, then ablate memory/trigger policies |
 
-The C, D, F, and G packets are not activation-ready. Every future recommendation requires an explicit baseline and negative-control ablation. E is separately authorized as an experimental, off-by-default capability. D requires an evidence-sufficient, human-accepted C bridge and remains blocked by C's negative report. F and G remain blocked by separate data contracts.
+The C, D, F, and G packets are not activation-ready. Every future recommendation requires an explicit baseline and negative-control ablation. E is separately authorized as an experimental, off-by-default capability and runs only when configuration explicitly adds E, as demonstrated by `operator-e.override.toml`. D requires an evidence-sufficient, human-accepted C bridge and remains blocked by C's negative report. F and G now have executable data contracts but remain blocked on valid evidence collected under those contracts.

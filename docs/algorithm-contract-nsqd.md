@@ -269,10 +269,10 @@ Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does n
 | C | Swanson ABC | deferred; B support is not C authorization | rejected |
 | D | analogical transport | deferred | rejected |
 | E | atypical combination | **experimental**, non-default | enabled only by composition allowlist |
-| F | missing dimensions | deferred; waits on axis-policy clarity | rejected |
-| G | failure resurrection | deferred; waits on an approved failed-experiment corpus | rejected |
+| F | missing dimensions | deferred; executable report-only proposal contract | rejected |
+| G | failure resurrection | deferred; executable report-only failure-record contract | rejected |
 
-Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. On 2026-09-03 the human approved Operator E evidence for experimental implementation and authorized an off-by-default runtime path. The default allowlist is `A`; configuration may add B or E. The divergence CLI may request A or B but cannot widen composition authorization. C, D, F, and G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
+Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. On 2026-09-03 the human approved Operator E evidence for experimental implementation and authorized an off-by-default runtime path. The default allowlist is `A`; configuration may add B or E, with `docs/reviews/nsqd-operator-activation-2026-08-30/operator-e.override.toml` serving as the explicit reviewed E example. The divergence CLI may request A or B but cannot widen composition authorization. C, D, F, and G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 
 ### ALG-OP-B — Archive whitespace (supported, non-default)
 
@@ -300,6 +300,14 @@ When explicitly allowlisted by composition, Operator E:
 6. Leave report-only JEPA E artifacts ungenerated until a caller submits a validated combination through `DivergeUseCase`.
 
 **Exposure boundary.** `DivergeUseCase` may persist `operator=E` only when E is explicitly present in the composition allowlist. Default composition is `A`. The CLI remains A/B-only; application callers enabling E must supply target-bound proof. E does not invent harvest seeds or DATA records.
+
+### ALG-OP-F — Missing-dimension proposal contract (deferred)
+
+`axis-candidate-contract.yaml` and `validate_operator_f_axis_proposal` define a fail-closed, report-only proposal boundary. One proposal must bind a non-registered measurable axis, source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review. Validation or digesting does not register the axis, mutate the archive, write corpus facts, or authorize Operator F.
+
+### ALG-OP-G — Failure-resurrection record contract (deferred)
+
+`failure-record-contract.yaml` and `validate_operator_g_failure_record` define a fail-closed, report-only evidence boundary. A record must bind an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Synthetic, invented, speculative, outcome-free, or unsupported records are rejected. Validation or digesting does not write corpus facts, restart work, or authorize Operator G.
 
 ---
 

@@ -1,7 +1,7 @@
 # Divergence operators packet
 
 **Study:** `ALG.OP`
-**Outcome:** Operators A and B are **supported**. B is non-default and enabled only by a composition allowlist. Operator E is **experimental**, executable, and off by default (`algorithm_identity=operator-e-atypical-combination/1`); configuration may add E. The divergence CLI remains A/B-only and cannot authorize or widen the allowlist. C, D, F, and G stay deferred and runtime-disabled.
+**Outcome:** Operators A and B are **supported**. B is non-default and enabled only by a composition allowlist. Operator E is **experimental**, executable, and off by default (`algorithm_identity=operator-e-atypical-combination/1`); configuration may add E, with `docs/reviews/nsqd-operator-activation-2026-08-30/operator-e.override.toml` providing the reviewed explicit example. The divergence CLI remains A/B-only and cannot authorize or widen the allowlist. C, D, F, and G stay deferred and runtime-disabled.
 
 ## Packet 4 (2026-08-26)
 
@@ -12,8 +12,8 @@
 | C | Swanson ABC | deferred | rejected | two named literatures plus explicit human activation; B composition-gating is not C authorization |
 | D | analogical transport | deferred | rejected | source/target `domain_policy_id` after C |
 | E | atypical combination | experimental | composition-gated, non-default | settings `nsqd.enabled_operators` may explicitly add E; application callers require target proof; executable `τ` alone remains insufficient |
-| F | missing dimensions | deferred | rejected | axis-policy clarity |
-| G | failure resurrection | deferred | rejected | approved failed-experiment corpus; do not invent it |
+| F | missing dimensions | deferred | rejected | valid proposal under `axis-candidate-contract.yaml`, followed by the specified ablation |
+| G | failure resurrection | deferred | rejected | approved records under `failure-record-contract.yaml`; do not invent them |
 
 Command: `uv run pytest tests/nsqd/test_operator_a.py -q --no-cov`
 
@@ -28,7 +28,7 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 - **Validated:** packet 4 keep-disabled outcome accepted 2026-08-26. The `ALG-OP-B` contract was accepted 2026-08-27, followed by human approval for supported, non-default, composition-gated B with controlled durable writes.
 - **Validated:** packet 5 CLI scope accepted 2026-08-30: `diverge --operator` may request A/B only. Selection cannot widen the composition allowlist; B requires explicit target and target-bound axiom proof.
 - **Human decision (2026-09-03):** E evidence is sufficient for experimental implementation, and experimental runtime is authorized. The executable algorithm exists and is composition-gated; executable `τ` remains unrelated.
-- **Evidence scope:** C starts with `N11-OPT-02 → N11-FIN-04`; D tests `optimization/1 → finance/1` only after C. E evaluates same-policy and explicit cross-policy tracks separately. F permits one report-only candidate axis per packet. G starts a typed human-approved failure-record collection contract; no failure corpus exists yet.
+- **Evidence scope:** C starts with `N11-OPT-02 → N11-FIN-04`; a second provenance-bound cycle rejected that pair for semantic-object mismatch and rejected the backup because direct prior art already connects the domains. D tests `optimization/1 → finance/1` only after an evidence-sufficient, human-accepted C bridge. E evaluates same-policy and explicit cross-policy tracks separately. F permits one report-only candidate axis per packet under its executable contract. G accepts only typed, human-reviewed failure records under its executable contract; no failure corpus exists yet.
 - **Not authorized:** default enablement of B; runtime enablement of C, D, F, or G.
 
 ## Packet 5 activation program (2026-08-30)
@@ -42,7 +42,7 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 | G | separate evidence packet | none | approved failed-experiment corpus with provenance; synthetic or invented failures cannot qualify |
 | CLI | A/B divergence selection | A remains default operator; B remains composition-gated; E is application/config-only | CLI may request A/B with B target proof; it cannot alter settings or expose C, D, E, F, or G |
 
-Dependency order is status semantics → C and E independently → D after C; F and G remain blocked by their own data contracts. CLI exposure does not change that order or authorize any operator.
+Dependency order is status semantics → C and E independently → D after C. F and G now have executable fail-closed data contracts but remain blocked on valid evidence and their required ablations. CLI exposure does not change that order or authorize any operator.
 
 Each report-only packet uses an explicit baseline and negative control before recommending a method. Current designs compare C bridge pairs and extraction methods, D typed structure mapping against surface similarity, E same/cross-policy tracks and A/B candidates against rarity-only generation, F one candidate axis against current axes and a shuffled axis, and—only after a real corpus exists—G typed failure memory against raw logs and no-memory baselines. The executable packet definitions live in `docs/reviews/nsqd-operator-activation-2026-08-30/`.
 
@@ -62,7 +62,7 @@ Every executed deferred-operator packet binds an immutable input snapshot, polic
 
 ### C — Swanson ABC literature discovery
 
-C takes two named, plausibly noninteracting literatures and produces auditable `A → B` plus `B → C` paths. Preferred `N11-OPT-02` (`s2:44b3b3bb…f6ae8b38934c`) and `N11-FIN-04` (`arxiv:2512.12727`) bind from approved projections; that binding is not noninteraction evidence and does not authorize generation. The executed external audit compared that pair with the approved backup across normalized terms, typed predicates, and shuffled controls. None of seven proposed concepts had direct support on both sides, so no pair or method was selected and candidate outputs remain empty. Zero citation/search results remain absence of evidence, not proof of noninteraction. Each future bridge must still bind normalized concepts, supporting citations, query/corpus snapshot and cutoff, polarity/direction, an explicit `A → C` prior-art search, and a noninteraction check. It never promotes an inferred `A → C` relation to fact.
+C takes two named, plausibly noninteracting literatures and produces auditable `A → B` plus `B → C` paths. Preferred `N11-OPT-02` (`s2:44b3b3bb…f6ae8b38934c`) and `N11-FIN-04` (`arxiv:2512.12727`) bind from approved projections; that binding is not noninteraction evidence and does not authorize generation. The first external audit compared that pair with the approved backup across normalized terms, typed predicates, and shuffled controls and produced no two-sided bridges. A second cycle at `docs/reviews/nsqd-operator-c-evidence-2026-09-05/` used independent primary-source retrieval: it rejected the preferred path because the two claims concern different semantic objects and rejected the backup because direct finance-to-stochastic-optimization prior art already exists. Candidate outputs remain empty, evidence remains insufficient, and noninteraction remains unverified. Zero citation/search results remain absence of evidence, not proof of noninteraction. Each future bridge must still bind normalized concepts, supporting citations, query/corpus snapshot and cutoff, polarity/direction, an explicit `A → C` prior-art search, and a noninteraction check. It never promotes an inferred `A → C` relation to fact.
 
 ### D — analogical transport
 
@@ -74,11 +74,11 @@ E combines approved, provenance-bound components only. Current inventory binds D
 
 ### F — missing dimensions
 
-F recommends, but cannot install, a candidate descriptor axis. A row includes the current axis-policy id, measurable axis definition, protocol, stability, residual variation, redundancy with existing axes, association with quality/failure, archive coverage/density ablation, confounds, and dimensionality cost. Human axis admission remains a separate schema/version decision; runtime archives cannot self-modify.
+F recommends, but cannot install, a candidate descriptor axis. `axis-candidate-contract.yaml` and `nsqd.domain.operator_f` define and validate the executable collection boundary: exact contract identity, report-only authorization, one non-registered axis, immutable source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review. A valid record remains a proposal only; it cannot register an axis, mutate the archive, or authorize Operator F. No candidate proposal or ablation result exists yet.
 
 ### G — failure resurrection
 
-G requires immutable, human-approved failed-experiment records. Each record distinguishes implementation, measurement, method, hypothesis, regime-bound, and inconclusive failures; binds original conditions and evidence; and names a measurable changed-condition trigger. The packet reports attribution confidence, trigger strength, constraint gain, duplicate-failure avoidance, and corpus limitations. Absence of success is not a failure record, and the system may not invent, approve, or resurrect its own failure.
+`failure-record-contract.yaml` and `nsqd.domain.operator_g` define and validate G's executable collection boundary. A qualifying record binds an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Synthetic, invented, speculative, outcome-free, or unsupported records fail closed. A valid record cannot write corpus facts, restart work, or authorize Operator G. No approved failure record or failure corpus exists yet.
 
 ## Method references
 
