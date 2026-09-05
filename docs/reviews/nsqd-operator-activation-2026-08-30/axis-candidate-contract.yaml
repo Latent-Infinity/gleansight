@@ -1,0 +1,32 @@
+schema_version: 1
+record_type: operator_f_axis_proposal
+template_only: true
+runtime_authorized: false
+schema_mutation_authorized: false
+maximum_candidate_axes_per_proposal: 1
+descriptor_kind_values:
+  - handcrafted
+  - learned
+  - novel_proposed
+value_type_values:
+  - integer
+  - number
+  - categorical
+  - vector
+required_baselines:
+  - current_registered_axes
+required_negative_controls:
+  - shuffled_candidate_axis
+required_metrics:
+  - held_out_archive_coverage_gain
+admission_rules:
+  - a proposal is report-only and cannot mutate a registered policy
+  - one proposal contains exactly one measurable semantic axis
+  - model generation and human approval are separate provenance activities
+  - learned axes require stability and leakage evaluation
+  - schema admission requires a later independent human decision
+method_references:
+  - https://doi.org/10.1162/EVCO_a_00025
+  - https://arxiv.org/abs/1504.04909
+  - https://arxiv.org/abs/2012.04322
+  - https://www.w3.org/TR/prov-o/

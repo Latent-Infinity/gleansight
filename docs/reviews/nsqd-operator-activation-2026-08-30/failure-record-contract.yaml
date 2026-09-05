@@ -32,6 +32,9 @@ failure_class_values:
   - hypothesis
   - regime_bound
   - inconclusive
+resurrection_scope_values:
+  - review_only
+  - test_only
 admission_rules:
   - all timestamps are timezone-aware UTC
   - source and evidence artifacts are immutable and digest-bound
@@ -47,12 +50,14 @@ operator_g_eligibility_rules:
 optional_fields:
   - known_confounds
   - supersedes_failure_record_id
-  - changed_condition_triggers
-  - restart_conditions
-  - scope
 forbidden_sources:
   - test failures without experiment evidence
   - job error codes
   - sufficiency failures
   - inferred or invented failures
   - absence of published or successful results
+method_references:
+  - https://www.w3.org/TR/prov-o/
+  - https://www.w3.org/TR/2013/REC-prov-constraints-20130430/
+  - https://sre.google/sre-book/postmortem-culture/
+  - https://sre.google/workbook/postmortem-analysis/

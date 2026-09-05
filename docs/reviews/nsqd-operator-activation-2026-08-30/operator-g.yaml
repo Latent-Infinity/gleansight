@@ -15,6 +15,7 @@ nearest_prior_art: []
 known_limitations:
   - no approved failed-experiment corpus or records exist
   - no resurrection proposal or ablation may run
+  - the executable data contract validates records but cannot make them Operator G eligible
 approved_failure_corpus: null
 approved_failure_record_ids: []
 audit_conclusion: No approved failed-experiment corpus exists in the repository.

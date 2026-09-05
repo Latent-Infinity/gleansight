@@ -17,6 +17,8 @@ nearest_prior_art: []
 known_limitations:
   - no candidate axis has been proposed or measured
   - no axis-admission decision or archive ablation exists
+  - the executable data contract validates proposals but does not admit an axis
+axis_candidate_contract: axis-candidate-contract.yaml
 proposal_policy: At most one measurable candidate axis per report-only packet.
 current_axis_inventory:
   finance/1:
