@@ -1,0 +1,27 @@
+{
+  "candidate_output_count": 0,
+  "cutoff_utc": "2026-09-05T00:00:00Z",
+  "metric_definitions": {
+    "accepted_bridge_count": "two-sided source support after semantic-object and direct-prior-art rejection",
+    "direct_prior_art_count": "candidate bridges already stated by a primary source",
+    "leakage_count": "claims relying on post-cutoff or unbound source material",
+    "two_sided_supported_count": "candidate bridges with literal support on both sides before semantic review"
+  },
+  "negative_control": {
+    "id": "shuffled_literature_negative_control/2",
+    "seed_material": "operator-c-shuffle/2|2026-09-05T00:00:00Z"
+  },
+  "runs": [
+    {"accepted_bridge_count": 0, "candidate_count": 3, "direct_prior_art_count": 0, "leakage_count": 0, "method": "normalized_shared_terms", "pair": "primary", "two_sided_supported_count": 1},
+    {"accepted_bridge_count": 0, "candidate_count": 3, "direct_prior_art_count": 0, "leakage_count": 0, "method": "typed_predication_paths", "pair": "primary", "two_sided_supported_count": 1},
+    {"accepted_bridge_count": 0, "candidate_count": 3, "direct_prior_art_count": 0, "leakage_count": 0, "method": "shuffled_literature_negative_control", "pair": "primary", "two_sided_supported_count": 0},
+    {"accepted_bridge_count": 0, "candidate_count": 1, "direct_prior_art_count": 1, "leakage_count": 0, "method": "normalized_shared_terms", "pair": "backup", "two_sided_supported_count": 1},
+    {"accepted_bridge_count": 0, "candidate_count": 1, "direct_prior_art_count": 1, "leakage_count": 0, "method": "typed_predication_paths", "pair": "backup", "two_sided_supported_count": 1},
+    {"accepted_bridge_count": 0, "candidate_count": 1, "direct_prior_art_count": 0, "leakage_count": 0, "method": "shuffled_literature_negative_control", "pair": "backup", "two_sided_supported_count": 0}
+  ],
+  "schema_version": 1,
+  "selected_extraction_method": null,
+  "selected_pair": null,
+  "selection_decision": "primary apparent overlap failed semantic-object review; backup was direct prior art; neither outperformed the rejection controls",
+  "time_sliced_rediscovery_limitation": "not measurable because no candidate bridge was accepted and no held-out rediscovery benchmark exists"
+}

@@ -1,0 +1,101 @@
+{
+  "authorization_state": "report_only",
+  "cutoff_utc": "2026-09-05T00:00:00Z",
+  "interaction_checks": [
+    {
+      "checks": {
+        "author_overlap": {
+          "count": 0,
+          "method": "intersection of author names on versioned arXiv records",
+          "status": "checked"
+        },
+        "co_citation": {
+          "status": "not_verified_no_citation_graph_snapshot"
+        },
+        "direct_citation": {
+          "status": "not_verified_no_citation_graph_snapshot"
+        },
+        "direct_mention": {
+          "count": 0,
+          "query_url": "https://api.openalex.org/works?search=%22Robust%20and%20Fast%20Training%20via%20Per-Sample%20Clipping%22%20%22Nonlinear%20and%20Heavy-Tailed%20Predictability%22&filter=from_publication_date:2000-01-01,to_publication_date:2026-09-05&per-page=10&select=id,title,doi,publication_date",
+          "status": "checked_absence_of_evidence"
+        }
+      },
+      "pair": "primary",
+      "status": "absence_of_evidence_only"
+    },
+    {
+      "checks": {
+        "author_overlap": {
+          "count": 0,
+          "method": "intersection of author names on versioned arXiv records",
+          "status": "checked"
+        },
+        "co_citation": {
+          "status": "not_verified_no_citation_graph_snapshot"
+        },
+        "direct_citation": {
+          "status": "not_verified_no_citation_graph_snapshot"
+        },
+        "direct_mention": {
+          "count": 1,
+          "source_id": "arXiv:2411.02947v1",
+          "status": "direct_domain_bridge_in_finance_source"
+        }
+      },
+      "pair": "backup",
+      "status": "direct_prior_art_found"
+    }
+  ],
+  "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "queried_at_utc": "2026-09-05T19:39:16Z",
+  "query_provider_limitations": [
+    "OpenAlex full-text keyword search is not a complete citation or author graph",
+    "no frozen citation or co-citation graph snapshot was available",
+    "bounded search absence is not proof of noninteraction or novelty"
+  ],
+  "records": [
+    {
+      "authors": ["Davide Nobile", "Philipp Grohs"],
+      "doi": "10.48550/arXiv.2605.02701",
+      "full_text_url": "https://arxiv.org/html/2605.02701v2",
+      "publication_date": "2026-05-04",
+      "role": "primary_literature_a",
+      "source_id": "arXiv:2605.02701v2",
+      "source_url": "https://arxiv.org/abs/2605.02701v2",
+      "title": "Robust and Fast Training via Per-Sample Clipping"
+    },
+    {
+      "authors": ["Kpante Emmanuel Gnandi", "Fredy Pokou", "Jules Sadefo Kamdem"],
+      "doi": "10.48550/arXiv.2605.26890",
+      "full_text_url": "https://arxiv.org/html/2605.26890v1",
+      "publication_date": "2026-05-26",
+      "role": "primary_literature_c",
+      "source_id": "arXiv:2605.26890v1",
+      "source_url": "https://arxiv.org/abs/2605.26890v1",
+      "title": "Nonlinear and Heavy-Tailed Predictability in Transition-Energy Financial Markets"
+    },
+    {
+      "authors": ["Abdurakhmon Sadiev", "Marina Danilova", "Eduard Gorbunov", "Samuel Horváth", "Gauthier Gidel", "Pavel Dvurechensky", "Alexander Gasnikov", "Peter Richtárik"],
+      "doi": "10.48550/arXiv.2302.00999",
+      "full_text_url": "https://arxiv.org/html/2302.00999v2",
+      "publication_date": "2023-02-02",
+      "role": "backup_literature_a",
+      "source_id": "arXiv:2302.00999v2",
+      "source_url": "https://arxiv.org/abs/2302.00999v2",
+      "title": "High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance"
+    },
+    {
+      "authors": ["Beatrice Acciaio", "Stephan Eckstein", "Songyan Hou"],
+      "doi": "10.48550/arXiv.2411.02947",
+      "full_text_url": "https://arxiv.org/html/2411.02947v1",
+      "publication_date": "2024-11-05",
+      "role": "backup_literature_c",
+      "source_id": "arXiv:2411.02947v1",
+      "source_url": "https://arxiv.org/abs/2411.02947v1",
+      "title": "Time-Causal VAE: Robust Financial Time Series Generator"
+    }
+  ],
+  "schema_version": 1,
+  "source_scope": "external_primary_sources_not_admitted_to_corpus"
+}

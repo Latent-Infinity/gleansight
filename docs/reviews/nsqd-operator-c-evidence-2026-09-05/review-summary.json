@@ -1,0 +1,28 @@
+{
+  "artifact_sha256": {
+    "ablation-results.json": "60c33a1b7f267ffab28a736f92e6e4039ae8ed9cd4ed8d4ea5b4d7b4a884c259",
+    "claim-extractions.jsonl": "7e8f2e08dfb12cb611c97ffe93f47502670a294d4a494504def2b42b9a1d2b18",
+    "direct-a-to-c-prior-art.jsonl": "be9c3b6abc8eb3315e1df61a2d7eaabc4be25a8ffc15d7c1a6026817effee0b2",
+    "evidence-ledger.json": "99d05a25cb7e00c8f5f66621d13593e6ad152f6255fa034cf5ba3fa2fc327ad8"
+  },
+  "authorization_state": "report_only",
+  "candidate_output_count": 0,
+  "cutoff_utc": "2026-09-05T00:00:00Z",
+  "evidence_sufficient": false,
+  "human_acceptance": "not_requested",
+  "independent_review": {
+    "review_status": "pending",
+    "reviewer_id": null
+  },
+  "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "packet_digest": "70fcfc6a52eb9541da49c0a9fd3bd527680b37933ef740ed91363c622698302d",
+  "packet_digest_algorithm": "sha256(canonical_json(artifact_sha256))",
+  "review_decision": "insufficient_evidence",
+  "runtime_activation": "not_authorized",
+  "schema_version": 1,
+  "selection": {
+    "extraction_method": null,
+    "pair": null,
+    "reason": "primary overlap failed semantic-object review and backup was direct prior art"
+  }
+}
