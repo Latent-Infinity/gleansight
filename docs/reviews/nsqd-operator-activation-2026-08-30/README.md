@@ -10,7 +10,7 @@ These packets inventory the smallest evidence currently available for Operators 
 
 | Operator | Packet | Current conclusion | Next gate |
 | --- | --- | --- | --- |
-| C | `operator-c.yaml` | a second provenance-bound evidence cycle rejected the preferred pair for semantic-object mismatch and the backup for direct prior art; candidate outputs remain empty, evidence remains insufficient, and noninteraction remains unverified | independent technical review of the second negative cycle; human acceptance is not requested |
+| C | `operator-c.yaml` | a second provenance-bound evidence cycle and independent technical review rejected the preferred pair for semantic-object mismatch and the backup for direct prior art; candidate outputs remain empty, evidence remains insufficient, and noninteraction remains unverified | new evidence or pair cycle; human acceptance is not requested |
 | D | `operator-d.yaml` | `optimization/1 → finance/1` selected; blocked because C has no evidence-sufficient, human-accepted bridge | wait for a successful C evidence cycle, then run structure-mapping ablation |
 | E | `operator-e.yaml` | experimental atypical-combination algorithm is executable off by default through the composition allowlist; CLI remains A/B-only; report-only JEPA artifacts remain ungenerated | explicitly configure E for runtime use; do not default-enable B or enable C, D, F, or G; do not treat JEPA report-only artifacts as generated combinations |
 | F | `operator-f.yaml` | executable fail-closed proposal contract defined; no candidate axis is admitted | collect one valid proposal, then run candidate-versus-current-and-shuffled ablation |

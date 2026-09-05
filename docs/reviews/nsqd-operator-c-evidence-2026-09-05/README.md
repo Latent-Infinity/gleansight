@@ -1,6 +1,6 @@
 # Operator C evidence cycle 2
 
-**State:** complete negative evidence cycle; report-only; runtime unauthorized
+**State:** independently reviewed negative evidence cycle; report-only; runtime unauthorized
 **Cutoff:** `2026-09-05T00:00:00Z`
 **Decision:** insufficient evidence; no Swanson bridge and no candidate output
 
@@ -13,17 +13,22 @@ financial time-series distributions to dynamic stochastic optimization, so it is
 prior art rather than an undiscovered bridge.
 
 OpenAlex exact-title search found no primary-pair result. A broader keyword query returned
-two results, neither establishing the proposed transfer. These observations are bounded
-search results, not proof of bibliographic noninteraction or novelty. No candidate was
-generated, no corpus fact was written, and no human activation was requested.
+two results, neither establishing the proposed transfer. A frozen OpenAlex metadata snapshot
+also records zero direct-citation and co-citation edges for both pairs, subject to the
+provider's coverage limits. These observations are bounded search results, not proof of
+bibliographic noninteraction or novelty. No candidate was generated, no corpus fact was
+written, and no human activation was requested.
 
 ## Artifacts
 
 - `evidence-ledger.json` — versioned source metadata and bounded interaction checks.
+- `bibliographic-snapshot.json` — frozen OpenAlex identifiers, citation edges, and source-byte digests.
+- `source-extracts.jsonl` — committed UTF-8 abstracts used for locally reproducible source digests.
 - `claim-extractions.jsonl` — four source-bound bridge assessments.
 - `direct-a-to-c-prior-art.jsonl` — exact-pair and broad direct-prior-art checks.
 - `ablation-results.json` — primary/backup method and shuffled-control comparison.
 - `review-summary.json` — digest manifest and non-authorizing cycle conclusion.
+- `review-seal.json` — detached digest binding for the independently reviewed summary.
 
 ## Reproduce
 

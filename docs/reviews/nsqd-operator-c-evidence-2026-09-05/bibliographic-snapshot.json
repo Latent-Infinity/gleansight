@@ -1,0 +1,74 @@
+{
+  "cutoff_utc": "2026-09-05T00:00:00Z",
+  "provider": "OpenAlex API",
+  "provider_limitations": [
+    "provider records may omit citation edges present in other indexes",
+    "zero returned reference or citing-work edges is absence of evidence, not proof of noninteraction"
+  ],
+  "queried_at_utc": "2026-09-05T23:26:48Z",
+  "records": [
+    {
+      "cited_by_count": 0,
+      "citing_work_ids": [],
+      "doi": "10.48550/arXiv.2605.02701",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2605.02701",
+      "openalex_id": "W7160275576",
+      "referenced_work_ids": [],
+      "source_content_artifact": "source-extracts.jsonl",
+      "source_content_bytes": 1190,
+      "source_content_scope": "abstract_utf8",
+      "source_content_sha256": "25059195de6f2829248994ebab3e2e9dd515f1391a4eff5fb238beab41a5e635",
+      "source_id": "arXiv:2605.02701v2",
+      "versioned_full_text_url": "https://arxiv.org/html/2605.02701v2"
+    },
+    {
+      "cited_by_count": 0,
+      "citing_work_ids": [],
+      "doi": "10.48550/arXiv.2605.26890",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2605.26890",
+      "openalex_id": "W7162528195",
+      "referenced_work_ids": [],
+      "source_content_artifact": "source-extracts.jsonl",
+      "source_content_bytes": 1647,
+      "source_content_scope": "abstract_utf8",
+      "source_content_sha256": "36dd9a0cbd44812d1b75f8da1b044ad78388e75c6fd66d26c41585e17bf37bdf",
+      "source_id": "arXiv:2605.26890v1",
+      "versioned_full_text_url": "https://arxiv.org/html/2605.26890v1"
+    },
+    {
+      "cited_by_count": 5,
+      "citing_work_ids": [
+        "W4392646840",
+        "W4399437517",
+        "W4402727401",
+        "W4406066986",
+        "W4413281384"
+      ],
+      "doi": "10.48550/arXiv.2302.00999",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2302.00999",
+      "openalex_id": "W4320814031",
+      "referenced_work_ids": [],
+      "source_content_artifact": "source-extracts.jsonl",
+      "source_content_bytes": 1193,
+      "source_content_scope": "abstract_utf8",
+      "source_content_sha256": "6eebda6b338dad4629a6b0b65056fc9ad5df280c6483acdc42364cacdd60c277",
+      "source_id": "arXiv:2302.00999v2",
+      "versioned_full_text_url": "https://arxiv.org/html/2302.00999v2"
+    },
+    {
+      "cited_by_count": 1,
+      "citing_work_ids": ["W4410110493"],
+      "doi": "10.48550/arXiv.2411.02947",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2411.02947",
+      "openalex_id": "W4404404360",
+      "referenced_work_ids": [],
+      "source_content_artifact": "source-extracts.jsonl",
+      "source_content_bytes": 1217,
+      "source_content_scope": "abstract_utf8",
+      "source_content_sha256": "98d0a1c6c071c705a920524f2e2a2084a8272a27ac08c6cad8aa1ac6d608b59a",
+      "source_id": "arXiv:2411.02947v1",
+      "versioned_full_text_url": "https://arxiv.org/html/2411.02947v1"
+    }
+  ],
+  "schema_version": 1
+}

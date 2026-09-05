@@ -1,0 +1,11 @@
+{
+  "authorization_state": "report_only",
+  "human_acceptance": "not_requested",
+  "packet_digest": "39cd4ee0de3b74d21b176f3b4b06768003fe007f407b6c1ecb373ae70522e6da",
+  "review_status": "approved_negative_conclusion",
+  "review_summary_sha256": "b83e05dc2b9c50737f725a2e270411d769ed05bf126255ab906fe9f9960fef8c",
+  "reviewed_at_utc": "2026-09-05T23:34:10Z",
+  "reviewer_id": "openai/gpt-5.5 / codebase-search-specialist",
+  "runtime_activation": "not_authorized",
+  "schema_version": 1
+}

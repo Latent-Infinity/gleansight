@@ -28,18 +28,23 @@ known_limitations:
   - local paraphrases do not supply author or citation graphs
 evidence_report: ../nsqd-operator-c-evidence-2026-08-31/review-summary.json
 latest_evidence_report: ../nsqd-operator-c-evidence-2026-09-05/review-summary.json
+latest_evidence_review_seal: ../nsqd-operator-c-evidence-2026-09-05/review-seal.json
+latest_evidence_review_summary_sha256: b83e05dc2b9c50737f725a2e270411d769ed05bf126255ab906fe9f9960fef8c
+latest_evidence_review_seal_sha256: 3ef1e426ea329f980510699971ed8c17b4c721965be1394abed268a41dee5be0
 latest_evidence_artifact_sha256:
   ablation-results.json: 60c33a1b7f267ffab28a736f92e6e4039ae8ed9cd4ed8d4ea5b4d7b4a884c259
+  bibliographic-snapshot.json: 65998203cd2e72fd902cd7e103a6f0329c648b3f4111527d034e7f2c588061fd
   claim-extractions.jsonl: 7e8f2e08dfb12cb611c97ffe93f47502670a294d4a494504def2b42b9a1d2b18
   direct-a-to-c-prior-art.jsonl: be9c3b6abc8eb3315e1df61a2d7eaabc4be25a8ffc15d7c1a6026817effee0b2
-  evidence-ledger.json: 99d05a25cb7e00c8f5f66621d13593e6ad152f6255fa034cf5ba3fa2fc327ad8
+  evidence-ledger.json: 9b46974743132af142f05730f9d906bd02b12616a142e9d8752af104e7503734
+  source-extracts.jsonl: d2613e7f00617a05661391bc3521e87d009eb7895ab803beb6c0f9bfe484d91d
 evidence_cycles:
   - cycle_id: operator-c-evidence-2026-08-31
     decision: insufficient_evidence
     review_status: approved_negative_conclusion
   - cycle_id: operator-c-evidence-2026-09-05
     decision: insufficient_evidence
-    review_status: pending_independent_review
+    review_status: approved_negative_conclusion
 evidence_artifact_sha256:
   evidence-ledger.json: 878f5b050c0fc69eb9b416be06fa15a2274097419c8a67580d64d03879ebcd5b
   claim-extractions.jsonl: c9162a5816ba0bec69c7989c2f832237600a62c9ba4bb88bc082536e978dde41

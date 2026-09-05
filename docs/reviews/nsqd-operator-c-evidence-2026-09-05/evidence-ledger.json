@@ -1,6 +1,12 @@
 {
   "authorization_state": "report_only",
+  "algorithm_identity": "operator-c-bounded-primary-source-audit/2",
+  "candidate_outputs": [],
   "cutoff_utc": "2026-09-05T00:00:00Z",
+  "extraction_identity": "manual-typed-claim-extraction/1",
+  "input_snapshot_artifact": "bibliographic-snapshot.json",
+  "prompt_identity": "operator-c-typed-bridge-review/2",
+  "source_extract_artifact": "source-extracts.jsonl",
   "interaction_checks": [
     {
       "checks": {
@@ -10,10 +16,14 @@
           "status": "checked"
         },
         "co_citation": {
-          "status": "not_verified_no_citation_graph_snapshot"
+          "count": 0,
+          "method": "intersection of OpenAlex citing-work ids in bibliographic-snapshot.json",
+          "status": "checked_absence_of_evidence"
         },
         "direct_citation": {
-          "status": "not_verified_no_citation_graph_snapshot"
+          "count": 0,
+          "method": "bidirectional OpenAlex referenced-work membership",
+          "status": "checked_absence_of_evidence"
         },
         "direct_mention": {
           "count": 0,
@@ -32,10 +42,14 @@
           "status": "checked"
         },
         "co_citation": {
-          "status": "not_verified_no_citation_graph_snapshot"
+          "count": 0,
+          "method": "intersection of OpenAlex citing-work ids in bibliographic-snapshot.json",
+          "status": "checked_absence_of_evidence"
         },
         "direct_citation": {
-          "status": "not_verified_no_citation_graph_snapshot"
+          "count": 0,
+          "method": "bidirectional OpenAlex referenced-work membership",
+          "status": "checked_absence_of_evidence"
         },
         "direct_mention": {
           "count": 1,
@@ -48,50 +62,72 @@
     }
   ],
   "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "known_limitations": [
+    "OpenAlex citation coverage is not complete",
+    "external HTML bytes are digest-bound but not admitted to the approved corpus",
+    "no held-out time-sliced rediscovery benchmark exists"
+  ],
+  "nearest_prior_art": ["W4412068297", "W7141388863", "arXiv:2411.02947v1"],
   "queried_at_utc": "2026-09-05T19:39:16Z",
   "query_provider_limitations": [
     "OpenAlex full-text keyword search is not a complete citation or author graph",
-    "no frozen citation or co-citation graph snapshot was available",
+    "the frozen OpenAlex snapshot may omit citation or co-citation edges indexed elsewhere",
     "bounded search absence is not proof of noninteraction or novelty"
   ],
   "records": [
     {
       "authors": ["Davide Nobile", "Philipp Grohs"],
+      "canonical_ids": {"arxiv": "2605.02701v2", "doi": "10.48550/arXiv.2605.02701", "openalex": "W7160275576"},
       "doi": "10.48550/arXiv.2605.02701",
+      "domain_policy_id": "optimization/1",
       "full_text_url": "https://arxiv.org/html/2605.02701v2",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2605.02701",
       "publication_date": "2026-05-04",
       "role": "primary_literature_a",
       "source_id": "arXiv:2605.02701v2",
+      "source_content_sha256": "25059195de6f2829248994ebab3e2e9dd515f1391a4eff5fb238beab41a5e635",
       "source_url": "https://arxiv.org/abs/2605.02701v2",
       "title": "Robust and Fast Training via Per-Sample Clipping"
     },
     {
       "authors": ["Kpante Emmanuel Gnandi", "Fredy Pokou", "Jules Sadefo Kamdem"],
+      "canonical_ids": {"arxiv": "2605.26890v1", "doi": "10.48550/arXiv.2605.26890", "openalex": "W7162528195"},
       "doi": "10.48550/arXiv.2605.26890",
+      "domain_policy_id": "finance/1",
       "full_text_url": "https://arxiv.org/html/2605.26890v1",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2605.26890",
       "publication_date": "2026-05-26",
       "role": "primary_literature_c",
       "source_id": "arXiv:2605.26890v1",
+      "source_content_sha256": "36dd9a0cbd44812d1b75f8da1b044ad78388e75c6fd66d26c41585e17bf37bdf",
       "source_url": "https://arxiv.org/abs/2605.26890v1",
       "title": "Nonlinear and Heavy-Tailed Predictability in Transition-Energy Financial Markets"
     },
     {
       "authors": ["Abdurakhmon Sadiev", "Marina Danilova", "Eduard Gorbunov", "Samuel Horváth", "Gauthier Gidel", "Pavel Dvurechensky", "Alexander Gasnikov", "Peter Richtárik"],
+      "canonical_ids": {"arxiv": "2302.00999v2", "doi": "10.48550/arXiv.2302.00999", "openalex": "W4320814031"},
       "doi": "10.48550/arXiv.2302.00999",
+      "domain_policy_id": "optimization/1",
       "full_text_url": "https://arxiv.org/html/2302.00999v2",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2302.00999",
       "publication_date": "2023-02-02",
       "role": "backup_literature_a",
       "source_id": "arXiv:2302.00999v2",
+      "source_content_sha256": "6eebda6b338dad4629a6b0b65056fc9ad5df280c6483acdc42364cacdd60c277",
       "source_url": "https://arxiv.org/abs/2302.00999v2",
       "title": "High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance"
     },
     {
       "authors": ["Beatrice Acciaio", "Stephan Eckstein", "Songyan Hou"],
+      "canonical_ids": {"arxiv": "2411.02947v1", "doi": "10.48550/arXiv.2411.02947", "openalex": "W4404404360"},
       "doi": "10.48550/arXiv.2411.02947",
+      "domain_policy_id": "finance/1",
       "full_text_url": "https://arxiv.org/html/2411.02947v1",
+      "metadata_url": "https://api.openalex.org/works/https://doi.org/10.48550/arXiv.2411.02947",
       "publication_date": "2024-11-05",
       "role": "backup_literature_c",
       "source_id": "arXiv:2411.02947v1",
+      "source_content_sha256": "98d0a1c6c071c705a920524f2e2a2084a8272a27ac08c6cad8aa1ac6d608b59a",
       "source_url": "https://arxiv.org/abs/2411.02947v1",
       "title": "Time-Causal VAE: Robust Financial Time Series Generator"
     }
