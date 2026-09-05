@@ -1,7 +1,7 @@
 # Divergence operators packet
 
 **Study:** `ALG.OP`
-**Outcome:** Operators A and B are **supported**. B is non-default and enabled only by a composition allowlist; the default composition remains A-only. The divergence CLI may request A/B but cannot authorize either. Operators C–G stay **deferred** and **runtime-disabled**.
+**Outcome:** Operators A and B are **supported**. B is non-default and enabled only by a composition allowlist. Operator E is **experimental**, executable, and off by default (`algorithm_identity=operator-e-atypical-combination/1`); configuration may add E. The divergence CLI remains A/B-only and cannot authorize or widen the allowlist. C, D, F, and G stay deferred and runtime-disabled.
 
 ## Packet 4 (2026-08-26)
 
@@ -11,7 +11,7 @@
 | B | archive whitespace | supported | composition-gated | settings `nsqd.enabled_operators`; CLI selection requires target-bound proof |
 | C | Swanson ABC | deferred | rejected | two named literatures plus explicit human activation; B composition-gating is not C authorization |
 | D | analogical transport | deferred | rejected | source/target `domain_policy_id` after C |
-| E | atypical combination | deferred | rejected | separate operator-specific evidence and explicit human activation; executable `τ` alone is insufficient |
+| E | atypical combination | experimental | composition-gated, non-default | settings `nsqd.enabled_operators` may explicitly add E; application callers require target proof; executable `τ` alone remains insufficient |
 | F | missing dimensions | deferred | rejected | axis-policy clarity |
 | G | failure resurrection | deferred | rejected | approved failed-experiment corpus; do not invent it |
 
@@ -27,9 +27,9 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 
 - **Validated:** packet 4 keep-disabled outcome accepted 2026-08-26. The `ALG-OP-B` contract was accepted 2026-08-27, followed by human approval for supported, non-default, composition-gated B with controlled durable writes.
 - **Validated:** packet 5 CLI scope accepted 2026-08-30: `diverge --operator` may request A/B only. Selection cannot widen the composition allowlist; B requires explicit target and target-bound axiom proof.
-- **Evidence target only:** E should be evaluated as experimental, off-by-default, and composition-gated. This is not runtime authorization; executable `τ` remains unrelated to E authorization.
+- **Human decision (2026-09-03):** E evidence is sufficient for experimental implementation, and experimental runtime is authorized. The executable algorithm exists and is composition-gated; executable `τ` remains unrelated.
 - **Evidence scope:** C starts with `N11-OPT-02 → N11-FIN-04`; D tests `optimization/1 → finance/1` only after C. E evaluates same-policy and explicit cross-policy tracks separately. F permits one report-only candidate axis per packet. G starts a typed human-approved failure-record collection contract; no failure corpus exists yet.
-- **Not authorized:** default enablement of B; runtime enablement of C–G.
+- **Not authorized:** default enablement of B; runtime enablement of C, D, F, or G.
 
 ## Packet 5 activation program (2026-08-30)
 
@@ -37,10 +37,10 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 | --- | --- | --- | --- |
 | C | separate evidence packet | none | two named literatures plus explicit human activation; shared status-table semantics with B are not C authorization |
 | D | separate evidence packet after C | none | explicit source and target `domain_policy_id`; cross-policy isolation must remain fail-closed |
-| E | experimental/config-gated evidence target | none | operational atypical-combination contract, provenance, usefulness/safety comparison, and separate human activation; `τ = 0.45` is not evidence |
+| E | experimental config-gated runtime | default `A`; composition may explicitly add E | atypical-combination contract is executable; `τ = 0.45` is not evidence; application callers require target proof |
 | F | separate evidence packet | none | axis-policy contract for proposing a dimension outside the registered archive axes |
 | G | separate evidence packet | none | approved failed-experiment corpus with provenance; synthetic or invented failures cannot qualify |
-| CLI | A/B divergence selection | A remains default; B remains composition-gated | CLI may narrow to A/B and carry B proof fields; it cannot alter settings or expose C–G |
+| CLI | A/B divergence selection | A remains default operator; B remains composition-gated; E is application/config-only | CLI may request A/B with B target proof; it cannot alter settings or expose C, D, E, F, or G |
 
 Dependency order is status semantics → C and E independently → D after C; F and G remain blocked by their own data contracts. CLI exposure does not change that order or authorize any operator.
 
@@ -52,7 +52,8 @@ Each report-only packet uses an explicit baseline and negative control before re
 | --- | --- | --- | --- | --- |
 | no switch | strongest | unavailable from CLI | low | rejected after B support |
 | A only | strong | unavailable | medium; suggests unsupported future surface | rejected |
-| A/B selection, composition authoritative | strong; cannot widen allowlist | target-bound proof is expressible | low | **selected** |
+| A/B selection, composition authoritative | strong; cannot widen allowlist | target-bound proof is expressible | low | selected 2026-08-30 |
+| A/B/E selection, composition authoritative | strong; cannot widen allowlist | B and E proof fields are expressible | low | rejected; E remains application/config-only |
 | dynamically expose every configured id | depends on future operator contracts | high | high; risks confusing exposure with authorization | deferred |
 
 ## Report-only evidence contracts
@@ -69,7 +70,7 @@ D follows C but has a different input contract: explicit `source_domain_policy_i
 
 ### E — atypical combination
 
-E combines approved, provenance-bound components only. Current inventory binds DATA-NSQD-03/N11 finance records and DATA-NSQD-04/N11 optimization records on unpooled tracks; inventory membership is not a combination and does not authorize generation. A report row includes component sources, corpus/co-occurrence snapshot, atypicality, nearest prior combinations, and a required mechanistic bridge explaining why the combination is not arbitrary. Low co-occurrence or downstream novelty score alone is insufficient. Evaluation compares bridge-valid usefulness and duplication rates against A/B proposals. `τ = 0.45` may score a grounded artifact later; it is not E evidence or authorization.
+E combines approved, provenance-bound components only. Current inventory binds DATA-NSQD-03/N11 finance records and DATA-NSQD-04/N11 optimization records on unpooled tracks. The JEPA five-paper finance snapshot may attach as same-policy co-occurrence with rarity-only interpretation; it is not a combination and does not authorize generation. Three JEPA report-only candidate artifacts may bind to the evidence plan without filling `candidate_combinations` or being passed to DivergeUseCase. A report row includes component sources, corpus/co-occurrence snapshot, atypicality, nearest prior combinations, and a required mechanistic bridge explaining why the combination is not arbitrary. Low co-occurrence or downstream novelty score alone is insufficient. A broader thirteen-source report-only primary-source packet binds the three JEPA Operator E artifacts and narrows each to a bounded unresolved combination question while retaining `novelty_claim=not_established` and empty generated combinations. After independent technical review, the human approved evidence sufficiency for experimental implementation and authorized an off-by-default runtime path on 2026-09-03. The executable algorithm identity is `operator-e-atypical-combination/1`; default composition is `A`, configuration may explicitly add E, and application callers require target-bound proof. The CLI remains A/B-only. Report-only JEPA artifacts are still not generated combinations. `τ = 0.45` may score a grounded artifact later; it is not E evidence or authorization.
 
 ### F — missing dimensions
 
@@ -91,4 +92,5 @@ G requires immutable, human-approved failed-experiment records. Each record dist
 ## Freeze / activation status
 
 - B is **supported**, non-default, and composition-gated.
-- C–G remain **deferred**.
+- E is **experimental**, off by default, and composition-gated.
+- C, D, F, and G remain **deferred**.

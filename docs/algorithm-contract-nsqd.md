@@ -268,11 +268,11 @@ Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does n
 | B | archive whitespace | **supported**, non-default | enabled only by composition allowlist |
 | C | Swanson ABC | deferred; B support is not C authorization | rejected |
 | D | analogical transport | deferred | rejected |
-| E | atypical combination | deferred; executable `τ` does not authorize this operator | rejected |
+| E | atypical combination | **experimental**, non-default | enabled only by composition allowlist |
 | F | missing dimensions | deferred; waits on axis-policy clarity | rejected |
 | G | failure resurrection | deferred; waits on an approved failed-experiment corpus | rejected |
 
-Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. The default composition remains A-only. The divergence CLI may request A or B, but cannot widen composition authorization. C–G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
+Packet 4 (2026-08-26) kept B–G deferred. Human review accepted `ALG-OP-B` on 2026-08-27 and subsequently approved B as supported, non-default, and composition-gated. On 2026-09-03 the human approved Operator E evidence for experimental implementation and authorized an off-by-default runtime path. The default allowlist is `A`; configuration may add B or E. The divergence CLI may request A or B but cannot widen composition authorization. C, D, F, and G remain deferred. No operator may relax policy isolation, ALG-SEP, production-valid gates, rank coverage, or no-self-approval.
 
 ### ALG-OP-B — Archive whitespace (supported, non-default)
 
@@ -286,7 +286,20 @@ When explicitly allowlisted by composition, Operator B:
 4. Persist `operator=B` on the artifact; a later scored card derives `generating_operator=B`. Grounding, value, and archive remain later stages; B does not score, rank, self-approve, or write corpus records.
 5. Remain subject to immutable-artifact identity: different operator or axioms at the same candidate hash still conflict.
 
-**Exposure boundary.** `DivergeUseCase` may persist `operator=B` only when B is present in its composition-injected allowlist. The allowlist is validated (`require_enabled_operators`): it must include `A`, may add `B`, and cannot name C–G or unknown ids. Production composition reads `settings.nsqd.enabled_operators` (default `A` only). `gleansight diverge --operator` is selection-only and accepts A/B; B requires `--target-cell-id` plus a matching `--axiom-cell-id`. A CLI request never mutates or widens the allowlist. B does not invent harvest seeds or DATA records.
+**Exposure boundary.** `DivergeUseCase` may persist `operator=B` only when B is present in its composition-injected allowlist. The allowlist is validated (`require_enabled_operators`): it must include `A`, may add `B` or experimental `E`, and cannot name C, D, F, G, or unknown ids. Production composition reads `settings.nsqd.enabled_operators` (default `A`). `gleansight diverge --operator` is selection-only and accepts A/B; B requires `--target-cell-id` plus a matching `--axiom-cell-id`. A CLI request never mutates or widens the allowlist. B does not invent harvest seeds or DATA records.
+
+### ALG-OP-E — Atypical combination (experimental, non-default)
+
+When explicitly allowlisted by composition, Operator E:
+
+1. Combine at least two approved `corpus-paper-paraphrase` components. Requirement cards are rejected.
+2. Keep same-policy and cross-policy tracks unpooled. Same-policy combinations share one `domain_policy_id` and bind a co-occurrence snapshot. Cross-policy combinations bind distinct source and target policies; source evidence cannot satisfy target-policy sufficiency.
+3. Require a provenance-bound mechanistic bridge. Rarity-only generation (`generation_method=rarity_only_negative_control` or a rarity-only bridge) is rejected. Low co-occurrence or downstream novelty score alone is insufficient. Executable `τ` is not authorization.
+4. Record atypicality as corpus rarity only, plus `nearest_prior_combinations` (possibly empty).
+5. Occupy an `ALG-SEL` target without axiom inversion. Persist `operator=E`; a later scored card derives `generating_operator=E`. E does not score, rank, self-approve, or write corpus records.
+6. Leave report-only JEPA E artifacts ungenerated until a caller submits a validated combination through `DivergeUseCase`.
+
+**Exposure boundary.** `DivergeUseCase` may persist `operator=E` only when E is explicitly present in the composition allowlist. Default composition is `A`. The CLI remains A/B-only; application callers enabling E must supply target-bound proof. E does not invent harvest seeds or DATA records.
 
 ---
 
