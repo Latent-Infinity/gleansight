@@ -130,6 +130,7 @@ human_decisions:
     allowlist. The default remains A-only and the divergence CLI remains A/B-only. B remains
     non-default; C, D, F, and G remain deferred. Report-only JEPA artifacts are not generated
     combinations.
+runtime_override: operator-e.override.toml
 required_before_review:
 - bind a component and co-occurrence snapshot by policy and track
 - measure atypicality and nearest prior combinations

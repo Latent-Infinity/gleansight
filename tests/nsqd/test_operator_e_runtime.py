@@ -9,6 +9,7 @@ from nsqd.app.use_cases import DivergeUseCase
 from nsqd.composition import build_container
 from nsqd.domain.diverge import (
     DEFAULT_ENABLED_OPERATORS,
+    enabled_operators_from_settings,
     require_enabled_operators,
     require_operator,
 )
@@ -29,6 +30,7 @@ from nsqd.null_adapters import (
     NullNsqdCandidateStore,
 )
 from nsqd.ports import NsqdJob
+from papers.config.settings import load_settings, packaged_defaults_path
 from tests.nsqd.test_operator_a import AS_OF, MISSING, _finance_statuses
 
 ENABLED_OPERATORS = frozenset({"A", "E"})
@@ -388,3 +390,23 @@ def test_container_defaults_omit_e_and_config_can_add_e(tmp_path: Path) -> None:
         enabled_operators=ENABLED_OPERATORS,
     )
     assert enabled.ctx.enabled_operators == ENABLED_OPERATORS
+
+
+def test_committed_override_explicitly_enables_operator_e() -> None:
+    override_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "reviews"
+        / "nsqd-operator-activation-2026-08-30"
+        / "operator-e.override.toml"
+    )
+    defaults = load_settings(defaults_path=packaged_defaults_path())
+    configured = load_settings(
+        defaults_path=packaged_defaults_path(),
+        override_path=override_path,
+    )
+    assert enabled_operators_from_settings(defaults) == frozenset({"A"})
+    assert enabled_operators_from_settings(configured) == ENABLED_OPERATORS
+    assert (
+        require_operator("E", enabled_operators=enabled_operators_from_settings(configured)) == "E"
+    )
