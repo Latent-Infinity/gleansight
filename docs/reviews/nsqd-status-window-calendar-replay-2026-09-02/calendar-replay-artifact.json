@@ -1,0 +1,330 @@
+{
+  "artifact_digest": "904aa079cef16fe9da57a203c814298cdbfbc6baf4dd50767573190af16b16d8",
+  "authorization_state": "report_only",
+  "evidence_sufficient": true,
+  "evidence_sufficient_scope": "human_decision_only",
+  "extracted_records": [
+    {
+      "coordinates": {
+        "horizon": "intraday",
+        "mechanism": "flow-driven",
+        "target": "drawdown"
+      },
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "191f480c8ce408f20ad126334513c9da0ac69859c003c5227e3b4fc6e420e632",
+      "source_paper_id": "10.2139/ssrn.3725454",
+      "type": "paper"
+    },
+    {
+      "coordinates": {
+        "horizon": "intraday",
+        "mechanism": "flow-driven",
+        "target": "returns"
+      },
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "301a027f3c01b02c905113cad09d61e4e21850056ac980624cdcc2c888d2e275",
+      "source_paper_id": "doi:10.1016/j.eswa.2024.123538",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "optimization/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "66b94ffcadb9d56fc71e56edea97880f92dcef5410d9140dd819c2c9bee7afb5",
+      "source_paper_id": "08f8241c666e58b7dcda27a4aaf506138d32910c",
+      "type": "paper"
+    },
+    {
+      "coordinates": {
+        "horizon": "daily",
+        "mechanism": "flow-driven",
+        "target": "returns"
+      },
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "70062cc579852e44462c6621704989735c1b4eea72f927d7433c1abbf2ed8e74",
+      "source_paper_id": "arxiv:2512.12727",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "optimization/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "72675bab5e53cd67d48e2f571d02155cbde916140a1db36872a3bde9dc8458ff",
+      "source_paper_id": "44b3b3bb40a9055eccdf86ea1702f6ae8b38934c",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "77126d71203845a38997177bfe02cb40e60299e62f16f7f3801769a8c4472de6",
+      "source_paper_id": "doi:10.1145/3533271.3561687",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "8b1cc09aad9b9eb2158c4b2ed923d78b190100080e771cdf2ce62cf01fd1ab6a",
+      "source_paper_id": "doi:10.2139/ssrn.6855118",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "optimization/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "d2bc50778e56c3d8d41bd6c5cd447fc0e74481a2a51e1ddcaf681a717b32f204",
+      "source_paper_id": "a6cb366736791bcccc5c8639de5a8f9636bf87e8",
+      "type": "paper"
+    },
+    {
+      "coordinates": {
+        "horizon": "event-time",
+        "mechanism": "shock-propagation",
+        "target": "signal-decay"
+      },
+      "domain_policy_id": "finance/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "e5cddf716d344f028bbd0bfb74dcfb690aec5950c5e4f611b0940d9be80df2a7",
+      "source_paper_id": "arxiv:2409.17392",
+      "type": "paper"
+    },
+    {
+      "domain_policy_id": "optimization/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "e8f0ceef6d43ca6342e8b6a3133547ac622bfd7f991f380faa61ca393a04fadf",
+      "source_paper_id": "4dabfd108c13cd730d3cc583e474b5d8bdf4685f",
+      "type": "paper"
+    },
+    {
+      "coordinates": {
+        "method": "sequential-quadratic",
+        "problem": "constrained-expectation",
+        "setting": "rank-deficient"
+      },
+      "domain_policy_id": "optimization/1",
+      "harvested_at": "2026-09-02T06:45:00+00:00",
+      "record_id": "f8054baf8e65d43708ba62597636be30709f5f0d9ff0cc427f7fe9cabea6d6a0",
+      "source_paper_id": "ae1b92291bc040828371378a5f7610000771be0f",
+      "type": "paper"
+    }
+  ],
+  "extracted_records_digest": "728c522334e7a64e91e32bba945a127a9ef958d915b75f0f09d2ea628b92b114",
+  "harvested_at_provenance_caveat": "timestamps are real persisted values from the receipt-bound report-only scratch replay, not proven original 2026-08-29 production-harvest timestamps because snapshot IDs do not bind harvested_at",
+  "packet_kind": "status_window_calendar_replay_report",
+  "runtime_authorized": false,
+  "runtime_status_window_days": 730,
+  "scenarios": [
+    {
+      "as_of_utc": "2026-09-02T06:45:00+00:00",
+      "policy_results": {
+        "finance/1": {
+          "calendar_cell_status_counts": {
+            "Code-gap": 4,
+            "Unknown": 332
+          },
+          "calendar_cutoff_utc": "2024-09-02T06:45:00+00:00",
+          "calendar_lifecycle_counts": {
+            "current": 6
+          },
+          "calendar_window_months": 24,
+          "cell_status_delta_count": 0,
+          "cell_status_delta_rows": [],
+          "domain_policy_id": "finance/1",
+          "fixed_cell_status_counts": {
+            "Code-gap": 4,
+            "Unknown": 332
+          },
+          "fixed_cutoff_utc": "2024-09-02T06:45:00+00:00",
+          "fixed_lifecycle_counts": {
+            "current": 6
+          },
+          "fixed_window_days": 730,
+          "lifecycle_delta_count": 0,
+          "lifecycle_delta_rows": [],
+          "record_count": 6,
+          "zero_delta": true
+        },
+        "optimization/1": {
+          "calendar_cell_status_counts": {
+            "Code-gap": 1,
+            "Unknown": 7
+          },
+          "calendar_cutoff_utc": "2024-09-02T06:45:00+00:00",
+          "calendar_lifecycle_counts": {
+            "current": 5
+          },
+          "calendar_window_months": 24,
+          "cell_status_delta_count": 0,
+          "cell_status_delta_rows": [],
+          "domain_policy_id": "optimization/1",
+          "fixed_cell_status_counts": {
+            "Code-gap": 1,
+            "Unknown": 7
+          },
+          "fixed_cutoff_utc": "2024-09-02T06:45:00+00:00",
+          "fixed_lifecycle_counts": {
+            "current": 5
+          },
+          "fixed_window_days": 730,
+          "lifecycle_delta_count": 0,
+          "lifecycle_delta_rows": [],
+          "record_count": 5,
+          "zero_delta": true
+        }
+      },
+      "scenario_id": "current_as_of",
+      "scenario_kind": "observed_current_as_of",
+      "scenario_note": "observed report-as-of replay near the receipt-bound evidence timestamp"
+    },
+    {
+      "as_of_utc": "2028-09-02T06:45:00+00:00",
+      "policy_results": {
+        "finance/1": {
+          "calendar_cell_status_counts": {
+            "Code-gap": 4,
+            "Unknown": 332
+          },
+          "calendar_cutoff_utc": "2026-09-02T06:45:00+00:00",
+          "calendar_lifecycle_counts": {
+            "current": 6
+          },
+          "calendar_window_months": 24,
+          "cell_status_delta_count": 0,
+          "cell_status_delta_rows": [],
+          "domain_policy_id": "finance/1",
+          "fixed_cell_status_counts": {
+            "Code-gap": 4,
+            "Unknown": 332
+          },
+          "fixed_cutoff_utc": "2026-09-03T06:45:00+00:00",
+          "fixed_lifecycle_counts": {
+            "stale": 6
+          },
+          "fixed_window_days": 730,
+          "lifecycle_delta_count": 6,
+          "lifecycle_delta_rows": [
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "191f480c8ce408f20ad126334513c9da0ac69859c003c5227e3b4fc6e420e632",
+              "source_paper_id": "10.2139/ssrn.3725454"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "301a027f3c01b02c905113cad09d61e4e21850056ac980624cdcc2c888d2e275",
+              "source_paper_id": "doi:10.1016/j.eswa.2024.123538"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "70062cc579852e44462c6621704989735c1b4eea72f927d7433c1abbf2ed8e74",
+              "source_paper_id": "arxiv:2512.12727"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "77126d71203845a38997177bfe02cb40e60299e62f16f7f3801769a8c4472de6",
+              "source_paper_id": "doi:10.1145/3533271.3561687"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "8b1cc09aad9b9eb2158c4b2ed923d78b190100080e771cdf2ce62cf01fd1ab6a",
+              "source_paper_id": "doi:10.2139/ssrn.6855118"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "e5cddf716d344f028bbd0bfb74dcfb690aec5950c5e4f611b0940d9be80df2a7",
+              "source_paper_id": "arxiv:2409.17392"
+            }
+          ],
+          "record_count": 6,
+          "zero_delta": false
+        },
+        "optimization/1": {
+          "calendar_cell_status_counts": {
+            "Code-gap": 1,
+            "Unknown": 7
+          },
+          "calendar_cutoff_utc": "2026-09-02T06:45:00+00:00",
+          "calendar_lifecycle_counts": {
+            "current": 5
+          },
+          "calendar_window_months": 24,
+          "cell_status_delta_count": 0,
+          "cell_status_delta_rows": [],
+          "domain_policy_id": "optimization/1",
+          "fixed_cell_status_counts": {
+            "Code-gap": 1,
+            "Unknown": 7
+          },
+          "fixed_cutoff_utc": "2026-09-03T06:45:00+00:00",
+          "fixed_lifecycle_counts": {
+            "stale": 5
+          },
+          "fixed_window_days": 730,
+          "lifecycle_delta_count": 5,
+          "lifecycle_delta_rows": [
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "66b94ffcadb9d56fc71e56edea97880f92dcef5410d9140dd819c2c9bee7afb5",
+              "source_paper_id": "08f8241c666e58b7dcda27a4aaf506138d32910c"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "72675bab5e53cd67d48e2f571d02155cbde916140a1db36872a3bde9dc8458ff",
+              "source_paper_id": "44b3b3bb40a9055eccdf86ea1702f6ae8b38934c"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "d2bc50778e56c3d8d41bd6c5cd447fc0e74481a2a51e1ddcaf681a717b32f204",
+              "source_paper_id": "a6cb366736791bcccc5c8639de5a8f9636bf87e8"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "e8f0ceef6d43ca6342e8b6a3133547ac622bfd7f991f380faa61ca393a04fadf",
+              "source_paper_id": "4dabfd108c13cd730d3cc583e474b5d8bdf4685f"
+            },
+            {
+              "calendar_lifecycle": "current",
+              "fixed_lifecycle": "stale",
+              "harvested_at": "2026-09-02T06:45:00+00:00",
+              "record_id": "f8054baf8e65d43708ba62597636be30709f5f0d9ff0cc427f7fe9cabea6d6a0",
+              "source_paper_id": "ae1b92291bc040828371378a5f7610000771be0f"
+            }
+          ],
+          "record_count": 5,
+          "zero_delta": false
+        }
+      },
+      "scenario_id": "boundary_sensitivity",
+      "scenario_kind": "boundary_sensitivity",
+      "scenario_note": "derived future sensitivity from the real receipt-bound harvested_at rows; not an observed future production state"
+    }
+  ],
+  "schema_version": 1,
+  "sealed_at_utc": "2026-09-03T05:32:08Z",
+  "source_receipt": {
+    "corpus_version": 11,
+    "harvested_at_utc": "2026-09-02T06:45:00+00:00",
+    "receipt_verified_exact": true,
+    "record_count": 11,
+    "snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+    "sqlite_sha256": "ab339287d8e9fcea662a1b8cb9557302bde356573cb4834a9b374a4cd375a2b7"
+  }
+}

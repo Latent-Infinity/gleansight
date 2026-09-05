@@ -1,0 +1,23 @@
+{
+  "artifacts": {
+    "calendar-replay-artifact.json": "a99be18d9fe18fafe6893c97c2105d256d8ecdd4484643447874ec3f1c3964fd",
+    "extracted-timestamp-rows.json": "44b6debd95715a14b78d3ffc8ef0bb134cdbf2fffc729ed709318a12f7a9afef"
+  },
+  "authorization_state": "report_only",
+  "baseline_receipt_sqlite_sha256": "ab339287d8e9fcea662a1b8cb9557302bde356573cb4834a9b374a4cd375a2b7",
+  "boundary_sensitivity_note": "derived future sensitivity from the real receipt-bound harvested_at rows; not an observed future production state",
+  "calendar_window_months": 24,
+  "corpus_version": 11,
+  "current_as_of_zero_delta": true,
+  "evidence_sufficient_scope": "human_decision_only",
+  "harvested_at_utc": "2026-09-02T06:45:00+00:00",
+  "historical_receipt_verified_exact": true,
+  "packet_kind": "status_window_calendar_replay_summary",
+  "runtime_authorized": false,
+  "runtime_status_window_days": 730,
+  "schema_version": 1,
+  "sealed_at_utc": "2026-09-03T05:32:08Z",
+  "snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+  "source_baseline_packet": "docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/baseline-evidence.json",
+  "summary_digest": "eae512a88c81ce298a98d88dc73e167db5ef67f2db7a8b84681cf4da086405be"
+}
