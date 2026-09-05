@@ -236,7 +236,7 @@ def test_executable_tau_and_inventory_do_not_authorize_operator_e() -> None:
     bound = bind_operator_e_inventory(_packet(), approved_records=APPROVED)
     assert NOVELTY_THRESHOLD_TAU == 0.45
     assert bound["runtime_authorized"] is False
-    with pytest.raises(ValueError, match="operator E is not supported"):
+    with pytest.raises(ValueError, match="not enabled by composition"):
         require_operator("E", enabled_operators=frozenset({"A", "B"}))
 
 
@@ -263,6 +263,6 @@ def test_committed_operator_e_packet_binds_approved_inventory_only() -> None:
     assert packet["candidate_outputs"] == []
     assert packet["runtime_authorized"] is False
     assert packet["evidence_sufficient"] is False
-    assert packet["algorithm_identity"] == "not_run"
+    assert packet["algorithm_identity"] == "operator-e-atypical-combination/1"
     assert "DATA-NSQD-03" in bound["tracks"]["same_policy"]["finance/1"]
     assert "DATA-NSQD-04" in bound["tracks"]["same_policy"]["optimization/1"]
