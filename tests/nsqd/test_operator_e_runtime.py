@@ -6,6 +6,7 @@ import pytest
 
 from nsqd.app.handlers import NsqdHandlerContext, handle_diverge
 from nsqd.app.use_cases import DivergeUseCase
+from nsqd.cli import _container
 from nsqd.composition import build_container
 from nsqd.domain.diverge import (
     DEFAULT_ENABLED_OPERATORS,
@@ -410,3 +411,23 @@ def test_committed_override_explicitly_enables_operator_e() -> None:
     assert (
         require_operator("E", enabled_operators=enabled_operators_from_settings(configured)) == "E"
     )
+
+
+def test_committed_override_runs_operator_e_through_real_composition(tmp_path: Path) -> None:
+    override_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "reviews"
+        / "nsqd-operator-activation-2026-08-30"
+        / "operator-e.override.toml"
+    )
+    container = _container(
+        tmp_path / "nsqd.sqlite",
+        tmp_path / "corpus.lancedb",
+        config=override_path,
+    )
+    assert container.ctx.enabled_operators == ENABLED_OPERATORS
+    result = handle_diverge(container.ctx, _operator_e_job())
+    stored = container.ctx.candidates.get_artifact(result["candidate_artifact_hash"])
+    assert stored is not None
+    assert stored["operator"] == "E"
