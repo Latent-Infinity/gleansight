@@ -1,0 +1,458 @@
+{
+  "algorithm_identity": "not_run",
+  "authorization_state": "report_only",
+  "candidate_assessments": [
+    {
+      "absence_interpretation": "bounded absence is not proof of novelty",
+      "artifact_hash": "9bb6044553a17738cea566c0f2c4563094d39e1353b4d2163d764a8fda3f2aa0",
+      "artifact_id": "E-REPORT-01",
+      "conclusion": "strong_component_overlap_combination_unresolved",
+      "narrowed_overlap_conclusion": "Probabilistic JEPA and financial calibrated selective prediction components already exist separately; the bounded unresolved question is their exact empirical integration in financial JEPA latent-distribution training with calibrated selective risk coverage.",
+      "nearest_prior_combinations": [
+        {
+          "overlap_summary": "VJEPA contributes probabilistic future-latent uncertainty while Temporal Conformal Prediction contributes calibrated financial interval behavior under shift.",
+          "source_ids": [
+            "arXiv:2601.14354",
+            "arXiv:2507.05470"
+          ]
+        },
+        {
+          "overlap_summary": "Var-JEPA supplies a JEPA variational latent-UQ component and FinAbstain supplies financial selective abstention / risk-coverage behavior.",
+          "source_ids": [
+            "arXiv:2603.20111",
+            "arXiv:2607.24875"
+          ]
+        },
+        {
+          "overlap_summary": "SPLICE combines JEPA embeddings with conformal uncertainty machinery while FinAbstain supplies financial selective abstention targets.",
+          "source_ids": [
+            "arXiv:2605.00126",
+            "arXiv:2607.24875"
+          ]
+        }
+      ],
+      "novelty_claim": "not_established",
+      "remaining_question": "Does a financial JEPA with calibrated latent-distribution uncertainty improve selective risk coverage beyond point-latent Fin-JEPA baselines without degrading held-out financial utility?",
+      "source_candidate_packet_path": "operator-e-report-only-candidates.json",
+      "source_candidate_packet_sha256": "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783",
+      "source_idea_id": "JEPA-IDEA-01"
+    },
+    {
+      "absence_interpretation": "bounded absence is not proof of novelty",
+      "artifact_hash": "e8d0d1dc3e4b7c79f1374b3b2a364fd5f9e5080452acaef8922890bfb25e5084",
+      "artifact_id": "E-REPORT-02",
+      "conclusion": "strong_mechanism_overlap_combination_unresolved",
+      "narrowed_overlap_conclusion": "The causal relevance gate itself is already covered directly by GS-FUSE, while event/causal/freshness components are covered by CAMEF, CGCMA, and CET, and JEPA-to-event prediction is covered by HEPA.",
+      "nearest_prior_combinations": [
+        {
+          "overlap_summary": "GS-FUSE gives the direct causal relevance gate and HEPA gives JEPA future-representation-to-event-prediction overlap.",
+          "source_ids": [
+            "arXiv:2605.28520",
+            "arXiv:2605.11130"
+          ]
+        },
+        {
+          "overlap_summary": "CAMEF covers causal financial event fusion while CET covers earnings-conditioned self-supervised financial prediction and signal decay.",
+          "source_ids": [
+            "arXiv:2502.04592",
+            "arXiv:2409.17392"
+          ]
+        },
+        {
+          "overlap_summary": "CGCMA supplies lag-aware trust gating for event fusion and HEPA supplies JEPA horizon-conditioned predictive representations.",
+          "source_ids": [
+            "arXiv:2604.16411",
+            "arXiv:2605.11130"
+          ]
+        }
+      ],
+      "novelty_claim": "not_established",
+      "remaining_question": "The bounded unresolved question is whether those components can be integrated into financial JEPA future-latent training with timestamp-safe external-event fusion and still outperform price-only JEPA baselines.",
+      "source_candidate_packet_path": "operator-e-report-only-candidates.json",
+      "source_candidate_packet_sha256": "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783",
+      "source_idea_id": "JEPA-IDEA-02"
+    },
+    {
+      "absence_interpretation": "bounded absence is not proof of novelty",
+      "artifact_hash": "b3edc59a50717fb3347cf3f34c04bdca9c87d3a7cb41c0e5b297a892fd02c415",
+      "artifact_id": "E-REPORT-03",
+      "conclusion": "strong_component_overlap_combination_unresolved",
+      "narrowed_overlap_conclusion": "Multi-resolution and smoother-target JEPA components already exist, JEPA-plus-denoising bridges exist, and financial denoised-label targets exist. The bounded unresolved question is the exact simultaneous raw-future-latent plus denoised-market-state target in Fin-JEPA with matched fidelity and economic metrics.",
+      "nearest_prior_combinations": [
+        {
+          "overlap_summary": "SC-JEPA supplies multi-resolution JEPA predictive targets while Denoised Labels supplies a direct financial denoised-label target.",
+          "source_ids": [
+            "arXiv:2602.04643",
+            "arXiv:2112.10139"
+          ]
+        },
+        {
+          "overlap_summary": "CF-JEPA supplies smoother multi-horizon latent-target asymmetry while Denoised Labels supplies financial denoised supervision.",
+          "source_ids": [
+            "arXiv:2606.07031",
+            "arXiv:2112.10139"
+          ]
+        },
+        {
+          "overlap_summary": "SPLICE supplies a JEPA-plus-stochastic/denoising bridge while Denoised Labels supplies direct financial denoised targets.",
+          "source_ids": [
+            "arXiv:2605.00126",
+            "arXiv:2112.10139"
+          ]
+        }
+      ],
+      "novelty_claim": "not_established",
+      "remaining_question": "Can Fin-JEPA train raw future latents and denoised market-state targets together without degrading latent fidelity while improving downstream financial utility?",
+      "source_candidate_packet_path": "operator-e-report-only-candidates.json",
+      "source_candidate_packet_sha256": "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783",
+      "source_idea_id": "JEPA-IDEA-03"
+    }
+  ],
+  "candidate_combinations": [],
+  "candidate_outputs": [],
+  "corpus_fact_writes": 0,
+  "corpus_version": 11,
+  "cutoff_utc": "2026-09-03T00:00:00Z",
+  "evidence_sufficient": false,
+  "forbidden_inferences": [
+    "bounded absence proves novelty",
+    "the packet authorizes Operator E",
+    "the packet authorizes runtime generation",
+    "the packet establishes evidence sufficiency",
+    "the broader packet turns report-only artifacts into candidate_combinations"
+  ],
+  "known_limitations": [
+    "primary verification used arXiv abstract pages plus DOI or venue metadata only where exposed by arXiv",
+    "failed librarian sessions produced no evidence and are not counted in this packet",
+    "no claim of exhaustive ACM, IEEE, SSRN, or full-text coverage is made",
+    "bounded absence is not proof of novelty",
+    "the packet is report-only evidence groundwork and does not establish evidence sufficiency or runtime authorization"
+  ],
+  "packet_digest": "044ed4cd4c1e7486c391e690b4aa1a2e301cb3a1942b6ec1c581e897969cbcb1",
+  "packet_kind": "operator_e_broader_prior_art_evidence",
+  "primary_sources": [
+    {
+      "authors": [
+        "Yongchao Huang"
+      ],
+      "component_tags": [
+        "jepa",
+        "variational_latent_uncertainty",
+        "probabilistic_world_model"
+      ],
+      "doi": "10.48550/arXiv.2601.14354",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract describes a JEPA variant that models a predictive distribution over future latent states and exposes uncertainty-bearing latent forecasts. It is not a financial paper and does not discuss selective abstention or risk coverage.",
+      "limitations": "Abstract-level evidence only; no financial calibration or abstention result is established here.",
+      "primary_url": "https://arxiv.org/abs/2601.14354",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2601.14354",
+      "submitted_at_utc": "2026-01-20",
+      "title": "VJEPA: Variational Joint Embedding Predictive Architectures as Probabilistic World Models"
+    },
+    {
+      "authors": [
+        "Moritz G\u00f6gl",
+        "Christopher Yau"
+      ],
+      "component_tags": [
+        "jepa",
+        "variational_elbo",
+        "latent_uncertainty_quantification"
+      ],
+      "doi": "10.48550/arXiv.2603.20111",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract reports an ELBO-style variational JEPA with latent uncertainty quantification on tabular data. It supplies a direct JEPA-plus-UQ component source but not a financial or abstention-specific study.",
+      "limitations": "Abstract-level evidence only; non-financial and not a selective prediction paper.",
+      "primary_url": "https://arxiv.org/abs/2603.20111",
+      "revised_at_utc": "2026-08-28",
+      "stable_id": "arXiv:2603.20111",
+      "submitted_at_utc": "2026-03-20",
+      "title": "Var-JEPA: A Variational Formulation of the Joint-Embedding Predictive Architecture - Bridging Predictive and Generative Self-Supervised Learning"
+    },
+    {
+      "authors": [
+        "Arnaud Zinflou"
+      ],
+      "component_tags": [
+        "jepa_embeddings",
+        "latent_generative_inpainting",
+        "adaptive_conformal_intervals"
+      ],
+      "doi": "10.48550/arXiv.2605.00126",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract combines JEPA-derived embeddings with latent generative inpainting and adaptive conformal intervals. It is a strong component overlap for uncertainty-aware JEPA-style prediction, but not a financial abstention paper.",
+      "limitations": "Abstract-level evidence only; load forecasting rather than financial selective risk coverage.",
+      "primary_url": "https://arxiv.org/abs/2605.00126",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2605.00126",
+      "submitted_at_utc": "2026-04-30",
+      "title": "SPLICE: Latent Diffusion over JEPA Embeddings for Conformal Time-Series Inpainting"
+    },
+    {
+      "authors": [
+        "Agnideep Aich",
+        "Ashit Baran Aich",
+        "Dipak C. Jain"
+      ],
+      "component_tags": [
+        "finance",
+        "calibrated_intervals",
+        "distribution_shift"
+      ],
+      "doi": "10.48550/arXiv.2507.05470",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract covers calibrated temporal prediction intervals for financial series including S&P500, Bitcoin, and Gold under shift. It provides direct financial calibration overlap without JEPA or selective abstention.",
+      "limitations": "Abstract-level evidence only; no JEPA latent-distribution objective or abstention policy is claimed.",
+      "primary_url": "https://arxiv.org/abs/2507.05470",
+      "revised_at_utc": "2026-01-22",
+      "stable_id": "arXiv:2507.05470",
+      "submitted_at_utc": "2025-07-07",
+      "title": "Temporal Conformal Prediction (TCP): A Distribution-Free Statistical and Machine Learning Framework for Adaptive Risk Forecasting"
+    },
+    {
+      "authors": [
+        "Dorothy Torres",
+        "Wei Cheng",
+        "Henan Huang"
+      ],
+      "component_tags": [
+        "finance",
+        "selective_abstention",
+        "risk_coverage"
+      ],
+      "doi": "10.48550/arXiv.2607.24875",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract reports financial calibration and selective abstention / risk-coverage behavior. It directly overlaps the financial abstention target but uses a different architecture family and explicitly simulated results rather than JEPA.",
+      "limitations": "Abstract-level evidence only; no JEPA latent distribution and simulated-result caveat remains material.",
+      "primary_url": "https://arxiv.org/abs/2607.24875",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2607.24875",
+      "submitted_at_utc": "2026-07-27",
+      "title": "FinAbstain: Uncertainty-Calibrated Multimodal RAG for Selective Financial Forecasting"
+    },
+    {
+      "authors": [
+        "Yang Zhang",
+        "En Chun",
+        "Ziyun Mao",
+        "Yulu Wu",
+        "Jun Wang"
+      ],
+      "component_tags": [
+        "finance",
+        "causal_relevance_gate",
+        "event_fusion"
+      ],
+      "doi": "10.48550/arXiv.2605.28520",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract describes a Granger-supervised causal-aware gate that opens only when incremental text value is present for financial event forecasting. This is a direct mechanism overlap for the proposed causal relevance gate.",
+      "limitations": "Abstract-level evidence only; no JEPA future-latent objective is included.",
+      "primary_url": "https://arxiv.org/abs/2605.28520",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2605.28520",
+      "submitted_at_utc": "2026-05-27",
+      "title": "GS-FUSE: Granger-Supervised Gated Fusion and Multi-Granularity Alignment for Event-Driven Financial Forecasting"
+    },
+    {
+      "authors": [
+        "Yang Zhang",
+        "Wenbo Yang",
+        "Jun Wang",
+        "Qiang Ma",
+        "Jie Xiong"
+      ],
+      "component_tags": [
+        "finance",
+        "causal_event_fusion",
+        "counterfactual_text"
+      ],
+      "doi": "10.48550/arXiv.2502.04592",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract covers causal and counterfactual macro-event text plus financial time-series fusion. It strengthens the event/causal overlap side for E-REPORT-02 without supplying JEPA.",
+      "limitations": "Abstract-level evidence only; no JEPA or learned relevance gate identical to the proposal is claimed.",
+      "primary_url": "https://arxiv.org/abs/2502.04592",
+      "revised_at_utc": "2025-08-08",
+      "stable_id": "arXiv:2502.04592",
+      "submitted_at_utc": "2025-02-07",
+      "title": "CAMEF: Causal-Augmented Multi-Modality Event-Driven Financial Forecasting by Integrating Time Series Patterns and Salient Macroeconomic Announcements"
+    },
+    {
+      "authors": [
+        "Yunxiang Guo"
+      ],
+      "component_tags": [
+        "finance",
+        "crypto_event_fusion",
+        "lag_aware_trust_gate"
+      ],
+      "doi": "10.48550/arXiv.2604.16411",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract reports event-conditioned crypto fusion with a lag-aware trust gate and fallback behavior. It overlaps freshness-aware external-event gating components for E-REPORT-02.",
+      "limitations": "Abstract-level evidence only; crypto rather than broader financial JEPA and no JEPA objective.",
+      "primary_url": "https://arxiv.org/abs/2604.16411",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2604.16411",
+      "submitted_at_utc": "2026-04-01",
+      "title": "CGCMA: Conditionally-Gated Cross-Modal Attention for Event-Conditioned Asynchronous Fusion"
+    },
+    {
+      "authors": [
+        "Jonas Petersen",
+        "Gian-Alessandro Lombardi",
+        "Riccardo Maggioni",
+        "Camilla Mazzoleni",
+        "Federico Martelli",
+        "Philipp Petersen"
+      ],
+      "component_tags": [
+        "jepa",
+        "horizon_conditioning",
+        "event_prediction"
+      ],
+      "doi": "10.48550/arXiv.2605.11130",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract uses horizon-conditioned JEPA future representations for event survival prediction including volatility regimes. It supplies a JEPA-to-event-prediction bridge source relevant to E-REPORT-02.",
+      "limitations": "Abstract-level evidence only; not financial external-event fusion and no causal text relevance gate.",
+      "primary_url": "https://arxiv.org/abs/2605.11130",
+      "revised_at_utc": "2026-06-03",
+      "stable_id": "arXiv:2605.11130",
+      "submitted_at_utc": "2026-05-11",
+      "title": "HEPA: A Self-Supervised Horizon-Conditioned Event Predictive Architecture for Time Series"
+    },
+    {
+      "authors": [
+        "Zhengxin Joseph Ye",
+        "Bjoern Schuller"
+      ],
+      "component_tags": [
+        "finance",
+        "earnings_conditioning",
+        "self_supervised_prediction"
+      ],
+      "doi": "10.48550/arXiv.2409.17392",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract covers earnings-conditioned self-supervised financial prediction and post-event signal decay. It provides direct financial event-conditioning overlap for E-REPORT-02 without JEPA or causal gating.",
+      "limitations": "Abstract-level evidence only; CPC rather than JEPA and no external causal relevance gate.",
+      "primary_url": "https://arxiv.org/abs/2409.17392",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2409.17392",
+      "submitted_at_utc": "2024-09-25",
+      "title": "Trading through Earnings Seasons using Self-Supervised Contrastive Representation Learning"
+    },
+    {
+      "authors": [
+        "Yanan He",
+        "Yunshi Wen",
+        "Xin Wang",
+        "Tengfei Ma"
+      ],
+      "component_tags": [
+        "jepa",
+        "multi_resolution",
+        "codebook_prediction"
+      ],
+      "doi": "10.48550/arXiv.2602.04643",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract reports codebook and multi-resolution JEPA predictive training. It overlaps multi-resolution predictive-target components for E-REPORT-03.",
+      "limitations": "Abstract-level evidence only; non-financial and no denoised market-state target.",
+      "primary_url": "https://arxiv.org/abs/2602.04643",
+      "revised_at_utc": "2026-07-17",
+      "stable_id": "arXiv:2602.04643",
+      "submitted_at_utc": "2026-02-04",
+      "title": "SC-JEPA: Stabilizing Latent Predictive Learning for Time-Series Anomaly Prediction"
+    },
+    {
+      "authors": [
+        "Jaehoon Lee",
+        "Sunghyun Sim"
+      ],
+      "component_tags": [
+        "jepa",
+        "multi_horizon",
+        "smoother_representation"
+      ],
+      "doi": "10.48550/arXiv.2606.07031",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract covers multi-horizon future representations and an online-vs-EMA smoother-representation asymmetry. It overlaps smoother latent-target design choices relevant to E-REPORT-03.",
+      "limitations": "Abstract-level evidence only; non-financial and not a raw-plus-denoised dual-target study.",
+      "primary_url": "https://arxiv.org/abs/2606.07031",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2606.07031",
+      "submitted_at_utc": "2026-06-05",
+      "title": "CF-JEPA: Mask-free forward prediction with asymmetric encoder utilization for time-series representation learning"
+    },
+    {
+      "authors": [
+        "Yanqing Ma",
+        "Carmine Ventre",
+        "Maria Polukarov"
+      ],
+      "component_tags": [
+        "finance",
+        "denoised_targets",
+        "self_supervised_learning"
+      ],
+      "doi": "10.48550/arXiv.2112.10139",
+      "evidence_locator": "arXiv abstract",
+      "evidence_summary": "The abstract reports denoised financial labels from self-supervised learning and downstream trading evaluation. It provides direct financial denoising overlap for E-REPORT-03.",
+      "limitations": "Abstract-level evidence only; no JEPA and no simultaneous raw-future-latent target.",
+      "primary_url": "https://arxiv.org/abs/2112.10139",
+      "revised_at_utc": null,
+      "stable_id": "arXiv:2112.10139",
+      "submitted_at_utc": "2021-12-19",
+      "title": "Denoised Labels for Financial Time-Series Data via Self-Supervised Learning"
+    }
+  ],
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "sealed_at_utc": "2026-09-03T08:26:14Z",
+  "search_protocol": {
+    "absence_interpretation": "bounded absence is not proof of novelty",
+    "coverage_claim": "no claim of exhaustive ACM/IEEE/SSRN full-text coverage",
+    "doi_venue_metadata_policy": "DOI and venue metadata were recorded only where exposed by arXiv",
+    "failed_librarian_sessions_counted": false,
+    "novelty_claim": "not_established",
+    "primary_verification_method": "arXiv abstract pages",
+    "queries_executed_on_utc": "2026-09-03",
+    "query_count": 3,
+    "query_log": [
+      {
+        "query_id": "Q1",
+        "query_text": "financial JEPA latent uncertainty abstention calibrated risk coverage"
+      },
+      {
+        "query_id": "Q2",
+        "query_text": "financial JEPA causal relevance gate event conditioning earnings exogenous context"
+      },
+      {
+        "query_id": "Q3",
+        "query_text": "JEPA dual target denoised financial state future latent raw dynamics"
+      }
+    ],
+    "stopping_rule": "bounded stopping after each candidate had at least one direct mechanism source, one JEPA source, and one financial-domain source, with 13 unique primary records and no new conceptual component from the final verification pass",
+    "unique_primary_record_count": 13
+  },
+  "source_candidate_packet": {
+    "artifact_bindings": [
+      {
+        "artifact_hash": "9bb6044553a17738cea566c0f2c4563094d39e1353b4d2163d764a8fda3f2aa0",
+        "artifact_id": "E-REPORT-01",
+        "source_idea_id": "JEPA-IDEA-01"
+      },
+      {
+        "artifact_hash": "e8d0d1dc3e4b7c79f1374b3b2a364fd5f9e5080452acaef8922890bfb25e5084",
+        "artifact_id": "E-REPORT-02",
+        "source_idea_id": "JEPA-IDEA-02"
+      },
+      {
+        "artifact_hash": "b3edc59a50717fb3347cf3f34c04bdca9c87d3a7cb41c0e5b297a892fd02c415",
+        "artifact_id": "E-REPORT-03",
+        "source_idea_id": "JEPA-IDEA-03"
+      }
+    ],
+    "path": "operator-e-report-only-candidates.json",
+    "sha256": "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783"
+  },
+  "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5"
+}

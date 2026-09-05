@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_e_report_only_candidates",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "evidence_sufficient": false,
+  "derived_at_utc": "2026-09-02T06:45:00Z",
+  "source_results_path": "results.json",
+  "source_results_sha256": "cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2",
+  "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+  "corpus_version": 11,
+  "candidates": [
+    {
+      "artifact_id": "E-REPORT-01",
+      "source_idea_id": "JEPA-IDEA-01",
+      "authorization_state": "report_only",
+      "runtime_authorized": false,
+      "evidence_sufficient": false,
+      "human_usefulness_score": null,
+      "title": "Calibrated latent-distribution Fin-JEPA for regime-specific abstention",
+      "component_ids": [
+        "N11-FIN-01",
+        "N11-FIN-04"
+      ],
+      "supporting_fact_ids": [
+        "JEPA-FACT-01",
+        "JEPA-FACT-02",
+        "JEPA-FACT-07",
+        "JEPA-FACT-08"
+      ],
+      "co_occurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+      "corpus_version": 11,
+      "atypicality": {
+        "combination": [
+          "forward_latent_prediction",
+          "regime_sensitivity",
+          "multiscale_trends"
+        ],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Replace point latent prediction with a calibrated latent distribution and use context-only regime strata to test whether uncertainty supports abstention. Regime detection and multi-horizon prediction are controls inherited from Fin-JEPA future work; the distinct hypothesis is calibrated distributional uncertainty tied to risk-coverage.",
+      "falsifiable_test": {
+        "design": "Walk-forward equity and FX evaluation with regime labels fit inside each training fold; compare point JEPA, the paper's regime and multi-horizon future-work baseline, distributional JEPA, and calibrated abstention.",
+        "primary_metric": "out-of-sample latent negative log likelihood with calibration error",
+        "secondary_metrics": [
+          "identity-relative latent MSE",
+          "return-signal risk-coverage",
+          "maximum drawdown at matched turnover"
+        ],
+        "failure_condition": "Reject if calibration or risk-coverage does not improve over point Fin-JEPA in held-out regimes."
+      },
+      "prior_art_status": "partial_overlap",
+      "artifact_hash": "9bb6044553a17738cea566c0f2c4563094d39e1353b4d2163d764a8fda3f2aa0",
+      "nearest_prior_combinations": []
+    },
+    {
+      "artifact_id": "E-REPORT-02",
+      "source_idea_id": "JEPA-IDEA-02",
+      "authorization_state": "report_only",
+      "runtime_authorized": false,
+      "evidence_sufficient": false,
+      "human_usefulness_score": null,
+      "title": "Event-conditioned financial JEPA with causal relevance gating",
+      "component_ids": [
+        "N11-FIN-01",
+        "N11-FIN-02",
+        "N11-FIN-03",
+        "N11-FIN-04"
+      ],
+      "supporting_fact_ids": [
+        "JEPA-FACT-01",
+        "JEPA-FACT-03",
+        "JEPA-FACT-04",
+        "JEPA-FACT-05",
+        "JEPA-FACT-06",
+        "JEPA-FACT-07"
+      ],
+      "co_occurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+      "corpus_version": 11,
+      "atypicality": {
+        "combination": [
+          "forward_latent_prediction",
+          "earnings_context",
+          "cross_asset_inputs",
+          "dynamic_variable_selection"
+        ],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Encode timestamp-safe earnings and dynamically selected exogenous context separately, open a relevance gate only when that context adds predictive information beyond price history, and train the gated context to predict future market latents across event-time windows. The causal relevance gate is imported from external GS-FUSE/CAMEF prior art and is not an approved-corpus fact.",
+      "falsifiable_test": {
+        "design": "Pre-register earnings and exogenous-data availability timestamps; compare price-only JEPA, unconditional fusion, relevance-gated fusion, and shuffled-event controls with purged walk-forward folds.",
+        "primary_metric": "event-window future-latent prediction gain over price-only JEPA",
+        "secondary_metrics": [
+          "day-by-day signal decay",
+          "directional accuracy",
+          "timestamp leakage violations",
+          "duplicate prior-art rate"
+        ],
+        "failure_condition": "Reject if gains disappear against shuffled events or if the gate uses information unavailable at decision time."
+      },
+      "prior_art_status": "partial_overlap",
+      "artifact_hash": "e8d0d1dc3e4b7c79f1374b3b2a364fd5f9e5080452acaef8922890bfb25e5084",
+      "nearest_prior_combinations": []
+    },
+    {
+      "artifact_id": "E-REPORT-03",
+      "source_idea_id": "JEPA-IDEA-03",
+      "authorization_state": "report_only",
+      "runtime_authorized": false,
+      "evidence_sufficient": false,
+      "human_usefulness_score": null,
+      "title": "Dual-target Fin-JEPA for raw dynamics and denoised market state",
+      "component_ids": [
+        "N11-FIN-01",
+        "N11-FIN-05"
+      ],
+      "supporting_fact_ids": [
+        "JEPA-FACT-01",
+        "JEPA-FACT-02",
+        "JEPA-FACT-09",
+        "JEPA-FACT-10"
+      ],
+      "co_occurrence_snapshot_id": "88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74",
+      "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+      "corpus_version": 11,
+      "atypicality": {
+        "combination": [
+          "forward_latent_prediction",
+          "denoised_targets",
+          "noise_robustness"
+        ],
+        "joint_support_count": 0,
+        "record_count": 5,
+        "score": 1.0,
+        "interpretation": "corpus rarity only; not novelty or value"
+      },
+      "mechanistic_bridge": "Train one predictor against the ordinary future encoder latent and a second head against a denoised, volatility-aware state target, forcing shared context features to preserve fast dynamics while exposing a smoother decision-relevant state.",
+      "falsifiable_test": {
+        "design": "Compare raw-target JEPA, denoised-target-only JEPA, dual-target JEPA, and shuffled-denoising controls on equities, Bitcoin, and FX with identical walk-forward splits.",
+        "primary_metric": "held-out downstream state classification at matched latent prediction error",
+        "secondary_metrics": [
+          "forward-return rank correlation",
+          "turnover-adjusted Sharpe",
+          "maximum drawdown",
+          "latent collapse metrics"
+        ],
+        "failure_condition": "Reject if denoised targets improve labels but not held-out economic metrics, or if raw-latent fidelity materially degrades."
+      },
+      "prior_art_status": "partial_overlap",
+      "artifact_hash": "b3edc59a50717fb3347cf3f34c04bdca9c87d3a7cb41c0e5b297a892fd02c415",
+      "nearest_prior_combinations": []
+    }
+  ]
+}
