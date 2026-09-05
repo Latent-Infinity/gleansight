@@ -33,6 +33,11 @@ def test_deferred_operator_packets_bind_report_only_metadata() -> None:
             assert packet["algorithm_identity"] == "operator-c-evidence-audit/1"
             assert packet["prompt_identity"] == "operator-c-full-text-extraction/1"
             assert isinstance(packet["nearest_prior_art"], list)
+        elif operator_id == "e":
+            assert packet["packet_kind"] == "evidence_plan"
+            assert packet["algorithm_identity"] == "operator-e-atypical-combination/1"
+            assert packet["prompt_identity"] == "not_run"
+            assert packet["nearest_prior_art"] == []
         else:
             assert packet["packet_kind"] == "evidence_plan"
             assert packet["algorithm_identity"] == "not_run"
@@ -60,6 +65,46 @@ def test_packet_provenance_covers_selected_records_and_e_inventory() -> None:
     }
     assert e_packet["scope_decision"] == "same_policy_and_cross_policy_separate_tracks"
     assert "executable tau authorizes Operator E" in e_packet["forbidden_inferences"]
+    assert (
+        "completed human usefulness review authorizes Operator E"
+        in e_packet["forbidden_inferences"]
+    )
+    assert (
+        "descriptive A vs E usefulness scores authorize Operator E"
+        in e_packet["forbidden_inferences"]
+    )
+    assert (
+        "report-only E candidate artifacts are generated combinations"
+        in e_packet["forbidden_inferences"]
+    )
+    artifacts = e_packet["report_only_candidate_artifacts"]
+    assert artifacts["passed_to_diverge"] is False
+    assert artifacts["human_usefulness_review_authorizes_operator_e"] is False
+    assert artifacts["artifact_ids"] == ["E-REPORT-01", "E-REPORT-02", "E-REPORT-03"]
+    assert e_packet["human_decisions"] == {
+        "decided_at_utc": "2026-09-03T16:00:38Z",
+        "evidence_sufficiency": "approved_for_experimental_implementation",
+        "runtime_authorization": "authorized_experimental_off_by_default",
+        "runtime_authorization_effective": True,
+        "implementation_state": "executable",
+        "default_enablement": False,
+        "decision_boundary": (
+            "Operator E is executable only when explicitly added to the composition "
+            "allowlist. The default remains A-only and the divergence CLI remains A/B-only. "
+            "B remains non-default; C, D, F, and G remain deferred. Report-only JEPA "
+            "artifacts are not generated combinations."
+        ),
+    }
+    broader = e_packet["broader_prior_art_evidence"]
+    assert (
+        broader["source"] == "../nsqd-jepa-ideas-gaps-2026-09-01/operator-e-broader-prior-art.json"
+    )
+    assert (
+        broader["source_candidate_sha256"]
+        == "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783"
+    )
+    assert broader["artifact_ids"] == ["E-REPORT-01", "E-REPORT-02", "E-REPORT-03"]
+    assert broader["primary_source_count"] == 13
 
 
 def test_failure_packet_and_contract_remain_empty_and_fail_closed() -> None:
@@ -75,6 +120,8 @@ def test_failure_packet_and_contract_remain_empty_and_fail_closed() -> None:
 
 def test_runtime_still_rejects_every_planned_operator() -> None:
     decisions = {row.operator_id: row for row in operator_decisions()}
-    for operator_id in ("C", "D", "E", "F", "G"):
+    assert decisions["E"].activation == "experimental"
+    assert decisions["E"].runtime_enabled is True
+    for operator_id in ("C", "D", "F", "G"):
         assert decisions[operator_id].activation == "deferred"
         assert decisions[operator_id].runtime_enabled is False

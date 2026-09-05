@@ -6,75 +6,155 @@ target_state: experimental_config_gated
 authorization_state: report_only
 runtime_authorized: false
 evidence_sufficient: false
-created_at_utc: "2026-08-31T09:09:18Z"
-algorithm_identity: not_run
+created_at_utc: '2026-08-31T09:09:18Z'
+algorithm_identity: operator-e-atypical-combination/1
 prompt_identity: not_run
 input_snapshot_ids: []
 input_bindings:
-  - manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
-    record_ids: [N11-FIN-01, N11-FIN-02, N11-FIN-03, N11-FIN-04, N11-FIN-05, N11-OPT-01, N11-OPT-02, N11-OPT-03, N11-OPT-04, N11-OPT-05]
-  - manifest: ../../../tests/fixtures/approved/nsqd/manifest.toml
-    record_ids: [DATA-NSQD-03, DATA-NSQD-04]
+- manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
+  record_ids:
+  - N11-FIN-01
+  - N11-FIN-02
+  - N11-FIN-03
+  - N11-FIN-04
+  - N11-FIN-05
+  - N11-OPT-01
+  - N11-OPT-02
+  - N11-OPT-03
+  - N11-OPT-04
+  - N11-OPT-05
+- manifest: ../../../tests/fixtures/approved/nsqd/manifest.toml
+  record_ids:
+  - DATA-NSQD-03
+  - DATA-NSQD-04
 candidate_outputs: []
 nearest_prior_art: []
 known_limitations:
-  - the inventory spans approved manifests and is not bound to one executable snapshot
-  - no component combination, co-occurrence analysis, or prior-art search has run
-  - inventory membership is not a co-occurrence snapshot and does not authorize generation
-scope_decision: same_policy_and_cross_policy_separate_tracks
-approved_component_inventory:
-  finance/1:
-    - DATA-NSQD-03
+- the inventory spans approved manifests and is not bound to one executable snapshot
+- top-level authorization fields describe this report-only evidence artifact; the nested
+  human decision separately governs the executable config-gated runtime
+- finance same-policy co-occurrence is the five-paper JEPA snapshot; DATA-NSQD-03
+  is inventory-only
+- Operator E is experimental and off by default; composition may explicitly add E;
+  B remains non-default and the CLI remains A/B-only
+- three report-only Operator E candidate artifacts exist in the JEPA packet; they
+  were not passed to DivergeUseCase and are not candidate_combinations
+- the broader report-only Operator E prior-art packet is completed and attached;
+  explicit runtime enablement does not turn report-only JEPA artifacts into generated
+  combinations
+- matched-count Operator A/B baselines are real report-only cards on the approved
+  corpus snapshot with finance/1 filtering; all six remain rejected because no human
+  dval assignment exists
+- the completed operator-label-blinded human usefulness review is descriptive only
+  and does not authorize Operator E
+- inventory membership is not a co-occurrence snapshot and does not authorize generation
+report_only_candidate_artifacts:
+  source: ../nsqd-jepa-ideas-gaps-2026-09-01/operator-e-report-only-candidates.json
+  source_packet_digest: c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783
+  source_content_digest: b507dec7ddf88f47a6d50d801e9707358379f2544da4ce83b4a04546fff66d43
+  review_summary_packet_digest: 62369d5b3b8192128b14afbf344f76b4508a769662b7aa75fbc427d98dedf21b
+  artifact_ids:
+  - E-REPORT-01
+  - E-REPORT-02
+  - E-REPORT-03
+  passed_to_diverge: false
+  human_usefulness_review_authorizes_operator_e: false
+co_occurrence_snapshots:
+  same_policy:finance/1:
+    source: ../nsqd-jepa-ideas-gaps-2026-09-01/results.json
+    source_packet_digest: cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2
+    review_summary_packet_digest: 62369d5b3b8192128b14afbf344f76b4508a769662b7aa75fbc427d98dedf21b
+    snapshot_id: 88712433c0781a0d91ecdc143a7f919ddcd9d0ff2cc8e495bba3e48635e73c74
+    record_ids:
     - N11-FIN-01
     - N11-FIN-02
     - N11-FIN-03
     - N11-FIN-04
     - N11-FIN-05
+    atypicality_interpretation: corpus rarity only; not novelty or value
+scope_decision: same_policy_and_cross_policy_separate_tracks
+approved_component_inventory:
+  finance/1:
+  - DATA-NSQD-03
+  - N11-FIN-01
+  - N11-FIN-02
+  - N11-FIN-03
+  - N11-FIN-04
+  - N11-FIN-05
   optimization/1:
-    - DATA-NSQD-04
-    - N11-OPT-01
-    - N11-OPT-02
-    - N11-OPT-03
-    - N11-OPT-04
-    - N11-OPT-05
+  - DATA-NSQD-04
+  - N11-OPT-01
+  - N11-OPT-02
+  - N11-OPT-03
+  - N11-OPT-04
+  - N11-OPT-05
 candidate_combinations: []
 tracks:
   same_policy:
     policy_rule: Every component and candidate target share one domain_policy_id.
   cross_policy:
-    policy_rule: Bind source_domain_policy_id and target_domain_policy_id; source evidence cannot satisfy target-policy sufficiency.
+    policy_rule: Bind source_domain_policy_id and target_domain_policy_id; source
+      evidence cannot satisfy target-policy sufficiency.
 ablations:
-  - id: component_scope
-    choices:
-      - same_policy
-      - cross_policy
-    scoring_rule: Score and review independently; do not pool thresholds or class counts.
-  - id: generation_method
-    choices:
-      - co_occurrence_atypicality_plus_mechanistic_bridge
-      - mechanistic_bridge_only
-      - rarity_only_negative_control
-    primary_metric: independently_reviewed_bridge_valid_usefulness
-    secondary_metrics:
-      - prior_art_duplicate_rate
-      - unsupported_bridge_rate
-      - policy_violation_count
-  - id: operator_baseline
-    choices:
-      - operator_E_candidate
-      - operator_A_candidate
-      - operator_B_candidate
-    primary_metric: reviewed_usefulness_at_matched_candidate_count
-selection_rule: Require zero policy violations and reject rarity-only gains; prefer E only if bridge-valid usefulness improves without a duplicate-rate regression.
+- id: component_scope
+  choices:
+  - same_policy
+  - cross_policy
+  scoring_rule: Score and review independently; do not pool thresholds or class counts.
+- id: generation_method
+  choices:
+  - co_occurrence_atypicality_plus_mechanistic_bridge
+  - mechanistic_bridge_only
+  - rarity_only_negative_control
+  primary_metric: independently_reviewed_bridge_valid_usefulness
+  secondary_metrics:
+  - prior_art_duplicate_rate
+  - unsupported_bridge_rate
+  - policy_violation_count
+- id: operator_baseline
+  choices:
+  - operator_E_candidate
+  - operator_A_candidate
+  - operator_B_candidate
+  primary_metric: reviewed_usefulness_at_matched_candidate_count
+selection_rule: Require zero policy violations and reject rarity-only gains; prefer
+  E only if bridge-valid usefulness improves without a duplicate-rate regression.
+human_decisions:
+  decided_at_utc: '2026-09-03T16:00:38Z'
+  evidence_sufficiency: approved_for_experimental_implementation
+  runtime_authorization: authorized_experimental_off_by_default
+  runtime_authorization_effective: true
+  implementation_state: executable
+  default_enablement: false
+  decision_boundary: Operator E is executable only when explicitly added to the composition
+    allowlist. The default remains A-only and the divergence CLI remains A/B-only. B remains
+    non-default; C, D, F, and G remain deferred. Report-only JEPA artifacts are not generated
+    combinations.
 required_before_review:
-  - bind a component and co-occurrence snapshot by policy and track
-  - measure atypicality and nearest prior combinations
-  - require a provenance-bound mechanistic bridge
-  - compare bridge-valid usefulness and duplication against Operators A and B
-  - obtain separate human activation after evidence review
+- bind a component and co-occurrence snapshot by policy and track
+- measure atypicality and nearest prior combinations
+- complete bounded broader prior-art review beyond the approved five-paper corpus
+- require a provenance-bound mechanistic bridge
+- compare bridge-valid usefulness and duplication against Operators A and B
+- obtain a separate human evidence-sufficiency decision and separate human activation
+  after evidence review
 forbidden_inferences:
-  - low co-occurrence is a useful combination
-  - novelty tau is Operator E evidence
-  - executable tau authorizes Operator E
-  - inventory membership authorizes combination generation
-  - scores or thresholds from one component-scope track transfer to the other
+- low co-occurrence is a useful combination
+- novelty tau is Operator E evidence
+- executable tau authorizes Operator E
+- inventory membership authorizes combination generation
+- scores or thresholds from one component-scope track transfer to the other
+- completed human usefulness review authorizes Operator E
+- descriptive A vs E usefulness scores authorize Operator E
+- report-only E candidate artifacts are generated combinations
+broader_prior_art_evidence:
+  source: ../nsqd-jepa-ideas-gaps-2026-09-01/operator-e-broader-prior-art.json
+  source_packet_digest: 044ed4cd4c1e7486c391e690b4aa1a2e301cb3a1942b6ec1c581e897969cbcb1
+  source_candidate_sha256: c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783
+  artifact_ids:
+  - E-REPORT-01
+  - E-REPORT-02
+  - E-REPORT-03
+  primary_source_count: 13
+  passed_to_diverge: false
+  human_evidence_decision_authorizes_operator_e: false
