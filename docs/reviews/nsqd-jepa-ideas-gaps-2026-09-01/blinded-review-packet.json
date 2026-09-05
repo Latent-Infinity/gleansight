@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "packet_kind": "human_usefulness_review_packet",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "evidence_sufficient": false,
+  "reviewer_identity": "human-reviewer",
+  "human_usefulness_review_status": "completed",
+  "blinded_at_utc": "2026-09-02T11:05:48Z",
+  "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+  "corpus_version": 11,
+  "blinding_scope": "operator_label_blinded",
+  "blinding_limitation": "proposal content is retained for usefulness scoring and may still permit family inference",
+  "ordering_method": "sort by sha256(canonical_json({artifact_hash, blind_review_salt})) ascending",
+  "claim_limits": "n=3 per source family; descriptive-only comparison; no activation or significance inference",
+  "usefulness_rubric": {
+    "0": "not useful or actively misleading",
+    "1": "weakly useful but mostly derivative or impractical",
+    "2": "useful and worth follow-up review",
+    "3": "highly useful and unusually compelling"
+  },
+  "abstention_reasons": [
+    "insufficient_domain_context",
+    "unclear_claim",
+    "possible_duplicate",
+    "not_finance_relevant"
+  ],
+  "duplicate_collapse_fields": [
+    "possible_duplicate_of_blind_ids",
+    "duplicate_group_id",
+    "duplicate_decision"
+  ],
+  "items": [
+    {
+      "blind_id": "BR-01",
+      "item_index": 1,
+      "proposal_title": "Dual-target Fin-JEPA for raw dynamics and denoised market state",
+      "proposal_summary": "Train one predictor against the ordinary future encoder latent and a second head against a denoised, volatility-aware state target, forcing shared context features to preserve fast dynamics while exposing a smoother decision-relevant state.",
+      "mechanistic_rationale": "Train one predictor against the ordinary future encoder latent and a second head against a denoised, volatility-aware state target, forcing shared context features to preserve fast dynamics while exposing a smoother decision-relevant state.",
+      "falsifiable_test": "Compare raw-target JEPA, denoised-target-only JEPA, dual-target JEPA, and shuffled-denoising controls on equities, Bitcoin, and FX with identical walk-forward splits.",
+      "primary_metric": "held-out downstream state classification at matched latent prediction error",
+      "review_form": {
+        "human_usefulness_score": 1,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-02",
+      "item_index": 2,
+      "proposal_title": "Raw-label microstructure state learner",
+      "proposal_summary": "Skip denoising and learn directly from raw noisy labels for intraday volatility state.",
+      "mechanistic_rationale": "Noise itself may preserve microstructure stress transitions that smoothing removes.",
+      "falsifiable_test": "Run matched pipelines with and without denoising under identical walk-forward splits.",
+      "primary_metric": "Raw labels should preserve intraday volatility-state transitions better than denoised labels.",
+      "review_form": {
+        "human_usefulness_score": 2,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-03",
+      "item_index": 3,
+      "proposal_title": "Calibrated latent-distribution Fin-JEPA for regime-specific abstention",
+      "proposal_summary": "Replace point latent prediction with a calibrated latent distribution and use context-only regime strata to test whether uncertainty supports abstention. Regime detection and multi-horizon prediction are controls inherited from Fin-JEPA future work; the distinct hypothesis is calibrated distributional uncertainty tied to risk-coverage.",
+      "mechanistic_rationale": "Replace point latent prediction with a calibrated latent distribution and use context-only regime strata to test whether uncertainty supports abstention. Regime detection and multi-horizon prediction are controls inherited from Fin-JEPA future work; the distinct hypothesis is calibrated distributional uncertainty tied to risk-coverage.",
+      "falsifiable_test": "Walk-forward equity and FX evaluation with regime labels fit inside each training fold; compare point JEPA, the paper's regime and multi-horizon future-work baseline, distributional JEPA, and calibrated abstention.",
+      "primary_metric": "out-of-sample latent negative log likelihood with calibration error",
+      "review_form": {
+        "human_usefulness_score": 1,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-04",
+      "item_index": 4,
+      "proposal_title": "Latent-error momentum discriminator",
+      "proposal_summary": "Use JEPA latent prediction error as a direct discriminator for daily return direction.",
+      "mechanistic_rationale": "Prediction misses may encode underreacted state transitions rather than pure representation error.",
+      "falsifiable_test": "Compare latent-error thresholding with size-matched random and lagged-error controls.",
+      "primary_metric": "Error-threshold portfolios should separate forward returns from matched latent-fidelity controls.",
+      "review_form": {
+        "human_usefulness_score": 2,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-05",
+      "item_index": 5,
+      "proposal_title": "Whitespace behavioral liquidity probe",
+      "proposal_summary": "Occupy missing finance cell mechanism=behavioral|target=liquidity|horizon=weekly with a target-bound report-only candidate.",
+      "mechanistic_rationale": "The chosen mechanism may expose an underexplored target and horizon combination in the current archive.",
+      "falsifiable_test": "Compare against neighboring occupied cells and shuffled target assignments.",
+      "primary_metric": "A target-bound card should be scorable and traceable even before any runtime authorization decision.",
+      "review_form": {
+        "human_usefulness_score": 0,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [
+          "BR-07",
+          "BR-08"
+        ],
+        "duplicate_group_id": "DG-01",
+        "duplicate_decision": "collapse_same_idea_variants",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-06",
+      "item_index": 6,
+      "proposal_title": "Event-conditioned financial JEPA with causal relevance gating",
+      "proposal_summary": "Encode timestamp-safe earnings and dynamically selected exogenous context separately, open a relevance gate only when that context adds predictive information beyond price history, and train the gated context to predict future market latents across event-time windows. The causal relevance gate is imported from external GS-FUSE/CAMEF prior art and is not an approved-corpus fact.",
+      "mechanistic_rationale": "Encode timestamp-safe earnings and dynamically selected exogenous context separately, open a relevance gate only when that context adds predictive information beyond price history, and train the gated context to predict future market latents across event-time windows. The causal relevance gate is imported from external GS-FUSE/CAMEF prior art and is not an approved-corpus fact.",
+      "falsifiable_test": "Pre-register earnings and exogenous-data availability timestamps; compare price-only JEPA, unconditional fusion, relevance-gated fusion, and shuffled-event controls with purged walk-forward folds.",
+      "primary_metric": "event-window future-latent prediction gain over price-only JEPA",
+      "review_form": {
+        "human_usefulness_score": 1,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-07",
+      "item_index": 7,
+      "proposal_title": "Whitespace institutional crowding probe",
+      "proposal_summary": "Occupy missing finance cell mechanism=institutional|target=crowding|horizon=regime-time with a target-bound report-only candidate.",
+      "mechanistic_rationale": "The chosen mechanism may expose an underexplored target and horizon combination in the current archive.",
+      "falsifiable_test": "Compare against neighboring occupied cells and shuffled target assignments.",
+      "primary_metric": "A target-bound card should be scorable and traceable even before any runtime authorization decision.",
+      "review_form": {
+        "human_usefulness_score": 0,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [
+          "BR-05",
+          "BR-08"
+        ],
+        "duplicate_group_id": "DG-01",
+        "duplicate_decision": "collapse_same_idea_variants",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-08",
+      "item_index": 8,
+      "proposal_title": "Whitespace balance-sheet slippage probe",
+      "proposal_summary": "Occupy missing finance cell mechanism=balance-sheet|target=slippage|horizon=event-time with a target-bound report-only candidate.",
+      "mechanistic_rationale": "The chosen mechanism may expose an underexplored target and horizon combination in the current archive.",
+      "falsifiable_test": "Compare against neighboring occupied cells and shuffled target assignments.",
+      "primary_metric": "A target-bound card should be scorable and traceable even before any runtime authorization decision.",
+      "review_form": {
+        "human_usefulness_score": 0,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [
+          "BR-05",
+          "BR-07"
+        ],
+        "duplicate_group_id": "DG-01",
+        "duplicate_decision": "collapse_same_idea_variants",
+        "reviewer_notes": null
+      }
+    },
+    {
+      "blind_id": "BR-09",
+      "item_index": 9,
+      "proposal_title": "Persistent post-earnings context carry",
+      "proposal_summary": "Assume earnings context stays decision-relevant beyond the immediate event window.",
+      "mechanistic_rationale": "Post-release repricing may diffuse slowly enough that stale earnings context still anchors flow.",
+      "falsifiable_test": "Extend the event window and compare against timestamp-purged decay baselines.",
+      "primary_metric": "Holding event-conditioned state features after the standard window should still improve signal decay forecasts.",
+      "review_form": {
+        "human_usefulness_score": 1,
+        "abstention_reason": null,
+        "possible_duplicate_of_blind_ids": [],
+        "duplicate_group_id": null,
+        "duplicate_decision": "distinct",
+        "reviewer_notes": null
+      }
+    }
+  ],
+  "packet_digest_algorithm": "sha256(canonical_json(packet_without_packet_digest))",
+  "packet_digest": "f01448dd1f10d8059f69c116201e9bffd1957a5bfef88f69bb5c75e5220e70cd",
+  "reviewed_at_utc": "2026-09-02T15:50:20Z"
+}

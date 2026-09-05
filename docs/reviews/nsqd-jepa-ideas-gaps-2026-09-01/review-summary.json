@@ -1,38 +1,147 @@
 {
-  "schema_version": 1,
-  "packet_kind": "research_result_report",
-  "authorization_state": "report_only",
-  "runtime_authorized": false,
-  "evidence_sufficient": false,
-  "corpus_fact_writes": 0,
-  "operator_activation_requested": false,
-  "cutoff_utc": "2026-09-01T00:00:00Z",
-  "sealed_at_utc": "2026-09-01T17:26:09Z",
-  "input_bindings": {
-    "manifest": "../nsqd-projection-review-2026-08-28/final/manifest.toml",
-    "record_ids": ["N11-FIN-01", "N11-FIN-02", "N11-FIN-03", "N11-FIN-04", "N11-FIN-05"]
-  },
-  "result_counts": {
-    "extracted_facts": 10,
-    "inferred_gaps": 4,
-    "proposed_ideas": 3,
-    "candidate_axis_hypotheses": 1
+  "accounting_revision": {
+    "human_usefulness_review_status": "completed",
+    "matched_count_operator_baselines_status": "executed_report_only",
+    "operator_e_authorization_state": "unauthorized",
+    "operator_e_broader_prior_art_status": "completed_report_only",
+    "revised_at_utc": "2026-09-03T16:00:38Z",
+    "structural_screen_status": "executed"
   },
   "artifact_sha256": {
-    "ablation-results.json": "fa6269da09fb823617681300632e317b9ab953d594a56be839d4275f0947f6a7",
+    "ablation-results.json": "ac5ba811d06075e4f9f4d1161a2dbbbfd8c7142c520f0f33c6b6e4798ac49d97",
+    "baseline-evidence.json": "c73caa58a667bd0c055ba59964273ecdc982ff88bab2f661a7a3d7b5cab1c33e",
+    "blinded-review-audit-manifest.json": "fa7cc3dc8ca35ce5c0d0d1ac1edd81dc70e109127b53f01ade70fc3eb8fc7af3",
+    "blinded-review-packet.json": "d1572c971ea1f50fd16c924a59dd705090882ecf94f26d76ff973c0ffccb8a5e",
+    "operator-e-broader-prior-art.json": "f1051a630dfc71d4f4f639130f826975e5b76e86cdfac50cf247973f7dc3bc96",
+    "operator-e-report-only-candidates.json": "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783",
     "prior-art-checks.jsonl": "62874a678b571a515a4ba8a7a100ee4ffe0dabdca0e3d650cd6dec28eda2f0d6",
     "results.json": "cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2",
     "source-ledger.json": "12889d817f4a6e13e2187c7d28bd0059c1a2c08d0a33b453012dc8b2cbf451ae"
   },
+  "authorization_state": "report_only",
+  "broader_prior_art_review": {
+    "covers_artifacts": [
+      "operator-e-broader-prior-art.json"
+    ],
+    "human_evidence_sufficiency_decision": "approved_for_experimental_implementation",
+    "human_decided_at_utc": "2026-09-03T16:00:38Z",
+    "reviewed_at_utc": "2026-09-03T09:31:53Z",
+    "reviewer_scope": "independent_agent_technical_review",
+    "runtime_authorization_decision": "authorized_experimental_pending_implementation",
+    "runtime_authorization_effective": false,
+    "status": "passed_report_only_technical_review"
+  },
+  "corpus_fact_writes": 0,
+  "current_execution_bundle_review": {
+    "covers_artifacts": [
+      "baseline-evidence.json",
+      "operator-e-report-only-candidates.json",
+      "blinded-review-packet.json",
+      "blinded-review-audit-manifest.json",
+      "ablation-results.json"
+    ],
+    "final_reviewed_at_utc": "2026-09-02T15:50:20Z",
+    "reviewer_id": "independent-agent-review",
+    "status": "passed"
+  },
+  "cutoff_utc": "2026-09-01T00:00:00Z",
+  "evidence_sufficient": false,
+  "forbidden_inferences": [
+    "report inclusion is a novelty finding",
+    "report inclusion is a corpus fact",
+    "the packet authorizes Operator E or F",
+    "the packet authorizes runtime generation or schema mutation"
+  ],
+  "human_usefulness_review": {
+    "all_scores_null": false,
+    "blinded_item_count": 9,
+    "by_operator": {
+      "A": {
+        "collapsed_scores": [
+          2,
+          2,
+          1
+        ],
+        "mean_score": 1.666667,
+        "raw_scores": [
+          2,
+          2,
+          1
+        ]
+      },
+      "B": {
+        "collapsed_scores": [
+          0
+        ],
+        "mean_score": 0.0,
+        "raw_scores": [
+          0,
+          0,
+          0
+        ]
+      },
+      "E": {
+        "collapsed_scores": [
+          1,
+          1,
+          1
+        ],
+        "mean_score": 1.0,
+        "raw_scores": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    "descriptive_only": true,
+    "duplicate_collapsed": {
+      "abstention_count": 0,
+      "effective_item_count": 7,
+      "mean_score": 1.142857,
+      "total_score": 8
+    },
+    "duplicate_group_count": 1,
+    "duplicate_rationale": "same idea, different targets",
+    "packet_status": "completed",
+    "raw": {
+      "abstention_count": 0,
+      "item_count": 9,
+      "mean_score": 0.888889,
+      "total_score": 8
+    },
+    "reviewed_at_utc": "2026-09-02T15:50:20Z",
+    "reviewer_identity": "human-reviewer",
+    "statistical_significance_inference": false
+  },
+  "input_bindings": {
+    "manifest": "../nsqd-projection-review-2026-08-28/final/manifest.toml",
+    "record_ids": [
+      "N11-FIN-01",
+      "N11-FIN-02",
+      "N11-FIN-03",
+      "N11-FIN-04",
+      "N11-FIN-05"
+    ]
+  },
+  "known_limitations": [
+    "only one of five approved records is a direct JEPA paper",
+    "co-occurrence is measured only within five approved finance projections",
+    "prior-art checks are bounded and do not establish novelty",
+    "the broader thirteen-source primary-source packet remains bounded and does not claim exhaustive ACM, IEEE, or SSRN full-text coverage",
+    "report-only Operator A and B baseline cards were generated on a scratch approved corpus snapshot with finance/1 filtering and remain rejected because no human dval assignment exists",
+    "the human packet is operator-label-blinded, not guaranteed family-inference-proof",
+    "completed usefulness review metrics are descriptive only and duplicate-collapsed results do not establish statistical significance",
+    "the validation_target axis is unstable at this corpus size"
+  ],
+  "operator_activation_requested": false,
+  "packet_digest": "62369d5b3b8192128b14afbf344f76b4508a769662b7aa75fbc427d98dedf21b",
   "packet_digest_algorithm": "sha256(canonical_json(artifact_sha256))",
-  "packet_digest": "c8547b8ffea8192f62085c627d34743d6659d54dc6f20d195796b0cf5a799bb8",
-  "independent_review": {
-    "workflow": "writer-reviewer/1",
-    "reviewer_id": "openai/gpt-5.4 / Sisyphus-Junior",
-    "required_rounds": 4,
+  "packet_kind": "research_result_report",
+  "prior_report_review": {
     "completed_rounds": 4,
-    "current_decision": "approve_report_only",
     "final_reviewed_at_utc": "2026-09-01T16:25:59Z",
+    "required_rounds": 4,
     "resolved_findings": [
       "removed unsupported macro-release language from JEPA-FACT-06",
       "bound every co-occurrence feature tag to extracted fact ids",
@@ -44,20 +153,25 @@
       "bound JEPA-FACT-04 earnings decay to the approved CET excerpt",
       "replaced primary-source-only facts 6, 8, and 10 with approved local projection facts",
       "bound every approved local excerpt to a verified SHA-256 digest"
-    ]
+    ],
+    "reviewer_id": "report-maintainer",
+    "scope": "results.json, source-ledger.json, prior-art-checks.jsonl, and the pre-baseline structural report",
+    "workflow": "writer-reviewer/1"
   },
-  "review_decision": "approved_report_only",
-  "known_limitations": [
-    "only one of five approved records is a direct JEPA paper",
-    "co-occurrence is measured only within five approved finance projections",
-    "prior-art checks are bounded and do not establish novelty",
-    "Operator A and B matched-count baselines were not executed",
-    "the validation_target axis is unstable at this corpus size"
-  ],
-  "forbidden_inferences": [
-    "report inclusion is a novelty finding",
-    "report inclusion is a corpus fact",
-    "the packet authorizes Operator E or F",
-    "the packet authorizes runtime generation or schema mutation"
-  ]
+  "report_only_artifact_counts": {
+    "blinded_review_items": 9,
+    "operator_a_baseline_cards": 3,
+    "operator_b_baseline_cards": 3,
+    "operator_e_candidate_artifacts": 3
+  },
+  "result_counts": {
+    "candidate_axis_hypotheses": 1,
+    "extracted_facts": 10,
+    "inferred_gaps": 4,
+    "proposed_ideas": 3
+  },
+  "review_decision": "completed_human_review_report_only",
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "sealed_at_utc": "2026-09-02T15:50:20Z"
 }
