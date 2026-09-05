@@ -345,7 +345,7 @@ def diverge(
         DivergeOperator,
         typer.Option(
             "--operator",
-            help="Requested supported operator; composition remains authoritative",
+            help="Requested operator; composition remains authoritative",
         ),
     ] = DivergeOperator.A,
     target_cell_id: Annotated[str | None, typer.Option("--target-cell-id")] = None,

@@ -57,6 +57,8 @@ def test_diverge_cli_exposes_operator_selection_without_tau() -> None:
     assert "--operator" in result.output
     assert "--target-cell-id" in result.output
     assert "--axiom-cell-id" in result.output
+    assert "A|B" in result.output or "[A|B]" in result.output
+    assert "A|B|E" not in result.output
     assert "--tau" not in result.output
 
 
@@ -144,7 +146,7 @@ def test_diverge_cli_rejects_operator_b_without_structured_proof(tmp_path: Path)
     assert "Operator B requires --target-cell-id and --axiom-cell-id" in result.output
 
 
-def test_diverge_cli_does_not_expose_deferred_operator_e(tmp_path: Path) -> None:
+def test_diverge_cli_does_not_expose_operator_e(tmp_path: Path) -> None:
     fixture = tmp_path / "candidate.yaml"
     fixture.write_text("domain_policy_id: finance/1\n", encoding="utf-8")
     result = CliRunner().invoke(
@@ -163,6 +165,35 @@ def test_diverge_cli_does_not_expose_deferred_operator_e(tmp_path: Path) -> None
             "finance/1",
         ],
     )
+    assert result.exit_code != 0
+    assert "Invalid value for '--operator'" in result.output
+
+
+def test_diverge_cli_rejects_operator_e_even_with_structured_proof(tmp_path: Path) -> None:
+    fixture = tmp_path / "candidate.yaml"
+    fixture.write_text("domain_policy_id: finance/1\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "diverge",
+            "--candidate-fixture",
+            str(fixture),
+            "--axiom",
+            "combine approved components",
+            "--axiom-cell-id",
+            "finance/target",
+            "--target-cell-id",
+            "finance/target",
+            "--operator",
+            "E",
+            "--snapshot-id",
+            "snap",
+            "--domain-policy-id",
+            "finance/1",
+        ],
+    )
+
     assert result.exit_code != 0
     assert "Invalid value for '--operator'" in result.output
 

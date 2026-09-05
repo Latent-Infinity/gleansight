@@ -97,8 +97,8 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 
 ### Diverge
 
-- **FR-D1** Default composition requires **Operator A** only. Operator B is supported but non-default and requires an explicit composition allowlist (`settings.nsqd.enabled_operators`, default `A`). `gleansight diverge --operator` may request only A or B; it never widens the composition allowlist, and B additionally requires explicit target-cell and target-bound axiom inputs. Artifacts persist `operator`; scored cards persist the corresponding `generating_operator`.
-- **FR-D1-FUTURE** Operators C–G are future requirements (lifecycle: deferred; not current acceptance criteria). B support does not activate them.
+- **FR-D1** Default composition requires **Operator A** (`settings.nsqd.enabled_operators`, default `A`). Operators B and E are non-default and require an explicit composition allowlist; E is experimental. `gleansight diverge --operator` may request A or B and never widens the composition allowlist. B requires explicit target-cell and target-bound axiom inputs. An application caller may submit E only through an explicitly E-enabled composition with the same target proof. Artifacts persist `operator`; scored cards persist the corresponding `generating_operator`.
+- **FR-D1-FUTURE** Operators C, D, F, and G are future requirements (lifecycle: deferred; not current acceptance criteria). B support and experimental E do not activate them.
 - **FR-D2** No rank/kill/score; does not call the gate.
 - **FR-D3** Output is an immutable candidate artifact (hash persisted) plus `generator_run_id`.
 - **FR-D4** Evaluator is a separate use-case that reloads by hash (`evaluator_run_id` ≠ `generator_run_id`). Session tokens alone are not sufficient (`ALG-SEP`).
