@@ -7,6 +7,7 @@ required_fields:
     - failure_record_id
     - domain_policy_id
     - experiment_id
+    - source_class
     - immutable_source_artifact_digests
   original_conditions:
     - code_revision
@@ -32,6 +33,8 @@ failure_class_values:
   - hypothesis
   - regime_bound
   - inconclusive
+source_class_values:
+  - registered_experiment_artifact
 resurrection_scope_values:
   - review_only
   - test_only
@@ -51,11 +54,11 @@ optional_fields:
   - known_confounds
   - supersedes_failure_record_id
 forbidden_sources:
-  - test failures without experiment evidence
-  - job error codes
-  - sufficiency failures
-  - inferred or invented failures
-  - absence of published or successful results
+  - test_failure_without_experiment_evidence
+  - job_error_code
+  - sufficiency_failure
+  - inferred_or_invented_failure
+  - absence_of_published_or_successful_results
 method_references:
   - https://www.w3.org/TR/prov-o/
   - https://www.w3.org/TR/2013/REC-prov-constraints-20130430/

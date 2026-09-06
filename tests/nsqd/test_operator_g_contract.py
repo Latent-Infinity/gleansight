@@ -37,6 +37,7 @@ def _record() -> dict[str, object]:
         "operator_g_eligible": False,
         "domain_policy_id": "finance/1",
         "experiment_id": "experiment-001",
+        "source_class": "registered_experiment_artifact",
         "immutable_source_artifact_digests": ["a" * 64],
         "original_conditions": {
             "code_revision": "b" * 40,
@@ -184,6 +185,7 @@ def test_operator_g_failure_contract_and_nested_records_reject_extra_fields() ->
         ("schema_version", 2, "schema_version"),
         ("authorization_state", "authorized", "authorization_state"),
         ("failure_record_id", " ", "failure_record_id"),
+        ("source_class", "test_failure_without_experiment_evidence", "source_class"),
         ("immutable_source_artifact_digests", ["BAD"], "sha256"),
     ],
 )

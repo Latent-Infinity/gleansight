@@ -16,6 +16,7 @@ _RECORD_REQUIRED_FIELDS = frozenset(
         "operator_g_eligible",
         "domain_policy_id",
         "experiment_id",
+        "source_class",
         "immutable_source_artifact_digests",
         "original_conditions",
         "outcome",
@@ -34,6 +35,7 @@ _CONTRACT_FIELDS = frozenset(
         "operator_g_eligible_by_default",
         "required_fields",
         "failure_class_values",
+        "source_class_values",
         "resurrection_scope_values",
         "admission_rules",
         "operator_g_eligibility_rules",
@@ -48,6 +50,7 @@ _REQUIRED_FIELD_GROUPS = {
             "failure_record_id",
             "domain_policy_id",
             "experiment_id",
+            "source_class",
             "immutable_source_artifact_digests",
         }
     ),
@@ -113,6 +116,7 @@ def validate_operator_g_failure_contract(contract: Mapping[str, object]) -> dict
         if set(_string_list(required_fields.get(group), f"required_fields.{group}")) != expected:
             raise ValueError(f"required_fields.{group} does not match the contract")
     _string_list(validated.get("failure_class_values"), "failure_class_values")
+    _string_list(validated.get("source_class_values"), "source_class_values")
     _string_list(validated.get("resurrection_scope_values"), "resurrection_scope_values")
     _string_list(validated.get("admission_rules"), "admission_rules")
     _string_list(validated.get("operator_g_eligibility_rules"), "operator_g_eligibility_rules")
@@ -146,6 +150,10 @@ def validate_operator_g_failure_record(
         raise ValueError("operator_g_eligible must be false before independent authorization")
     for field in ("failure_record_id", "domain_policy_id", "experiment_id"):
         _required_string(validated, field)
+    source_class = _required_string(validated, "source_class")
+    forbidden_sources = _string_list(rules["forbidden_sources"], "forbidden_sources")
+    if source_class in forbidden_sources or source_class not in rules["source_class_values"]:
+        raise ValueError("source_class is not an allowed experiment evidence source")
     if "known_confounds" in validated:
         _string_list(validated.get("known_confounds"), "known_confounds")
     if "supersedes_failure_record_id" in validated:
