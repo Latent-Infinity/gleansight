@@ -9,8 +9,8 @@
 | --- | --- | --- | --- | --- |
 | A | inversion | supported | enabled | — |
 | B | archive whitespace | supported | composition-gated | settings `nsqd.enabled_operators`; CLI selection requires target-bound proof |
-| C | Swanson ABC | deferred | rejected | two named literatures plus explicit human activation; B composition-gating is not C authorization |
-| D | analogical transport | deferred | rejected | valid proposal under `analogical-transport-contract.yaml` after an evidence-sufficient C bridge |
+| C | Swanson ABC | deferred | rejected | genuinely new literature pair or evidence cycle plus separate human acceptance and explicit runtime activation; B composition-gating is not C authorization |
+| D | analogical transport | deferred | rejected | valid proposal under `analogical-transport-contract.yaml` after an evidence-sufficient, human-accepted C bridge |
 | E | atypical combination | experimental | composition-gated, non-default | settings `nsqd.enabled_operators` may explicitly add E; application callers require target proof; executable `τ` alone remains insufficient |
 | F | missing dimensions | deferred | rejected | valid proposal under `axis-candidate-contract.yaml`, followed by the specified ablation |
 | G | failure resurrection | deferred | rejected | approved records under `failure-record-contract.yaml`; do not invent them |
@@ -35,7 +35,7 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 
 | Track | Approved next state | Runtime effect now | Required evidence / dependency |
 | --- | --- | --- | --- |
-| C | separate evidence packet | none | two named literatures plus explicit human activation; shared status-table semantics with B are not C authorization |
+| C | separate evidence packet | none | genuinely new literature pair or evidence cycle plus separate human acceptance and explicit runtime activation; shared status-table semantics with B are not C authorization |
 | D | separate evidence packet after C | none | executable mapping contract exists; still requires an evidence-sufficient, human-accepted C bridge plus typed graphs |
 | E | experimental config-gated runtime | default `A`; composition may explicitly add E | atypical-combination contract is executable; `τ = 0.45` is not evidence; application callers require target proof |
 | F | separate evidence packet | none | axis-policy contract for proposing a dimension outside the registered archive axes |
