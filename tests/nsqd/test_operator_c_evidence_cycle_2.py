@@ -36,6 +36,7 @@ def test_second_operator_c_cycle_is_digest_bound_and_latest() -> None:
         "../nsqd-operator-c-evidence-2026-09-05/review-summary.json"
     )
     summary = _json(EVIDENCE_ROOT / "review-summary.json")
+    ledger = _json(EVIDENCE_ROOT / "evidence-ledger.json")
     artifacts = _mapping(summary["artifact_sha256"])
     assert set(artifacts) == {
         "evidence-ledger.json",
@@ -50,6 +51,9 @@ def test_second_operator_c_cycle_is_digest_bound_and_latest() -> None:
     preimage = json.dumps(artifacts, sort_keys=True, separators=(",", ":")).encode()
     assert summary["packet_digest"] == hashlib.sha256(preimage).hexdigest()
     assert packet["latest_evidence_artifact_sha256"] == artifacts
+    assert packet["latest_algorithm_identity"] == ledger["algorithm_identity"]
+    assert packet["latest_prompt_identity"] == ledger["prompt_identity"]
+    assert packet["latest_executed_at_utc"] == ledger["queried_at_utc"]
     seal_path = EVIDENCE_ROOT / "review-seal.json"
     seal = _json(seal_path)
     summary_digest = hashlib.sha256(

@@ -4,7 +4,8 @@
 **Contract:** `docs/ablations/alg-operators.md`
 **Approved-input manifests:** `docs/reviews/nsqd-projection-review-2026-08-28/final/manifest.toml` for N11 records; `tests/fixtures/approved/nsqd/manifest.toml` for DATA-NSQD-03/04
 **Packet plans recorded at:** `2026-08-31T09:09:18Z`
-**Operator C evidence report reviewed at:** `2026-08-31T18:25:20Z`
+**Operator C initial evidence report reviewed at:** `2026-08-31T18:25:20Z`
+**Operator C second evidence report reviewed at:** `2026-09-05T23:34:10Z`
 
 These packets inventory the smallest evidence currently available for Operators C–G. They do not make candidates corpus facts or expose C, D, F, or G through the CLI. Operator E is executable only when explicitly allowlisted in configuration; the default remains A-only and executable `τ = 0.45` is unrelated.
 
