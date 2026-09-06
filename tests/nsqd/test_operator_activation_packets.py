@@ -144,6 +144,7 @@ def test_authority_docs_exclude_experimental_operator_e_from_deferred_set() -> N
     algorithm_contract = (DOCS_ROOT / "algorithm-contract-nsqd.md").read_text(encoding="utf-8")
     development_plan = (DOCS_ROOT / "development-plan-ns-qd.md").read_text(encoding="utf-8")
     fact_ledger = (DOCS_ROOT / "fact-ledger.md").read_text(encoding="utf-8")
+    novelty_tau = (DOCS_ROOT / "ablations" / "alg-novelty-tau.md").read_text(encoding="utf-8")
     prd = (DOCS_ROOT / "prd-ns-qd.md").read_text(encoding="utf-8")
     requirements = (DOCS_ROOT / "requirements-ns-qd.md").read_text(encoding="utf-8")
     product = (DOCS_ROOT / "product-gleansight.md").read_text(encoding="utf-8")
@@ -151,12 +152,14 @@ def test_authority_docs_exclude_experimental_operator_e_from_deferred_set() -> N
     assert "C–G remain deferred" not in algorithm_contract
     assert "| Operators C–G |" not in development_plan
     assert "C-G remain runtime-disabled" not in fact_ledger
+    assert "Operator E remains deferred" not in novelty_tau
     assert "C–G are deferred" not in prd
     assert "Operators C–G as current acceptance criteria" not in requirements
     assert "C–G later" not in product
     assert "C, D, F, and G remain deferred" in algorithm_contract
     assert "| Operators C, D, F, and G |" in development_plan
     assert "C, D, F, and G remain runtime-disabled" in fact_ledger
+    assert "E was later authorized separately as experimental" in novelty_tau
     assert "C, D, F, and G are deferred" in prd
     assert "Operators C, D, F, and G as current acceptance criteria" in requirements
     assert product.count("C, D, F, and G later") == 2

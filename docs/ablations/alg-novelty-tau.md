@@ -22,7 +22,7 @@ Command: `uv run pytest tests/nsqd/test_domain_policies.py::test_novelty_thresho
 
 ## Decision
 
-Activate **`τ = 0.45` as `approved_default_tunable`**. The packet contains 120 accepted autonomous writer/reviewer labels under N11.3/N11.4, with 30 near-duplicate and 30 novel rows per policy. At `0.45`, overall novel false-kill is 3.33%, finance is 0%, optimization is 6.67%, and near-duplicate false-pass is 21.67%. Measurement inventory is fail-closed and does not fabricate pairs. Operator E remains deferred; this decision does not authorize operators C–G, calendar-month semantics, or CLI `--operator`.
+Activate **`τ = 0.45` as `approved_default_tunable`**. The packet contains 120 accepted autonomous writer/reviewer labels under N11.3/N11.4, with 30 near-duplicate and 30 novel rows per policy. At `0.45`, overall novel false-kill is 3.33%, finance is 0%, optimization is 6.67%, and near-duplicate false-pass is 21.67%. Measurement inventory is fail-closed and does not fabricate pairs. This decision did not authorize Operator E; E was later authorized separately as experimental, executable, off by default, and explicit-config-only. It does not authorize operators C, D, F, or G, calendar-month semantics, or CLI `--operator`.
 
 ## Human validation
 
