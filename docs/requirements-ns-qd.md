@@ -186,7 +186,7 @@ Port tests assert behavioral contracts (snapshot filter, job exclusivity, clock)
 - 12-agent runtime
 - Renaming `src/papers` in the first slices
 - Changing experimental `papers ask` synthesis (not the discovery gate)
-- Operators C–G as current acceptance criteria; default or CLI exposure of Operator B
+- Operators C, D, F, and G as current acceptance criteria; default or CLI exposure of Operator B or E
 - Treating smoke snapshots as production-valid novelty or as production elites
 - Durable NS-QD work on the paper `jobs` table
 - Paper projector / DATA-NSQD-04 in N1
