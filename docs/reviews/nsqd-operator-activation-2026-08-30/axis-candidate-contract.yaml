@@ -4,6 +4,7 @@ template_only: true
 runtime_authorized: false
 schema_mutation_authorized: false
 maximum_candidate_axes_per_proposal: 1
+approval_digest_field: approved_proposal_digest
 descriptor_kind_values:
   - handcrafted
   - learned
@@ -23,6 +24,7 @@ admission_rules:
   - a proposal is report-only and cannot mutate a registered policy
   - one proposal contains exactly one measurable semantic axis
   - model generation and human approval are separate provenance activities
+  - human approval binds the canonical proposal digest and fails after mutation
   - learned axes require stability and leakage evaluation
   - schema admission requires a later independent human decision
 method_references:

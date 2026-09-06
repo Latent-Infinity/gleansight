@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -36,6 +37,7 @@ _CONTRACT_FIELDS = frozenset(
         "required_baselines",
         "required_negative_controls",
         "required_metrics",
+        "approval_digest_field",
         "admission_rules",
         "method_references",
     }
@@ -53,7 +55,15 @@ _AXIS_FIELDS = frozenset(
         "leakage_risks",
     }
 )
-_REVIEW_FIELDS = frozenset({"status", "human_reviewer", "human_approved_at_utc", "approval_scope"})
+_REVIEW_FIELDS = frozenset(
+    {
+        "status",
+        "human_reviewer",
+        "human_approved_at_utc",
+        "approval_scope",
+        "approved_proposal_digest",
+    }
+)
 _PROVENANCE_FIELDS = frozenset({"generated_by", "source_artifact_digests"})
 
 
@@ -70,6 +80,8 @@ def validate_operator_f_axis_contract(contract: Mapping[str, object]) -> dict[st
             raise ValueError(f"operator F axis contract {field} must be {str(expected).lower()}")
     if validated.get("maximum_candidate_axes_per_proposal") != 1:
         raise ValueError("operator F axis contract must allow exactly one candidate axis")
+    if validated.get("approval_digest_field") != "approved_proposal_digest":
+        raise ValueError("operator F axis contract approval_digest_field is invalid")
     _string_list(validated.get("descriptor_kind_values"), "descriptor_kind_values")
     _string_list(validated.get("value_type_values"), "value_type_values")
     _string_list(validated.get("required_baselines"), "required_baselines")
@@ -141,11 +153,28 @@ def validate_operator_f_axis_proposal(
             raise ValueError("human_approved_at_utc must be timezone-aware UTC")
         if review.get("approval_scope") not in {"schema_only", "evaluation_only"}:
             raise ValueError("approval_scope is invalid")
+        approved_digest = _required_string(review, "approved_proposal_digest")
+        if approved_digest != operator_f_axis_proposal_digest(validated):
+            raise ValueError("approved_proposal_digest does not match the axis proposal")
+    elif any(
+        review.get(field) is not None
+        for field in (
+            "human_reviewer",
+            "human_approved_at_utc",
+            "approval_scope",
+            "approved_proposal_digest",
+        )
+    ):
+        raise ValueError("unapproved review fields must be null")
     return validated
 
 
 def operator_f_axis_proposal_digest(proposal: Mapping[str, object]) -> str:
-    return sha256_hex(canonical_json(_mapping(proposal, "operator F axis proposal")))
+    preimage = copy.deepcopy(_mapping(proposal, "operator F axis proposal"))
+    review = preimage.get("review")
+    if isinstance(review, dict):
+        review["approved_proposal_digest"] = None
+    return sha256_hex(canonical_json(preimage))
 
 
 def _mapping(value: object, field: str) -> dict[str, Any]:

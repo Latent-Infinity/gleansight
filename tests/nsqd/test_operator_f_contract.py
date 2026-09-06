@@ -62,6 +62,7 @@ def _proposal() -> dict[str, object]:
             "human_reviewer": None,
             "human_approved_at_utc": None,
             "approval_scope": None,
+            "approved_proposal_digest": None,
         },
     }
 
@@ -117,6 +118,7 @@ def test_operator_f_axis_proposal_rejects_duplicate_axes_and_self_approval() -> 
         "human_reviewer": "agent:f-proposer",
         "human_approved_at_utc": "2026-09-05T20:00:00Z",
         "approval_scope": "evaluation_only",
+        "approved_proposal_digest": None,
     }
     with pytest.raises(ValueError, match="independent human"):
         validate_operator_f_axis_proposal(self_approved, contract=_contract())
@@ -127,6 +129,7 @@ def test_operator_f_axis_proposal_rejects_duplicate_axes_and_self_approval() -> 
         "human_reviewer": "agent:independent-reviewer",
         "human_approved_at_utc": "2026-09-05T20:00:00Z",
         "approval_scope": "evaluation_only",
+        "approved_proposal_digest": None,
     }
     with pytest.raises(ValueError, match="human reviewer"):
         validate_operator_f_axis_proposal(agent_approved, contract=_contract())
@@ -208,7 +211,10 @@ def test_operator_f_axis_proposal_validates_axis_enums_and_human_review() -> Non
         "human_reviewer": "human:axis-reviewer",
         "human_approved_at_utc": "2026-09-05T20:00:00Z",
         "approval_scope": "evaluation_only",
+        "approved_proposal_digest": None,
     }
+    review = cast(dict[str, object], approved["review"])
+    review["approved_proposal_digest"] = operator_f_axis_proposal_digest(approved)
     assert (
         validate_operator_f_axis_proposal(approved, contract=_contract())["review"]
         == approved["review"]
@@ -223,6 +229,12 @@ def test_operator_f_axis_proposal_validates_axis_enums_and_human_review() -> Non
         review[field] = value
         with pytest.raises(ValueError, match=message):
             validate_operator_f_axis_proposal(invalid, contract=_contract())
+
+    mutated = copy.deepcopy(approved)
+    axis = cast(dict[str, object], mutated["candidate_axis"])
+    axis["semantic_definition"] = "Mutated after approval."
+    with pytest.raises(ValueError, match="approved_proposal_digest"):
+        validate_operator_f_axis_proposal(mutated, contract=_contract())
 
 
 def test_operator_f_axis_proposal_rejects_malformed_shapes_and_strings() -> None:
