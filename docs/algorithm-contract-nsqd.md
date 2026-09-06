@@ -1,6 +1,6 @@
 # Algorithm contract — NS/QD-inspired discovery
 
-**Status:** v1.1 defaults; ALG.* probe review completed through 2026-08-26; defaults remain explicitly **not frozen** and tunable. Operator B is supported, non-default, and composition-gated; C–G remain deferred.
+**Status:** v1.1 defaults; ALG.* probe review completed through 2026-08-26; defaults remain explicitly **not frozen** and tunable. Operator B is supported, non-default, and composition-gated; Operator E is experimental, off by default, and composition-gated; C, D, F, and G remain deferred.
 **Normative owner:** this file owns formulas, states, deterministic policies, schemas, and version semantics.
 **Related:** terminology in `docs/glossary-nsqd.md`; obligations in `docs/requirements-ns-qd.md`; sequencing in `docs/development-plan-ns-qd.md`.
 

@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.58 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.59 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -126,6 +126,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.57 | 2026-09-05 | Complete the second Operator C cycle's review and provenance boundary: a committed source-extract artifact makes source-content hashes locally reproducible, a frozen OpenAlex snapshot records bounded citation/co-citation checks, prompt identity is explicit, and a detached seal binds the independently approved negative conclusion without changing `report_only`, evidence insufficiency, zero outputs, human acceptance, or runtime authorization. The explicit E override is additionally exercised through the real composition container. Full gate: 1620 passed, 2 skipped, 92.07%; EV-N20: 401 passed; focused C packet: 25 passed. |
 | 1.6.58 | 2026-09-05 | Close the final fail-closed contract review: Operator F human approval now binds a canonical proposal digest and rejects post-approval mutation; Operator G accepts only the registered-experiment source class and rejects forbidden evidence-source classes; Operator C authority explicitly separates initial and latest algorithm, prompt, execution, and review identities. The historical calendar evidence date remains unchanged. Full gate: 1621 passed, 2 skipped, 92.05%; EV-N20: 402 passed; focused F/G contract coverage: 94.44%. |
 | 1.6.59 | 2026-09-05 | Prevent caller-controlled Operator G contract widening by requiring the exact canonical `registered_experiment_artifact` source-class set and validating records against the internal canonical set. Full gate: 1622 passed, 2 skipped, 92.06%; EV-N20: 403 passed. |
+| 1.6.60 | 2026-09-05 | Reconcile all authority summaries with Operator E's experimental, off-by-default, composition-gated runtime authorization: only C, D, F, and G remain deferred/runtime-disabled. Full gate: 1623 passed, 2 skipped, 92.06%; EV-N20: 404 passed. |
 
 ---
 
@@ -170,7 +171,7 @@ Paper `jobs` + EW-V0B CHECK stay paper-only. Harvest, project (N2b), map, diverg
 | EW atomic import | EW-V2 | Pass | — | done 2026-08-20 |
 | EW RRF | EW-V1 | Pass | — | done 2026-08-19 |
 | Operator B | supported, non-default, config-gated | Pass | — | settings authorize A+B; internal job/use-case selects B |
-| Operators C–G | C/D deferred; F/G collection contracts executable but non-authorizing | N/A (deferred) | — | C needs evidence; F/G need valid records and ablations |
+| Operators C, D, F, and G | C/D deferred; F/G collection contracts executable but non-authorizing | N/A (deferred) | — | C needs evidence; F/G need valid records and ablations |
 | HD-NSQD-01 | LanceDB recorded | Pass | — | closed; no N0.4 |
 | Domain-policy isolation | EV-N16 | Pass | — | Explicit policy id; pack-scoped corpus views/verdicts; no implicit `finance/1` |
 | Insufficiency acquisition fallback | EV-N17 | Pass | — | Default acquire/UI composition wires the paper runtime, workers, and analysis-metadata bootstrap; approved DATA-NSQD-03 is committed and verified |
