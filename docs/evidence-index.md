@@ -1,8 +1,8 @@
 # Evidence Index (project register)
 
 **Plan Set:** gleansight
-**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.57 (NS/QD)
-**As of:** 2026-09-05
+**Authority:** `docs/development-plan-open-work.md` (evidence closeout) and `docs/development-plan-ns-qd.md` v1.6.58 (NS/QD)
+**As of:** 2026-09-03
 
 `Last Result` is CI-derived. `Lifecycle: Pending: Vn` means the path may be missing until phase Vn closes, at which point it becomes `Required`.
 
