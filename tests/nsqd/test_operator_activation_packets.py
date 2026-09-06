@@ -154,8 +154,20 @@ def test_authority_docs_exclude_experimental_operator_e_from_deferred_set() -> N
     assert "| Operators C–G |" not in development_plan
     assert "C-G remain runtime-disabled" not in fact_ledger
     assert "Operator E remains deferred" not in novelty_tau
-    assert "new literature pair or evidence cycle" in operator_ablation
-    assert "evidence-sufficient, human-accepted C bridge" in operator_ablation
+    assert (
+        "| C | Swanson ABC | deferred | rejected | genuinely new literature pair or evidence "
+        "cycle plus separate human acceptance and explicit runtime activation; B "
+        "composition-gating is not C authorization |"
+    ) in operator_ablation
+    assert (
+        "| D | analogical transport | deferred | rejected | valid proposal under "
+        "`analogical-transport-contract.yaml` after an evidence-sufficient, human-accepted C "
+        "bridge |"
+    ) in operator_ablation
+    assert (
+        "executable mapping contract exists; still requires an evidence-sufficient, "
+        "human-accepted C bridge plus typed graphs"
+    ) in operator_ablation
     assert "C–G are deferred" not in prd
     assert "Operators C–G as current acceptance criteria" not in requirements
     assert "C–G later" not in product
