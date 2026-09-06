@@ -267,7 +267,7 @@ Allowed operator ids: `A`, `B`, `C`, `D`, `E`, `F`, `G`. Generation still does n
 | A | inversion | **supported** | enabled |
 | B | archive whitespace | **supported**, non-default | enabled only by composition allowlist |
 | C | Swanson ABC | deferred; B support is not C authorization | rejected |
-| D | analogical transport | deferred | rejected |
+| D | analogical transport | deferred; executable report-only mapping contract | rejected |
 | E | atypical combination | **experimental**, non-default | enabled only by composition allowlist |
 | F | missing dimensions | deferred; executable report-only proposal contract | rejected |
 | G | failure resurrection | deferred; executable report-only failure-record contract | rejected |
@@ -300,6 +300,10 @@ When explicitly allowlisted by composition, Operator E:
 6. Leave report-only JEPA E artifacts ungenerated until a caller submits a validated combination through `DivergeUseCase`.
 
 **Exposure boundary.** `DivergeUseCase` may persist `operator=E` only when E is explicitly present in the composition allowlist. Default composition is `A`. The CLI remains A/B-only; application callers enabling E must supply target-bound proof. E does not invent harvest seeds or DATA records.
+
+### ALG-OP-D — Analogical-transport mapping contract (deferred)
+
+`analogical-transport-contract.yaml` and `validate_operator_d_mapping_proposal` define a fail-closed, report-only mapping boundary. A proposal must bind distinct source and target `domain_policy_id`s, typed relational graphs, allowed relation mappings, forbidden surface attributes, target constraints, required baselines and a surface-similarity negative control, and empty candidate inferences. An evidence-sufficient, human-accepted Operator C bridge is still required before any mapping may be selected; current C evidence remains insufficient. Validation or digesting does not authorize Operator D, emit transported facts, or write corpus records.
 
 ### ALG-OP-F — Missing-dimension proposal contract (deferred)
 
