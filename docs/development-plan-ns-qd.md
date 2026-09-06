@@ -8,7 +8,7 @@
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.59 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.60 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -127,6 +127,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.58 | 2026-09-05 | Close the final fail-closed contract review: Operator F human approval now binds a canonical proposal digest and rejects post-approval mutation; Operator G accepts only the registered-experiment source class and rejects forbidden evidence-source classes; Operator C authority explicitly separates initial and latest algorithm, prompt, execution, and review identities. The historical calendar evidence date remains unchanged. Full gate: 1621 passed, 2 skipped, 92.05%; EV-N20: 402 passed; focused F/G contract coverage: 94.44%. |
 | 1.6.59 | 2026-09-05 | Prevent caller-controlled Operator G contract widening by requiring the exact canonical `registered_experiment_artifact` source-class set and validating records against the internal canonical set. Full gate: 1622 passed, 2 skipped, 92.06%; EV-N20: 403 passed. |
 | 1.6.60 | 2026-09-05 | Reconcile all authority summaries with Operator E's experimental, off-by-default, composition-gated runtime authorization: only C, D, F, and G remain deferred/runtime-disabled. Full gate: 1623 passed, 2 skipped, 92.06%; EV-N20: 404 passed. |
+| 1.6.61 | 2026-09-05 | Extend the Operator E authority reconciliation to the frozen PRD, requirements, and product summary so every current authority surface consistently excludes E from the deferred C/D/F/G set. Full gate: 1623 passed, 2 skipped, 92.06%; EV-N20: 404 passed. |
 
 ---
 
