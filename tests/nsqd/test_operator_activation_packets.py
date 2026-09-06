@@ -12,6 +12,7 @@ from nsqd.domain.snapshot import is_utc_datetime
 PACKET_ROOT = (
     Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
 )
+DOCS_ROOT = PACKET_ROOT.parents[1]
 PACKET_IDS = ("c", "d", "e", "f", "g")
 
 
@@ -125,3 +126,16 @@ def test_runtime_still_rejects_every_planned_operator() -> None:
     for operator_id in ("C", "D", "F", "G"):
         assert decisions[operator_id].activation == "deferred"
         assert decisions[operator_id].runtime_enabled is False
+
+
+def test_authority_docs_exclude_experimental_operator_e_from_deferred_set() -> None:
+    algorithm_contract = (DOCS_ROOT / "algorithm-contract-nsqd.md").read_text(encoding="utf-8")
+    development_plan = (DOCS_ROOT / "development-plan-ns-qd.md").read_text(encoding="utf-8")
+    fact_ledger = (DOCS_ROOT / "fact-ledger.md").read_text(encoding="utf-8")
+
+    assert "C–G remain deferred" not in algorithm_contract
+    assert "| Operators C–G |" not in development_plan
+    assert "C-G remain runtime-disabled" not in fact_ledger
+    assert "C, D, F, and G remain deferred" in algorithm_contract
+    assert "| Operators C, D, F, and G |" in development_plan
+    assert "C, D, F, and G remain runtime-disabled" in fact_ledger
