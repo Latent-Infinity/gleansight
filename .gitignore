@@ -226,6 +226,7 @@ ehthumbs.db
 Thumbs.db
 
 # Local agent/session state
+.omo/
 .serena/
 .mdcrdt/
 .sisyphus/
