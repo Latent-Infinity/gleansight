@@ -1,0 +1,35 @@
+schema_version: 1
+record_type: operator_d_mapping_proposal
+template_only: true
+runtime_authorized: false
+requires_upstream_c_bridge: true
+upstream_c_bridge_sufficient: false
+allowed_mapping_methods:
+  - typed_structure_mapping
+  - graph_relational_alignment
+forbidden_mapping_methods:
+  - surface_similarity_negative_control
+forbidden_surface_attributes:
+  - title
+  - venue
+required_baselines:
+  - typed_structure_mapping
+required_negative_controls:
+  - surface_similarity_negative_control
+required_metrics:
+  - held_out_analogy_recovery
+  - role_consistency
+  - target_contradiction_rate
+  - domain_policy_violation_count
+zero_policy_violation_required: true
+approval_digest_field: approved_proposal_digest
+admission_rules:
+  - source and target domain policies must be distinct
+  - typed source and target relational graphs are required
+  - mappings use allowed relation predicates, never forbidden surface attributes
+  - surface similarity is a negative control, not a selected mapping method
+  - candidate inferences stay empty until an evidence-sufficient human-accepted C bridge exists
+  - validation does not authorize Operator D or write corpus facts
+method_references:
+  - https://doi.org/10.1207/s15516709cog0702_3
+  - https://doi.org/10.1016/0010-0285(80)90013-4
