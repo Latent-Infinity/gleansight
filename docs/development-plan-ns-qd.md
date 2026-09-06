@@ -129,6 +129,7 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.60 | 2026-09-05 | Reconcile all authority summaries with Operator E's experimental, off-by-default, composition-gated runtime authorization: only C, D, F, and G remain deferred/runtime-disabled. Full gate: 1623 passed, 2 skipped, 92.06%; EV-N20: 404 passed. |
 | 1.6.61 | 2026-09-05 | Extend the Operator E authority reconciliation to the frozen PRD, requirements, and product summary so every current authority surface consistently excludes E from the deferred C/D/F/G set. Full gate: 1623 passed, 2 skipped, 92.06%; EV-N20: 404 passed. |
 | 1.6.62 | 2026-09-05 | Add an executable fail-closed Operator D analogical-transport contract without activating D: proposals require distinct source/target policies, typed graphs, allowed relation mappings, an exact non-widenable forbidden-surface-attribute set, a surface-similarity negative control, empty inferences, and a still-insufficient upstream C bridge. Four-command gate: 1638 passed, 2 skipped, 92.09%; EV-N20 pytest: 419 passed; touched `operator_d.py`: 94%. |
+| 1.6.63 | 2026-09-06 | Align executable and documentary C/D gate metadata with the closed runtime milestone: C requires a genuinely new literature pair or evidence cycle plus separate human acceptance and runtime activation; D requires an evidence-sufficient, human-accepted C bridge. Regression tests bind both statements without changing runtime enablement. Four-command gate: 1638 passed, 2 skipped, 92.09%. |
 
 ---
 
