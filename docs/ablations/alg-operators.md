@@ -10,7 +10,7 @@
 | A | inversion | supported | enabled | — |
 | B | archive whitespace | supported | composition-gated | settings `nsqd.enabled_operators`; CLI selection requires target-bound proof |
 | C | Swanson ABC | deferred | rejected | two named literatures plus explicit human activation; B composition-gating is not C authorization |
-| D | analogical transport | deferred | rejected | source/target `domain_policy_id` after C |
+| D | analogical transport | deferred | rejected | valid proposal under `analogical-transport-contract.yaml` after an evidence-sufficient C bridge |
 | E | atypical combination | experimental | composition-gated, non-default | settings `nsqd.enabled_operators` may explicitly add E; application callers require target proof; executable `τ` alone remains insufficient |
 | F | missing dimensions | deferred | rejected | valid proposal under `axis-candidate-contract.yaml`, followed by the specified ablation |
 | G | failure resurrection | deferred | rejected | approved records under `failure-record-contract.yaml`; do not invent them |
@@ -36,13 +36,13 @@ Command: `uv run pytest tests/nsqd/test_operator_b.py tests/nsqd/test_operator_a
 | Track | Approved next state | Runtime effect now | Required evidence / dependency |
 | --- | --- | --- | --- |
 | C | separate evidence packet | none | two named literatures plus explicit human activation; shared status-table semantics with B are not C authorization |
-| D | separate evidence packet after C | none | explicit source and target `domain_policy_id`; cross-policy isolation must remain fail-closed |
+| D | separate evidence packet after C | none | executable mapping contract exists; still requires an evidence-sufficient, human-accepted C bridge plus typed graphs |
 | E | experimental config-gated runtime | default `A`; composition may explicitly add E | atypical-combination contract is executable; `τ = 0.45` is not evidence; application callers require target proof |
 | F | separate evidence packet | none | axis-policy contract for proposing a dimension outside the registered archive axes |
 | G | separate evidence packet | none | approved failed-experiment corpus with provenance; synthetic or invented failures cannot qualify |
 | CLI | A/B divergence selection | A remains default operator; B remains composition-gated; E is application/config-only | CLI may request A/B with B target proof; it cannot alter settings or expose C, D, E, F, or G |
 
-Dependency order is status semantics → C and E independently → D after C. F and G now have executable fail-closed data contracts but remain blocked on valid evidence and their required ablations. CLI exposure does not change that order or authorize any operator.
+Dependency order is status semantics → C and E independently → D after C. D, F, and G now have executable fail-closed data contracts; D remains blocked on C, and F/G remain blocked on valid evidence and their required ablations. CLI exposure does not change that order or authorize any operator.
 
 Each report-only packet uses an explicit baseline and negative control before recommending a method. Current designs compare C bridge pairs and extraction methods, D typed structure mapping against surface similarity, E same/cross-policy tracks and A/B candidates against rarity-only generation, F one candidate axis against current axes and a shuffled axis, and—only after a real corpus exists—G typed failure memory against raw logs and no-memory baselines. The executable packet definitions live in `docs/reviews/nsqd-operator-activation-2026-08-30/`.
 
@@ -66,7 +66,7 @@ C takes two named, plausibly noninteracting literatures and produces auditable `
 
 ### D — analogical transport
 
-D follows C but has a different input contract: explicit `source_domain_policy_id` and `target_domain_policy_id`, typed source and target relational graphs, allowed mapping predicates, forbidden attributes, and target-domain constraints. It maps systematic relations rather than surface attributes and emits unapproved candidate inferences. Evidence reports structural/role consistency, target contradiction rate, held-out analogy recovery, human plausibility at K, and a zero-tolerance policy-leak count.
+D follows C but has a different input contract: explicit `source_domain_policy_id` and `target_domain_policy_id`, typed source and target relational graphs, allowed mapping predicates, forbidden attributes, and target-domain constraints. `analogical-transport-contract.yaml` and `nsqd.domain.operator_d` define the executable collection boundary: distinct policies, typed graphs, allowed relation mappings, a surface-similarity negative control, empty candidate inferences, and a still-insufficient upstream C bridge. Validation does not authorize Operator D. It maps systematic relations rather than surface attributes and would emit unapproved candidate inferences only after an evidence-sufficient, human-accepted C bridge. Evidence reports structural/role consistency, target contradiction rate, held-out analogy recovery, human plausibility at K, and a zero-tolerance policy-leak count.
 
 ### E — atypical combination
 
@@ -93,4 +93,4 @@ F recommends, but cannot install, a candidate descriptor axis. `axis-candidate-c
 
 - B is **supported**, non-default, and composition-gated.
 - E is **experimental**, off by default, and composition-gated.
-- C, D, F, and G remain **deferred**.
+- C, D, F, and G remain **deferred**. D/F/G have executable report-only data contracts.

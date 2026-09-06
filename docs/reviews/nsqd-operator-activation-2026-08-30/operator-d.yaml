@@ -18,6 +18,10 @@ nearest_prior_art: []
 known_limitations:
   - upstream C evidence report is complete but insufficient and has no selected bridge
   - typed source and target relational graphs do not exist
+  - the executable mapping contract validates proposals but does not authorize Operator D
+analogical_transport_contract: analogical-transport-contract.yaml
+typed_source_graph: null
+typed_target_graph: null
 depends_on: operator-c.yaml
 direction_decision: selected
 selected_direction:

@@ -108,6 +108,18 @@ def test_packet_provenance_covers_selected_records_and_e_inventory() -> None:
     assert broader["primary_source_count"] == 13
 
 
+def test_operator_d_packet_binds_fail_closed_mapping_contract() -> None:
+    d_packet = _load("operator-d.yaml")
+    contract = _load("analogical-transport-contract.yaml")
+    assert d_packet["analogical_transport_contract"] == "analogical-transport-contract.yaml"
+    assert d_packet["typed_source_graph"] is None
+    assert d_packet["typed_target_graph"] is None
+    assert contract["template_only"] is True
+    assert contract["runtime_authorized"] is False
+    assert contract["upstream_c_bridge_sufficient"] is False
+    assert "surface_similarity_negative_control" in contract["forbidden_mapping_methods"]
+
+
 def test_failure_packet_and_contract_remain_empty_and_fail_closed() -> None:
     g_packet = _load("operator-g.yaml")
     contract = _load("failure-record-contract.yaml")
