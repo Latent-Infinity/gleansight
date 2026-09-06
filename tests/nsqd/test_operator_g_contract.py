@@ -166,6 +166,15 @@ def test_operator_g_failure_contract_rejects_drift(
         validate_operator_g_failure_contract(contract)
 
 
+def test_operator_g_failure_contract_rejects_source_class_widening() -> None:
+    contract = _contract()
+    source_classes = cast(list[str], contract["source_class_values"])
+    source_classes.append("caller_added_source")
+
+    with pytest.raises(ValueError, match="source_class_values"):
+        validate_operator_g_failure_contract(contract)
+
+
 def test_operator_g_failure_contract_and_nested_records_reject_extra_fields() -> None:
     contract = _contract()
     contract["unexpected"] = True
