@@ -303,11 +303,11 @@ When explicitly allowlisted by composition, Operator E:
 
 ### ALG-OP-F — Missing-dimension proposal contract (deferred)
 
-`axis-candidate-contract.yaml` and `validate_operator_f_axis_proposal` define a fail-closed, report-only proposal boundary. One proposal must bind a non-registered measurable axis, source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review. Validation or digesting does not register the axis, mutate the archive, write corpus facts, or authorize Operator F.
+`axis-candidate-contract.yaml` and `validate_operator_f_axis_proposal` define a fail-closed, report-only proposal boundary. One proposal must bind a non-registered measurable axis, source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review whose approval binds the canonical proposal digest. Post-approval mutation is rejected. Validation or digesting does not register the axis, mutate the archive, write corpus facts, or authorize Operator F.
 
 ### ALG-OP-G — Failure-resurrection record contract (deferred)
 
-`failure-record-contract.yaml` and `validate_operator_g_failure_record` define a fail-closed, report-only evidence boundary. A record must bind an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Synthetic, invented, speculative, outcome-free, or unsupported records are rejected. Validation or digesting does not write corpus facts, restart work, or authorize Operator G.
+`failure-record-contract.yaml` and `validate_operator_g_failure_record` define a fail-closed, report-only evidence boundary. A record must identify a registered experiment artifact as its source class and bind an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Test failures, job errors, sufficiency failures, synthetic or inferred failures, and absence-of-success claims are rejected. Validation or digesting does not write corpus facts, restart work, or authorize Operator G.
 
 ---
 

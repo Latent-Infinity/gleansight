@@ -74,11 +74,11 @@ E combines approved, provenance-bound components only. Current inventory binds D
 
 ### F — missing dimensions
 
-F recommends, but cannot install, a candidate descriptor axis. `axis-candidate-contract.yaml` and `nsqd.domain.operator_f` define and validate the executable collection boundary: exact contract identity, report-only authorization, one non-registered axis, immutable source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review. A valid record remains a proposal only; it cannot register an axis, mutate the archive, or authorize Operator F. No candidate proposal or ablation result exists yet.
+F recommends, but cannot install, a candidate descriptor axis. `axis-candidate-contract.yaml` and `nsqd.domain.operator_f` define and validate the executable collection boundary: exact contract identity, report-only authorization, one non-registered axis, immutable source and snapshot digests, current-axis and shuffled-axis controls, required metric declarations, and a distinct independent human review bound to the canonical proposal digest. A valid record remains a proposal only; it cannot register an axis, mutate the archive, or authorize Operator F. No candidate proposal or ablation result exists yet.
 
 ### G — failure resurrection
 
-`failure-record-contract.yaml` and `nsqd.domain.operator_g` define and validate G's executable collection boundary. A qualifying record binds an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Synthetic, invented, speculative, outcome-free, or unsupported records fail closed. A valid record cannot write corpus facts, restart work, or authorize Operator G. No approved failure record or failure corpus exists yet.
+`failure-record-contract.yaml` and `nsqd.domain.operator_g` define and validate G's executable collection boundary. A qualifying record identifies a registered experiment artifact as its source class and binds an immutable source artifact, measured failure evidence, original conditions, one allowed resurrection scope, changed-condition triggers, restart conditions, and a distinct independent human review. Test failures, job errors, sufficiency failures, synthetic or inferred failures, and absence-of-success claims fail closed. A valid record cannot write corpus facts, restart work, or authorize Operator G. No approved failure record or failure corpus exists yet.
 
 ## Method references
 
