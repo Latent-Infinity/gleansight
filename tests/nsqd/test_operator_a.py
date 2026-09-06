@@ -144,6 +144,8 @@ def test_operator_c_wait_on_does_not_require_b_activation() -> None:
     assert "after b" not in wait_on
     assert "literature" in wait_on
     assert "activation" in wait_on
+    assert "new literature pair or evidence cycle" in wait_on
+    assert "evidence-sufficient, human-accepted c bridge" in by_id["D"].wait_on.lower()
     assert operator_is_enabled("C", enabled_operators=frozenset({"A", "B"})) is False
     with pytest.raises(ValueError, match="operator C is not supported"):
         require_operator("C", enabled_operators=frozenset({"A", "B"}))

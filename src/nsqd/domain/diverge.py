@@ -61,7 +61,8 @@ def operator_decisions() -> tuple[OperatorDecision, ...]:
             "deferred",
             False,
             (
-                "two named literatures plus explicit human activation; "
+                "genuinely new literature pair or evidence cycle plus separate "
+                "human acceptance and explicit runtime activation; "
                 "B composition-gating is not C authorization"
             ),
         ),
@@ -69,7 +70,7 @@ def operator_decisions() -> tuple[OperatorDecision, ...]:
             "D",
             "deferred",
             False,
-            "source and target domain_policy_id after C",
+            "typed source and target graphs after an evidence-sufficient, human-accepted C bridge",
         ),
         OperatorDecision(
             "E",
