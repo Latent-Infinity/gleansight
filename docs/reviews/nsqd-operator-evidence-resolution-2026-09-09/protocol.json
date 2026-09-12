@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_evidence_resolution_protocol",
+  "frozen_at_utc": "2026-09-09T15:11:38Z",
+  "cutoff_utc": "2026-09-09T15:11:38Z",
+  "acquisition_outcomes_observed": false,
+  "authority": {
+    "authorization_state": "report_only",
+    "validation_target_scope": "evaluation_only",
+    "runtime_states": {
+      "operator_c": "disabled",
+      "operator_d": "disabled",
+      "operator_f": "disabled",
+      "operator_g": "disabled",
+      "operator_e": "disabled_absent_explicit_override"
+    },
+    "schema_admission_authorized": false,
+    "runtime_change_authorized": false,
+    "operator_g_restart_authorized": false
+  },
+  "discovery_envelope": {
+    "maximum_query_batches": 3,
+    "maximum_candidates_per_batch": 25,
+    "maximum_staged_imports_per_pass": 3,
+    "widening_requires_explicit_human_authorization": true
+  },
+  "source_identity": {
+    "identity_fields": [
+      "source_class",
+      "stable_source_id",
+      "version_id",
+      "retrieval_uri",
+      "content_sha256"
+    ],
+    "deduplication_key_fields": [
+      "stable_source_id",
+      "version_id",
+      "content_sha256"
+    ],
+    "version_rules": [
+      "A DOI version of record uses its DOI plus publisher version or publication date.",
+      "An arXiv source uses the version-qualified arXiv identifier.",
+      "A repository source uses repository URL, commit SHA, and repository-relative path.",
+      "Same-work versions remain one source group and may not occupy separate folds.",
+      "A byte-identical digest or identical stable-source/version pair is a duplicate."
+    ],
+    "duplicate_identity_action": "reject_before_eligibility"
+  },
+  "operator_c": {
+    "search_questions": [
+      "Does a primary source support a typed directed relation from the proposed source object to the bridge object?",
+      "Does a primary source support a typed directed relation from the bridge object to the proposed target object?",
+      "Do exact passages establish compatible direction and polarity on both sides without relying on shared terminology alone?",
+      "Does direct A-to-C prior art, counterevidence, or a stated limitation defeat novelty or compatibility?"
+    ],
+    "bridge_eligibility_conditions": [
+      "Both relation sides bind exact source/version identities and exact passage locations.",
+      "Source object, bridge object, and target object types are declared and compatible.",
+      "Direction and polarity are explicit for both relations and are not inferred from topic overlap.",
+      "Assumptions and limitations are closed for each relation.",
+      "Direct A-to-C prior art and counterevidence searches are recorded under the same cutoff and budget.",
+      "Repeated historical pairs, renamed bridges, and unsupported abstract-only claims are ineligible."
+    ],
+    "typed_relation": {
+      "required_sides": ["source", "target"],
+      "required_fields_per_side": [
+        "source_identity",
+        "subject_object_type",
+        "predicate_type",
+        "object_object_type",
+        "direction",
+        "polarity",
+        "passage",
+        "passage_location",
+        "assumptions",
+        "limitations"
+      ],
+      "relation_fields": [
+        "A_to_bridge",
+        "bridge_to_C",
+        "shared_bridge_identity",
+        "composition_justification"
+      ],
+      "passage_binding_required": true
+    },
+    "direct_a_to_c_prior_art_required": true,
+    "counterevidence_required": true,
+    "negative_controls": [
+      "normalized_shared_term_control_under_identical_query_budget",
+      "sha256_seeded_shuffled_literature_pair_control_under_identical_query_budget"
+    ],
+    "query_budget": {
+      "maximum_query_batches": 3,
+      "maximum_candidates_per_batch": 25,
+      "maximum_staged_imports_per_pass": 3,
+      "widening_requires_explicit_human_authorization": true
+    },
+    "positive_verdict_conditions": [
+      "Both typed relation sides satisfy every eligibility condition.",
+      "Retained source bytes permit exact passage replay; unavailable bytes prohibit a positive verdict.",
+      "Direct A-to-C prior art and counterevidence records are complete and do not defeat the bridge claim.",
+      "The typed predication path is supported while both negative controls remain unsupported under equal budgets.",
+      "An independent reviewer confirms identity, relation compatibility, passages, controls, and limitations.",
+      "Positive technical review does not constitute human acceptance or runtime authorization."
+    ],
+    "stop_conditions": [
+      "Stop and report unavailable when source identity, version, bytes, or exact passage location cannot be replayed.",
+      "Stop and reject on duplicate or historically repeated pair identity, reversed relation, incompatible object type, direction, or polarity.",
+      "Stop discovery at the frozen query and staged-import envelope.",
+      "Stop positive adjudication when direct prior art, counterevidence, or either negative control is unresolved."
+    ]
+  },
+  "operator_f": {
+    "source_group_identity_fields": [
+      "canonical_work_identity",
+      "all_version_identities",
+      "approved_source_byte_sha256",
+      "registered_coordinates",
+      "validation_target",
+      "primary_metric",
+      "provenance"
+    ],
+    "eligibility_conditions": [
+      "The finance source is genuine, independently inspectable, and bound to approved source bytes.",
+      "All registered coordinates, validation_target label, primary metric, and provenance are declared before splitting.",
+      "Two independent adjudications agree and a separate human corpus approval is digest-bound.",
+      "The source group is independent of every other eligible source group."
+    ],
+    "exclusion_conditions": [
+      "Exclude abstract-only evidence, inferred coordinates, missing primary metric, missing provenance, or missing approval.",
+      "Exclude reviewer disagreement and changed source digest until resolved by a new adjudication.",
+      "Exclude duplicate versions as independent groups; DATA-NSQD-03 and DATA-NSQD-04 receive no automatic finance credit."
+    ],
+    "exclude_before_fold_assignment": true,
+    "versions_share_one_source_group": true,
+    "minimum_eligible_source_groups": 5,
+    "folds": {
+      "unit": "independent_source_group",
+      "fold_count": 5,
+      "algorithm": "sha256_seeded_source_group_round_robin/v1",
+      "seed": "operator-f/evidence-resolution/source-grouped-five-fold/v1",
+      "preimage": "utf8(seed + ':' + canonical_source_group_identity)",
+      "ordering": "ascending_sha256_then_canonical_source_group_identity",
+      "assignment": "zero_based_rank_modulo_5"
+    },
+    "tracks": [
+      "current_registered_axes",
+      "current_axes_plus_validation_target",
+      "current_axes_plus_shuffled_validation_target"
+    ],
+    "shuffled_label_control": "sha256_seeded_permutation_within_eligible_population/v1",
+    "identical_population_and_folds_across_tracks": true,
+    "training_only_preprocessing": true,
+    "metrics": [
+      {
+        "name": "held_out_gain",
+        "definition": "Arithmetic mean across five held-out folds of candidate occupied-cell count minus current-axis occupied-cell count, using identical held-out source groups.",
+        "unavailable_when": "Fewer than five eligible source groups or any track lacks an identical fold population."
+      },
+      {
+        "name": "density",
+        "definition": "For each held-out fold and track, eligible held-out record count divided by occupied held-out cell count; report the five fold values and arithmetic mean.",
+        "unavailable_when": "The occupied held-out cell count is zero."
+      },
+      {
+        "name": "quality_weighted_diversity",
+        "definition": "For each fold, sum the pre-split blinded quality weights represented by distinct occupied cells divided by total held-out quality weight; report fold values and arithmetic mean.",
+        "unavailable_when": "Any held-out record lacks a pre-split blinded quality weight or total held-out quality weight is zero."
+      },
+      {
+        "name": "stability",
+        "definition": "One minus population standard deviation of the five foldwise candidate-minus-current held-out gains divided by one plus the absolute arithmetic mean gain.",
+        "unavailable_when": "Any of the five foldwise gains is unavailable or nonfinite."
+      },
+      {
+        "name": "redundancy",
+        "definition": "Maximum bias-corrected Cramer's V between validation_target and each registered axis, fitted on training groups and evaluated on the corresponding held-out group; report all fold maxima and their arithmetic mean.",
+        "unavailable_when": "A contingency table is degenerate or a held-out category was absent from its training groups."
+      },
+      {
+        "name": "residual_variation",
+        "definition": "Held-out normalized conditional entropy H(validation_target given registered axes) divided by H(validation_target), with category support learned only from training groups; report fold values and arithmetic mean.",
+        "unavailable_when": "Held-out validation_target entropy is zero or required category support is absent from training groups."
+      },
+      {
+        "name": "confound_sensitivity",
+        "definition": "Maximum absolute difference between aggregate held-out gain and gain recomputed within each predeclared provenance-supported confound stratum, using unchanged folds and tracks.",
+        "unavailable_when": "No confound strata were predeclared or any declared stratum lacks an eligible held-out observation."
+      },
+      {
+        "name": "interpretability",
+        "definition": "Arithmetic mean of predeclared binary operationalizability ratings from independent reviewers blinded to track outcomes and source identity; retain each rating and disagreement.",
+        "unavailable_when": "Reviewer independence, blinding, or a predeclared rating item is missing."
+      }
+    ],
+    "blinding": {
+      "quality_review_blinded_to": [
+        "fold_assignment",
+        "track_identity",
+        "candidate_label",
+        "numeric_outcomes"
+      ],
+      "interpretability_review_blinded_to": [
+        "source_identity",
+        "fold_assignment",
+        "numeric_outcomes"
+      ],
+      "thresholds_must_be_approved_before": "any_decision_bearing_outcome_is_unblinded",
+      "imputation_authorized": false
+    },
+    "threshold_policy": {
+      "status": "human_decision_required_before_outcome_unblinding",
+      "numeric_thresholds": [],
+      "approved_at_utc": null,
+      "outcomes_observed_at_approval": false,
+      "post_outcome_thresholds_authorized": false
+    },
+    "positive_selection_conditions": [
+      "All eight metrics are replayable and finite or explicitly unavailable without imputation.",
+      "Candidate, current-axis, and shuffled-label tracks use identical eligible identities and folds.",
+      "A digest-bound human threshold decision predates decision-bearing outcome unblinding.",
+      "The smallest implementation wins every approved comparison required by that decision; otherwise retain the baseline or report no selection.",
+      "Any favorable result remains evaluation-only and does not admit validation_target or authorize runtime."
+    ],
+    "stop_conditions": [
+      "Stop as unavailable below five eligible independent source groups.",
+      "Stop on duplicate versions across folds, inconsistent populations, missing provenance, nonfinite values, or imputation.",
+      "Stop decision-bearing interpretation until numeric thresholds receive explicit human approval before outcome unblinding.",
+      "Stop and reject any schema-admission or runtime-authority claim."
+    ]
+  },
+  "operator_g": {
+    "required_registered_experiment_fields": [
+      "failure_record_id",
+      "domain_policy_id",
+      "experiment_id",
+      "scientific_purpose",
+      "registration_digest",
+      "code_revision",
+      "data_snapshot_ids",
+      "configuration_digest",
+      "model_or_method_identity",
+      "started_at_utc",
+      "completed_at_utc",
+      "exact_command",
+      "resource_cap",
+      "predeclared_success_failure_and_inconclusive_outcomes",
+      "exit_status",
+      "measured_outcome",
+      "failure_classification",
+      "immutable_source_artifact_digests",
+      "evidence_artifact_digests",
+      "provenance",
+      "changed_condition_triggers",
+      "restart_conditions",
+      "cleanup_receipt"
+    ],
+    "forbidden_candidate_classes": [
+      "test_failure_without_experiment_evidence",
+      "tau_measurement",
+      "unexecuted_study",
+      "job_error_code",
+      "sufficiency_failure",
+      "inferred_or_invented_failure",
+      "absence_of_published_or_successful_results"
+    ],
+    "experiment_purpose": {
+      "existing_experiment_preferred": true,
+      "new_experiment_requires_scientific_purpose": true,
+      "new_experiment_requires_explicit_authorization": true,
+      "authorization_request_fields": [
+        "scientific_question",
+        "resource_budget",
+        "exact_command",
+        "predeclared_success_failure_and_inconclusive_outcomes",
+        "cleanup_plan"
+      ],
+      "experiment_must_not_be_designed_to_create_failure": true
+    },
+    "external_trust": {
+      "record_fields_are_authority": false,
+      "separately_supplied_approval_required": true,
+      "approval_binding_fields": [
+        "approved_record_digest",
+        "reviewer_identity",
+        "reviewer_session",
+        "approved_at_utc",
+        "approval_scope"
+      ],
+      "evidence_bytes_must_match_declared_digests": true
+    },
+    "changed_condition_requirements": [
+      "Each trigger names a measurable changed variable, original value, candidate value, comparison rule, and evidence digests.",
+      "A trigger is evaluated only against immutable evidence from the registered experiment.",
+      "Similarity alone, inferred improvement, or a missing failure is not a changed condition."
+    ],
+    "restart_condition_requirements": [
+      "Each restart condition names a measurable predicate, required evidence digest, allowed scope, and independent decision owner.",
+      "Record admission, packet inclusion, resurrection, restart, and runtime authorization remain separate decisions.",
+      "No restart condition may infer satisfaction from similarity or from the record's own approval fields."
+    ],
+    "conditional_ablations": {
+      "activation_condition": "at_least_one_real_independently_approved_record_exists",
+      "memory_tracks": [
+        "typed_failure_memory",
+        "raw_logs_from_the_same_registered_experiments",
+        "no_failure_memory"
+      ],
+      "restart_policy_tracks": [
+        "explicit_changed_condition_policy",
+        "similarity_only_control"
+      ],
+      "common_experiments_required": true
+    },
+    "decision_separation": [
+      "contract_validation",
+      "independent_record_approval",
+      "operator_g_eligibility",
+      "packet_inclusion",
+      "resurrection_authorization",
+      "restart_authorization",
+      "runtime_authorization"
+    ],
+    "stop_conditions": [
+      "Stop intake when any registered-experiment field, immutable evidence byte, digest, UTC execution time, measured outcome, changed condition, or restart condition is missing.",
+      "Stop and reject forbidden candidate classes, self-approval, stale digests, inferred restart, and record-field authority claims.",
+      "Stop before a new experiment unless its scientific purpose and full authorization request receive explicit human authorization.",
+      "Stop conditional ablations until a real independently approved record exists; successful or inconclusive experiments may leave G blocked."
+    ]
+  },
+  "reviewer_independence": {
+    "producer_identity_required": true,
+    "producer_session_required": true,
+    "reviewer_identity_required": true,
+    "reviewer_session_required": true,
+    "reviewer_must_differ_from_producer": true,
+    "reviewer_session_must_differ_from_producer_session": true,
+    "self_review_authorized": false,
+    "technical_review_is_human_acceptance": false
+  },
+  "access_and_retention": {
+    "source_byte_states": [
+      "retained_repository_authorized",
+      "retained_authorized_external_store",
+      "not_retained_repository_policy",
+      "unavailable_from_source"
+    ],
+    "bibliographic_response_states": [
+      "retained_repository_authorized",
+      "retained_authorized_external_store",
+      "not_retained_repository_policy",
+      "unavailable_from_service"
+    ],
+    "required_retention_record_fields": [
+      "artifact_identity",
+      "state",
+      "content_sha256_or_null",
+      "byte_count_or_null",
+      "repository_path_or_null",
+      "authorized_external_locator_or_null",
+      "reason",
+      "recorded_at_utc"
+    ],
+    "negative_null_unavailable_and_counterevidence_retained": true,
+    "paid_or_private_access_requires_authorization": true,
+    "nonlocal_compute_requires_authorization": true,
+    "retention_outside_repository_policy_requires_authorization": true,
+    "predecessor_retention_claims_inherited": false
+  },
+  "global_stop_conditions": [
+    "Stop if any acquisition outcome was observed before this protocol and manifest were frozen.",
+    "Stop on unexplained mutation of the successor baseline index, historical packet bytes, current C/F/G packet digests, or protected .playwright-mcp bytes.",
+    "Stop when the discovery envelope is exhausted; widening requires a new explicit human authorization before further acquisition.",
+    "Stop on missing or duplicate source/version identity, unresolved access authorization, or unrecorded retention state.",
+    "Stop on reviewer-producer identity or session conflict, self-approval, or technical review presented as human acceptance.",
+    "Stop decision use of thresholds chosen after outcomes, and retain all negative, null, unavailable, and counterevidence results.",
+    "Stop any product schema, CLI, configuration, admission, resurrection, restart, or runtime authority change under this protocol."
+  ]
+}
