@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_f_formula_correction",
+  "created_at_utc": "2026-09-11T00:00:00Z",
+  "review_status": "review_pending",
+  "authorization_state": "report_only",
+  "approval_scope": "formula_selection_only",
+  "proposal_id": "F-PROP-001",
+  "predecessor": {
+    "manifest": "../nsqd-operator-f-readiness-2026-09-08/packet-manifest.json",
+    "packet_digest": "939e528b276c2065499bd724af4e88916da1b4927ef4a0ae8eb8ace6cd0cc9d8",
+    "manifest_sha256": "3f1de41608d7a25283b08427334ab560c63e40470d469971127b83e8e4f2b9b3"
+  },
+  "approved_non_authorizing_formulas": {
+    "quality_weighted_diversity": "per_held_out_fold(sum(max_trusted_quality_weight_per_occupied_track_specific_cell)/sum(all_held_out_record_trusted_quality_weights));finite_nonnegative_weights_required;zero_total=typed_unavailable",
+    "redundancy_with_existing_axes": "per_held_out_rotation(max(bias_corrected_cramers_v(candidate_label,registered_axis)_fit_on_other_four_training_folds));aggregate=arithmetic_mean_of_five_rotations;held_out_frequencies_never_refit"
+  },
+  "source_bindings": [
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_metrics_basic.py",
+      "role": "quality_weighted_diversity_implementation",
+      "sha256": "7794b06bb271e1c75e3511a6868d4c05a7e1c107ff392812558f9b7c82c1bcd2"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_metrics_stats.py",
+      "role": "redundancy_implementation",
+      "sha256": "94f04b9358a529e5a7378edf26f722b2b3d04701b7e0c96673f41554eddfec5c"
+    },
+    {
+      "path": "tests/nsqd/test_operator_f_metric_diversity_semantics.py",
+      "role": "quality_weighted_diversity_tests",
+      "sha256": "280d5de5df2e2c000b5bc14cbb685d3a6e0c4de057791b5a00f2a7b04310616a"
+    },
+    {
+      "path": "tests/nsqd/test_operator_f_metric_redundancy_semantics.py",
+      "role": "redundancy_tests",
+      "sha256": "3b369b478ccdc2f04cc49607563d13d8b5a4341b9d9927079e09c81baba8e688"
+    }
+  ],
+  "evidence_sufficient": false,
+  "schema_admission_authorized": false,
+  "runtime_authorized": false
+}
