@@ -1,0 +1,41 @@
+schema_version: 1
+packet_kind: operator_activation_status_overlay
+created_at_utc: "2026-09-11T00:00:00Z"
+review_status: review_pending
+authorization_state: report_only
+predecessor:
+  path: ../nsqd-operator-activation-2026-08-30
+  tree_sha256: 34dccff0d4c15c2bf193e66a79c933963af51c7553a4159f00a506f0906e0709
+source_bindings:
+  - path: ../nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/packet-manifest.json
+    role: operator_c_readme_integrity_successor
+    sha256: fb27d839695e914051dad484d53cfd228de4724099dbc78f99793ab59528acf6
+    packet_digest: 65e6f4d684dec0ef3867a6664f0d542ed55b30b8a6067c0f3f331ec4d1509687
+  - path: ../nsqd-operator-f-readiness-2026-09-11-formula-correction/packet-manifest.json
+    role: operator_f_formula_successor
+    sha256: 72e21375a988d73dcc4781e44739cccdd87ffc37f9eae22e83bf754543773b96
+    packet_digest: 677932da4b0ecfeea26a0a80558314e1ee1a11b635877e15860cc9fc88775a2b
+  - path: ../nsqd-status-window-calendar-replay-2026-09-11-command-sync/packet-manifest.json
+    role: status_replay_command_successor
+    sha256: f2009436db6076604c0a64a1600834a1b5b1f5695f1dfcacd077f417611a01ab
+    packet_digest: 0839478d96311ef2540b0dc394051860b253d160de6f8ea6d34955f3dd424acd
+  - path: ../nsqd-operator-g-readiness-census-2026-09-09-c-review-correction/packet-manifest.json
+    role: operator_g_immutable_predecessor
+    sha256: 5130a26750eb4fc21851366bb263fc76673d78d023e1ce7c549f3b793c52cc91
+    packet_digest: 2509690fecb8800bd99dcb726d31504876c6de37a1c66c5ced33562dcc1439e6
+operator_status:
+  C: {enabled: false, runtime_authorized: false}
+  D: {enabled: false, runtime_authorized: false}
+  E: {enabled: false, runtime_authorized: false}
+  F: {enabled: false, runtime_authorized: false}
+  G: {enabled: false, runtime_authorized: false}
+authority:
+  operator_c_bridge_accepted: false
+  operator_c_evidence_sufficient: false
+  operator_d_advancement_authorized: false
+  operator_f_evidence_sufficient: false
+  operator_f_schema_admission_authorized: false
+  operator_g_packet_inclusion_authorized: false
+  operator_g_restart_authorized: false
+  operator_g_resurrection_authorized: false
+  runtime_authorized: false
