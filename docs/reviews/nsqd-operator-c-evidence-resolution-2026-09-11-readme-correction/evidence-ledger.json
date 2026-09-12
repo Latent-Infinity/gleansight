@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "protocol_packet_digest": "460986b339301e9012d56d34e5dca93bcfa30493d23b60317b9e992f9a5dc69c",
+  "authorization_state": "report_only",
+  "source_scope": "fresh_external_evidence_not_admitted_to_approved_corpus",
+  "full_text_inspected": true,
+  "predecessor": {"packet_path":"../nsqd-operator-c-evidence-2026-09-09-resolution","packet_digest":"406fccd5d072db490e3abcd067b0327b3817effcbe85cac49f0eaa40be8cb4d3","status":"rejected_source_replay_and_control_derivation","supersedes":true},
+  "typed_relation_results": {"A_to_bridge":"unsupported","bridge_to_C":"unsupported","composition":"unsupported"},
+  "interaction_checks": [
+    {"check":"direct_a_to_c_prior_art","status":"not_observed_within_bounded_queries","observed_count":0,"query_receipt_ids":["openalex-exact-a-c","openalex-normalized-a-c"],"limitation":"The bounded full-text searches are not a universal prior-art or legal-priority search."},
+    {"check":"direct_citation","status":"not_observed_within_bounded_queries","observed_count":0,"query_receipt_ids":["openalex-exact-a-bridge","openalex-exact-bridge-c","openalex-exact-a-c"],"limitation":"Exact-title co-occurrence is a bounded proxy; Semantic Scholar citation-reference data was unavailable."},
+    {"check":"co_citation","status":"not_observed_within_bounded_queries","observed_count":0,"query_receipt_ids":["openalex-exact-a-bridge","openalex-exact-bridge-c","openalex-exact-a-c"],"limitation":"No returned exact-title co-occurrence does not prove absence of co-citation."},
+    {"check":"author_overlap","status":"not_observed_within_bounded_queries","observed_count":0,"query_receipt_ids":["arxiv-source-identity"],"limitation":"The three supplied arXiv identity entries expose distinct author lists only for these versions."},
+    {"check":"direct_mention","status":"not_observed_within_bounded_queries","observed_count":0,"query_receipt_ids":["openalex-exact-a-bridge","openalex-exact-bridge-c","openalex-exact-a-c","openalex-normalized-a-bridge","openalex-normalized-bridge-c","openalex-normalized-a-c"],"limitation":"OpenAlex full-text search coverage and indexing are incomplete."},
+    {"check":"counterevidence","status":"observed_in_exact_passages","observed_count":2,"query_receipt_ids":["arxiv-source-identity"],"extract_ids":["BRIDGE-REAL-MARKET-LIMIT","BRIDGE-SAMPLE-LIMIT"],"limitation":"These limitations constrain the bridge paper and do not establish universal failure of latent build-up."},
+    {"check":"semantic_scholar_availability","status":"unavailable_from_service","observed_count":null,"query_receipt_ids":["s2-a-citations-references","s2-bridge-citations-references","s2-c-citations-references"],"limitation":"HTTP 429 is provider unavailability and is not absence evidence."}
+  ],
+  "negative_controls": {"normalized_shared_term_control_under_identical_query_budget":"not_observed_within_bounded_queries","sha256_seeded_shuffled_literature_pair_control_under_identical_query_budget":"unavailable_nonreproducible"},
+  "historical_cycle_comparison": {"new_primary_source":"arXiv:2604.20949v1","distinct_middle_object":"latent_limit_order_book_build_up_regime","finance_native_surface_overlap":true,"renamed_positive_claim":false,"conclusion":"legitimate_new_negative_cycle"},
+  "known_limitations": [
+    "Successful zero-result queries establish only not_observed_within_bounded_queries, not universal absence, noninteraction, novelty, or priority.",
+    "Semantic Scholar citation-reference checks were unavailable_from_service after HTTP 429 and cannot support an absence conclusion.",
+    "The shuffled-control derivation is unavailable_nonreproducible because retained producer history lacks seed material, candidate pool, algorithm, and permutation.",
+    "The bridge simulation cannot confirm that its latent build-up DGP exists in real markets.",
+    "Source and response bytes are not retained in the repository; manual replay used the retained frozen acquisition outside the packet."
+  ],
+  "accepted_bridge": false,
+  "candidate_combinations": [],
+  "candidate_outputs": [],
+  "evidence_sufficient": false,
+  "result": "insufficient_evidence",
+  "human_acceptance": "not_requested",
+  "operator_c_status": "blocked",
+  "operator_d_status": "blocked",
+  "schema_admission_authorized": false,
+  "runtime_authorized": false,
+  "universal_absence_claimed": false,
+  "independent_review_status": "not_requested_todo_6_separate"
+}

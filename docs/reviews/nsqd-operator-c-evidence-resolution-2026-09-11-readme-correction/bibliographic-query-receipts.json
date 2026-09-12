@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "protocol_packet_digest": "460986b339301e9012d56d34e5dca93bcfa30493d23b60317b9e992f9a5dc69c",
+  "cutoff_utc": "2026-09-09T15:11:38Z",
+  "query_completed_at_utc": "2026-09-09T20:27:38Z",
+  "maximum_query_batches": 3,
+  "maximum_candidates_per_batch": 25,
+  "interpretation": {
+    "not_observed_within_bounded_queries": "No interaction was returned by the recorded successful query within its frozen terms and result window; this is not universal absence or noninteraction.",
+    "unavailable_from_service": "The provider returned HTTP 429, so citation/reference evidence was unavailable and cannot be interpreted as absence."
+  },
+  "query_batches": [
+    {
+      "batch_number": 1,
+      "purpose": "source identity plus exact-title interaction and provider citation-reference checks",
+      "records": [
+        {
+          "query_id": "arxiv-source-identity", "provider": "arXiv", "retrieval_uri": "https://export.arxiv.org/api/query?id_list=2602.04643v2,2604.20949v1,1402.2198v1&max_results=3", "final_url": "https://export.arxiv.org/api/query?id_list=2602.04643v2%2c2604.20949v1%2c1402.2198v1&max_results=3", "queried_at_utc": "2026-09-09T20:27:02Z", "http_status": 200, "media_type": "application/atom+xml; charset=utf-8", "response_byte_count": 6777, "response_sha256": "db0f457ecb85877db44453e50448294dcb0d93d6992ca62574bbe16c5e7cf9b6", "returned_count": 3, "total_count": 3, "observation_state": "source_identity_observed",
+          "retention": {"artifact_identity":"arxiv-source-identity#response","state":"not_retained_repository_policy","content_sha256_or_null":"db0f457ecb85877db44453e50448294dcb0d93d6992ca62574bbe16c5e7cf9b6","byte_count_or_null":6777,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Frozen response metadata and digest retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:02Z"}
+        },
+        {
+          "query_id": "openalex-exact-a-bridge", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 634, "response_sha256": "48f67d1c2822d97f7c291420321fd014be1cadbb389c8d35660c5bf2bdbbf3e8", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-exact-a-bridge#response","state":"not_retained_repository_policy","content_sha256_or_null":"48f67d1c2822d97f7c291420321fd014be1cadbb389c8d35660c5bf2bdbbf3e8","byte_count_or_null":634,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result response receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-exact-bridge-c", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 796, "response_sha256": "16bdbe34f18c8802353f24d88a42674b40a61cf65a98be2b4e754713068d41c3", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-exact-bridge-c#response","state":"not_retained_repository_policy","content_sha256_or_null":"16bdbe34f18c8802353f24d88a42674b40a61cf65a98be2b4e754713068d41c3","byte_count_or_null":796,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result response receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-exact-a-c", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 609, "response_sha256": "2c5b667689283e4550039326087d5c5e97e46bb1c28b47c1bf4b7f289fcb7149", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-exact-a-c#response","state":"not_retained_repository_policy","content_sha256_or_null":"2c5b667689283e4550039326087d5c5e97e46bb1c28b47c1bf4b7f289fcb7149","byte_count_or_null":609,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result response receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "s2-a-citations-references", "provider": "Semantic Scholar", "request_scope": "ARXIV:2602.04643 citations and references", "retrieval_uri": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:2602.04643?fields=paperId,title,authors,citations.paperId,references.paperId", "final_url": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:2602.04643?fields=paperId,title,authors,citations.paperId,references.paperId", "queried_at_utc": "2026-09-09T20:27:38Z", "http_status": 429, "media_type": "application/json", "response_byte_count": 174, "response_sha256": "65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148", "returned_count": null, "total_count": null, "observation_state": "unavailable_from_service",
+          "retention": {"artifact_identity":"s2-a-citations-references#response","state":"unavailable_from_service","content_sha256_or_null":"65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148","byte_count_or_null":174,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"HTTP 429 error body was observed in frozen acquisition; citation-reference data was unavailable and the body was not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:38Z"}
+        },
+        {
+          "query_id": "s2-bridge-citations-references", "provider": "Semantic Scholar", "request_scope": "ARXIV:2604.20949 citations and references", "retrieval_uri": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:2604.20949?fields=paperId,title,authors,citations.paperId,references.paperId", "final_url": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:2604.20949?fields=paperId,title,authors,citations.paperId,references.paperId", "queried_at_utc": "2026-09-09T20:27:38Z", "http_status": 429, "media_type": "application/json", "response_byte_count": 174, "response_sha256": "65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148", "returned_count": null, "total_count": null, "observation_state": "unavailable_from_service",
+          "retention": {"artifact_identity":"s2-bridge-citations-references#response","state":"unavailable_from_service","content_sha256_or_null":"65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148","byte_count_or_null":174,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"HTTP 429 error body was observed in frozen acquisition; citation-reference data was unavailable and the body was not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:38Z"}
+        },
+        {
+          "query_id": "s2-c-citations-references", "provider": "Semantic Scholar", "request_scope": "ARXIV:1402.2198 citations and references", "retrieval_uri": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:1402.2198?fields=paperId,title,authors,citations.paperId,references.paperId", "final_url": "https://api.semanticscholar.org/graph/v1/paper/ARXIV:1402.2198?fields=paperId,title,authors,citations.paperId,references.paperId", "queried_at_utc": "2026-09-09T20:27:38Z", "http_status": 429, "media_type": "application/json", "response_byte_count": 174, "response_sha256": "65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148", "returned_count": null, "total_count": null, "observation_state": "unavailable_from_service",
+          "retention": {"artifact_identity":"s2-c-citations-references#response","state":"unavailable_from_service","content_sha256_or_null":"65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148","byte_count_or_null":174,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"HTTP 429 error body was observed in frozen acquisition; citation-reference data was unavailable and the body was not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:38Z"}
+        }
+      ]
+    },
+    {
+      "batch_number": 2,
+      "purpose": "normalized shared-term control under the identical result budget",
+      "control": "normalized_shared_term_control_under_identical_query_budget",
+      "records": [
+        {
+          "query_id": "openalex-normalized-a-bridge", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22soft+codebook%22+%22latent+build-up+regime%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22soft+codebook%22+%22latent+build-up+regime%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 511, "response_sha256": "3f084a00ad86141fff57fc36587e0b8663990e331792f2b363a2a693ba6adede", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-normalized-a-bridge#response","state":"not_retained_repository_policy","content_sha256_or_null":"3f084a00ad86141fff57fc36587e0b8663990e331792f2b363a2a693ba6adede","byte_count_or_null":511,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-normalized-bridge-c", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22latent+build-up+regime%22+%22Intrinsic+Network+liquidity%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22latent+build-up+regime%22+%22Intrinsic+Network+liquidity%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 553, "response_sha256": "2974260a050cb569d8f909f642ffd835bd384c735afb7e16ab6abd6e6e0b65c8", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-normalized-bridge-c#response","state":"not_retained_repository_policy","content_sha256_or_null":"2974260a050cb569d8f909f642ffd835bd384c735afb7e16ab6abd6e6e0b65c8","byte_count_or_null":553,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-normalized-a-c", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22time-series+anomaly+prediction%22+%22market+liquidity+stress%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22time-series+anomaly+prediction%22+%22market+liquidity+stress%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 565, "response_sha256": "c1a97b6ac23febd28f182fa75aac6c89ed83d9f3d810d27f5035f67b336298c0", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-normalized-a-c#response","state":"not_retained_repository_policy","content_sha256_or_null":"c1a97b6ac23febd28f182fa75aac6c89ed83d9f3d810d27f5035f67b336298c0","byte_count_or_null":565,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        }
+      ]
+    },
+    {
+      "batch_number": 3,
+      "purpose": "SHA256-seeded shuffled literature pair control under the identical result budget",
+      "control": "sha256_seeded_shuffled_literature_pair_control_under_identical_query_budget",
+      "seed_sha256": "ba6214aaaec2b9407e898601dea5d64c556af32b62e8183a3a14a4fb7b2a2957",
+      "derivation": {
+        "status": "unavailable_nonreproducible",
+        "declared_seed_sha256": "ba6214aaaec2b9407e898601dea5d64c556af32b62e8183a3a14a4fb7b2a2957",
+        "seed_material": null,
+        "candidate_pool": null,
+        "algorithm": null,
+        "ordering_or_permutation": null,
+        "reason": "Retained producer-session history supplies only the declared seed hash and resulting query receipts; the derivation inputs and procedure cannot be proven and are not reconstructed."
+      },
+      "records": [
+        {
+          "query_id": "openalex-shuffled-1", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Algorithmic+Monitoring%3A+Measuring+Market+Stress+with+Machine+Learning%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22SC-JEPA%22+%22Algorithmic+Monitoring%3A+Measuring+Market+Stress+with+Machine+Learning%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 633, "response_sha256": "a8048c93c9171c53e4dc24ca4798447a2d64711740cd36861b6be8cf0aa3ea58", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-shuffled-1#response","state":"not_retained_repository_policy","content_sha256_or_null":"a8048c93c9171c53e4dc24ca4798447a2d64711740cd36861b6be8cf0aa3ea58","byte_count_or_null":633,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result shuffled-control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-shuffled-2", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22An+Interpretable+Ensemble-Based+Generative+Framework+for+Anomaly+Detection+in+High-Dimensional+Financial+Time+Series%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22An+Interpretable+Ensemble-Based+Generative+Framework+for+Anomaly+Detection+in+High-Dimensional+Financial+Time+Series%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 961, "response_sha256": "1932f767517e6e4100ea4788cd48da65d476d0c57f64e9146cc1638fc1656b7e", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-shuffled-2#response","state":"not_retained_repository_policy","content_sha256_or_null":"1932f767517e6e4100ea4788cd48da65d476d0c57f64e9146cc1638fc1656b7e","byte_count_or_null":961,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result shuffled-control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        },
+        {
+          "query_id": "openalex-shuffled-3", "provider": "OpenAlex", "retrieval_uri": "https://api.openalex.org/works?search=%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22+%22The+Market%E2%80%99s+Conditioning+Representation%3A+Equilibrium%2C+Crowding%2C+and+Convention+Multiplicity%22&per-page=25", "final_url": "https://api.openalex.org/works?search=%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22+%22The+Market%E2%80%99s+Conditioning+Representation%3A+Equilibrium%2C+Crowding%2C+and+Convention+Multiplicity%22&per-page=25", "queried_at_utc": "2026-09-09T20:27:03Z", "http_status": 200, "media_type": "application/json", "response_byte_count": 883, "response_sha256": "2c8ef53ff482caf5e4cce3194c63378ee9649eb3da2662cccd8ac55e9ef5f7ed", "returned_count": 0, "total_count": 0, "observation_state": "not_observed_within_bounded_queries",
+          "retention": {"artifact_identity":"openalex-shuffled-3#response","state":"not_retained_repository_policy","content_sha256_or_null":"2c8ef53ff482caf5e4cce3194c63378ee9649eb3da2662cccd8ac55e9ef5f7ed","byte_count_or_null":883,"repository_path_or_null":null,"authorized_external_locator_or_null":null,"reason":"Zero-result shuffled-control receipt retained; response body not copied into the repository.","recorded_at_utc":"2026-09-09T20:27:03Z"}
+        }
+      ]
+    }
+  ]
+}
