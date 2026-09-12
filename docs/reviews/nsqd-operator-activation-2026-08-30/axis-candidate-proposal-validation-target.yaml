@@ -1,0 +1,47 @@
+schema_version: 1
+proposal_id: F-PROP-001
+authorization_state: report_only
+runtime_authorized: false
+schema_mutation_authorized: false
+domain_policy_id: finance/1
+source_snapshot_ids:
+  - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
+existing_axis_inventory:
+  - mechanism
+  - target
+  - horizon
+candidate_axis:
+  name: validation_target
+  descriptor_kind: novel_proposed
+  semantic_definition: "The primary level at which a representation is validated: representation fidelity, predictive task, economic utility, or calibrated risk."
+  measurement_protocol: Two reviewers independently assign one primary validation target from the paper's declared primary metric; disagreements are adjudicated and multi-target studies retain a secondary tag.
+  observation_window: declared_primary_metric_at_publication
+  value_type: categorical
+  domain:
+    - representation_fidelity
+    - predictive_task
+    - economic_utility
+    - calibrated_risk
+  known_confounds:
+    - papers often report multiple metric families
+    - economic metrics use incomparable costs and horizons
+    - five records are insufficient for stability
+  leakage_risks:
+    - post-hoc selection among reported metric families
+    - assigning labels from downstream economic results rather than declared primary metrics
+baselines:
+  - current_registered_axes
+negative_controls:
+  - shuffled_candidate_axis
+metrics:
+  - held_out_archive_coverage_gain
+provenance:
+  generated_by: agent:f-proposer
+  source_artifact_digests:
+    - cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2
+review:
+  status: human_approved
+  human_reviewer: human:firestrand
+  human_approved_at_utc: "2026-09-07T09:36:57Z"
+  approval_scope: evaluation_only
+  approved_proposal_digest: cbbaf10797b2acb0ebf34b4d62fa37b0e3ec5dfad41c7989334519d9a5962bb6

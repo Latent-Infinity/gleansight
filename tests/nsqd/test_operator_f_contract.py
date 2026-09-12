@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import cast
 
 import pytest
 import yaml
 
+from nsqd.domain.operator_approval import (
+    OPERATOR_F_PROPOSAL_APPROVAL_SCOPE,
+    OperatorApprovalKind,
+    TrustedOperatorApproval,
+)
 from nsqd.domain.operator_f import (
     operator_f_axis_proposal_digest,
     validate_operator_f_axis_contract,
@@ -65,6 +71,169 @@ def _proposal() -> dict[str, object]:
             "approved_proposal_digest": None,
         },
     }
+
+
+def _approved_proposal(
+    *,
+    reviewer: str = "human:axis-reviewer",
+) -> dict[str, object]:
+    proposal = _proposal()
+    proposal["review"] = {
+        "status": "human_approved",
+        "human_reviewer": reviewer,
+        "human_approved_at_utc": "2026-09-05T20:00:00Z",
+        "approval_scope": OPERATOR_F_PROPOSAL_APPROVAL_SCOPE,
+        "approved_proposal_digest": None,
+    }
+    review = cast(dict[str, object], proposal["review"])
+    review["approved_proposal_digest"] = operator_f_axis_proposal_digest(proposal)
+    return proposal
+
+
+def _trusted_approval(
+    proposal: Mapping[str, object],
+    *,
+    kind: OperatorApprovalKind = OperatorApprovalKind.F_AXIS_PROPOSAL,
+    digest: str | None = None,
+    reviewer: str | None = None,
+    approved_at: datetime | None = None,
+    reviewer_session: str = "session:axis-reviewer",
+    scope: str = OPERATOR_F_PROPOSAL_APPROVAL_SCOPE,
+) -> TrustedOperatorApproval:
+    review = cast(Mapping[str, object], proposal["review"])
+    return TrustedOperatorApproval(
+        kind=kind,
+        content_digest=digest or cast(str, review["approved_proposal_digest"]),
+        reviewer_identity=reviewer or cast(str, review["human_reviewer"]),
+        approved_at_utc=approved_at
+        or datetime.fromisoformat(
+            cast(str, review["human_approved_at_utc"]).replace("Z", "+00:00")
+        ),
+        reviewer_session=reviewer_session,
+        approval_scope=scope,
+    )
+
+
+def test_approved_proposal_requires_detached_trust() -> None:
+    approved = _approved_proposal()
+
+    with pytest.raises(ValueError, match="trusted approval"):
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            producer_session="session:f-producer",
+        )
+
+
+def test_exact_detached_approval_accepts_only_report_only_proposal() -> None:
+    approved = _approved_proposal()
+
+    validated = validate_operator_f_axis_proposal(
+        approved,
+        contract=_contract(),
+        trusted_approval=_trusted_approval(approved),
+        producer_session="session:f-producer",
+    )
+
+    assert validated["authorization_state"] == "report_only"
+    assert validated["runtime_authorized"] is False
+    assert validated["schema_mutation_authorized"] is False
+
+
+def test_approved_proposal_requires_separately_supplied_producer_session() -> None:
+    approved = _approved_proposal()
+
+    with pytest.raises(ValueError, match="producer_session"):
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            trusted_approval=_trusted_approval(approved),
+        )
+
+
+@pytest.mark.parametrize(
+    "trusted",
+    [
+        lambda proposal: _trusted_approval(proposal, kind=OperatorApprovalKind.D_MAPPING_PROPOSAL),
+        lambda proposal: _trusted_approval(proposal, digest="f" * 64),
+        lambda proposal: _trusted_approval(proposal, reviewer="human:other-reviewer"),
+        lambda proposal: _trusted_approval(
+            proposal, approved_at=datetime(2026, 9, 5, 20, tzinfo=UTC) + timedelta(seconds=1)
+        ),
+        lambda proposal: _trusted_approval(proposal, scope="schema_only"),
+    ],
+)
+def test_approved_proposal_rejects_wrong_detached_tuple(
+    trusted: Callable[[Mapping[str, object]], TrustedOperatorApproval],
+) -> None:
+    approved = _approved_proposal()
+
+    with pytest.raises(ValueError):
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            trusted_approval=trusted(approved),
+            producer_session="session:f-producer",
+        )
+
+
+@pytest.mark.parametrize(
+    ("reviewer", "reviewer_session", "message"),
+    [
+        ("agent:f-proposer", "session:axis-reviewer", "independent human"),
+        ("agent:reviewer", "session:axis-reviewer", "human reviewer"),
+        ("human:axis-reviewer", "session:f-producer", "reviewer session"),
+    ],
+)
+def test_approved_proposal_rejects_nonindependent_detached_reviewer(
+    reviewer: str,
+    reviewer_session: str,
+    message: str,
+) -> None:
+    approved = _approved_proposal(reviewer=reviewer)
+
+    with pytest.raises(ValueError, match=message):
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            trusted_approval=_trusted_approval(
+                approved,
+                reviewer_session=reviewer_session,
+            ),
+            producer_session="session:f-producer",
+        )
+
+
+def test_copied_approval_metadata_cannot_approve_different_proposal() -> None:
+    approved = _approved_proposal()
+    copied = copy.deepcopy(approved)
+    axis = cast(dict[str, object], copied["candidate_axis"])
+    axis["semantic_definition"] = "Different proposal content."
+
+    with pytest.raises(ValueError, match="approved_proposal_digest"):
+        validate_operator_f_axis_proposal(
+            copied,
+            contract=_contract(),
+            trusted_approval=_trusted_approval(approved),
+            producer_session="session:f-producer",
+        )
+
+
+def test_mutation_with_recomputed_metadata_rejects_pre_mutation_approval() -> None:
+    approved = _approved_proposal()
+    trusted = _trusted_approval(approved)
+    axis = cast(dict[str, object], approved["candidate_axis"])
+    axis["semantic_definition"] = "Mutated after detached approval."
+    review = cast(dict[str, object], approved["review"])
+    review["approved_proposal_digest"] = operator_f_axis_proposal_digest(approved)
+
+    with pytest.raises(ValueError, match="trusted approval"):
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            trusted_approval=trusted,
+            producer_session="session:f-producer",
+        )
 
 
 def test_committed_operator_f_axis_contract_is_fail_closed() -> None:
@@ -216,7 +385,12 @@ def test_operator_f_axis_proposal_validates_axis_enums_and_human_review() -> Non
     review = cast(dict[str, object], approved["review"])
     review["approved_proposal_digest"] = operator_f_axis_proposal_digest(approved)
     assert (
-        validate_operator_f_axis_proposal(approved, contract=_contract())["review"]
+        validate_operator_f_axis_proposal(
+            approved,
+            contract=_contract(),
+            trusted_approval=_trusted_approval(approved),
+            producer_session="session:f-producer",
+        )["review"]
         == approved["review"]
     )
 

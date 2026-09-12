@@ -1,22 +1,29 @@
 schema_version: 1
-packet_kind: evidence_plan
+packet_kind: evidence_report
 operator: F
 name: missing dimensions
 authorization_state: report_only
 runtime_authorized: false
 evidence_sufficient: false
 created_at_utc: "2026-08-31T09:09:18Z"
-algorithm_identity: not_run
+algorithm_identity: operator-f-descriptive-axis-pilot/1
 prompt_identity: not_run
-input_snapshot_ids: []
+input_snapshot_ids:
+  - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
 input_bindings:
   - policy: ../../../tests/fixtures/approved/nsqd/policies/finance-1.toml
   - policy: ../../../tests/fixtures/approved/nsqd/policies/optimization-1.toml
+  - hypothesis: ../nsqd-jepa-ideas-gaps-2026-09-01/results.json
+    axis_id: validation_target
+  - source_ledger: ../nsqd-jepa-ideas-gaps-2026-09-01/source-ledger.json
+  - projection_manifest: ../nsqd-projection-review-2026-08-28/final/manifest.toml
 candidate_outputs: []
 nearest_prior_art: []
 known_limitations:
-  - no candidate axis has been proposed or measured
-  - no axis-admission decision or archive ablation exists
+  - the validation_target proposal is approved only for this evaluation
+  - five finance records remain insufficient for stability or schema admission
+  - only N11-FIN-02, N11-FIN-03, and N11-FIN-04 have registered-axis coordinates
+  - held-out coverage, quality, stability, and redundancy are not estimable from this pilot
   - the executable data contract validates proposals but does not admit an axis
 axis_candidate_contract: axis-candidate-contract.yaml
 proposal_policy: At most one measurable candidate axis per report-only packet.
@@ -29,7 +36,29 @@ current_axis_inventory:
     - problem
     - method
     - setting
-candidate_axes: []
+candidate_axes:
+  - proposal_id: F-PROP-001
+    source: axis-candidate-proposal-validation-target.yaml
+    domain_policy_id: finance/1
+    axis_name: validation_target
+    review_status: human_approved
+    approval_scope: evaluation_only
+    approved_proposal_digest: cbbaf10797b2acb0ebf34b4d62fa37b0e3ec5dfad41c7989334519d9a5962bb6
+    schema_admission_recommended: false
+    ablation_executed: true
+ablation_executed: true
+pilot_result:
+  source: operator-f-validation-target-pilot.json
+  source_sha256: 888d1e7c9d3fab43713b76dad3c66749466d00ac5313a0e8de87b3f4b542252a
+  result_digest: 9523f57d449fa2abbf6e5525ba13477f2ec8d79fbcd481aed1f73850898f8fb3
+  total_record_count: 5
+  candidate_observed_record_count: 5
+  coordinate_eligible_record_count: 3
+  occupied_cells_by_track: [3, 3, 3]
+  held_out_archive_coverage_gain: null
+  evidence_sufficient: false
+  schema_admission_recommended: false
+  runtime_authorized: false
 ablations:
   - id: axis_value
     choices:
@@ -55,3 +84,6 @@ forbidden_inferences:
   - adding dimensions necessarily improves archive illumination
   - Operator F may mutate a registered policy
   - a learned latent factor is admissible without a measurable semantic protocol
+  - binding the JEPA validation_target hypothesis admits a production descriptor axis
+  - evaluation-only approval authorizes Operator F runtime
+  - unchanged descriptive occupancy establishes stability or schema-admission evidence

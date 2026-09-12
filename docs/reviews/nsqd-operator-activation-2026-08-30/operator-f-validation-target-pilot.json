@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "record_type": "operator_f_axis_pilot_result",
+  "authorization_state": "report_only",
+  "evaluation_scope": "evaluation_only",
+  "runtime_authorized": false,
+  "schema_mutation_authorized": false,
+  "schema_admission_authorized": false,
+  "proposal_id": "F-PROP-001",
+  "approved_proposal_digest": "cbbaf10797b2acb0ebf34b4d62fa37b0e3ec5dfad41c7989334519d9a5962bb6",
+  "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+  "source_artifacts": [
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/axis-candidate-contract.yaml",
+      "sha256": "50655378e33aee1dc653458464aa020eef6ec098feb9981a146afe29fd150346"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/axis-candidate-proposal-validation-target.yaml",
+      "sha256": "0849bd0c6231279d767fda0c4e850de1854f303ce496ee136e06f3e7df310fd5"
+    },
+    {
+      "path": "docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/results.json",
+      "sha256": "cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2"
+    },
+    {
+      "path": "docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/source-ledger.json",
+      "sha256": "12889d817f4a6e13e2187c7d28bd0059c1a2c08d0a33b453012dc8b2cbf451ae"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-01.yaml",
+      "sha256": "a53a3709784dc063af81e969f9e006497f4913634c2d3f9c5eee8eb9fae7f0cb"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-02.yaml",
+      "sha256": "c2b1566e4bcde1ca7795a850cd2e2c173d36fa5a7dab6302d7c41d4ad54b8ec9"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-03.yaml",
+      "sha256": "6cb8c419012687cf59234d898665ed6a5f9001809a570638530f4b5caa045620"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-04.yaml",
+      "sha256": "5e72b16c73c9d80d90805f65ec8e5445a6aabbfa7af54e9e9327086ad893daef"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-05.yaml",
+      "sha256": "cdfc67f7ff9c8ff8f39139df3e2906f6a6229d818418ce834868911f76edb6e9"
+    },
+    {
+      "path": "tests/fixtures/approved/nsqd/policies/finance-1.toml",
+      "sha256": "38f81d80e2858bb1a26a55ad51af24295e9dd4de215c4dbf32cfc098749787f5"
+    }
+  ],
+  "registered_axes": [
+    "mechanism",
+    "target",
+    "horizon"
+  ],
+  "candidate_axis": "validation_target",
+  "records": [
+    {
+      "record_id": "N11-FIN-01",
+      "projection_sha256": "a53a3709784dc063af81e969f9e006497f4913634c2d3f9c5eee8eb9fae7f0cb",
+      "registered_coordinates": null,
+      "validation_target": "representation_fidelity"
+    },
+    {
+      "record_id": "N11-FIN-02",
+      "projection_sha256": "c2b1566e4bcde1ca7795a850cd2e2c173d36fa5a7dab6302d7c41d4ad54b8ec9",
+      "registered_coordinates": {
+        "mechanism": "shock-propagation",
+        "target": "signal-decay",
+        "horizon": "event-time"
+      },
+      "validation_target": "predictive_task"
+    },
+    {
+      "record_id": "N11-FIN-03",
+      "projection_sha256": "6cb8c419012687cf59234d898665ed6a5f9001809a570638530f4b5caa045620",
+      "registered_coordinates": {
+        "mechanism": "flow-driven",
+        "target": "returns",
+        "horizon": "intraday"
+      },
+      "validation_target": "economic_utility"
+    },
+    {
+      "record_id": "N11-FIN-04",
+      "projection_sha256": "5e72b16c73c9d80d90805f65ec8e5445a6aabbfa7af54e9e9327086ad893daef",
+      "registered_coordinates": {
+        "mechanism": "flow-driven",
+        "target": "returns",
+        "horizon": "daily"
+      },
+      "validation_target": "economic_utility"
+    },
+    {
+      "record_id": "N11-FIN-05",
+      "projection_sha256": "cdfc67f7ff9c8ff8f39139df3e2906f6a6229d818418ce834868911f76edb6e9",
+      "registered_coordinates": null,
+      "validation_target": "predictive_task"
+    }
+  ],
+  "total_record_count": 5,
+  "candidate_observed_record_count": 5,
+  "coordinate_eligible_record_ids": [
+    "N11-FIN-02",
+    "N11-FIN-03",
+    "N11-FIN-04"
+  ],
+  "coordinate_ineligible_record_ids": [
+    "N11-FIN-01",
+    "N11-FIN-05"
+  ],
+  "shuffle": {
+    "algorithm": "sha256_seeded_cyclic_rotation/v1",
+    "seed": "operator-f/F-PROP-001/validation_target/control-v1",
+    "offset": 4,
+    "permutation": [
+      {
+        "record_id": "N11-FIN-01",
+        "receives_value_from_record_id": "N11-FIN-05"
+      },
+      {
+        "record_id": "N11-FIN-02",
+        "receives_value_from_record_id": "N11-FIN-01"
+      },
+      {
+        "record_id": "N11-FIN-03",
+        "receives_value_from_record_id": "N11-FIN-02"
+      },
+      {
+        "record_id": "N11-FIN-04",
+        "receives_value_from_record_id": "N11-FIN-03"
+      },
+      {
+        "record_id": "N11-FIN-05",
+        "receives_value_from_record_id": "N11-FIN-04"
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "track_id": "current_registered_axes",
+      "eligible_record_count": 3,
+      "occupied_cell_count": 3,
+      "occupied_cells": [
+        "mechanism=flow-driven|target=returns|horizon=daily",
+        "mechanism=flow-driven|target=returns|horizon=intraday",
+        "mechanism=shock-propagation|target=signal-decay|horizon=event-time"
+      ],
+      "observed_cell_coverage": 1.0,
+      "records_per_occupied_cell": 1.0,
+      "occupied_cell_gain_vs_current": 0
+    },
+    {
+      "track_id": "current_axes_plus_validation_target",
+      "eligible_record_count": 3,
+      "occupied_cell_count": 3,
+      "occupied_cells": [
+        "mechanism=flow-driven|target=returns|horizon=daily|validation_target=economic_utility",
+        "mechanism=flow-driven|target=returns|horizon=intraday|validation_target=economic_utility",
+        "mechanism=shock-propagation|target=signal-decay|horizon=event-time|validation_target=predictive_task"
+      ],
+      "observed_cell_coverage": 1.0,
+      "records_per_occupied_cell": 1.0,
+      "occupied_cell_gain_vs_current": 0
+    },
+    {
+      "track_id": "current_axes_plus_shuffled_validation_target",
+      "eligible_record_count": 3,
+      "occupied_cell_count": 3,
+      "occupied_cells": [
+        "mechanism=flow-driven|target=returns|horizon=daily|validation_target=economic_utility",
+        "mechanism=flow-driven|target=returns|horizon=intraday|validation_target=predictive_task",
+        "mechanism=shock-propagation|target=signal-decay|horizon=event-time|validation_target=representation_fidelity"
+      ],
+      "observed_cell_coverage": 1.0,
+      "records_per_occupied_cell": 1.0,
+      "occupied_cell_gain_vs_current": 0
+    }
+  ],
+  "held_out_archive_coverage_gain": null,
+  "findings": [
+    "All five records have observed validation_target values; only N11-FIN-02, N11-FIN-03, and N11-FIN-04 have registered-axis coordinates.",
+    "All three tracks occupy three cells among three coordinate-eligible records; descriptive occupied-cell coverage and density are unchanged.",
+    "Held-out archive coverage gain is not estimable from three coordinate-eligible records; no stability or quality evidence is claimed."
+  ],
+  "evidence_sufficient": false,
+  "schema_admission_recommended": false,
+  "result_digest": "9523f57d449fa2abbf6e5525ba13477f2ec8d79fbcd481aed1f73850898f8fb3"
+}

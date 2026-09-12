@@ -2,8 +2,16 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from typing import Any
 
+from nsqd.domain.operator_approval import (
+    OPERATOR_F_PROPOSAL_APPROVAL_SCOPE,
+    OperatorApprovalKind,
+    OperatorApprovalProducer,
+    TrustedOperatorApproval,
+    require_operator_f_proposal_approval,
+)
 from nsqd.domain.snapshot import canonical_json, is_utc_datetime_or_iso, sha256_hex
 
 _PROPOSAL_FIELDS = frozenset(
@@ -96,6 +104,8 @@ def validate_operator_f_axis_proposal(
     proposal: Mapping[str, object],
     *,
     contract: Mapping[str, object],
+    trusted_approval: TrustedOperatorApproval | None = None,
+    producer_session: str | None = None,
 ) -> dict[str, Any]:
     rules = validate_operator_f_axis_contract(contract)
     validated = _mapping(proposal, "operator F axis proposal")
@@ -151,11 +161,42 @@ def validate_operator_f_axis_proposal(
             raise ValueError("Operator F approval requires a human reviewer identity")
         if not is_utc_datetime_or_iso(review.get("human_approved_at_utc")):
             raise ValueError("human_approved_at_utc must be timezone-aware UTC")
-        if review.get("approval_scope") not in {"schema_only", "evaluation_only"}:
+        if review.get("approval_scope") != OPERATOR_F_PROPOSAL_APPROVAL_SCOPE:
             raise ValueError("approval_scope is invalid")
         approved_digest = _required_string(review, "approved_proposal_digest")
-        if approved_digest != operator_f_axis_proposal_digest(validated):
+        expected_digest = operator_f_axis_proposal_digest(validated)
+        if approved_digest != expected_digest:
             raise ValueError("approved_proposal_digest does not match the axis proposal")
+        if trusted_approval is None:
+            raise ValueError(
+                "approved Operator F metadata has no independently supplied trusted approval"
+            )
+        approved_at_value = review.get("human_approved_at_utc")
+        approved_at = (
+            approved_at_value
+            if isinstance(approved_at_value, datetime)
+            else datetime.fromisoformat(str(approved_at_value).replace("Z", "+00:00"))
+        )
+        exact_detached_tuple = (
+            trusted_approval.kind is OperatorApprovalKind.F_AXIS_PROPOSAL
+            and trusted_approval.content_digest == approved_digest
+            and trusted_approval.reviewer_identity == reviewer
+            and trusted_approval.approved_at_utc == approved_at
+            and trusted_approval.approval_scope == review.get("approval_scope")
+        )
+        if not exact_detached_tuple:
+            raise ValueError("approved Operator F metadata has no exact trusted approval")
+        if (
+            producer_session is None
+            or not producer_session
+            or producer_session != producer_session.strip()
+        ):
+            raise ValueError("Operator F producer_session must be a nonblank exact value")
+        require_operator_f_proposal_approval(
+            trusted_approval,
+            producer=OperatorApprovalProducer(generated_by, producer_session),
+            expected_digest=expected_digest,
+        )
     elif any(
         review.get(field) is not None
         for field in (
