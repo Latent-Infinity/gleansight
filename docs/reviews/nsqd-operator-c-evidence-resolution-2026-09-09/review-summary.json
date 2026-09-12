@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "packet_digest": "8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90",
+  "packet_digest_algorithm": "sha256(canonical_json(artifact_sha256))",
+  "packet_manifest_sha256": "baf5ab583e294c4eebee2fcaa2cc73c5e4a985cfd74005af7cf21a39e4aa0abf",
+  "artifact_sha256": {
+    "README.md": "213382cf673e63049d941bbf3e37b461a6bad48ff91c25f595ed91df6993bd36",
+    "acquisition-receipts.json": "082168d9014904b3eee00c4fa0358a9f100acf8a029dabb9fc910b6bb38ea213",
+    "bibliographic-query-receipts.json": "b0be5323ddd7b46939320ce2efe488785742d090c0722e0626716d390e2e67a8",
+    "evidence-ledger.json": "fc70c082fb821a5eaf21d6ec56acaa83194536f6bd64311ceb19355d7cd1a71c",
+    "source-extracts.jsonl": "d9c92f4257fd41cc32bb204c765254125288088d8c08b19e828e4aae1fa355d4",
+    "typed-relations.json": "f737e4747d2bc18deb2cb4c5fd4150ca8797e5f1a6092356d8d6c44ca4ceff0c"
+  },
+  "independent_review": {
+    "reviewer_identity": "oracle / independent-evidence-reviewer",
+    "reviewer_agent_type": "oracle",
+    "reviewer_model": "openai/gpt-5.6-sol",
+    "reviewer_session_id": "ses_f76edce6dffe6gPRxa2M13UADd",
+    "producer_identity": "Sisyphus-Junior",
+    "producer_session_id": "ses_f782300deffeTwlc03Dk8T8Cdz",
+    "reviewer_differs_from_producer": true,
+    "reviewer_session_differs_from_producer_session": true,
+    "reviewed_at_utc": "2026-09-10T02:28:53Z",
+    "approval_scope": "bounded_negative_report_only_evidence_conclusion"
+  },
+  "adversarial_verify": {
+    "verdict": "confirmed",
+    "confidence": 0.96,
+    "reviewed_claim": "Both typed edges and their composition are unsupported; candidate outputs remain empty and evidence remains insufficient.",
+    "positive_bridge_supported": false,
+    "supports_todo_7_advancement": false
+  },
+  "findings": [
+    {
+      "severity": "medium",
+      "finding": "Live bibliographic replay was partial: the arXiv identity query and the Semantic Scholar A and C endpoints returned HTTP 429, while the bridge Semantic Scholar endpoint now returned HTTP 200.",
+      "effect": "Citation and co-citation observations remain bounded or unavailable and cannot establish universal absence, novelty, priority, or noninteraction."
+    },
+    {
+      "severity": "low",
+      "finding": "The packet does not declare a quote-normalization algorithm. Eight passages replay under generic line-break dehyphenation; BRIDGE-THREE-REGIME requires context-sensitive preservation of the lexical hyphen in data-generating.",
+      "effect": "All nine passage wordings and locations are confirmed, but normalized string replay is not fully algorithmically specified."
+    },
+    {
+      "severity": "informational",
+      "finding": "The shared bridge identity is not textually identical to the bridge endpoint object type, and no typed alias is established.",
+      "effect": "Positive composition is not justified."
+    }
+  ],
+  "source_replay": [
+    {
+      "source_identity": "arXiv:2602.04643v2",
+      "retrieval_uri": "https://arxiv.org/pdf/2602.04643v2",
+      "final_url": "https://arxiv.org/pdf/2602.04643v2",
+      "observed_at_utc": "2026-09-10T02:11:48.054334Z",
+      "http_status": 200,
+      "media_type": "application/pdf",
+      "byte_count": 2647744,
+      "sha256": "ef56d2b2f2d701667f853c0bb69795fa58f7acbca16fbca27629852550983668",
+      "receipt_exact_match": true,
+      "title": "SC-JEPA: Stabilizing Latent Predictive Learning for Time-Series Anomaly Prediction",
+      "authors": ["Yanan He", "Yunshi Wen", "Xin Wang", "Tengfei Ma"]
+    },
+    {
+      "source_identity": "arXiv:2604.20949v1",
+      "retrieval_uri": "https://arxiv.org/pdf/2604.20949v1",
+      "final_url": "https://arxiv.org/pdf/2604.20949v1",
+      "observed_at_utc": "2026-09-10T02:11:48.059987Z",
+      "http_status": 200,
+      "media_type": "application/pdf",
+      "byte_count": 1182734,
+      "sha256": "4680476871fd7b23842977cec7fe35b69a838606cbddc0e5df3c68942897bd68",
+      "receipt_exact_match": true,
+      "title": "Early Detection of Latent Microstructure Regimes in Limit Order Books",
+      "authors": ["Prakul Sunil Hiremath", "Vruksha Arun Hiremath"]
+    },
+    {
+      "source_identity": "arXiv:1402.2198v1",
+      "retrieval_uri": "https://arxiv.org/pdf/1402.2198v1",
+      "final_url": "https://arxiv.org/pdf/1402.2198v1",
+      "observed_at_utc": "2026-09-10T02:11:48.083364Z",
+      "http_status": 200,
+      "media_type": "application/pdf",
+      "byte_count": 1613669,
+      "sha256": "4b65227e4da7eaaaaf381c20c8716e0c1c99d80abfd188d6bf0456c5f30bc166",
+      "receipt_exact_match": true,
+      "title": "Multi-scale Representation of High Frequency Market Liquidity",
+      "authors": ["Anton Golub", "Gregor Chliamovitch", "Alexandre Dupuis", "Bastien Chopard"]
+    }
+  ],
+  "passage_replay": [
+    {"extract_id":"A-SOFT-CODEBOOK","source_identity":"arXiv:2602.04643v2","pdf_page":1,"section":"Abstract","quote_sha256":"04fdafedf06a48ee6e315bf75c9d8f9673b96b43facb8afb29ca1a0f95971ead","status":"confirmed_at_declared_location"},
+    {"extract_id":"A-MULTI-RESOLUTION","source_identity":"arXiv:2602.04643v2","pdf_page":1,"section":"Abstract","quote_sha256":"18cf5948d3fc49c063f73aba8c1d094e99f620a868935a769206b1067592a475","status":"confirmed_at_declared_location"},
+    {"extract_id":"BRIDGE-THREE-REGIME","source_identity":"arXiv:2604.20949v1","pdf_page":2,"section":"Abstract","quote_sha256":"20e54e52f70d890a0f9f6f9727a69467069777d7ffbb0dd4622aa9694a46f547","status":"confirmed_at_declared_location","normalization_note":"Poppler treats the rendered line-end hyphen in data-generating as discretionary and extracts datagenerating; contextual preservation of the lexical hyphen is required."},
+    {"extract_id":"BRIDGE-IDENTIFIABILITY","source_identity":"arXiv:2604.20949v1","pdf_page":2,"section":"Abstract","quote_sha256":"34e671f8404cf053ebf089a36d46dafa7645871ee3580046ab381231d3179f8f","status":"confirmed_at_declared_location"},
+    {"extract_id":"BRIDGE-REAL-MARKET-LIMIT","source_identity":"arXiv:2604.20949v1","pdf_page":26,"printed_page":null,"section":"9 Preliminary Illustrative Real-Data Application","quote_sha256":"7e753d00531fb200ff9b849b45198b1820b8c883f59e21630500046e00f4e105","status":"confirmed_at_declared_location"},
+    {"extract_id":"BRIDGE-SAMPLE-LIMIT","source_identity":"arXiv:2604.20949v1","pdf_page":27,"section":"9 Preliminary Illustrative Real-Data Application","quote_sha256":"207d6103cefb7b52911e698fda95f20b9e4d0e409e6129deaf2b999d731f7388","status":"confirmed_at_declared_location"},
+    {"extract_id":"C-INTRINSIC-NETWORK","source_identity":"arXiv:1402.2198v1","pdf_page":1,"section":"Abstract","quote_sha256":"2b3f47e43b3bd821f5276cbb02028c41418ac56bc54fd8c1a4389d367e8a95ae","status":"confirmed_at_declared_location"},
+    {"extract_id":"C-LIQUIDITY-STRESS","source_identity":"arXiv:1402.2198v1","pdf_page":1,"section":"Abstract","quote_sha256":"18b65d21a59ee6f310fb47d8b602bcc7fd24bda42f8cee2619d1b51fde8a05bb","status":"confirmed_at_declared_location"},
+    {"extract_id":"C-LIQUIDITY-DEFINITION","source_identity":"arXiv:1402.2198v1","pdf_page":10,"section":"6 Price trajectory unlikeliness","quote_sha256":"819d9bcf5e352447b26e238443489e62d4c8ed0acd4919fee5987d1250f42a04","status":"confirmed_at_declared_location"}
+  ],
+  "relation_analysis": {
+    "A_to_bridge": {
+      "source_identity": "arXiv:2602.04643v2",
+      "target_identity": "arXiv:2604.20949v1",
+      "source_object_type": "learned_time_series_anomaly_prediction_representation",
+      "bridge_object_type": "causal_limit_order_book_latent_build_up_regime",
+      "predicate": "instantiates_as",
+      "direction": "A_to_bridge",
+      "polarity": "unsupported",
+      "passage_supports_source_object": true,
+      "passage_supports_predicate": false,
+      "analysis": "SC-JEPA learns generic regime-level representations on time-series benchmarks. The bridge paper defines a causal limit-order-book DGP state. Neither source applies, converts, identifies, or equates the SC-JEPA representation with that DGP state."
+    },
+    "bridge_to_C": {
+      "source_identity": "arXiv:2604.20949v1",
+      "target_identity": "arXiv:1402.2198v1",
+      "bridge_object_type": "causal_limit_order_book_latent_build_up_regime",
+      "target_object_type": "intrinsic_network_liquidity_measure",
+      "predicate": "maps_to_or_drives",
+      "direction": "bridge_to_C",
+      "polarity": "unsupported",
+      "passages_support_endpoint_objects": true,
+      "passages_support_predicate": false,
+      "analysis": "The bridge regime is defined through temporal drift, persistence, and limit-order-book depth behavior. The target Liquidity measure is information-theoretic price-trajectory unlikeliness over an Intrinsic Network. Shared stress, liquidity, and early-warning vocabulary does not establish a mapping or causal relation."
+    },
+    "composition": {
+      "shared_bridge_identity": "latent_limit_order_book_build_up_regime",
+      "edge_bridge_endpoint_type": "causal_limit_order_book_latent_build_up_regime",
+      "exact_string_identity": false,
+      "typed_alias_supported": false,
+      "A_to_bridge_supported": false,
+      "bridge_to_C_supported": false,
+      "composition_justification": "unsupported",
+      "accepted_bridge": false
+    }
+  },
+  "interaction_analysis": {
+    "direct_a_to_c_prior_art": {"status":"not_observed_within_bounded_queries","live_openalex_exact_count":0,"live_openalex_normalized_count":0,"cross_source_exact_title_and_identifier_mentions_in_reacquired_pdfs":0,"limitation":"This is not a universal prior-art, novelty, priority, or legal search."},
+    "direct_citation": {"status":"not_observed_within_bounded_queries","cross_source_exact_title_identifier_and_author_mentions_in_reacquired_pdfs":0,"semantic_scholar_live_status":"partially_available","limitation":"Only the bridge Semantic Scholar record was available live; exact-title OpenAlex searches are bounded proxies."},
+    "co_citation": {"status":"not_observed_within_bounded_queries","limitation":"Live Semantic Scholar coverage was incomplete, so graph-wide co-citation absence is unresolved."},
+    "author_overlap": {"status":"not_observed_within_bounded_queries","observed_overlap_count":0,"basis":"Author lists visible in the three exact-hash PDFs are pairwise distinct."},
+    "direct_mention": {"status":"not_observed_within_bounded_queries","cross_source_exact_title_and_identifier_mentions_in_reacquired_pdfs":0,"limitation":"Full-text extraction and provider indexing can be incomplete."},
+    "counterevidence": {"status":"observed_in_exact_passages","observed_count":2,"extract_ids":["BRIDGE-REAL-MARKET-LIMIT","BRIDGE-SAMPLE-LIMIT"],"analysis":"The bridge paper cannot confirm its assumed latent build-up structure exists in real markets, and its five-event application is proof-of-concept rather than statistically reliable. These limitations do not establish universal failure."}
+  },
+  "live_query_replay": [
+    {"query_id":"arxiv-source-identity","retrieval_uri":"https://export.arxiv.org/api/query?id_list=2602.04643v2,2604.20949v1,1402.2198v1&max_results=3","final_url":"https://export.arxiv.org/api/query?id_list=2602.04643v2,2604.20949v1,1402.2198v1&max_results=3","observed_at_utc":"2026-09-10T02:16:24.539598Z","http_status":429,"media_type":"text/html","response_byte_count":14,"response_sha256":"467622e2f17f01d302d6c790b13078569f17d71cd83910558535019a594e07c1","returned_count":null,"outcome":"unavailable_from_service_live_review","frozen_receipt_outcome":"source_identity_observed"},
+    {"query_id":"openalex-exact-a-bridge","retrieval_uri":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22&per-page=25","observed_at_utc":"2026-09-10T02:16:26.147551Z","http_status":200,"response_byte_count":634,"response_sha256":"f4a9eceb60777c4ec5a40529411b6ebf8c72402d9c38da501292eea4a1fba03e","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"openalex-exact-bridge-c","retrieval_uri":"https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25","observed_at_utc":"2026-09-10T02:16:28.398654Z","http_status":200,"response_byte_count":796,"response_sha256":"296e366ba98bb3a33bcf77d549447995c5efef655a0ceb23149bebd954a471c1","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"openalex-exact-a-c","retrieval_uri":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22&per-page=25","observed_at_utc":"2026-09-10T02:16:29.951207Z","http_status":200,"response_byte_count":609,"response_sha256":"4a0820033a83c692790dfe9977119a41037efb389e9a3af9802aab51f936b2bc","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"s2-a-citations-references","retrieval_uri":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:2602.04643?fields=paperId,title,authors,citations.paperId,references.paperId","final_url":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:2602.04643?fields=paperId,title,authors,citations.paperId,references.paperId","observed_at_utc":"2026-09-10T02:16:31.097129Z","http_status":429,"response_byte_count":174,"response_sha256":"65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148","outcome":"unavailable_from_service"},
+    {"query_id":"s2-bridge-citations-references","retrieval_uri":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:2604.20949?fields=paperId,title,authors,citations.paperId,references.paperId","final_url":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:2604.20949?fields=paperId,title,authors,citations.paperId,references.paperId","observed_at_utc":"2026-09-10T02:16:32.348173Z","http_status":200,"response_byte_count":1503,"response_sha256":"2d9cd372e6647abec655542811b320310f2dbeff6dfa1ab8e3da37bb6dded377","paper_id":"56bd6a294a872cfe90b46d9f04d6b25d6369d95b","citation_count":2,"reference_count":14,"outcome":"source_identity_and_relationship_ids_observed_live","limitation":"A and C Semantic Scholar identities were unavailable live, so relationship IDs could not be fully cross-resolved within the frozen request envelope."},
+    {"query_id":"s2-c-citations-references","retrieval_uri":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:1402.2198?fields=paperId,title,authors,citations.paperId,references.paperId","final_url":"https://api.semanticscholar.org/graph/v1/paper/ARXIV:1402.2198?fields=paperId,title,authors,citations.paperId,references.paperId","observed_at_utc":"2026-09-10T02:16:33.458508Z","http_status":429,"response_byte_count":174,"response_sha256":"65ab993d12c5c2cc9b68e6da2bb79b326930283e520363ffcdc145f88cd5a148","outcome":"unavailable_from_service"},
+    {"query_id":"openalex-normalized-a-bridge","retrieval_uri":"https://api.openalex.org/works?search=%22soft+codebook%22+%22latent+build-up+regime%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22soft+codebook%22+%22latent+build-up+regime%22&per-page=25","observed_at_utc":"2026-09-10T02:16:34.807359Z","http_status":200,"response_byte_count":510,"response_sha256":"19daa58fa861ae6eadf792a897ea0afb8bf3c5e031a44d09d09bd689a260d212","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"openalex-normalized-bridge-c","retrieval_uri":"https://api.openalex.org/works?search=%22latent+build-up+regime%22+%22Intrinsic+Network+liquidity%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22latent+build-up+regime%22+%22Intrinsic+Network+liquidity%22&per-page=25","observed_at_utc":"2026-09-10T02:16:36.236053Z","http_status":200,"response_byte_count":552,"response_sha256":"e7a8f1fedd15f98c64b20d4ff6fa7e8b44418533625df1480dce64820683899a","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"openalex-normalized-a-c","retrieval_uri":"https://api.openalex.org/works?search=%22time-series+anomaly+prediction%22+%22market+liquidity+stress%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22time-series+anomaly+prediction%22+%22market+liquidity+stress%22&per-page=25","observed_at_utc":"2026-09-10T02:16:37.881881Z","http_status":200,"response_byte_count":565,"response_sha256":"c97219d7c207e250f4bb94d217c65c074df326bfb93d789fb277e767d31ac15f","returned_count":0,"total_count":0,"outcome":"not_observed_within_bounded_queries"},
+    {"query_id":"openalex-shuffled-1","retrieval_uri":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Algorithmic+Monitoring%3A+Measuring+Market+Stress+with+Machine+Learning%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22SC-JEPA%22+%22Algorithmic+Monitoring%3A+Measuring+Market+Stress+with+Machine+Learning%22&per-page=25","observed_at_utc":"2026-09-10T02:16:39.370845Z","http_status":200,"response_byte_count":633,"response_sha256":"5cc83ac7aedcc94c21b6903f621b68ccdaa88a9b15c3ebdfee33ad5c63fa1d5a","returned_count":0,"total_count":0,"outcome":"query_result_replayed_but_control_derivation_unavailable"},
+    {"query_id":"openalex-shuffled-2","retrieval_uri":"https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22An+Interpretable+Ensemble-Based+Generative+Framework+for+Anomaly+Detection+in+High-Dimensional+Financial+Time+Series%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22Early+Detection+of+Latent+Microstructure+Regimes+in+Limit+Order+Books%22+%22An+Interpretable+Ensemble-Based+Generative+Framework+for+Anomaly+Detection+in+High-Dimensional+Financial+Time+Series%22&per-page=25","observed_at_utc":"2026-09-10T02:16:40.945982Z","http_status":200,"response_byte_count":961,"response_sha256":"c9fddf91e45ff405e7560824dfd329219088638823b2078903d811e6721c2c67","returned_count":0,"total_count":0,"outcome":"query_result_replayed_but_control_derivation_unavailable"},
+    {"query_id":"openalex-shuffled-3","retrieval_uri":"https://api.openalex.org/works?search=%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22+%22The+Market%E2%80%99s+Conditioning+Representation%3A+Equilibrium%2C+Crowding%2C+and+Convention+Multiplicity%22&per-page=25","final_url":"https://api.openalex.org/works?search=%22Multi-scale+Representation+of+High+Frequency+Market+Liquidity%22+%22The+Market%E2%80%99s+Conditioning+Representation%3A+Equilibrium%2C+Crowding%2C+and+Convention+Multiplicity%22&per-page=25","observed_at_utc":"2026-09-10T02:16:42.517591Z","http_status":200,"response_byte_count":882,"response_sha256":"d71a122d357039379a1e9d396078c2d88fb06a13968a59e6a71a78b2af4641ac","returned_count":0,"total_count":0,"outcome":"query_result_replayed_but_control_derivation_unavailable"}
+  ],
+  "control_replay": {
+    "normalized_shared_term_control_under_identical_query_budget": {"frozen_status":"not_observed_within_bounded_queries","live_status":"not_observed_within_bounded_queries","live_zero_queries":3,"supported_as_universal_absence":false},
+    "sha256_seeded_shuffled_literature_pair_control_under_identical_query_budget": {"declared_seed_sha256":"ba6214aaaec2b9407e898601dea5d64c556af32b62e8183a3a14a4fb7b2a2957","seed_material":null,"candidate_pool":null,"algorithm":null,"ordering_or_permutation":null,"derivation_status":"unavailable_nonreproducible","live_zero_queries":3,"supported_control":false,"used_as_absence_evidence":false,"producer_session_review":{"session_id":"ses_f782300deffeTwlc03Dk8T8Cdz","message_count":154,"transcript_entry_count":796,"seed_material_search_matches":0,"candidate_pool_search_matches":0,"ordering_or_permutation_search_matches":0,"declared_seed_hash_matches":1,"conclusion":"Retained history contains the declared hash and resulting queries but no reproducible derivation provenance."}}
+  },
+  "verification": {
+    "packet_suite": {"command":"PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' uv run pytest tests/nsqd/test_operator_c_evidence_resolution.py -q --no-cov","result":"55 passed in 0.17s"},
+    "isolated_rehashed_suite": {"command":"PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' uv run pytest tests/nsqd/test_operator_c_evidence_resolution.py::test_rehashed_semantic_corruptions_fail_closed -q --no-cov","result":"36 passed in 0.13s"},
+    "independent_rehashed_controls": {"requested_corruptions_rejected":"31/31","additional_current_corruptions_rejected":"2/2","all_expected_guards_exact":true},
+    "semantic_suite": {"command":"PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPTS='-p no:cacheprovider' uv run pytest tests/nsqd/test_operator_c_resolution_semantics.py -q --no-cov","result":"18 passed in 0.08s"},
+    "json_validation": {"json_artifacts_valid":"5/5","jsonl_rows_valid":"9/9"}
+  },
+  "predecessor_and_chain": {
+    "predecessor_path": "../nsqd-operator-c-evidence-2026-09-09-resolution",
+    "predecessor_packet_digest": "406fccd5d072db490e3abcd067b0327b3817effcbe85cac49f0eaa40be8cb4d3",
+    "predecessor_manifest_sha256": "745b16df316fd61c19949c2d046b15b86399b5d0633c1b4f5d2fd6f527e46788",
+    "predecessor_artifacts_match": true,
+    "supersedes": true,
+    "acyclic": true,
+    "historical_directories_unchanged": true,
+    "immutable_chain_requirements": [
+      "Do not change any of the six evidence artifacts or packet-manifest.json.",
+      "review-summary.json must bind the packet digest, raw manifest SHA-256, and exact six-member artifact map.",
+      "review-summary.json and review-seal.json must not enter the evidence manifest.",
+      "Compute review_summary_sha256 over the exact serialized review-summary.json bytes.",
+      "review-seal.json must bind that digest, the packet digest, reviewer identity, reviewer session, model, UTC review time, verdict, scope, and non-authority fields.",
+      "Review tamper tests must reject changed evidence, manifest, summary, seal, reviewer-producer collision, authority escalation, and circular inclusion."
+    ]
+  },
+  "authority": {
+    "authorization_state": "report_only",
+    "source_scope": "fresh_external_evidence_not_admitted_to_approved_corpus",
+    "accepted_bridge": false,
+    "candidate_combinations": [],
+    "candidate_outputs": [],
+    "evidence_sufficient": false,
+    "result": "insufficient_evidence",
+    "technical_review": "confirmed_negative_conclusion",
+    "technical_review_is_human_acceptance": false,
+    "human_acceptance": "not_requested",
+    "operator_c_status": "blocked",
+    "operator_d_status": "blocked",
+    "schema_admission_authorized": false,
+    "runtime_authorized": false,
+    "universal_absence_claimed": false,
+    "todo_7_advancement_authorized": false
+  },
+  "limitations": [
+    "Live arXiv source-identity replay returned HTTP 429; exact PDF bytes independently established the three source/version identities.",
+    "Live Semantic Scholar coverage was partial and cannot support universal citation or co-citation absence.",
+    "OpenAlex live body hashes changed from the frozen receipts even when zero-result semantics remained unchanged; the live responses do not overwrite the cutoff record.",
+    "The exact quote normalization procedure is not declared, and one lexical line-end hyphen requires context-sensitive handling.",
+    "The shuffled-query outputs are replayable, but the shuffle derivation is not; they are not a supported negative control.",
+    "The direct-prior-art search is bounded and is not a legal priority, universal novelty, or universal noninteraction search.",
+    "The review confirms only the negative packet conclusion and grants no human, schema, Operator C/D, or runtime authority."
+  ],
+  "cleanup": {
+    "temporary_path": "/var/folders/xf/c9939qyj0wx236rc2nrgrdhw0000gn/T/opencode/gleansight-todo6-c-review-20260909",
+    "method": "guarded shutil.rmtree exact target",
+    "target_present_after": false,
+    "source_or_query_bytes_retained_in_repository": false,
+    "repository_paths_deleted": false
+  }
+}

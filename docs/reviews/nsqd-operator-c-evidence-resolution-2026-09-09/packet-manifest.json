@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "artifact_sha256": {
+    "README.md": "213382cf673e63049d941bbf3e37b461a6bad48ff91c25f595ed91df6993bd36",
+    "acquisition-receipts.json": "082168d9014904b3eee00c4fa0358a9f100acf8a029dabb9fc910b6bb38ea213",
+    "bibliographic-query-receipts.json": "b0be5323ddd7b46939320ce2efe488785742d090c0722e0626716d390e2e67a8",
+    "evidence-ledger.json": "fc70c082fb821a5eaf21d6ec56acaa83194536f6bd64311ceb19355d7cd1a71c",
+    "source-extracts.jsonl": "d9c92f4257fd41cc32bb204c765254125288088d8c08b19e828e4aae1fa355d4",
+    "typed-relations.json": "f737e4747d2bc18deb2cb4c5fd4150ca8797e5f1a6092356d8d6c44ca4ceff0c"
+  },
+  "packet_digest": "8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90"
+}

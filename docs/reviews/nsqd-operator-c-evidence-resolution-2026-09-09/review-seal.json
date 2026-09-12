@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "packet_digest": "8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90",
+  "review_summary_sha256": "643fc415cc2f6b266a7a8bf4c04fdf11e34ede3947dd3be090ad241d3a5f04d4",
+  "reviewer_identity": "oracle / independent-evidence-reviewer",
+  "reviewer_agent_type": "oracle",
+  "reviewer_model": "openai/gpt-5.6-sol",
+  "reviewer_session_id": "ses_f76edce6dffe6gPRxa2M13UADd",
+  "producer_identity": "Sisyphus-Junior",
+  "producer_session_id": "ses_f782300deffeTwlc03Dk8T8Cdz",
+  "reviewed_at_utc": "2026-09-10T02:28:53Z",
+  "verdict": "confirmed",
+  "approval_scope": "bounded_negative_report_only_evidence_conclusion",
+  "authorization_state": "report_only",
+  "accepted_bridge": false,
+  "evidence_sufficient": false,
+  "technical_review_is_human_acceptance": false,
+  "human_acceptance": "not_requested",
+  "schema_admission_authorized": false,
+  "runtime_authorized": false,
+  "todo_7_advancement_authorized": false
+}
