@@ -89,6 +89,9 @@ include = ["src", "tests"]
 # BasePage vs Page). Same envelope as coverage omit of src/papers/ui/*.
 exclude = ["data", "src/papers/ui", "tests/ui"]
 
+[tool.pyright]
+extraPaths = ["src"]
+
 # Test doubles implement the methods a test needs, not every Protocol member.
 # Production src remains fully checked.
 [[tool.ty.overrides]]
@@ -97,3 +100,14 @@ include = ["tests/**"]
 [tool.ty.overrides.rules]
 invalid-argument-type = "ignore"
 unused-ignore-comment = "ignore"
+
+[[tool.ty.overrides]]
+include = [
+  "src/nsqd/infra/lancedb/**",
+  "src/papers/infra/converter_docling/**",
+  "src/papers/infra/embedder_st/**",
+  "src/papers/infra/lancedb/**",
+]
+
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
