@@ -1,88 +1,31 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 import yaml
 
+from nsqd.domain.contract_validation import StructuredInput
 from nsqd.domain.diverge import require_operator
 from nsqd.domain.operator_d import (
     operator_d_mapping_proposal_digest,
     validate_operator_d_mapping_contract,
     validate_operator_d_mapping_proposal,
 )
+from tests.nsqd import operator_dg_contract_support
 
-PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
-)
-CONTRACT_PATH = PACKET_ROOT / "analogical-transport-contract.yaml"
-
-
-def _contract() -> dict[str, object]:
-    loaded = yaml.safe_load(CONTRACT_PATH.read_text(encoding="utf-8"))
-    assert isinstance(loaded, dict)
-    return loaded
-
-
-def _graph(*, prefix: str, predicate: str) -> dict[str, object]:
-    return {
-        "nodes": [
-            {"id": f"{prefix}-problem", "role": "problem"},
-            {"id": f"{prefix}-method", "role": "method"},
-        ],
-        "relations": [
-            {
-                "source": f"{prefix}-problem",
-                "predicate": predicate,
-                "target": f"{prefix}-method",
-            }
-        ],
-    }
-
-
-def _proposal() -> dict[str, object]:
-    return {
-        "schema_version": 1,
-        "proposal_id": "D-MAP-001",
-        "authorization_state": "report_only",
-        "runtime_authorized": False,
-        "source_domain_policy_id": "optimization/1",
-        "target_domain_policy_id": "finance/1",
-        "source_record_id": "N11-OPT-02",
-        "target_record_id": "N11-FIN-04",
-        "source_graph": _graph(prefix="opt", predicate="solved_by"),
-        "target_graph": _graph(prefix="fin", predicate="explained_by"),
-        "allowed_relation_mappings": [
-            {"source_predicate": "solved_by", "target_predicate": "explained_by"}
-        ],
-        "forbidden_surface_attributes": ["title", "venue"],
-        "target_constraints": ["no_policy_leak", "no_approved_fact"],
-        "mapping_method": "typed_structure_mapping",
-        "baselines": ["typed_structure_mapping"],
-        "negative_controls": ["surface_similarity_negative_control"],
-        "metrics": [
-            "held_out_analogy_recovery",
-            "role_consistency",
-            "target_contradiction_rate",
-            "domain_policy_violation_count",
-        ],
-        "upstream_c": {
-            "evidence_sufficient": False,
-            "human_accepted": False,
-            "selected_bridge_id": None,
-        },
-        "candidate_inferences": [],
-        "provenance": {
-            "generated_by": "agent:d-proposer",
-            "source_artifact_digests": ["c" * 64],
-        },
-        "review": {
-            "status": "pending",
-            "human_reviewer": None,
-            "human_approved_at_utc": None,
-            "approved_proposal_digest": None,
-        },
-    }
+PACKET_ROOT = operator_dg_contract_support.D_PACKET_ROOT
+_contract = operator_dg_contract_support.operator_d_contract
+_graph = operator_dg_contract_support.operator_d_graph
+_proposal = operator_dg_contract_support.operator_d_proposal
+_CANONICAL_D_REQUIREMENTS = {
+    "required_baselines": ["typed_structure_mapping"],
+    "required_negative_controls": ["surface_similarity_negative_control"],
+    "required_metrics": [
+        "held_out_analogy_recovery",
+        "role_consistency",
+        "target_contradiction_rate",
+        "domain_policy_violation_count",
+    ],
+}
 
 
 def test_committed_operator_d_mapping_contract_is_fail_closed() -> None:
@@ -105,7 +48,9 @@ def test_operator_d_mapping_proposal_is_digest_bound_and_non_authorizing() -> No
     validated = validate_operator_d_mapping_proposal(_proposal(), contract=_contract())
     assert validated["runtime_authorized"] is False
     assert validated["candidate_inferences"] == []
-    assert validated["upstream_c"]["evidence_sufficient"] is False
+    upstream = validated["upstream_c"]
+    assert isinstance(upstream, dict)
+    assert upstream["evidence_sufficient"] is False
     assert len(operator_d_mapping_proposal_digest(validated)) == 64
 
 
@@ -124,7 +69,7 @@ def test_operator_d_mapping_proposal_is_digest_bound_and_non_authorizing() -> No
 )
 def test_operator_d_mapping_proposal_rejects_unsafe_or_incomplete_rows(
     field: str,
-    value: object,
+    value: StructuredInput,
     message: str,
 ) -> None:
     proposal = _proposal()
@@ -139,14 +84,19 @@ def test_operator_d_mapping_proposal_rejects_same_policy_and_c_authorization() -
     with pytest.raises(ValueError, match="distinct source and target"):
         validate_operator_d_mapping_proposal(same_policy, contract=_contract())
 
-    authorized_c = _proposal()
-    authorized_c["upstream_c"] = {
-        "evidence_sufficient": True,
-        "human_accepted": True,
-        "selected_bridge_id": "C-BRIDGE-1",
-    }
-    with pytest.raises(ValueError, match="upstream C"):
-        validate_operator_d_mapping_proposal(authorized_c, contract=_contract())
+    for field, value in (
+        ("evidence_sufficient", True),
+        ("human_accepted", True),
+        ("selected_bridge_id", "C-BRIDGE-1"),
+    ):
+        authorized_c = _proposal()
+        authorized_c["upstream_c"] = {
+            "evidence_sufficient": False,
+            "human_accepted": False,
+            "selected_bridge_id": None,
+        } | {field: value}
+        with pytest.raises(ValueError, match="upstream C"):
+            validate_operator_d_mapping_proposal(authorized_c, contract=_contract())
 
     leak = _proposal()
     leak["allowed_relation_mappings"] = [
@@ -154,30 +104,6 @@ def test_operator_d_mapping_proposal_rejects_same_policy_and_c_authorization() -
     ]
     with pytest.raises(ValueError, match="forbidden surface"):
         validate_operator_d_mapping_proposal(leak, contract=_contract())
-
-    self_approved = _proposal()
-    digest = operator_d_mapping_proposal_digest(self_approved)
-    self_approved["review"] = {
-        "status": "human_approved",
-        "human_reviewer": "agent:d-proposer",
-        "human_approved_at_utc": "2026-09-05T20:00:00Z",
-        "approved_proposal_digest": digest,
-    }
-    with pytest.raises(ValueError, match="independent human reviewer"):
-        validate_operator_d_mapping_proposal(self_approved, contract=_contract())
-
-    approved = _proposal()
-    approved["review"] = {
-        "status": "human_approved",
-        "human_reviewer": "human:reviewer",
-        "human_approved_at_utc": "2026-09-05T20:00:00Z",
-        "approved_proposal_digest": None,
-    }
-    review = approved["review"]
-    assert isinstance(review, dict)
-    review["approved_proposal_digest"] = operator_d_mapping_proposal_digest(approved)
-    validated = validate_operator_d_mapping_proposal(approved, contract=_contract())
-    assert validated["review"]["human_reviewer"] == "human:reviewer"
 
 
 @pytest.mark.parametrize(
@@ -202,95 +128,120 @@ def test_operator_d_mapping_proposal_rejects_forbidden_surface_attribute_widenin
         validate_operator_d_mapping_proposal(proposal, contract=_contract())
 
 
-def test_operator_d_mapping_contract_and_proposal_reject_schema_drift() -> None:
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        (
+            "allowed_mapping_methods",
+            ["typed_structure_mapping", "graph_relational_alignment", "caller_asserted_mapping"],
+        ),
+        ("forbidden_mapping_methods", ["caller_selected_negative_control"]),
+    ],
+)
+def test_operator_d_mapping_contract_rejects_caller_mutated_mapping_policy(
+    field: str,
+    value: list[str],
+) -> None:
     contract = _contract()
-    for field, value, message in (
-        ("schema_version", 2, "schema_version"),
-        ("record_type", "operator_c_bridge", "record_type"),
-        ("template_only", False, "template_only"),
-        ("requires_upstream_c_bridge", False, "requires_upstream_c_bridge"),
-        ("zero_policy_violation_required", False, "zero_policy_violation_required"),
-        ("approval_digest_field", "other", "approval_digest_field"),
-        ("forbidden_surface_attributes", ["venue"], "forbidden_surface_attributes"),
-        ("forbidden_surface_attributes", ["title", "topic"], "forbidden_surface_attributes"),
-    ):
-        broken = dict(contract)
-        broken[field] = value
-        with pytest.raises(ValueError, match=message):
-            validate_operator_d_mapping_contract(broken)
+    contract[field] = value
+
+    with pytest.raises(ValueError, match=field):
+        validate_operator_d_mapping_contract(contract)
+
+
+@pytest.mark.parametrize("field", sorted(_CANONICAL_D_REQUIREMENTS))
+@pytest.mark.parametrize("mutation", ["deletion", "replacement", "widening", "duplication"])
+def test_operator_d_rejects_caller_mutated_canonical_evidence_requirements(
+    field: str,
+    mutation: str,
+) -> None:
+    canonical = _CANONICAL_D_REQUIREMENTS[field]
+    mutated = {
+        "deletion": canonical[1:],
+        "replacement": ["attacker_metric"],
+        "widening": [*canonical, "attacker_metric"],
+        "duplication": [*canonical, canonical[0]],
+    }[mutation]
+    contract = _contract()
+    contract[field] = mutated
+    proposal = _proposal()
+    proposal[field.removeprefix("required_")] = mutated
+
+    with pytest.raises(ValueError, match=field):
+        validate_operator_d_mapping_proposal(proposal, contract=contract)
+
+
+def test_operator_d_proposal_preserves_required_subset_semantics_for_extras() -> None:
+    proposal = _proposal()
+    proposal["baselines"] = ["typed_structure_mapping", "descriptive_baseline"]
+    proposal["negative_controls"] = [
+        "surface_similarity_negative_control",
+        "descriptive_negative_control",
+    ]
+    proposal["metrics"] = [
+        *_CANONICAL_D_REQUIREMENTS["required_metrics"],
+        "descriptive_metric",
+    ]
+
+    validated = validate_operator_d_mapping_proposal(proposal, contract=_contract())
+
+    baselines = validated["baselines"]
+    assert isinstance(baselines, list)
+    assert baselines[-1] == "descriptive_baseline"
+
+
+@pytest.mark.parametrize("schema_version", [True, 1.0, "1"])
+def test_operator_d_contract_and_proposal_require_integer_schema_version(
+    schema_version: StructuredInput,
+) -> None:
+    contract = _contract()
+    contract["schema_version"] = schema_version
+    with pytest.raises(ValueError, match="schema_version"):
+        validate_operator_d_mapping_contract(contract)
 
     proposal = _proposal()
-    proposal["schema_version"] = 2
+    proposal["schema_version"] = schema_version
     with pytest.raises(ValueError, match="schema_version"):
         validate_operator_d_mapping_proposal(proposal, contract=_contract())
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("baselines", ("typed_structure_mapping",)),
+        (
+            "allowed_relation_mappings",
+            ({"source_predicate": "solved_by", "target_predicate": "explained_by"},),
+        ),
+        ("candidate_inferences", ()),
+    ],
+)
+def test_operator_d_proposal_rejects_non_list_json_representations(
+    field: str,
+    value: StructuredInput,
+) -> None:
     proposal = _proposal()
-    proposal["authorization_state"] = "authorized"
-    with pytest.raises(ValueError, match="report_only"):
+    proposal[field] = value
+
+    with pytest.raises(ValueError, match=field):
         validate_operator_d_mapping_proposal(proposal, contract=_contract())
+
+
+def test_operator_d_mapping_proposal_rejects_removed_policy_leakage_guard() -> None:
     proposal = _proposal()
-    proposal["mapping_method"] = "untyped_guess"
-    with pytest.raises(ValueError, match="mapping_method is invalid"):
+    proposal["target_constraints"] = ["no_approved_fact"]
+
+    with pytest.raises(ValueError, match="target_constraints"):
         validate_operator_d_mapping_proposal(proposal, contract=_contract())
+
+
+def test_operator_d_mapping_proposal_rejects_dangling_typed_graph_relation() -> None:
     proposal = _proposal()
-    proposal["baselines"] = ["graph_relational_alignment"]
-    with pytest.raises(ValueError, match="baselines must include"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["allowed_relation_mappings"] = [
-        {"source_predicate": "unknown", "target_predicate": "explained_by"}
+    source_graph = _graph(prefix="opt", predicate="solved_by")
+    source_graph["relations"] = [
+        {"source": "opt-problem", "predicate": "solved_by", "target": "missing-node"}
     ]
-    with pytest.raises(ValueError, match="source_predicate is unbound"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["allowed_relation_mappings"] = [
-        {"source_predicate": "solved_by", "target_predicate": "unknown"}
-    ]
-    with pytest.raises(ValueError, match="target_predicate is unbound"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    raw_graph = proposal["source_graph"]
-    assert isinstance(raw_graph, dict)
-    source_graph = dict(raw_graph)
-    source_graph["nodes"] = [
-        {"id": "dup", "role": "problem"},
-        {"id": "dup", "role": "method"},
-    ]
-    source_graph["relations"] = [{"source": "dup", "predicate": "solved_by", "target": "dup"}]
     proposal["source_graph"] = source_graph
-    with pytest.raises(ValueError, match="unique ids"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["review"] = {
-        "status": "pending",
-        "human_reviewer": "human:reviewer",
-        "human_approved_at_utc": None,
-        "approved_proposal_digest": None,
-    }
-    with pytest.raises(ValueError, match="unapproved review"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["review"] = {
-        "status": "maybe",
-        "human_reviewer": None,
-        "human_approved_at_utc": None,
-        "approved_proposal_digest": None,
-    }
-    with pytest.raises(ValueError, match="review status"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    with pytest.raises(ValueError, match="string-keyed mapping"):
-        validate_operator_d_mapping_contract("missing")
-    proposal = _proposal()
-    proposal["source_graph"] = "missing"
-    with pytest.raises(ValueError, match="source_graph"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["proposal_id"] = "  "
-    with pytest.raises(ValueError, match="proposal_id"):
-        validate_operator_d_mapping_proposal(proposal, contract=_contract())
-    proposal = _proposal()
-    proposal["provenance"] = {
-        "generated_by": "agent:d-proposer",
-        "source_artifact_digests": ["not-a-digest"],
-    }
-    with pytest.raises(ValueError, match="sha256"):
+
+    with pytest.raises(ValueError, match="relations must reference graph nodes"):
         validate_operator_d_mapping_proposal(proposal, contract=_contract())

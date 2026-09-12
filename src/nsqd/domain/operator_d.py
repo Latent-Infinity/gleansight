@@ -1,11 +1,21 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Mapping, Sequence
-from typing import Any
+from collections.abc import Mapping
 
-from nsqd.domain.snapshot import canonical_json, is_utc_datetime_or_iso, sha256_hex
+from nsqd.domain import contract_validation
+from nsqd.domain.contract_validation import StructuredInput, StructuredValue
+from nsqd.domain.operator_approval import TrustedOperatorApproval, require_operator_d_approval
+from nsqd.domain.snapshot import canonical_json, sha256_hex
 
+_mapping = contract_validation.as_mapping
+_mapping_list = contract_validation.mapping_list
+_exact_fields = contract_validation.require_exact_fields
+_exact_string_set = contract_validation.require_exact_string_set
+_required_string = contract_validation.required_string
+_schema_version = contract_validation.require_schema_version
+_sha256_list = contract_validation.sha256_list
+_string_list = contract_validation.string_list
 _CONTRACT_FIELDS = frozenset(
     {
         "schema_version",
@@ -27,6 +37,15 @@ _CONTRACT_FIELDS = frozenset(
     }
 )
 _FORBIDDEN_SURFACE_ATTRIBUTES = frozenset({"title", "venue"})
+_ALLOWED_MAPPING_METHODS = frozenset({"typed_structure_mapping", "graph_relational_alignment"})
+_FORBIDDEN_MAPPING_METHODS = frozenset({"surface_similarity_negative_control"})
+_REQUIRED_TARGET_CONSTRAINTS = frozenset({"no_policy_leak", "no_approved_fact"})
+_REQUIRED_BASELINES = frozenset({"typed_structure_mapping"})
+_REQUIRED_NEGATIVE_CONTROLS = frozenset({"surface_similarity_negative_control"})
+_REQUIRED_METRICS = frozenset(
+    {"held_out_analogy_recovery", "role_consistency", "target_contradiction_rate"}
+    | {"domain_policy_violation_count"}
+)
 _PROPOSAL_FIELDS = frozenset(
     {
         "schema_version",
@@ -59,20 +78,16 @@ _MAPPING_FIELDS = frozenset({"source_predicate", "target_predicate"})
 _UPSTREAM_FIELDS = frozenset({"evidence_sufficient", "human_accepted", "selected_bridge_id"})
 _PROVENANCE_FIELDS = frozenset({"generated_by", "source_artifact_digests"})
 _REVIEW_FIELDS = frozenset(
-    {
-        "status",
-        "human_reviewer",
-        "human_approved_at_utc",
-        "approved_proposal_digest",
-    }
+    {"status", "human_reviewer", "human_approved_at_utc", "approved_proposal_digest"}
 )
 
 
-def validate_operator_d_mapping_contract(contract: Mapping[str, object]) -> dict[str, Any]:
+def validate_operator_d_mapping_contract(
+    contract: Mapping[str, StructuredInput],
+) -> dict[str, StructuredValue]:
     validated = _mapping(contract, "operator D mapping contract")
     _exact_fields(validated, _CONTRACT_FIELDS, "operator D mapping contract")
-    if validated.get("schema_version") != 1:
-        raise ValueError("operator D mapping contract schema_version must be 1")
+    _schema_version(validated.get("schema_version"), "operator D mapping contract schema_version")
     if validated.get("record_type") != "operator_d_mapping_proposal":
         raise ValueError("operator D mapping contract record_type is invalid")
     if validated.get("template_only") is not True:
@@ -85,30 +100,45 @@ def validate_operator_d_mapping_contract(contract: Mapping[str, object]) -> dict
         raise ValueError("operator D mapping contract zero_policy_violation_required must be true")
     if validated.get("approval_digest_field") != "approved_proposal_digest":
         raise ValueError("operator D mapping contract approval_digest_field is invalid")
-    _string_list(validated.get("allowed_mapping_methods"), "allowed_mapping_methods")
-    _string_list(validated.get("forbidden_mapping_methods"), "forbidden_mapping_methods")
-    if set(
-        _string_list(validated.get("forbidden_surface_attributes"), "forbidden_surface_attributes")
-    ) != set(_FORBIDDEN_SURFACE_ATTRIBUTES):
-        raise ValueError("forbidden_surface_attributes do not match the contract")
-    _string_list(validated.get("required_baselines"), "required_baselines")
-    _string_list(validated.get("required_negative_controls"), "required_negative_controls")
-    _string_list(validated.get("required_metrics"), "required_metrics")
+    _exact_string_set(
+        validated.get("allowed_mapping_methods"),
+        _ALLOWED_MAPPING_METHODS,
+        "allowed_mapping_methods",
+    )
+    _exact_string_set(
+        validated.get("forbidden_mapping_methods"),
+        _FORBIDDEN_MAPPING_METHODS,
+        "forbidden_mapping_methods",
+    )
+    _exact_string_set(
+        validated.get("forbidden_surface_attributes"),
+        _FORBIDDEN_SURFACE_ATTRIBUTES,
+        "forbidden_surface_attributes",
+    )
+    _exact_string_set(
+        validated.get("required_baselines"), _REQUIRED_BASELINES, "required_baselines"
+    )
+    _exact_string_set(
+        validated.get("required_negative_controls"),
+        _REQUIRED_NEGATIVE_CONTROLS,
+        "required_negative_controls",
+    )
+    _exact_string_set(validated.get("required_metrics"), _REQUIRED_METRICS, "required_metrics")
     _string_list(validated.get("admission_rules"), "admission_rules")
     _string_list(validated.get("method_references"), "method_references")
-    return validated
+    return contract_validation.normalize_mapping(validated)
 
 
 def validate_operator_d_mapping_proposal(
-    proposal: Mapping[str, object],
+    proposal: Mapping[str, StructuredInput],
     *,
-    contract: Mapping[str, object],
-) -> dict[str, Any]:
+    contract: Mapping[str, StructuredInput],
+    trusted_approvals: frozenset[TrustedOperatorApproval] = frozenset(),
+) -> dict[str, StructuredValue]:
     rules = validate_operator_d_mapping_contract(contract)
     validated = _mapping(proposal, "operator D mapping proposal")
     _exact_fields(validated, _PROPOSAL_FIELDS, "operator D mapping proposal")
-    if validated.get("schema_version") != rules["schema_version"]:
-        raise ValueError("operator D mapping proposal schema_version does not match contract")
+    _schema_version(validated.get("schema_version"), "operator D mapping proposal schema_version")
     if validated.get("authorization_state") != "report_only":
         raise ValueError("authorization_state must be report_only")
     _require_false(validated, "runtime_authorized")
@@ -142,7 +172,11 @@ def validate_operator_d_mapping_proposal(
             raise ValueError("allowed_relation_mappings source_predicate is unbound")
         if target_predicate not in target_predicates:
             raise ValueError("allowed_relation_mappings target_predicate is unbound")
-    _string_list(validated.get("target_constraints"), "target_constraints")
+    target_constraints = set(
+        _string_list(validated.get("target_constraints"), "target_constraints")
+    )
+    if not _REQUIRED_TARGET_CONSTRAINTS.issubset(target_constraints):
+        raise ValueError("target_constraints must preserve policy leakage guards")
     mapping_method = _required_string(validated, "mapping_method")
     if mapping_method in set(
         _string_list(rules["forbidden_mapping_methods"], "forbidden_mapping_methods")
@@ -166,7 +200,7 @@ def validate_operator_d_mapping_proposal(
     ):
         raise ValueError("upstream C bridge remains insufficient and unaccepted")
     inferences = validated.get("candidate_inferences")
-    if not isinstance(inferences, list) or inferences:
+    if type(inferences) is not list or inferences:
         raise ValueError("candidate_inferences must remain empty without an upstream C bridge")
     provenance = _mapping(validated.get("provenance"), "provenance")
     _exact_fields(provenance, _PROVENANCE_FIELDS, "provenance")
@@ -178,33 +212,29 @@ def validate_operator_d_mapping_proposal(
     if status not in {"pending", "rejected", "human_approved"}:
         raise ValueError("review status is invalid")
     if status == "human_approved":
-        reviewer = _required_string(review, "human_reviewer")
-        if reviewer == generated_by:
-            raise ValueError("Operator D approval requires an independent human reviewer")
-        if not reviewer.startswith("human:"):
-            raise ValueError("Operator D approval requires a human reviewer identity")
-        if not is_utc_datetime_or_iso(review.get("human_approved_at_utc")):
-            raise ValueError("human_approved_at_utc must be timezone-aware UTC")
-        approved_digest = _required_string(review, "approved_proposal_digest")
-        if approved_digest != operator_d_mapping_proposal_digest(validated):
-            raise ValueError("approved_proposal_digest does not match the mapping proposal")
+        require_operator_d_approval(
+            review,
+            generated_by=generated_by,
+            expected_digest=operator_d_mapping_proposal_digest(validated),
+            trusted_approvals=trusted_approvals,
+        )
     elif any(
         review.get(field) is not None
         for field in ("human_reviewer", "human_approved_at_utc", "approved_proposal_digest")
     ):
         raise ValueError("unapproved review fields must be null")
-    return validated
+    return contract_validation.normalize_mapping(validated)
 
 
-def operator_d_mapping_proposal_digest(proposal: Mapping[str, object]) -> str:
+def operator_d_mapping_proposal_digest(proposal: Mapping[str, StructuredInput]) -> str:
     preimage = copy.deepcopy(_mapping(proposal, "operator D mapping proposal"))
-    review = preimage.get("review")
-    if isinstance(review, dict):
+    review = contract_validation.mutable_mapping(preimage.get("review"))
+    if review is not None:
         review["approved_proposal_digest"] = None
     return sha256_hex(canonical_json(preimage))
 
 
-def _graph(value: object, field: str) -> set[str]:
+def _graph(value: StructuredInput, field: str) -> set[str]:
     graph = _mapping(value, field)
     _exact_fields(graph, _GRAPH_FIELDS, field)
     nodes = _mapping_list(graph.get("nodes"), f"{field} nodes")
@@ -227,48 +257,6 @@ def _graph(value: object, field: str) -> set[str]:
     return set(predicates)
 
 
-def _mapping(value: object, field: str) -> dict[str, Any]:
-    if not isinstance(value, Mapping) or any(not isinstance(key, str) for key in value):
-        raise ValueError(f"{field} must be a string-keyed mapping")
-    return {str(key): item for key, item in value.items()}
-
-
-def _mapping_list(value: object, field: str) -> list[dict[str, Any]]:
-    if isinstance(value, (str, bytes, Mapping)) or not isinstance(value, Sequence) or not value:
-        raise ValueError(f"{field} must be a non-empty list")
-    return [_mapping(item, field) for item in value]
-
-
-def _exact_fields(value: Mapping[str, object], expected: frozenset[str], field: str) -> None:
-    if set(value) != expected:
-        raise ValueError(f"{field} fields do not match the contract")
-
-
-def _required_string(value: Mapping[str, object], field: str) -> str:
-    item = value.get(field)
-    if not isinstance(item, str) or not item.strip():
-        raise ValueError(f"{field} is required")
-    return item.strip()
-
-
-def _string_list(value: object, field: str) -> list[str]:
-    if isinstance(value, (str, bytes, Mapping)) or not isinstance(value, Sequence) or not value:
-        raise ValueError(f"{field} must be a non-empty list")
-    items = [item.strip() for item in value if isinstance(item, str) and item.strip()]
-    if len(items) != len(value) or len(items) != len(set(items)):
-        raise ValueError(f"{field} must contain unique non-empty strings")
-    return items
-
-
-def _sha256_list(value: object, field: str) -> list[str]:
-    items = _string_list(value, field)
-    if any(
-        len(item) != 64 or any(char not in "0123456789abcdef" for char in item) for item in items
-    ):
-        raise ValueError(f"{field} must contain lowercase sha256 digests")
-    return items
-
-
-def _require_false(value: Mapping[str, object], field: str) -> None:
+def _require_false(value: Mapping[str, StructuredInput], field: str) -> None:
     if value.get(field) is not False:
         raise ValueError(f"{field} must be false")
