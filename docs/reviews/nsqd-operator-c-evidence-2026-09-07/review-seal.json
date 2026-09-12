@@ -1,0 +1,11 @@
+{
+  "authorization_state": "report_only",
+  "human_acceptance": "not_requested",
+  "packet_digest": "8eb17c52eaa85cc35618a7008db1c1603f351f3cc4333821994c17d468021d18",
+  "review_status": "approved_negative_conclusion",
+  "review_summary_sha256": "0625dd330f5df2c14f20a4b8d2db5692e20d28625f7267f795be8b9e8979b0fa",
+  "reviewed_at_utc": "2026-09-07T11:12:48Z",
+  "reviewer_id": "openai/gpt-5.6-sol / independent-evidence-reviewer",
+  "runtime_activation": "not_authorized",
+  "schema_version": 1
+}

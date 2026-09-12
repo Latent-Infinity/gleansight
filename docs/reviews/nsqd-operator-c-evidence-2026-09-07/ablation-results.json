@@ -1,0 +1,62 @@
+{
+  "candidate_output_count": 0,
+  "cutoff_utc": "2026-09-07T00:00:00Z",
+  "metric_definitions": {
+    "accepted_bridge_count": "hypotheses with a source-bound typed path surviving object mismatch and direct-domain counterevidence",
+    "candidate_count": "surface hypotheses emitted for review, not candidate outputs",
+    "direct_counterevidence_count": "authoritative financial-JEPA sources materially overlapping the proposed A-to-C transfer"
+  },
+  "derived_inputs": {
+    "claim_rows": "claim-extractions.jsonl",
+    "counterevidence_rows": "direct-a-to-c-prior-art.jsonl",
+    "extract_rows": "source-extracts.jsonl"
+  },
+  "negative_control": {
+    "algorithm": "sha256_seeded_two-item_cyclic_rotation/v1",
+    "id": "shuffled_literature_negative_control/3",
+    "permutation": [
+      {"receives_role": "literature_c", "source_id": "arXiv:2602.04643v2"},
+      {"receives_role": "literature_a", "source_id": "arXiv:1402.2198v1"}
+    ],
+    "seed_material": "operator-c-shuffle/3|2026-09-07T00:00:00Z|arXiv:2602.04643v2|arXiv:1402.2198v1",
+    "seed_sha256": "e0dc2080a5bd313807707cc5733ebebfe2114a14f936fc1150c6a05e606f852a"
+  },
+  "normalized_shared_terms": ["early warning", "multi-scale", "predict", "state"],
+  "runs": [
+    {
+      "accepted_bridge_count": 0,
+      "candidate_count": 4,
+      "direct_counterevidence_count": 2,
+      "method": "normalized_shared_terms",
+      "result": "shared vocabulary generated hypotheses but supplied no typed cross-source entailment"
+    },
+    {
+      "accepted_bridge_count": 0,
+      "candidate_count": 4,
+      "direct_counterevidence_count": 2,
+      "method": "typed_predication_paths",
+      "result": "all paths contain an unbound object or domain-transfer edge, or collide with direct financial-JEPA evidence"
+    },
+    {
+      "accepted_bridge_count": 0,
+      "candidate_count": 4,
+      "direct_counterevidence_count": 2,
+      "method": "shuffled_literature_negative_control",
+      "result": "deterministic role reversal preserves the four shared-term hypotheses but supplies no typed support; relevance and rediscovery remain unmeasured"
+    }
+  ],
+  "required_metrics": {
+    "bridge_relevance_at_k": {"k": null, "status": "not_measured_pending_independent_review", "value": null},
+    "leakage_checks": {"post_cutoff_material_used_count": 0, "source_binding_failure_count": 0, "status": "checked_from_bound_receipts"},
+    "polarity_or_direction_error_rate": {"status": "not_measured_pending_independent_review", "value": null},
+    "reviewer_decision": "pending",
+    "support_counts": {"accepted_bridge_count": 0, "source_extract_count": 13, "typed_hypothesis_count": 4},
+    "time_sliced_rediscovery_precision_at_k": {"k": null, "status": "not_measured_no_held_out_benchmark", "value": null}
+  },
+  "rediscovery_result": "not_measured",
+  "evaluated_pair": "arXiv:2602.04643v2|arXiv:1402.2198v1",
+  "schema_version": 1,
+  "selected_extraction_method": null,
+  "selected_pair": null,
+  "selection_decision": "no method produced an accepted bridge; no superiority, relevance, novelty, or rediscovery claim is made"
+}

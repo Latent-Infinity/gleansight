@@ -1,0 +1,67 @@
+{
+  "cutoff_utc": "2026-09-07T00:00:00Z",
+  "records": [
+    {
+      "authors": ["Yanan He", "Yunshi Wen", "Xin Wang", "Tengfei Ma"],
+      "domain_policy_id": "external/time-series",
+      "full_text_inspected": true,
+      "metadata_url": "https://export.arxiv.org/api/query?id_list=2602.04643",
+      "pdf_receipt_id": "arXiv:2602.04643v2#pdf",
+      "published_at_utc": "2026-02-04T15:11:29Z",
+      "role": "selected_literature_a",
+      "source_id": "arXiv:2602.04643v2",
+      "source_receipt_id": "arXiv:2602.04643v2#source",
+      "source_url": "https://arxiv.org/abs/2602.04643v2",
+      "title": "SC-JEPA: Stabilizing Latent Predictive Learning for Time-Series Anomaly Prediction",
+      "updated_at_utc": "2026-07-17T10:19:17Z"
+    },
+    {
+      "authors": ["Anton Golub", "Gregor Chliamovitch", "Alexandre Dupuis", "Bastien Chopard"],
+      "domain_policy_id": "finance/1",
+      "full_text_inspected": true,
+      "metadata_url": "https://export.arxiv.org/api/query?id_list=1402.2198",
+      "pdf_receipt_id": "arXiv:1402.2198v1#pdf",
+      "published_at_utc": "2014-02-10T16:26:06Z",
+      "role": "selected_literature_c",
+      "source_id": "arXiv:1402.2198v1",
+      "source_receipt_id": "arXiv:1402.2198v1#source",
+      "source_url": "https://arxiv.org/abs/1402.2198v1",
+      "title": "Multi-scale Representation of High Frequency Market Liquidity",
+      "updated_at_utc": "2014-02-10T16:26:06Z"
+    },
+    {
+      "abstract": "We investigate whether Joint-Embedding Predictive Architectures (JEPA) can learn useful representations of U.S. equity markets. We jointly train a permutation-invariant tokenizer that maps each trading day's unordered per-asset features to a fixed set of learned factor tokens, together with a temporal JEPA using masked prediction to obtain a compact daily market-state embedding. Our evaluations show that these embeddings are strongly associated with second-moment market structure (realized volatility, correlation concentration, effective factor dimensionality) and weakly associated with market direction. The embedding helps predict gradual recovery dynamics but not sudden stress onsets. Without any text supervision, latent regimes show statistically significant alignment with news-topic shifts.",
+      "abstract_scope": "authoritative API2 note abstract",
+      "authors": ["Simon Mahns", "Randall Balestriero", "Mido Assran"],
+      "domain_policy_id": "finance/1",
+      "full_text_inspected": false,
+      "license": "CC BY 4.0",
+      "metadata_receipt_id": "OpenReview:BZfkxSasd3#api2-note",
+      "metadata_url": "https://api2.openreview.net/notes?id=BZfkxSasd3",
+      "pdf_locator": "/pdf/6ddc0f748a4cbe51806b18a848fcf17e6b28f3ee.pdf",
+      "role": "direct_domain_counterevidence",
+      "source_id": "OpenReview:BZfkxSasd3v2",
+      "title": "Joint-Embedding Predictive Learning of Latent Market States in U.S. Equities",
+      "venue": "ICML 2026",
+      "venue_api_value": "ICML 2026 regular",
+      "version": 2
+    },
+    {
+      "approved_record_id": "N11-FIN-01",
+      "authors": ["Yihan Wang"],
+      "domain_policy_id": "finance/1",
+      "doi": "10.2139/ssrn.6855118",
+      "full_text_inspected": true,
+      "publication_date": "2026-01-01",
+      "public_draft_permalink": "https://github.com/cedricwyh/fin-jepa/blob/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "repository_commit": "58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9",
+      "repository_receipt_id": "doi:10.2139/ssrn.6855118#repository-source",
+      "repository_url": "https://github.com/cedricwyh/fin-jepa/blob/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "role": "repository_bound_direct_domain_counterevidence",
+      "source_id": "doi:10.2139/ssrn.6855118",
+      "title": "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series"
+    }
+  ],
+  "schema_version": 1,
+  "source_authority": "external evidence only; no record is admitted or projected by this packet"
+}

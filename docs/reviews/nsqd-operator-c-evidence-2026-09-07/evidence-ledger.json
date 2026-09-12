@@ -1,0 +1,70 @@
+{
+  "algorithm_identity": "operator-c-provenance-bound-primary-source-audit/3",
+  "authorization_state": "report_only",
+  "candidate_outputs": [],
+  "cutoff_utc": "2026-09-07T00:00:00Z",
+  "extraction_identity": "manual-typed-full-text-predication/2",
+  "input_snapshot_artifact": "bibliographic-snapshot.json",
+  "interaction_checks": [
+    {
+      "checks": {
+        "author_overlap": {
+          "count": 0,
+          "method": "exact intersection of author names in version-pinned primary sources",
+          "status": "checked"
+        },
+        "co_citation": {
+          "count": null,
+          "method": "no complete citation index was acquired for this cycle",
+          "status": "not_verified_absence_of_evidence_only"
+        },
+        "direct_citation": {
+          "count": 0,
+          "method": "exact title, author, and identifier search across both acquired source archives",
+          "status": "checked_in_acquired_pair_sources_absence_of_evidence_only"
+        },
+        "direct_mention": {
+          "count": 0,
+          "method": "bidirectional exact title, author, identifier, SC-JEPA, and soft-codebook string checks",
+          "status": "checked_in_acquired_pair_sources_absence_of_evidence_only"
+        }
+      },
+      "pair": "arXiv:2602.04643v2|arXiv:1402.2198v1",
+      "status": "unverified_absence_of_evidence_only"
+    }
+  ],
+  "known_limitations": [
+    "OpenReview full text was not retrieved or inspected; only the authoritative API2 metadata and abstract are used",
+    "no complete citation or co-citation index was acquired, so bibliographic noninteraction is unverified",
+    "the Fin-JEPA repository source is commit-pinned and approved as an existing source, but this packet creates no new corpus authority",
+    "no held-out time-sliced rediscovery or relevance benchmark was run"
+  ],
+  "noninteraction_conclusion": "unverified_absence_of_evidence_only",
+  "prompt_identity": "operator-c-typed-bridge-review/3",
+  "queried_at_utc": "2026-09-07T10:33:39Z",
+  "records": [
+    {
+      "role": "selected_literature_a",
+      "source_id": "arXiv:2602.04643v2",
+      "source_receipts": ["arXiv:2602.04643v2#pdf", "arXiv:2602.04643v2#source"]
+    },
+    {
+      "role": "selected_literature_c",
+      "source_id": "arXiv:1402.2198v1",
+      "source_receipts": ["arXiv:1402.2198v1#pdf", "arXiv:1402.2198v1#source"]
+    },
+    {
+      "role": "direct_domain_counterevidence",
+      "source_id": "OpenReview:BZfkxSasd3v2",
+      "source_receipts": ["OpenReview:BZfkxSasd3#api2-note"]
+    },
+    {
+      "role": "repository_bound_direct_domain_counterevidence",
+      "source_id": "doi:10.2139/ssrn.6855118",
+      "source_receipts": ["doi:10.2139/ssrn.6855118#repository-source"]
+    }
+  ],
+  "schema_version": 1,
+  "source_extract_artifact": "source-extracts.jsonl",
+  "source_scope": "external_evidence_not_admitted_to_approved_corpus"
+}

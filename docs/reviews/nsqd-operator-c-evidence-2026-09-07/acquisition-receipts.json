@@ -1,0 +1,74 @@
+{
+  "cutoff_utc": "2026-09-07T00:00:00Z",
+  "digest_algorithm": "sha256",
+  "records": [
+    {
+      "byte_count": 2647744,
+      "content_scope": "version-pinned arXiv PDF",
+      "observed_media_type": "application/pdf",
+      "receipt_id": "arXiv:2602.04643v2#pdf",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-07T10:30:40Z",
+      "sha256": "ef56d2b2f2d701667f853c0bb69795fa58f7acbca16fbca27629852550983668",
+      "url": "https://arxiv.org/pdf/2602.04643v2",
+      "version": "v2"
+    },
+    {
+      "byte_count": 2357454,
+      "content_scope": "version-pinned arXiv source archive",
+      "observed_media_type": "application/gzip",
+      "receipt_id": "arXiv:2602.04643v2#source",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-07T10:30:43Z",
+      "sha256": "563ed7a21c6aa19964ae89fdbf3bb81c40c998f36f5298d5aa5bc2161ac63217",
+      "url": "https://export.arxiv.org/e-print/2602.04643v2",
+      "version": "v2"
+    },
+    {
+      "byte_count": 1613669,
+      "content_scope": "version-pinned arXiv PDF",
+      "observed_media_type": "application/pdf",
+      "receipt_id": "arXiv:1402.2198v1#pdf",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-07T10:30:43Z",
+      "sha256": "4b65227e4da7eaaaaf381c20c8716e0c1c99d80abfd188d6bf0456c5f30bc166",
+      "url": "https://arxiv.org/pdf/1402.2198v1",
+      "version": "v1"
+    },
+    {
+      "byte_count": 1347442,
+      "content_scope": "version-pinned arXiv source archive",
+      "observed_media_type": "application/gzip",
+      "receipt_id": "arXiv:1402.2198v1#source",
+      "retrieval_method": "curl --fail --location with explicit user agent after unadorned endpoint returned HTTP 403",
+      "retrieved_at_utc": "2026-09-07T10:31:14Z",
+      "sha256": "cb671211b8a2dcbd7a8056c26e34cdf78e476c5703b2c617f398bb0f9d928b09",
+      "url": "https://arxiv.org/e-print/1402.2198v1",
+      "version": "v1"
+    },
+    {
+      "byte_count": 3892,
+      "content_scope": "authoritative API2 notes response body; metadata and abstract only",
+      "observed_media_type": "application/json",
+      "receipt_id": "OpenReview:BZfkxSasd3#api2-note",
+      "retrieval_method": "Playwright browser verification followed by capture of the successful GET response body",
+      "retrieved_at_utc": "2026-09-07T10:32:53Z",
+      "sha256": "7b4de97b4708b9d3895a3a1d73470beb20caab9e5dd1df8c25520877f55cd20d",
+      "url": "https://api2.openreview.net/notes?id=BZfkxSasd3",
+      "version": "2"
+    },
+    {
+      "byte_count": 45773,
+      "content_scope": "commit-pinned public repository LaTeX source",
+      "observed_media_type": "text/x-tex",
+      "receipt_id": "doi:10.2139/ssrn.6855118#repository-source",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-07T10:33:39Z",
+      "sha256": "3b652f82d4ccd27d54e11c9b054e429fa41bc289aa2c82e5ec920416bf813bc6",
+      "url": "https://raw.githubusercontent.com/cedricwyh/fin-jepa/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "version": "58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9"
+    }
+  ],
+  "schema_version": 1,
+  "storage_policy": "binary PDFs and source archives retained outside git; receipts and UTF-8 extracts tracked"
+}
