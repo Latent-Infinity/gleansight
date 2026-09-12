@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-2026-09-08/README.md",
+      "sha256": "0bda7dd5c053a528312eb199b80ae4f4138f94b199f71dc5d8d2189891b771a7",
+      "trailing_whitespace_line_count": 1
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-2026-09-09-resolution/README.md",
+      "sha256": "34d5d5391ddaf0afbe4c7a6ae1973b7fc91620a496e95e03096635ad2f28cd0c",
+      "trailing_whitespace_line_count": 4
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-09/README.md",
+      "sha256": "213382cf673e63049d941bbf3e37b461a6bad48ff91c25f595ed91df6993bd36",
+      "trailing_whitespace_line_count": 4
+    }
+  ]
+}
