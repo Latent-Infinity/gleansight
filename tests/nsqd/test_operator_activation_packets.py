@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -39,9 +40,15 @@ def test_deferred_operator_packets_bind_report_only_metadata() -> None:
             assert packet["algorithm_identity"] == "operator-e-atypical-combination/1"
             assert packet["prompt_identity"] == "not_run"
             assert packet["nearest_prior_art"] == []
-        else:
+        elif operator_id in {"d", "g"}:
             assert packet["packet_kind"] == "evidence_plan"
             assert packet["algorithm_identity"] == "not_run"
+            assert packet["prompt_identity"] == "not_run"
+            assert packet["nearest_prior_art"] == []
+        else:
+            assert operator_id == "f"
+            assert packet["packet_kind"] == "evidence_report"
+            assert packet["algorithm_identity"] == "operator-f-descriptive-axis-pilot/1"
             assert packet["prompt_identity"] == "not_run"
             assert packet["nearest_prior_art"] == []
         assert isinstance(packet["input_bindings"], list)
@@ -120,6 +127,65 @@ def test_operator_d_packet_binds_fail_closed_mapping_contract() -> None:
     assert "surface_similarity_negative_control" in contract["forbidden_mapping_methods"]
 
 
+def test_operator_f_packet_binds_evaluation_only_validation_target_pilot() -> None:
+    f_packet = _load("operator-f.yaml")
+    proposal = _load("axis-candidate-proposal-validation-target.yaml")
+    contract = _load("axis-candidate-contract.yaml")
+    bound = f_packet["candidate_axes"]
+    assert f_packet["axis_candidate_contract"] == "axis-candidate-contract.yaml"
+    assert f_packet["input_snapshot_ids"] == [
+        "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5"
+    ]
+    assert f_packet["ablation_executed"] is True
+    assert f_packet["runtime_authorized"] is False
+    assert f_packet["evidence_sufficient"] is False
+    assert bound == [
+        {
+            "proposal_id": "F-PROP-001",
+            "source": "axis-candidate-proposal-validation-target.yaml",
+            "domain_policy_id": "finance/1",
+            "axis_name": "validation_target",
+            "review_status": "human_approved",
+            "approval_scope": "evaluation_only",
+            "approved_proposal_digest": (
+                "cbbaf10797b2acb0ebf34b4d62fa37b0e3ec5dfad41c7989334519d9a5962bb6"
+            ),
+            "schema_admission_recommended": False,
+            "ablation_executed": True,
+        }
+    ]
+    assert proposal["proposal_id"] == bound[0]["proposal_id"]
+    assert proposal["candidate_axis"]["name"] == "validation_target"
+    assert proposal["review"] == {
+        "status": "human_approved",
+        "human_reviewer": "human:firestrand",
+        "human_approved_at_utc": "2026-09-07T09:36:57Z",
+        "approval_scope": "evaluation_only",
+        "approved_proposal_digest": (
+            "cbbaf10797b2acb0ebf34b4d62fa37b0e3ec5dfad41c7989334519d9a5962bb6"
+        ),
+    }
+    assert f_packet["pilot_result"] == {
+        "source": "operator-f-validation-target-pilot.json",
+        "source_sha256": "888d1e7c9d3fab43713b76dad3c66749466d00ac5313a0e8de87b3f4b542252a",
+        "result_digest": "9523f57d449fa2abbf6e5525ba13477f2ec8d79fbcd481aed1f73850898f8fb3",
+        "total_record_count": 5,
+        "candidate_observed_record_count": 5,
+        "coordinate_eligible_record_count": 3,
+        "occupied_cells_by_track": [3, 3, 3],
+        "held_out_archive_coverage_gain": None,
+        "evidence_sufficient": False,
+        "schema_admission_recommended": False,
+        "runtime_authorized": False,
+    }
+    result_path = PACKET_ROOT / f_packet["pilot_result"]["source"]
+    assert (
+        hashlib.sha256(result_path.read_bytes()).hexdigest()
+        == f_packet["pilot_result"]["source_sha256"]
+    )
+    assert contract["schema_mutation_authorized"] is False
+
+
 def test_failure_packet_and_contract_remain_empty_and_fail_closed() -> None:
     g_packet = _load("operator-g.yaml")
     contract = _load("failure-record-contract.yaml")
@@ -129,6 +195,23 @@ def test_failure_packet_and_contract_remain_empty_and_fail_closed() -> None:
     assert contract["operator_g_eligible_by_default"] is False
     assert "changed_condition_triggers" in contract["operator_g_eligibility_rules"][2]
     assert "restart_conditions" in contract["operator_g_eligibility_rules"][3]
+
+
+def test_operator_c_packet_binds_current_reviewed_negative_resolution_cycle() -> None:
+    packet = _load("operator-c.yaml")
+    results = packet["latest_cycle_results"]
+    assert packet["latest_evidence_packet_manifest"] == (
+        "../nsqd-operator-c-evidence-resolution-2026-09-09/packet-manifest.json"
+    )
+    assert packet["latest_evidence_packet_digest"] == (
+        "8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90"
+    )
+    assert results["accepted_bridge"] is False
+    assert results["retrieval_method"] == "curl_http"
+    assert results["evidence_sufficient"] is False
+    assert results["operator_c_status"] == results["operator_d_status"] == "blocked"
+    assert results["runtime_activation"] == "not_authorized"
+    assert results["independent_review"] == "confirmed_negative_conclusion"
 
 
 def test_runtime_still_rejects_every_planned_operator() -> None:
