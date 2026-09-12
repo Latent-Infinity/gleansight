@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_f_full_implementation_binding",
+  "created_at_utc": "2026-09-12T01:50:34Z",
+  "review_status": "review_pending",
+  "authorization_state": "report_only",
+  "approval_scope": "formula_selection_only",
+  "proposal_id": "F-PROP-001",
+  "predecessor": {
+    "manifest": "../nsqd-operator-f-readiness-2026-09-11-formula-correction/packet-manifest.json",
+    "manifest_sha256": "72e21375a988d73dcc4781e44739cccdd87ffc37f9eae22e83bf754543773b96",
+    "packet_digest": "677932da4b0ecfeea26a0a80558314e1ee1a11b635877e15860cc9fc88775a2b",
+    "review_validity": "valid_for_predecessor_only"
+  },
+  "approved_non_authorizing_formulas": {
+    "quality_weighted_diversity": "per_held_out_fold(sum(max_trusted_quality_weight_per_occupied_track_specific_cell)/sum(all_held_out_record_trusted_quality_weights));finite_nonnegative_weights_required;zero_total=typed_unavailable",
+    "redundancy_with_existing_axes": "per_held_out_rotation(max(bias_corrected_cramers_v(candidate_label,registered_axis)_fit_on_other_four_training_folds));aggregate=arithmetic_mean_of_five_rotations;held_out_frequencies_never_refit"
+  },
+  "trust_evidence": "absent",
+  "source_bindings": [
+    {
+      "path": "src/nsqd/domain/operator_approval.py",
+      "role": "proposal_approval_boundary",
+      "sha256": "60745662daea9b0d1451bd2a87d466e0ca97958d5d436a62ee98f52434313ecc"
+    },
+    {
+      "path": "src/nsqd/domain/operator_approval_errors.py",
+      "role": "proposal_approval_typed_errors",
+      "sha256": "1c11db19abbefe0e45c2ca4ea8af76617f3f773d178be1836a4e79fdea6a083f"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f.py",
+      "role": "operator_f_proposal_contract",
+      "sha256": "7753521b3a0a5e68c3a3f834151ca917a92108ac3af6183a21696fdc407b3b2f"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation.py",
+      "role": "evaluation_entrypoint_and_result_validation",
+      "sha256": "473aaa773edd507e21903f7149a5dc906be0391945927fbce5f7de01635cb678"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_metrics.py",
+      "role": "metric_dispatch",
+      "sha256": "9ac95e89e4f863cbea3d7ff0dba09a260594aacc67686736d7b2bf66d61ba5f5"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_metrics_basic.py",
+      "role": "quality_weighted_diversity_implementation",
+      "sha256": "7794b06bb271e1c75e3511a6868d4c05a7e1c107ff392812558f9b7c82c1bcd2"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_metrics_stats.py",
+      "role": "redundancy_implementation",
+      "sha256": "94f04b9358a529e5a7378edf26f722b2b3d04701b7e0c96673f41554eddfec5c"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_readiness.py",
+      "role": "readiness_replay_models",
+      "sha256": "6bc2115b0e4b26df03b99e664e506c51027f7241d595a2a672982e8985396861"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_support.py",
+      "role": "deterministic_folds_tracks_and_hashing",
+      "sha256": "15d4c8b23d592b7cc77bad9cae99bd44e7a75b86c352d960376260bf7beaa042"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_trust.py",
+      "role": "evaluation_trust_models",
+      "sha256": "9c4bcc3842eac3a835ce16f3f81e0cb935bf7d67010f9aa97fe8c8dcbb27e994"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_trust_rules.py",
+      "role": "evaluation_trust_rules",
+      "sha256": "ee0cb2f92a0882be98308e9eb34e92fcd1987daf1559f2e682436f500812e6bb"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_types.py",
+      "role": "evaluation_runtime_types",
+      "sha256": "ad043debe09a21f63677ba65c0936c5f5ae4f8ef7ec5185ad6c833a544a4711d"
+    },
+    {
+      "path": "src/nsqd/domain/operator_f_evaluation_validation.py",
+      "role": "evaluation_utc_and_scalar_validation",
+      "sha256": "370a69a0fe0448fc1f65aa717b7f539efba567144953216d1f2cced78c122685"
+    },
+    {
+      "path": "src/nsqd/domain/snapshot.py",
+      "role": "canonical_snapshot_and_digest_runtime",
+      "sha256": "27e9bb4788608334f38fd9b4df4b3d2d75c1e6a13baf32928ee14d8d7d98a755"
+    },
+    {
+      "path": "tests/nsqd/operator_f_evaluation_remediation_support.py",
+      "role": "metric_remediation_semantic_test_support",
+      "sha256": "928ae015af054ceabbeee9e7dcbb95596d006a5c0b9e14d50d6b7be7e99f1103"
+    },
+    {
+      "path": "tests/nsqd/operator_f_evaluation_support.py",
+      "role": "metric_semantic_test_fixtures",
+      "sha256": "a2152635a36ccd881e21c33db68384e93c03f50a008363f4e029744f69262ade"
+    },
+    {
+      "path": "tests/nsqd/test_operator_f_metric_diversity_semantics.py",
+      "role": "quality_weighted_diversity_exact_semantic_tests",
+      "sha256": "280d5de5df2e2c000b5bc14cbb685d3a6e0c4de057791b5a00f2a7b04310616a"
+    },
+    {
+      "path": "tests/nsqd/test_operator_f_metric_redundancy_semantics.py",
+      "role": "redundancy_exact_semantic_tests",
+      "sha256": "3b369b478ccdc2f04cc49607563d13d8b5a4341b9d9927079e09c81baba8e688"
+    }
+  ],
+  "authority": {
+    "evidence_sufficient": false,
+    "schema_admission_authorized": false,
+    "runtime_authorized": false
+  }
+}
