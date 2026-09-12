@@ -1,0 +1,99 @@
+schema_version: 2
+record_type: approved_failed_experiment
+template_only: true
+operator_g_eligible_by_default: false
+required_fields:
+  identity:
+    - failure_record_id
+    - domain_policy_id
+    - experiment_id
+    - source_class
+    - immutable_source_artifact_digests
+  registration:
+    - scientific_purpose
+    - registered_at_utc
+    - registration_digest
+    - exact_command
+    - resource_cap
+    - predeclared_success_failure_and_inconclusive_outcomes
+  original_conditions:
+    - code_revision
+    - data_snapshot_ids
+    - configuration_digest
+    - model_or_method_identity
+    - started_at_utc
+    - completed_at_utc
+  outcome:
+    - failure_class
+    - bounded_observation
+    - measured_results
+    - evidence_artifact_digests
+  execution:
+    - exit_status
+    - measured_outcome
+    - failure_classification
+    - cleanup_receipt
+  changed_condition_trigger:
+    - trigger_id
+    - predicate
+    - previous_condition
+    - new_condition
+    - evidence_artifact_digests
+    - resurrection_scope
+    - measured_variable
+    - comparison_rule
+  restart_condition:
+    - condition_id
+    - predicate
+    - scope
+    - required_evidence_digest
+    - decision_owner
+  provenance:
+    - generated_by
+    - producer_session
+  review:
+    - review_status
+    - human_reviewer
+    - reviewer_session
+    - human_approved_at_utc
+    - approval_scope
+    - approved_record_digest
+failure_class_values:
+  - implementation
+  - measurement
+  - method
+  - hypothesis
+  - regime_bound
+  - inconclusive
+source_class_values:
+  - registered_experiment_artifact
+resurrection_scope_values:
+  - review_only
+  - test_only
+admission_rules:
+  - registration precedes execution and is digest-bound
+  - all timestamps are timezone-aware UTC
+  - source and evidence artifacts are immutable and digest-bound
+  - measured failure evidence exists; absence of success is insufficient
+  - review approval is independently supplied and bound to the completed record
+  - approved records are immutable; corrections create a new record and supersession link
+operator_g_eligibility_rules:
+  - only schema version 2 records can qualify for census inclusion
+  - record admission and resurrection eligibility are separate decisions
+  - original conditions are complete enough for comparison
+  - changed-condition and restart evidence is complete and externally trusted
+  - an independent human authorizes inclusion in an Operator G evidence packet
+optional_fields:
+  - known_confounds
+  - supersedes_failure_record_id
+forbidden_sources:
+  - test_failure_without_experiment_evidence
+  - job_error_code
+  - sufficiency_failure
+  - inferred_or_invented_failure
+  - absence_of_published_or_successful_results
+method_references:
+  - https://www.w3.org/TR/prov-o/
+  - https://www.w3.org/TR/2013/REC-prov-constraints-20130430/
+  - https://sre.google/sre-book/postmortem-culture/
+  - https://sre.google/workbook/postmortem-analysis/
