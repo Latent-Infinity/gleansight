@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "artifact_sha256": {
+    "README.md": "34d5d5391ddaf0afbe4c7a6ae1973b7fc91620a496e95e03096635ad2f28cd0c",
+    "acquisition-receipts.json": "75702f8d65e400a0a31eff38a70f167fbb8d27e2662f85cd090cee0b990aa108",
+    "bibliographic-query-receipts.json": "4bd46862cf38cd8e72822c2ceccb82cb29856efdbaa4fc522a38ed5196aaf111",
+    "evidence-ledger.json": "16881767921380f7b6cf77e0621a666de69100a97656c75fabe23a1faa60a05b",
+    "source-extracts.jsonl": "74c609059109c3e30d50fc22b9b285eae5d7a3f3a7ac97f2beb7a4f1f1fc2e1f",
+    "typed-relations.json": "d7e0a2941ac46c9ae71288a504d0de34305fc23fb7e9ce11cf9327cf708030be"
+  },
+  "packet_digest": "406fccd5d072db490e3abcd067b0327b3817effcbe85cac49f0eaa40be8cb4d3"
+}
