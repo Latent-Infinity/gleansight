@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_f_readiness_inventory",
+  "created_at_utc": "2026-09-08T00:00:00Z",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "schema_admission_authorized": false,
+  "evidence_sufficient": false,
+  "proposal_id": "F-PROP-001",
+  "approval_scope": "evaluation_only",
+  "source_snapshot_id": "bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5",
+  "source_bindings": [
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/operator-f.yaml",
+      "role": "current_operator_f_report",
+      "sha256": "b47098fcf03e1b611d0b138b42f4e414359f10d6980d444668be90a4cd977b79"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/axis-candidate-contract.yaml",
+      "role": "axis_candidate_contract",
+      "sha256": "50655378e33aee1dc653458464aa020eef6ec098feb9981a146afe29fd150346"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/axis-candidate-proposal-validation-target.yaml",
+      "role": "evaluation_only_proposal",
+      "sha256": "0849bd0c6231279d767fda0c4e850de1854f303ce496ee136e06f3e7df310fd5"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/operator-f-validation-target-pilot.json",
+      "role": "historical_pilot_result",
+      "sha256": "888d1e7c9d3fab43713b76dad3c66749466d00ac5313a0e8de87b3f4b542252a"
+    },
+    {
+      "path": "docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/results.json",
+      "role": "candidate_axis_hypothesis",
+      "sha256": "cdcb6eb1c274c17cbb71c5a76cf8c439d0bc021b2149225b4b27b550360705f2"
+    },
+    {
+      "path": "docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/source-ledger.json",
+      "role": "source_paper_ledger",
+      "sha256": "12889d817f4a6e13e2187c7d28bd0059c1a2c08d0a33b453012dc8b2cbf451ae"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/manifest.toml",
+      "role": "approved_projection_manifest",
+      "sha256": "4c2e3c007969c0081cd2ef254bd6c674aed872cd2edc863247370219b51ba638"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-01.yaml",
+      "role": "approved_projection",
+      "sha256": "a53a3709784dc063af81e969f9e006497f4913634c2d3f9c5eee8eb9fae7f0cb"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-02.yaml",
+      "role": "approved_projection",
+      "sha256": "c2b1566e4bcde1ca7795a850cd2e2c173d36fa5a7dab6302d7c41d4ad54b8ec9"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-03.yaml",
+      "role": "approved_projection",
+      "sha256": "6cb8c419012687cf59234d898665ed6a5f9001809a570638530f4b5caa045620"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-04.yaml",
+      "role": "approved_projection",
+      "sha256": "5e72b16c73c9d80d90805f65ec8e5445a6aabbfa7af54e9e9327086ad893daef"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/N11-FIN-05.yaml",
+      "role": "approved_projection",
+      "sha256": "cdfc67f7ff9c8ff8f39139df3e2906f6a6229d818418ce834868911f76edb6e9"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/excerpts/finance-fin-jepa.md",
+      "role": "approved_source_excerpt",
+      "sha256": "d7a85481038ba3a52dbb713656cb98837479ee402b3732a637279934ced40dd2"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/excerpts/finance-cet.md",
+      "role": "approved_source_excerpt",
+      "sha256": "8899b360fd7093286af98a343bf13a2f8529beef2786e6eadbfde00da942cfef"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/excerpts/finance-fx-transformer.md",
+      "role": "approved_source_excerpt",
+      "sha256": "74382586d45e0dc0353dd695f95bddfe3e6664ce9337f7f1392a11aa43636389"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/excerpts/finance-exformer.md",
+      "role": "approved_source_excerpt",
+      "sha256": "a03a700f8944c2eea86ef1da143daec03f0368c8eef9d30dc0bed8ee20d36944"
+    },
+    {
+      "path": "docs/reviews/nsqd-projection-review-2026-08-28/final/excerpts/finance-denoised-labels.md",
+      "role": "approved_source_excerpt",
+      "sha256": "1347adc049591baac68831c9ce2a50817f7fd8feb116c51e2f26e5ab57bd634d"
+    },
+    {
+      "path": "tests/fixtures/approved/nsqd/policies/finance-1.toml",
+      "role": "registered_domain_policy",
+      "sha256": "38f81d80e2858bb1a26a55ad51af24295e9dd4de215c4dbf32cfc098749787f5"
+    }
+  ],
+  "inventory": {
+    "total_record_count": 5,
+    "candidate_observed_record_count": 5,
+    "coordinate_eligible_record_count": 3,
+    "coordinate_eligible_record_ids": [
+      "N11-FIN-02",
+      "N11-FIN-03",
+      "N11-FIN-04"
+    ],
+    "coordinate_ineligible_record_count": 2,
+    "coordinate_ineligible_record_ids": [
+      "N11-FIN-01",
+      "N11-FIN-05"
+    ],
+    "independent_source_paper_count": 5,
+    "independent_source_papers": [
+      {"record_id": "N11-FIN-01", "source_paper_id": "doi:10.2139/ssrn.6855118"},
+      {"record_id": "N11-FIN-02", "source_paper_id": "arxiv:2409.17392"},
+      {"record_id": "N11-FIN-03", "source_paper_id": "doi:10.1016/j.eswa.2024.123538"},
+      {"record_id": "N11-FIN-04", "source_paper_id": "arxiv:2512.12727"},
+      {"record_id": "N11-FIN-05", "source_paper_id": "doi:10.1145/3533271.3561687"}
+    ]
+  },
+  "evidence_status": {
+    "held_out_archive_coverage_gain": null,
+    "stability_evidence": "absent",
+    "redundancy_evidence": "absent",
+    "residual_variation_evidence": "absent",
+    "quality_evidence": "absent"
+  },
+  "evaluation_protocol": {
+    "status": "predeclared_not_executed",
+    "execution_blocker": "insufficient_eligible_source_groups",
+    "split_unit": "source_paper_group",
+    "temporal_split_status": "unsupported_by_current_provenance",
+    "fixed_seed": "operator-f/F-PROP-001/source-grouped-evaluation/v1",
+    "split_assignment_algorithm": {
+      "algorithm": "sha256_seeded_source_group_round_robin/v1",
+      "preimage": "utf8(fixed_seed + ':' + source_paper_id)",
+      "digest": "sha256",
+      "ordering": "ascending_digest_then_source_paper_id",
+      "assignment": "zero_based_rank_modulo_fold_count"
+    },
+    "split_size_policy": {
+      "scheme": "five_fold_source_group_cross_validation",
+      "fold_count": 5,
+      "training_fold_count_per_evaluation": 4,
+      "held_out_fold_count_per_evaluation": 1,
+      "minimum_eligible_source_group_count": 5,
+      "current_eligible_source_group_count": 3,
+      "current_split_instantiable": false
+    },
+    "missingness_exclusion": {
+      "exclusion_unit": "source_paper_group",
+      "required_fields": ["registered_coordinates", "validation_target"],
+      "apply_before_split_assignment": true,
+      "apply_identically_to_all_tracks": true,
+      "imputation_authorized": false,
+      "current_excluded_record_ids": ["N11-FIN-01", "N11-FIN-05"]
+    },
+    "tracks": [
+      "current_registered_axes",
+      "current_axes_plus_validation_target",
+      "current_axes_plus_shuffled_validation_target"
+    ],
+    "identical_eligible_record_ids_across_tracks": [
+      "N11-FIN-02",
+      "N11-FIN-03",
+      "N11-FIN-04"
+    ],
+    "leakage_controls": [
+      "group_all_versions_of_a_source_paper_together",
+      "adjudicate_labels_before_split_assignment",
+      "fit_preprocessing_within_training_groups_only",
+      "blind_candidate_labels_during_quality_review",
+      "lock_eligible_set_before_track_comparison",
+      "never_assign_from_downstream_outcomes_or_abstract_inference"
+    ],
+    "metrics": [
+      "held_out_archive_coverage_gain",
+      "cell_density",
+      "quality_weighted_diversity",
+      "stability_across_resamples",
+      "redundancy_with_existing_axes",
+      "residual_variation",
+      "confound_sensitivity",
+      "interpretability_review"
+    ],
+    "metric_definitions": {
+      "held_out_archive_coverage_gain": "track_occupied_held_out_cells_minus_current_occupied_held_out_cells",
+      "cell_density": "eligible_held_out_records_divided_by_occupied_held_out_cells",
+      "quality_weighted_diversity": "sum_blinded_pre_split_quality_weight_per_occupied_held_out_cell",
+      "stability_across_resamples": "distribution_of_track_metric_differences_across_valid_held_out_folds",
+      "redundancy_with_existing_axes": "training_group_candidate_to_registered_axis_association_replayed_on_held_out_group",
+      "residual_variation": "held_out_candidate_variation_after_training_group_registered_axis_adjustment",
+      "confound_sensitivity": "track_metric_differences_by_predeclared_provenance_supported_strata",
+      "interpretability_review": "blinded_protocol_adherence_review_before_track_outcomes"
+    },
+    "derived_metric_mappings": {},
+    "resampling": {
+      "unit": "source_paper_group",
+      "method": "deterministic_held_out_fold_rotation/v1",
+      "repetitions": "one_per_valid_fold",
+      "shared_assignments_across_tracks": true,
+      "current_status": "not_executable_with_three_eligible_source_groups"
+    },
+    "comparison_declarations": {
+      "baseline_track": "current_registered_axes",
+      "candidate_track": "current_axes_plus_validation_target",
+      "negative_control_track": "current_axes_plus_shuffled_validation_target",
+      "eligible_set_locked_before_assignment": true,
+      "all_directional_results_retained": true,
+      "outcomes_available": false
+    }
+  },
+  "decision_thresholds_status": "human_approval_required",
+  "decision_thresholds": {},
+  "blockers": [
+    "larger_coordinate_complete_corpus_required",
+    "held_out_gain_absent",
+    "stability_evidence_absent",
+    "redundancy_and_residual_variation_evidence_absent",
+    "quality_and_confound_evidence_absent",
+    "numeric_decision_thresholds_require_human_approval",
+    "separate_human_schema_decision_required"
+  ]
+}
