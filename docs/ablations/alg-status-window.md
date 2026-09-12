@@ -3,6 +3,10 @@
 **Study:** `ALG.STATUS.WINDOW`
 **Freeze: no.** v1 runtime semantics remain **730 inclusive UTC days** (`STATUS_WINDOW_DAYS = 730`). The calendar-month comparison stays report-only and non-activating.
 
+Current authority clarification (2026-09-11): `docs/reviews/nsqd-operator-activation-2026-09-11-authority-clarification/` (`5b4b50dddca913a2425eb1f965e2dc6f152dd700050379fd65ee8e4e6e9840b8`) is `review_pending` and report-only. It succeeds the technically reviewed remediation overlay without transferring that review. The preserved 2026-08-30 F-PROP-001 `human_approved` field is a `historical_claim_unverified`: repository evidence has no detached trusted approval tuple, so current runtime validation rejects the record, without retroactively endorsing or rejecting whether an actual human decision occurred. The 2026-09-11 C/F/status correction packets and G census remain the current evidence artifacts; historical activation claims are not current authority. Evidence sufficiency, schema admission, packet inclusion, G eligibility, restart, resurrection, operator activation, and runtime authority remain false.
+
+Current release evidence closure (2026-09-12): the independently technically reviewed F implementation binding is `docs/reviews/nsqd-operator-f-readiness-2026-09-12-implementation-binding/` (`e82490162af6f8da4507aef5cfe019869a2caecdaa3cf985a0751e794c8d62fe`), and the independently technically reviewed activation pointer sync is `docs/reviews/nsqd-operator-activation-2026-09-12-pointer-sync/` (`c767f3ced5be85ddd1aa8432106e207e6b0c262593a90a69a910a4518444ebed`). The current unreviewed G successor is `docs/reviews/nsqd-operator-g-readiness-census-2026-09-12-schema-closure/` (`9af4910deb08b980a6a8ee0feda263825cada46703b13d54e00aeb983ea06680`), chained from packet `0649829a742d6433ec757afb5620cfa5f03665372d08196b47259a432bbb3f49`, complete over 354 structured files with 49 source bindings, zero trusted approvals, zero trusted evidence artifacts, and zero qualifying records. All authority remains false.
+
 ## Runtime semantics
 
 | Choice | v1 runtime |
