@@ -1,0 +1,58 @@
+schema_version: 1
+packet_kind: operator_activation_pointer_sync
+created_at_utc: "2026-09-12T01:50:34Z"
+review_status: review_pending
+authorization_state: report_only
+predecessor:
+  manifest: ../nsqd-operator-activation-2026-09-11-authority-clarification/packet-manifest.json
+  manifest_sha256: fb44c79f87002e48c46f4d00647fc289e72579726f33b187fc59160b05180ee6
+  packet_digest: 5b4b50dddca913a2425eb1f965e2dc6f152dd700050379fd65ee8e4e6e9840b8
+  review_validity: valid_for_predecessor_only
+inherited_activation_tree:
+  path: ../nsqd-operator-activation-2026-08-30
+  tree_sha256: 34dccff0d4c15c2bf193e66a79c933963af51c7553a4159f00a506f0906e0709
+  disposition: inherited_user_owned_staged_baseline
+  endorsement: none
+base_reference:
+  commit: e29685b92d2f8ee88fcf0584556e5e8bc9df31aa
+  tree: 8ce1217183659ad05b2544f0390a9ee2eb4bf6ea
+  relationship_to_inherited_tree: comparison_base_only_not_activation_tree
+historical_claim:
+  proposal_id: F-PROP-001
+  source: ../nsqd-operator-activation-2026-08-30/axis-candidate-proposal-validation-target.yaml
+  recorded_status: human_approved
+  recorded_scope: evaluation_only
+  current_trust_status: historical_claim_unverified
+  detached_trust_evidence_present: false
+  current_runtime_validation: rejected_missing_trusted_approval
+  actual_human_decision_disposition: not_determined
+source_bindings:
+  - path: ../nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/packet-manifest.json
+    role: operator_c_readme_integrity_successor
+    sha256: fb27d839695e914051dad484d53cfd228de4724099dbc78f99793ab59528acf6
+    packet_digest: 65e6f4d684dec0ef3867a6664f0d542ed55b30b8a6067c0f3f331ec4d1509687
+  - path: ../nsqd-operator-f-readiness-2026-09-12-implementation-binding/packet-manifest.json
+    role: operator_f_full_implementation_binding_successor
+    sha256: 7aefc06baace0604ca994eecaae04c1508aae9487ff64d1aa1fbfcef446fc245
+    packet_digest: e82490162af6f8da4507aef5cfe019869a2caecdaa3cf985a0751e794c8d62fe
+  - path: ../nsqd-status-window-calendar-replay-2026-09-11-command-sync/packet-manifest.json
+    role: status_replay_command_successor
+    sha256: f2009436db6076604c0a64a1600834a1b5b1f5695f1dfcacd077f417611a01ab
+    packet_digest: 0839478d96311ef2540b0dc394051860b253d160de6f8ea6d34955f3dd424acd
+operator_status:
+  C: {enabled: false, runtime_authorized: false}
+  D: {enabled: false, runtime_authorized: false}
+  E: {enabled: false, runtime_authorized: false}
+  F: {enabled: false, runtime_authorized: false}
+  G: {enabled: false, runtime_authorized: false}
+authority:
+  operator_c_bridge_accepted: false
+  operator_c_evidence_sufficient: false
+  operator_d_advancement_authorized: false
+  operator_f_evidence_sufficient: false
+  operator_f_schema_admission_authorized: false
+  operator_g_packet_inclusion_authorized: false
+  operator_g_restart_authorized: false
+  operator_g_resurrection_authorized: false
+  operator_activation_authorized: false
+  runtime_authorized: false
