@@ -1,0 +1,7 @@
+{
+  "artifact_sha256": {
+    "readiness.json": "ee12c356fea8240edf91a21fc8fc296c2872c4d586029cb69c98a95f6ab271f5"
+  },
+  "packet_digest": "96e13bb1c2a183b4e797ea1309f0b2f0d4659a05778d0151a4045b44e23c4ee2",
+  "schema_version": 1
+}
