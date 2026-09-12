@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_g_readiness_census",
+  "created_at_utc": "2026-09-11T20:57:57Z",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "resurrection_authorized": false,
+  "operator_g_eligible": false,
+  "evidence_sufficient": false,
+  "predecessor": {
+    "manifest": "../nsqd-operator-g-readiness-census-2026-09-11-code-correction/packet-manifest.json",
+    "packet_digest": "2dc39d073f845dc208d4747959b954b473b60a9d48ebe5050d1287b0a16a0d6e"
+  },
+  "census": {
+    "algorithm_version": "operator-g-evidence-census/v4",
+    "status": "complete",
+    "scope_snapshot_digest": "f593a38f25ccd79284d81401f79e311873fc83ed9a82e5bc728330ab85d1ef5e",
+    "scope_file_count": 319,
+    "repository_roots": [
+      "docs",
+      "src",
+      "tests"
+    ],
+    "structured_extensions": [
+      "json",
+      "jsonl",
+      "toml",
+      "yaml",
+      "yml"
+    ],
+    "limits": {
+      "max_files": 10000,
+      "max_file_bytes": 16777216,
+      "max_total_bytes": 268435456,
+      "max_depth": 64,
+      "max_structured_depth": 64
+    }
+  },
+  "external_trust_inputs": {
+    "trusted_approval_count": 0,
+    "trusted_evidence_artifact_count": 0
+  },
+  "source_bindings": [
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/failure-record-contract.yaml",
+      "role": "canonical_failure_record_contract",
+      "sha256": "b7eca17a5c29dfa869a2f19dbd37c0bd7a13634a1a620317cc9032cbc438f4c0"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/operator-g.yaml",
+      "role": "current_operator_g_plan",
+      "sha256": "e5053771a27c593049028aec592c1ea4be01ee71abbd95ca160335b389088870"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidate-hashes.json",
+      "role": "candidate_hash_reconciliation",
+      "sha256": "e74e6abeb433eda7e8398a274329c1f7dbcd6374c3c4718af1c69650d1239704"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidates.json",
+      "role": "unexecuted_candidate_studies",
+      "sha256": "ac01c344973175e0c3270711403fe5bdb0a80977eb5781717a40cf729ca509f0"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/measurements.jsonl",
+      "role": "tau_measurement_rows",
+      "sha256": "0af46ae4aa2404c29b92af375228bcc2e20b3ad816b9bd5fdce4fe3cb9456bf6"
+    },
+    {
+      "path": "src/nsqd/domain/contract_validation.py",
+      "role": "shared_contract_validation",
+      "sha256": "18c9b6173729bba9f421bf400dbb6af92756a16bfe94c3751f0eba092230885d"
+    },
+    {
+      "path": "src/nsqd/domain/contract_validation_errors.py",
+      "role": "typed_contract_validation_errors",
+      "sha256": "9bd88aa99c66068c6dbf770107b1731f66bdb927174bdbb400198dbe6f3401d8"
+    },
+    {
+      "path": "src/nsqd/domain/operator_approval.py",
+      "role": "external_approval_boundary",
+      "sha256": "60745662daea9b0d1451bd2a87d466e0ca97958d5d436a62ee98f52434313ecc"
+    },
+    {
+      "path": "src/nsqd/domain/operator_approval_errors.py",
+      "role": "typed_approval_errors",
+      "sha256": "1c11db19abbefe0e45c2ca4ea8af76617f3f773d178be1836a4e79fdea6a083f"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g.py",
+      "role": "canonical_failure_record_facade",
+      "sha256": "5e9cc6849aa8b3234d4b7aa9fc8289673fc85f1402e09b832b554d81a2412ff9"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_census.py",
+      "role": "census_domain_algorithm",
+      "sha256": "fbf1f77fd152d2316196e515f1cfa736f8343d5f7ab4d6b9b087ca16d1f12b66"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_census_types.py",
+      "role": "census_domain_types",
+      "sha256": "fc4a22afd1d48d5021c6ff9cff76c17a8e17876cdde9c83de7c08eb43e006652"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_evidence.py",
+      "role": "evidence_trust_boundary",
+      "sha256": "a1008a5470e8751ad04935e884d52acd1e7f2b2d5f46b4e15c995c728ddf0ca6"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_record_validation.py",
+      "role": "canonical_failure_record_validation",
+      "sha256": "d851685fa0559410f45460f8ad9256b62c7a776f9a8cfb586aab1b411f3fe551"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_readiness.py",
+      "role": "readiness_projection_validator",
+      "sha256": "eac2bb5f4d8c3589ddd4416b452ccf0376b92e9d480d0b7e3e8e0f570efe0121"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_release_validation.py",
+      "role": "release_failure_record_validation",
+      "sha256": "7541a751e8f764292e6d38f5d2290e2b2f8b9010945878c32299db63cb59ec73"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_types.py",
+      "role": "failure_record_contract_types",
+      "sha256": "ae923465dd0618e38a95db97eacaed84fac4dc26510558a9510b3f99837f26fb"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census.py",
+      "role": "bounded_census_orchestration",
+      "sha256": "0e972272d7ba01df88f9873e1cf0bdbff4ac3984c7c5ba069f96d25672c81cfb"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census_formats.py",
+      "role": "structured_format_discovery",
+      "sha256": "82fc971cd421ad687eccb3a6c76730cee42b695b502149ccb1a1b7c5e987caeb"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census_files.py",
+      "role": "race_safe_filesystem_boundary",
+      "sha256": "a051df8a1273e04d49efd8e7bc972149442bb7515b2d643509a9167bd2190140"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_structured_inputs.py",
+      "role": "typed_structured_input_boundary",
+      "sha256": "df99a9834ea8cc75e602d2c814596fbe668a72ce7bdf9dbdf8af16cb0a3c04d4"
+    },
+    {
+      "path": "tests/nsqd/operator_dg_contract_support.py",
+      "role": "ast_only_synthetic_pending_fixture",
+      "sha256": "a63fa4ff8d900d149f09383e75b450545076b1e8f4c538a2b8f719a79079c2fa"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/packet-manifest.json",
+      "role": "current_operator_c_evidence_manifest",
+      "sha256": "fb27d839695e914051dad484d53cfd228de4724099dbc78f99793ab59528acf6"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/technical-review-summary.json",
+      "role": "operator_c_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/technical-review-seal.json",
+      "role": "operator_c_successor_technical_review_seal",
+      "sha256": "75eb736b308d7a857d07467add069714203abed1573daa9cb60d5a5073375398"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/packet-manifest.json",
+      "role": "current_operator_f_readiness_manifest",
+      "sha256": "72e21375a988d73dcc4781e44739cccdd87ffc37f9eae22e83bf754543773b96"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/technical-review-summary.json",
+      "role": "operator_f_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/technical-review-seal.json",
+      "role": "operator_f_successor_technical_review_seal",
+      "sha256": "fef39b1fe5a79126c0ac0118826d14a5e0c9adb60797d090f7dad4df535f09a2"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/packet-manifest.json",
+      "role": "current_status_window_manifest",
+      "sha256": "f2009436db6076604c0a64a1600834a1b5b1f5695f1dfcacd077f417611a01ab"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/technical-review-summary.json",
+      "role": "status_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/technical-review-seal.json",
+      "role": "status_successor_technical_review_seal",
+      "sha256": "318b253d759bb1c2ab9f56d98d7b791470ee018fa108a081d0fb1a957ad29a16"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/packet-manifest.json",
+      "role": "current_operator_activation_manifest",
+      "sha256": "0d1e835ce09827666f35cc1b23b5ad041b974b55f9525011a17a1fb57bb43ebc"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/technical-review-summary.json",
+      "role": "activation_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/technical-review-seal.json",
+      "role": "activation_successor_technical_review_seal",
+      "sha256": "1c702ab42334f622580e450ae775c0238ffb81b6d2bd25a7e1e42bb4238aa9aa"
+    }
+  ],
+  "candidate_locators": [
+    {
+      "locator": "docs/reviews/nsqd-operator-activation-2026-08-30/failure-record-contract.yaml#0",
+      "candidate_class": "failure_record_contract_template",
+      "observed_count": 1,
+      "reason_code": "contract_template_not_record"
+    },
+    {
+      "locator": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidates.json#0..119",
+      "candidate_class": "unexecuted_candidate_study",
+      "observed_count": 120,
+      "reason_code": "unexecuted_study_no_measured_results"
+    },
+    {
+      "locator": "docs/reviews/nsqd-tau-calibration-2026-08-29/measurements.jsonl#0..119",
+      "candidate_class": "tau_calibration_measurement",
+      "observed_count": 120,
+      "reason_code": "tau_measurement_not_registered_experiment"
+    },
+    {
+      "locator": "tests/nsqd/operator_dg_contract_support.py#0",
+      "candidate_class": "synthetic_operator_g_test_fixture",
+      "observed_count": 1,
+      "reason_code": "synthetic_pending_fixture_not_artifact"
+    }
+  ],
+  "candidate_inventory": [
+    {
+      "candidate_class": "job_error",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_job_error_code"
+    },
+    {
+      "candidate_class": "pytest_or_contract_test_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_test_failure_without_experiment_evidence"
+    },
+    {
+      "candidate_class": "sufficiency_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_sufficiency_failure"
+    },
+    {
+      "candidate_class": "synthetic_operator_g_test_fixture",
+      "observed_count": 1,
+      "qualifying_count": 0,
+      "reason_code": "synthetic_pending_fixture_not_artifact"
+    },
+    {
+      "candidate_class": "tau_calibration_measurement",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "tau_measurement_not_registered_experiment"
+    },
+    {
+      "candidate_class": "unexecuted_candidate_study",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "unexecuted_study_no_measured_results"
+    }
+  ],
+  "qualifying_approved_record_count": 0,
+  "qualifying_record_digests": [],
+  "records": [],
+  "authority": {
+    "packet_inclusion_authorized": false,
+    "operator_g_eligibility_implied": false,
+    "restart_authorized": false,
+    "resurrection_authorized": false,
+    "runtime_authorized": false
+  }
+}
