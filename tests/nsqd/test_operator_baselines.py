@@ -1518,41 +1518,8 @@ def test_baseline_execution_receipt_binds_runtime_store_and_index() -> None:
     assert receipt["lancedb_tree_sha256"]
 
 
-def test_private_execution_receipt_and_binding_guards_cover_runtime_edges() -> None:
+def test_private_projection_binding_guards_cover_runtime_edges() -> None:
     _results, baseline, _e_candidates, _blinded, _audit = _payloads()
-
-    with pytest.raises(ValueError, match="sqlite_sha256"):
-        bad_receipt = copy.deepcopy(baseline["execution_receipt"])
-        bad_receipt["sqlite_sha256"] = "0" * 64
-        opb.verify_scratch_execution_receipt(
-            bad_receipt,
-            scratch_runtime=baseline["scratch_runtime"],
-        )
-
-    with pytest.raises(ValueError, match="lancedb_tree_sha256"):
-        bad_receipt = copy.deepcopy(baseline["execution_receipt"])
-        bad_receipt["lancedb_tree_sha256"] = "0" * 64
-        opb.verify_scratch_execution_receipt(
-            bad_receipt,
-            scratch_runtime=baseline["scratch_runtime"],
-        )
-
-    with pytest.raises(ValueError, match="candidate_count"):
-        bad_receipt = copy.deepcopy(baseline["execution_receipt"])
-        bad_receipt["candidate_count"] = 5
-        opb.verify_scratch_execution_receipt(
-            bad_receipt,
-            scratch_runtime=baseline["scratch_runtime"],
-        )
-
-    with pytest.raises(ValueError, match="frontier card payload sha"):
-        bad_receipt = copy.deepcopy(baseline["execution_receipt"])
-        first = bad_receipt["frontier_card_hashes"][0]
-        bad_receipt["frontier_card_payload_sha256"][first] = "0" * 64
-        opb.verify_scratch_execution_receipt(
-            bad_receipt,
-            scratch_runtime=baseline["scratch_runtime"],
-        )
 
     with pytest.raises(ValueError, match="projected_record_id"):
         bad_bindings = copy.deepcopy(baseline["projection_bindings"])

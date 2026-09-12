@@ -1726,6 +1726,14 @@ def _is_under_allowed_temp_root(expanded: Path, resolved: Path) -> bool:
 
 def _matching_allowed_temp_root(expanded: Path, resolved: Path) -> tuple[Path, Path] | None:
     expanded_abs = expanded if expanded.is_absolute() else expanded.resolve(strict=False)
+    repo_root = REPO_ROOT.resolve(strict=False)
+    if (
+        expanded_abs == REPO_ROOT
+        or REPO_ROOT in expanded_abs.parents
+        or resolved == repo_root
+        or repo_root in resolved.parents
+    ):
+        return None
     for root in _allowed_temp_roots():
         root_resolved = root.resolve(strict=False)
         if expanded_abs == root or root in expanded_abs.parents:
