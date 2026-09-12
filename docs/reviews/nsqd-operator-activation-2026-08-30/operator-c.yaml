@@ -9,9 +9,9 @@ created_at_utc: "2026-08-31T09:09:18Z"
 executed_at_utc: "2026-08-31T16:44:06Z"
 algorithm_identity: operator-c-evidence-audit/1
 prompt_identity: operator-c-full-text-extraction/1
-latest_algorithm_identity: operator-c-bounded-primary-source-audit/2
-latest_prompt_identity: operator-c-typed-bridge-review/2
-latest_executed_at_utc: "2026-09-05T19:39:16Z"
+latest_algorithm_identity: operator-c-provenance-bound-primary-source-audit/3
+latest_prompt_identity: operator-c-typed-bridge-review/3
+latest_executed_at_utc: "2026-09-09T20:27:38Z"
 input_snapshot_ids:
   - bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5
 input_bindings:
@@ -23,24 +23,47 @@ nearest_prior_art:
   - openalex:W4414475397
   - openalex:W4388963597
 known_limitations:
-  - no proposed bridge has direct full-text support on both A-to-B and B-to-C sides
-  - bibliographic noninteraction remains unverified; zero query results are absence of evidence only
-  - Semantic Scholar citation queries were rate-limited with HTTP 429
+  - both proposed typed edges, A-to-bridge and bridge-to-C, are unsupported by the inspected full text
+  - source PDF bytes and bibliographic API response bodies are not retained under repository policy; offline quote-containment and response replay are unavailable after temporary-file cleanup
+  - OpenAlex zero results apply only to the recorded bounded queries; universal noninteraction remains unverified
+  - Semantic Scholar citation and reference evidence was unavailable from the service via HTTP 429 and cannot support an absence conclusion
+  - the bridge real-market evidence covers one week and five labelled events and is not statistically reliable
+  - the current packet received a confirmed bounded negative report-only Todo 6 technical review; this is not human acceptance or positive bridge evidence
   - time-sliced rediscovery is not measurable without an accepted bridge and held-out benchmark
   - identifiers are bound from approved projection source_paper_id values only
   - local paraphrases do not supply author or citation graphs
 evidence_report: ../nsqd-operator-c-evidence-2026-08-31/review-summary.json
-latest_evidence_report: ../nsqd-operator-c-evidence-2026-09-05/review-summary.json
-latest_evidence_review_seal: ../nsqd-operator-c-evidence-2026-09-05/review-seal.json
-latest_evidence_review_summary_sha256: b83e05dc2b9c50737f725a2e270411d769ed05bf126255ab906fe9f9960fef8c
-latest_evidence_review_seal_sha256: 3ef1e426ea329f980510699971ed8c17b4c721965be1394abed268a41dee5be0
+latest_evidence_report: ../nsqd-operator-c-evidence-resolution-2026-09-09/review-summary.json
+latest_evidence_review_seal: ../nsqd-operator-c-evidence-resolution-2026-09-09/review-seal.json
+latest_evidence_packet_manifest: ../nsqd-operator-c-evidence-resolution-2026-09-09/packet-manifest.json
+latest_evidence_packet_digest: 8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90
+latest_evidence_review_summary_sha256: 643fc415cc2f6b266a7a8bf4c04fdf11e34ede3947dd3be090ad241d3a5f04d4
+latest_evidence_review_seal_sha256: 43119d95b784fa587ae640815b8b71f6c96ccbc6f12d72ab1875edaff39971f2
+latest_evidence_packet_manifest_sha256: baf5ab583e294c4eebee2fcaa2cc73c5e4a985cfd74005af7cf21a39e4aa0abf
 latest_evidence_artifact_sha256:
-  ablation-results.json: 60c33a1b7f267ffab28a736f92e6e4039ae8ed9cd4ed8d4ea5b4d7b4a884c259
-  bibliographic-snapshot.json: 65998203cd2e72fd902cd7e103a6f0329c648b3f4111527d034e7f2c588061fd
-  claim-extractions.jsonl: 7e8f2e08dfb12cb611c97ffe93f47502670a294d4a494504def2b42b9a1d2b18
-  direct-a-to-c-prior-art.jsonl: be9c3b6abc8eb3315e1df61a2d7eaabc4be25a8ffc15d7c1a6026817effee0b2
-  evidence-ledger.json: 9b46974743132af142f05730f9d906bd02b12616a142e9d8752af104e7503734
-  source-extracts.jsonl: d2613e7f00617a05661391bc3521e87d009eb7895ab803beb6c0f9bfe484d91d
+  README.md: 213382cf673e63049d941bbf3e37b461a6bad48ff91c25f595ed91df6993bd36
+  acquisition-receipts.json: 082168d9014904b3eee00c4fa0358a9f100acf8a029dabb9fc910b6bb38ea213
+  bibliographic-query-receipts.json: b0be5323ddd7b46939320ce2efe488785742d090c0722e0626716d390e2e67a8
+  evidence-ledger.json: fc70c082fb821a5eaf21d6ec56acaa83194536f6bd64311ceb19355d7cd1a71c
+  source-extracts.jsonl: d9c92f4257fd41cc32bb204c765254125288088d8c08b19e828e4aae1fa355d4
+  typed-relations.json: f737e4747d2bc18deb2cb4c5fd4150ca8797e5f1a6092356d8d6c44ca4ceff0c
+latest_independently_reviewed_evidence_report: ../nsqd-operator-c-evidence-resolution-2026-09-09/review-summary.json
+latest_independently_reviewed_evidence_review_seal: ../nsqd-operator-c-evidence-resolution-2026-09-09/review-seal.json
+latest_independently_reviewed_evidence_packet_manifest: ../nsqd-operator-c-evidence-resolution-2026-09-09/packet-manifest.json
+latest_independently_reviewed_evidence_packet_digest: 8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90
+latest_independently_reviewed_evidence_packet_manifest_sha256: baf5ab583e294c4eebee2fcaa2cc73c5e4a985cfd74005af7cf21a39e4aa0abf
+latest_technical_review:
+  reviewer_session_id: ses_f76edce6dffe6gPRxa2M13UADd
+  verdict: confirmed
+  approval_scope: bounded_negative_report_only_evidence_conclusion
+  technical_review: confirmed_negative_conclusion
+  technical_review_is_human_acceptance: false
+  human_acceptance: not_requested
+  accepted_bridge: false
+  evidence_sufficient: false
+  todo_7_advancement_authorized: false
+  schema_admission_authorized: false
+  runtime_authorized: false
 evidence_cycles:
   - cycle_id: operator-c-evidence-2026-08-31
     decision: insufficient_evidence
@@ -48,6 +71,27 @@ evidence_cycles:
   - cycle_id: operator-c-evidence-2026-09-05
     decision: insufficient_evidence
     review_status: approved_negative_conclusion
+  - cycle_id: operator-c-evidence-2026-09-07
+    decision: insufficient_evidence
+    review_status: approved_negative_conclusion
+  - cycle_id: operator-c-evidence-2026-09-08
+    decision: insufficient_evidence
+    packet_digest: 7dc279651b4e70c2838d80b7e00cf7e9da7102ad93dcb87c462103f1c6cd4f43
+    review_status: needs_fix
+    substantive_evidence_verdict: confirmed
+    post_review_remediation_status: independently_confirmed
+  - cycle_id: operator-c-evidence-2026-09-09-resolution
+    decision: insufficient_evidence
+    packet_digest: 406fccd5d072db490e3abcd067b0327b3817effcbe85cac49f0eaa40be8cb4d3
+    review_status: not_requested_todo_6_separate
+  - cycle_id: operator-c-evidence-resolution-2026-09-09
+    decision: insufficient_evidence
+    packet_digest: 8bec12564b873d1ae59a60ed0988b766e66909e7efa62a11a3fc027cfe06dd90
+    review_status: confirmed_negative_conclusion
+    reviewer_session_id: ses_f76edce6dffe6gPRxa2M13UADd
+    review_scope: bounded_negative_report_only_evidence_conclusion
+    technical_review_is_human_acceptance: false
+    human_acceptance: not_requested
 evidence_artifact_sha256:
   evidence-ledger.json: 878f5b050c0fc69eb9b416be06fa15a2274097419c8a67580d64d03879ebcd5b
   claim-extractions.jsonl: c9162a5816ba0bec69c7989c2f832237600a62c9ba4bb88bc082536e978dde41
@@ -108,18 +152,40 @@ ablations:
 selection_rule: Prefer the smallest method that improves reviewed relevance over the shuffled control without increasing leakage or direction errors.
 ablation_result: no pair or extraction method outperformed the shuffled control; no selection
 required_check_results:
-  bibliographic_noninteraction: unverified_absence_of_evidence_only
+  bibliographic_noninteraction: bounded_checks_zero_observed_universal_unverified
+  openreview_v2_full_text: inspected
   full_text_A_to_B_and_B_to_C: completed_zero_two_sided_bridges
-  direct_A_to_C_prior_art: completed_no_exact_pair_result
-  relevance_support_leakage: completed_zero_relevance_zero_support_zero_leakage
+  direct_A_to_C_prior_art: completed_direct_domain_counterevidence_found
+  relevance_support_leakage: completed_support_and_leakage_checks_relevance_unmeasured
   pair_and_extraction_ablation: completed_no_selection
-  independent_review: approved_negative_conclusion
+  independent_review: confirmed_bounded_negative_report_only_conclusion
 latest_cycle_results:
-  primary_pair: rejected_semantic_object_mismatch
-  backup_pair: rejected_direct_prior_art
-  bibliographic_noninteraction: unverified_absence_of_evidence_only
+  accepted_bridge: false
+  full_text_inspected: true
+  retrieval_method: curl_http
+  retrieval_basis: official_versioned_arxiv_pdfs
+  source_bytes_retained: false
+  source_bytes_retention: not_retained_repository_policy
+  offline_quote_containment_replay: unavailable_after_temporary_file_cleanup
+  bibliographic_response_bytes_retained: false
+  bibliographic_response_retention: not_retained_repository_policy
+  bibliographic_response_replay: unavailable_after_temporary_file_cleanup
+  offline_integrity_verification:
+    packet_manifest: available
+    acquisition_receipt_metadata: available
+    source_extract_records: available
+    typed_relation_records: available
+  openalex_interactions: not_observed_within_bounded_queries
+  semantic_scholar_interactions: unavailable_from_service_http_429
+  universal_noninteraction: unverified
+  universal_noninteraction_claimed: false
   candidate_output_count: 0
+  evidence_sufficient: false
+  human_acceptance: not_requested
+  independent_review: confirmed_negative_conclusion
   runtime_activation: not_authorized
+  operator_c_status: blocked
+  operator_d_status: blocked
 required_before_review:
   - verify citation, co-citation, author, and direct-mention noninteraction
   - bind external bibliographic identifiers for both literatures
