@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "artifact_sha256": {
+    "README.md": "be16e009e3e5599fb76f5c67db51cf974e1b6813cdf835c34cfed06693a4cfb6",
+    "authority-status.yaml": "53a0645b3c917fe629b11e2efbc2cb08f98a273d3e7d36882052cd8931cf057e"
+  },
+  "packet_digest": "5b4b50dddca913a2425eb1f965e2dc6f152dd700050379fd65ee8e4e6e9840b8"
+}

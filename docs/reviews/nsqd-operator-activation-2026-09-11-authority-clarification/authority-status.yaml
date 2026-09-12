@@ -1,0 +1,46 @@
+schema_version: 1
+packet_kind: operator_activation_authority_clarification
+created_at_utc: "2026-09-11T00:00:00Z"
+review_status: review_pending
+authorization_state: report_only
+predecessor:
+  manifest: ../nsqd-operator-activation-2026-09-11-remediation/packet-manifest.json
+  manifest_sha256: 0d1e835ce09827666f35cc1b23b5ad041b974b55f9525011a17a1fb57bb43ebc
+  packet_digest: 824e8f71cc3f18ff89b300736bcbdb31863fc2fc812af6a2095e45856dbc9b6e
+  review_validity: valid_for_predecessor_only
+inherited_activation_tree:
+  path: ../nsqd-operator-activation-2026-08-30
+  tree_sha256: 34dccff0d4c15c2bf193e66a79c933963af51c7553a4159f00a506f0906e0709
+base_reference:
+  commit: e29685b92d2f8ee88fcf0584556e5e8bc9df31aa
+  tree: 8ce1217183659ad05b2544f0390a9ee2eb4bf6ea
+inherited_change_disposition:
+  comparison_to_base: staged_activation_changes_predate_remediation
+  preservation: inherited_user_owned_staged_baseline
+  endorsement: none
+  protected_paths:
+    - ../nsqd-operator-activation-2026-08-30/README.md
+    - ../nsqd-operator-activation-2026-08-30/axis-candidate-proposal-validation-target.yaml
+    - ../nsqd-operator-activation-2026-08-30/operator-c.yaml
+    - ../nsqd-operator-activation-2026-08-30/operator-f-validation-target-pilot.json
+    - ../nsqd-operator-activation-2026-08-30/operator-f.yaml
+historical_claim:
+  proposal_id: F-PROP-001
+  source: ../nsqd-operator-activation-2026-08-30/axis-candidate-proposal-validation-target.yaml
+  recorded_status: human_approved
+  recorded_scope: evaluation_only
+  current_trust_status: historical_claim_unverified
+  detached_trust_evidence_present: false
+  current_runtime_validation: rejected_missing_trusted_approval
+  actual_human_decision_disposition: not_determined
+authority:
+  operator_c_bridge_accepted: false
+  operator_c_evidence_sufficient: false
+  operator_d_advancement_authorized: false
+  operator_f_evidence_sufficient: false
+  operator_f_schema_admission_authorized: false
+  operator_g_packet_inclusion_authorized: false
+  operator_g_restart_authorized: false
+  operator_g_resurrection_authorized: false
+  operator_activation_authorized: false
+  runtime_authorized: false
