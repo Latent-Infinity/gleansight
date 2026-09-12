@@ -1,0 +1,264 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_g_readiness_census",
+  "created_at_utc": "2026-09-11T19:00:00Z",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "resurrection_authorized": false,
+  "operator_g_eligible": false,
+  "evidence_sufficient": false,
+  "predecessor": {
+    "manifest": "../nsqd-operator-g-readiness-census-2026-09-09-c-review-correction/packet-manifest.json",
+    "packet_digest": "2509690fecb8800bd99dcb726d31504876c6de37a1c66c5ced33562dcc1439e6"
+  },
+  "census": {
+    "algorithm_version": "operator-g-evidence-census/v3",
+    "status": "complete",
+    "scope_snapshot_digest": "acd5e2177f673ac98a33a9afe345a508e94cd2ea89ac1a05e5f1c31036084faf",
+    "scope_file_count": 319,
+    "repository_roots": [
+      "docs",
+      "src",
+      "tests"
+    ],
+    "structured_extensions": [
+      "json",
+      "jsonl",
+      "toml",
+      "yaml",
+      "yml"
+    ],
+    "limits": {
+      "max_files": 10000,
+      "max_file_bytes": 16777216,
+      "max_total_bytes": 268435456,
+      "max_depth": 64,
+      "max_structured_depth": 64
+    }
+  },
+  "external_trust_inputs": {
+    "trusted_approval_count": 0,
+    "trusted_evidence_artifact_count": 0
+  },
+  "source_bindings": [
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/failure-record-contract.yaml",
+      "role": "canonical_failure_record_contract",
+      "sha256": "b7eca17a5c29dfa869a2f19dbd37c0bd7a13634a1a620317cc9032cbc438f4c0"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/operator-g.yaml",
+      "role": "current_operator_g_plan",
+      "sha256": "e5053771a27c593049028aec592c1ea4be01ee71abbd95ca160335b389088870"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidate-hashes.json",
+      "role": "candidate_hash_reconciliation",
+      "sha256": "e74e6abeb433eda7e8398a274329c1f7dbcd6374c3c4718af1c69650d1239704"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidates.json",
+      "role": "unexecuted_candidate_studies",
+      "sha256": "ac01c344973175e0c3270711403fe5bdb0a80977eb5781717a40cf729ca509f0"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/measurements.jsonl",
+      "role": "tau_measurement_rows",
+      "sha256": "0af46ae4aa2404c29b92af375228bcc2e20b3ad816b9bd5fdce4fe3cb9456bf6"
+    },
+    {
+      "path": "src/nsqd/domain/operator_approval.py",
+      "role": "external_approval_boundary",
+      "sha256": "8b6d2bce389d035d1ae7cacb1d2f6daf32b65d202d62748777b5982c03f729fd"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g.py",
+      "role": "canonical_failure_record_validation",
+      "sha256": "8ead99597848363a47b18796d4b1257b4e6208db4e5822e73cb51b5e337bbaaa"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_census.py",
+      "role": "census_domain_algorithm",
+      "sha256": "cf38edf63e0409315798d598c330f4193309acc6398a2d1433ce44022428a465"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_census_types.py",
+      "role": "census_domain_types",
+      "sha256": "fc4a22afd1d48d5021c6ff9cff76c17a8e17876cdde9c83de7c08eb43e006652"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_evidence.py",
+      "role": "evidence_trust_boundary",
+      "sha256": "a1008a5470e8751ad04935e884d52acd1e7f2b2d5f46b4e15c995c728ddf0ca6"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_record_validation.py",
+      "role": "registered_experiment_validation",
+      "sha256": "da0ba46dbfc1bb01edfdb058ad6d8790d9e8c987d5eeb01bb4c80850fb9ba252"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_readiness.py",
+      "role": "readiness_projection_validator",
+      "sha256": "901f499ecd83e403260a41367cba8599117af81ff279a45c16ddc1634eb8d413"
+    },
+    {
+      "path": "src/nsqd/domain/operator_g_types.py",
+      "role": "structured_value_boundary",
+      "sha256": "bbd2f2f55f64df9d363dcc7cbe62d7d3c372e70098d87f40ae94770e1654a897"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census.py",
+      "role": "bounded_filesystem_discovery",
+      "sha256": "09c68b752ca2f6142f02ade8fce17140d195890ba511ba647cc1eb5a19365d4e"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census_formats.py",
+      "role": "structured_format_discovery",
+      "sha256": "5f43a411e688b4628f8d59da6d0f5999c902ed754b74d6ce776efe9d74ade5bd"
+    },
+    {
+      "path": "src/nsqd/infrastructure/operator_g_census_files.py",
+      "role": "race_safe_filesystem_boundary",
+      "sha256": "980b9b8cb02baf95300cfbb5201bae4283453585d2db176e7ea38ceecf980408"
+    },
+    {
+      "path": "tests/nsqd/operator_dg_contract_support.py",
+      "role": "ast_only_synthetic_pending_fixture",
+      "sha256": "cd2d66c778e5f8889571760c13152bdb99074c008accc98c479241d53392bb1e"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/packet-manifest.json",
+      "role": "current_operator_c_evidence_manifest",
+      "sha256": "fb27d839695e914051dad484d53cfd228de4724099dbc78f99793ab59528acf6"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/technical-review-summary.json",
+      "role": "operator_c_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction/technical-review-seal.json",
+      "role": "operator_c_successor_technical_review_seal",
+      "sha256": "75eb736b308d7a857d07467add069714203abed1573daa9cb60d5a5073375398"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/packet-manifest.json",
+      "role": "current_operator_f_readiness_manifest",
+      "sha256": "72e21375a988d73dcc4781e44739cccdd87ffc37f9eae22e83bf754543773b96"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/technical-review-summary.json",
+      "role": "operator_f_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-f-readiness-2026-09-11-formula-correction/technical-review-seal.json",
+      "role": "operator_f_successor_technical_review_seal",
+      "sha256": "fef39b1fe5a79126c0ac0118826d14a5e0c9adb60797d090f7dad4df535f09a2"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/packet-manifest.json",
+      "role": "current_status_window_manifest",
+      "sha256": "f2009436db6076604c0a64a1600834a1b5b1f5695f1dfcacd077f417611a01ab"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/technical-review-summary.json",
+      "role": "status_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync/technical-review-seal.json",
+      "role": "status_successor_technical_review_seal",
+      "sha256": "318b253d759bb1c2ab9f56d98d7b791470ee018fa108a081d0fb1a957ad29a16"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/packet-manifest.json",
+      "role": "current_operator_activation_manifest",
+      "sha256": "0d1e835ce09827666f35cc1b23b5ad041b974b55f9525011a17a1fb57bb43ebc"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/technical-review-summary.json",
+      "role": "activation_successor_technical_review",
+      "sha256": "ca07af1c3ad6bd83aa5bf6f5ae028157ac50790f1c74528dcd72e851ec650b39"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-09-11-remediation/technical-review-seal.json",
+      "role": "activation_successor_technical_review_seal",
+      "sha256": "1c702ab42334f622580e450ae775c0238ffb81b6d2bd25a7e1e42bb4238aa9aa"
+    }
+  ],
+  "candidate_locators": [
+    {
+      "locator": "docs/reviews/nsqd-operator-activation-2026-08-30/failure-record-contract.yaml#0",
+      "candidate_class": "failure_record_contract_template",
+      "observed_count": 1,
+      "reason_code": "contract_template_not_record"
+    },
+    {
+      "locator": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidates.json#0..119",
+      "candidate_class": "unexecuted_candidate_study",
+      "observed_count": 120,
+      "reason_code": "unexecuted_study_no_measured_results"
+    },
+    {
+      "locator": "docs/reviews/nsqd-tau-calibration-2026-08-29/measurements.jsonl#0..119",
+      "candidate_class": "tau_calibration_measurement",
+      "observed_count": 120,
+      "reason_code": "tau_measurement_not_registered_experiment"
+    },
+    {
+      "locator": "tests/nsqd/operator_dg_contract_support.py#0",
+      "candidate_class": "synthetic_operator_g_test_fixture",
+      "observed_count": 1,
+      "reason_code": "synthetic_pending_fixture_not_artifact"
+    }
+  ],
+  "candidate_inventory": [
+    {
+      "candidate_class": "job_error",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_job_error_code"
+    },
+    {
+      "candidate_class": "pytest_or_contract_test_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_test_failure_without_experiment_evidence"
+    },
+    {
+      "candidate_class": "sufficiency_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_sufficiency_failure"
+    },
+    {
+      "candidate_class": "synthetic_operator_g_test_fixture",
+      "observed_count": 1,
+      "qualifying_count": 0,
+      "reason_code": "synthetic_pending_fixture_not_artifact"
+    },
+    {
+      "candidate_class": "tau_calibration_measurement",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "tau_measurement_not_registered_experiment"
+    },
+    {
+      "candidate_class": "unexecuted_candidate_study",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "unexecuted_study_no_measured_results"
+    }
+  ],
+  "qualifying_approved_record_count": 0,
+  "qualifying_record_digests": [],
+  "records": [],
+  "authority": {
+    "packet_inclusion_authorized": false,
+    "operator_g_eligibility_implied": false,
+    "restart_authorized": false,
+    "resurrection_authorized": false,
+    "runtime_authorized": false
+  }
+}
