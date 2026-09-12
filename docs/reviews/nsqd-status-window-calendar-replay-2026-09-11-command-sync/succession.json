@@ -1,0 +1,12 @@
+{
+  "authorization_state": "report_only",
+  "packet_kind": "status_window_command_sync_succession",
+  "predecessor": {
+    "packet_digest": "f81a9eed5d12f12a77d7252e234ff7a1e409ebb8a6d32bb709f0980e5b95ffd4",
+    "path": "../nsqd-status-window-calendar-replay-2026-09-02"
+  },
+  "prior_summary_validity": "valid_for_predecessor_evidence_bytes_only",
+  "review_status": "review_pending",
+  "runtime_authorized": false,
+  "schema_version": 1
+}

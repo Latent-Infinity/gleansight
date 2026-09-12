@@ -1,0 +1,11 @@
+{
+  "artifact_sha256": {
+    "README.md": "aa4b28b15917fccca11ba31ac79cc921b69b372ba7e77e83e42f2f2570d4e806",
+    "calendar-replay-artifact.json": "a99be18d9fe18fafe6893c97c2105d256d8ecdd4484643447874ec3f1c3964fd",
+    "extracted-timestamp-rows.json": "44b6debd95715a14b78d3ffc8ef0bb134cdbf2fffc729ed709318a12f7a9afef",
+    "review-summary.json": "f2bd201776cc31021c43fa554a60110f9ea3e283c19f9dd0a562b2d1e69359a2",
+    "succession.json": "f4b73eb2e3821ee011ade6a7dd2d8d9e2b4ba13530e90b346a9c7958229a5ab6"
+  },
+  "packet_digest": "0839478d96311ef2540b0dc394051860b253d160de6f8ea6d34955f3dd424acd",
+  "schema_version": 1
+}

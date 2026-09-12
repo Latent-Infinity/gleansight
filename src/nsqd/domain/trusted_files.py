@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 from pathlib import Path
 from typing import Any
 
@@ -15,32 +17,79 @@ def read_verified_repo_file(
     field: str,
     max_bytes: int | None = None,
 ) -> bytes:
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
+        raise ValueError(f"{field} cannot be read without no-follow support")
+    if max_bytes is not None and max_bytes <= 0:
+        raise ValueError("max_bytes must be positive")
     if relative_path.is_absolute() or expected_root.is_absolute():
         raise ValueError(f"{field} is outside the approved root")
     if ".." in relative_path.parts or ".." in expected_root.parts:
         raise ValueError(f"{field} is outside the approved root")
-    repo_root_path = repo_root.resolve(strict=False)
-    candidate_path = repo_root_path / relative_path
-    expected_root_path = repo_root_path / expected_root
+    candidate_path = repo_root / relative_path
+    expected_root_path = repo_root / expected_root
     try:
         candidate_path.relative_to(expected_root_path)
     except ValueError as exc:
         raise ValueError(f"{field} is outside the approved root") from exc
-    if expected_root_path.exists() and expected_root_path.is_symlink():
-        raise ValueError(f"{field} must not resolve through a symlink")
-    require_non_symlink_path_within_root(path=candidate_path, root=expected_root_path, field=field)
-    require_non_symlink_leaf(path=candidate_path, field=field)
-    if not candidate_path.exists():
-        raise ValueError(f"{field} is missing")
-    if not candidate_path.is_file():
-        raise ValueError(f"{field} must be a regular file")
-    raw_bytes = candidate_path.read_bytes()
-    if max_bytes is not None:
-        if max_bytes <= 0:
-            raise ValueError("max_bytes must be positive")
-        if len(raw_bytes) > max_bytes:
+    descriptors: list[int] = []
+    try:
+        directory = os.open(repo_root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        descriptors.append(directory)
+        for component in relative_path.parts[:-1]:
+            directory = os.open(
+                component,
+                os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                dir_fd=directory,
+            )
+            descriptors.append(directory)
+        file_descriptor = os.open(
+            relative_path.parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory
+        )
+        descriptors.append(file_descriptor)
+        before = os.fstat(file_descriptor)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError(f"{field} must be a regular file")
+        if max_bytes is not None and before.st_size > max_bytes:
             raise ValueError(f"{field} exceeds the verified byte limit")
-    return raw_bytes
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            read_size = 1024 * 1024
+            if max_bytes is not None:
+                read_size = min(read_size, max_bytes + 1 - total)
+            chunk = os.read(file_descriptor, read_size)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+            if max_bytes is not None and total > max_bytes:
+                raise ValueError(f"{field} exceeds the verified byte limit")
+        raw_bytes = b"".join(chunks)
+        after = os.fstat(file_descriptor)
+        before_identity = (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+            before.st_ctime_ns,
+        )
+        after_identity = (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+            after.st_ctime_ns,
+        )
+        if before_identity != after_identity or len(raw_bytes) != after.st_size:
+            raise ValueError(f"{field} changed during verified read")
+        return raw_bytes
+    except FileNotFoundError as exc:
+        raise ValueError(f"{field} is missing") from exc
+    except OSError as exc:
+        raise ValueError(f"{field} must not resolve through a symlink or unsafe path") from exc
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
 
 
 def read_verified_repo_text(
