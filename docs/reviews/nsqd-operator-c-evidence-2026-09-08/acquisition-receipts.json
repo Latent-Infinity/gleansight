@@ -1,0 +1,83 @@
+{
+  "cutoff_utc": "2026-09-08T06:33:47Z",
+  "digest_algorithm": "sha256",
+  "records": [
+    {
+      "byte_count": 2342053,
+      "content_scope": "OpenReview current PDF, independently retrieved from note-id and API2-exposed hash locators with identical bytes",
+      "final_url": "https://openreview.net/pdf?id=BZfkxSasd3",
+      "hash_locator_final_url": "https://openreview.net/pdf/6ddc0f748a4cbe51806b18a848fcf17e6b28f3ee.pdf",
+      "http_status": 200,
+      "magic_hex": "25504446",
+      "note_id": "BZfkxSasd3",
+      "note_version": 2,
+      "observed_media_type": "application/pdf",
+      "receipt_id": "OpenReview:BZfkxSasd3v2#pdf",
+      "retrieval_method": "CloakBrowser 0.4.10 CDP plus agent-browser 0.31.1 and Playwright browser-context response capture",
+      "retrieved_at_utc": "2026-09-08T06:24:52.958905088Z",
+      "sha256": "afa32af2b8ae2609ee34dbfb94690b3d63273676530107fabc8a12cfce8eab86"
+    },
+    {
+      "byte_count": 3892,
+      "content_scope": "authoritative API2 note response binding note id, version, title, authors, venue, and current PDF locator",
+      "exposed_pdf_locator": "/pdf/6ddc0f748a4cbe51806b18a848fcf17e6b28f3ee.pdf",
+      "final_url": "https://api2.openreview.net/notes?id=BZfkxSasd3",
+      "http_status": 200,
+      "note_id": "BZfkxSasd3",
+      "note_version": 2,
+      "observed_media_type": "application/json; charset=utf-8",
+      "receipt_id": "OpenReview:BZfkxSasd3v2#api2-note",
+      "retrieval_method": "CloakBrowser browser-context request after challenge clearance",
+      "retrieved_at_utc": "2026-09-08T06:27:00Z",
+      "sha256": "7b4de97b4708b9d3895a3a1d73470beb20caab9e5dd1df8c25520877f55cd20d"
+    },
+    {
+      "byte_count": 2647744,
+      "content_scope": "version-pinned arXiv PDF",
+      "final_url": "https://arxiv.org/pdf/2602.04643v2",
+      "http_status": 200,
+      "magic_hex": "25504446",
+      "observed_media_type": "application/pdf",
+      "receipt_id": "arXiv:2602.04643v2#pdf",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-08T06:33:47Z",
+      "sha256": "ef56d2b2f2d701667f853c0bb69795fa58f7acbca16fbca27629852550983668"
+    },
+    {
+      "byte_count": 1613669,
+      "content_scope": "version-pinned arXiv PDF",
+      "final_url": "https://arxiv.org/pdf/1402.2198v1",
+      "http_status": 200,
+      "magic_hex": "25504446",
+      "observed_media_type": "application/pdf",
+      "receipt_id": "arXiv:1402.2198v1#pdf",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-08T06:33:47Z",
+      "sha256": "4b65227e4da7eaaaaf381c20c8716e0c1c99d80abfd188d6bf0456c5f30bc166"
+    },
+    {
+      "byte_count": 45773,
+      "content_scope": "commit-pinned Fin-JEPA repository LaTeX source",
+      "final_url": "https://raw.githubusercontent.com/cedricwyh/fin-jepa/58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9/docs/jepa_paper.tex",
+      "http_status": 200,
+      "observed_media_type": "text/plain; charset=utf-8",
+      "receipt_id": "doi:10.2139/ssrn.6855118#repository-source",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-08T06:33:47Z",
+      "sha256": "3b652f82d4ccd27d54e11c9b054e429fa41bc289aa2c82e5ec920416bf813bc6"
+    },
+    {
+      "byte_count": 86676,
+      "content_scope": "official ICML 2026 poster page; metadata and abstract, not full-text substitution",
+      "final_url": "https://icml.cc/virtual/2026/poster/65643",
+      "http_status": 200,
+      "observed_media_type": "text/html; charset=utf-8",
+      "receipt_id": "ICML:2026-poster-65643#page",
+      "retrieval_method": "curl --fail --location",
+      "retrieved_at_utc": "2026-09-08T06:33:47Z",
+      "sha256": "586c46c3a5013ba184fd5eab0bfb67ca8a9700354c28593a25a1ee615cea84cb"
+    }
+  ],
+  "schema_version": 1,
+  "storage_policy": "downloaded source bytes were inspected locally and removed; only receipts and exact UTF-8 extracts are tracked"
+}

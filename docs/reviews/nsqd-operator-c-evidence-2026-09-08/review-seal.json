@@ -1,0 +1,13 @@
+{
+  "approval_scope": "bounded_negative_report_only_evidence_conclusion",
+  "authorization_state": "report_only",
+  "human_acceptance": "not_requested",
+  "original_review_verdict": "needs-fix",
+  "packet_digest": "7dc279651b4e70c2838d80b7e00cf7e9da7102ad93dcb87c462103f1c6cd4f43",
+  "review_summary_sha256": "9008c85c2a47e5a08655fcb9d5efc6307ed90a13431f971ca8d8057e9642e6be",
+  "reviewer_model": "openai/gpt-5.6-sol",
+  "reviewer_session_id": "ses_f802fe0bcffel0U98vSq8ZrALK",
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "substantive_evidence_verdict": "confirmed"
+}

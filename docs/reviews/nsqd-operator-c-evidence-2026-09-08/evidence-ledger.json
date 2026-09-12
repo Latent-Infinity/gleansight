@@ -1,0 +1,47 @@
+{
+  "authorization_state": "report_only",
+  "candidate_combinations": [],
+  "candidate_outputs": [],
+  "cutoff_utc": "2026-09-08T06:33:47Z",
+  "evidence_sufficient": false,
+  "full_text_inspected": true,
+  "human_acceptance": "not_requested",
+  "interaction_checks": [
+    {
+      "check": "direct_citation",
+      "observed_count": 0,
+      "query_receipt_ids": ["openalex-scj-work", "openalex-golub-work", "openalex-golub-citers-scj", "openalex-scj-citers-golub"],
+      "status": "not_observed_within_bounded_queries"
+    },
+    {
+      "check": "co_citation",
+      "observed_count": 0,
+      "query_receipt_ids": ["openalex-co-citation"],
+      "status": "not_observed_within_bounded_queries"
+    },
+    {
+      "check": "direct_mention",
+      "observed_count": 0,
+      "query_receipt_ids": ["arxiv-identifiers-pair", "arxiv-exact-titles-pair", "arxiv-alias-author-pair", "crossref-pair-first-page"],
+      "status": "not_observed_within_bounded_queries"
+    },
+    {
+      "check": "author_overlap",
+      "observed_count": 0,
+      "query_receipt_ids": ["openalex-scj-work", "openalex-golub-work"],
+      "status": "not_observed_within_bounded_queries"
+    }
+  ],
+  "known_limitations": [
+    "OpenAlex reports zero indexed references for W7128092022 despite the version-pinned SC-JEPA PDF containing references, demonstrating incomplete indexing for that record",
+    "Crossref bibliographic searches return relevance-ranked first pages from very large result sets and are not complete citation or full-text indexes",
+    "arXiv API searches cover arXiv metadata fields, not an exhaustive full-text citation graph",
+    "zero returned rows are bounded observations and do not establish universal noninteraction, novelty, or legal priority"
+  ],
+  "operator_c_status": "blocked",
+  "operator_d_status": "blocked",
+  "result": "insufficient_evidence",
+  "runtime_authorized": false,
+  "schema_version": 1,
+  "source_scope": "external_evidence_not_admitted_to_approved_corpus"
+}

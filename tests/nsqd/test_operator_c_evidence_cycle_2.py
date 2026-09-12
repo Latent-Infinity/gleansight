@@ -30,13 +30,14 @@ def _mapping(value: object) -> dict[str, object]:
     return {str(key): item for key, item in value.items()}
 
 
-def test_second_operator_c_cycle_is_digest_bound_and_latest() -> None:
+def test_second_operator_c_cycle_remains_digest_bound_in_history() -> None:
     packet = yaml.safe_load((ACTIVATION_ROOT / "operator-c.yaml").read_text(encoding="utf-8"))
-    assert packet["latest_evidence_report"] == (
-        "../nsqd-operator-c-evidence-2026-09-05/review-summary.json"
-    )
+    assert {
+        "cycle_id": "operator-c-evidence-2026-09-05",
+        "decision": "insufficient_evidence",
+        "review_status": "approved_negative_conclusion",
+    } in packet["evidence_cycles"]
     summary = _json(EVIDENCE_ROOT / "review-summary.json")
-    ledger = _json(EVIDENCE_ROOT / "evidence-ledger.json")
     artifacts = _mapping(summary["artifact_sha256"])
     assert set(artifacts) == {
         "evidence-ledger.json",
@@ -50,10 +51,6 @@ def test_second_operator_c_cycle_is_digest_bound_and_latest() -> None:
         assert hashlib.sha256((EVIDENCE_ROOT / name).read_bytes()).hexdigest() == digest
     preimage = json.dumps(artifacts, sort_keys=True, separators=(",", ":")).encode()
     assert summary["packet_digest"] == hashlib.sha256(preimage).hexdigest()
-    assert packet["latest_evidence_artifact_sha256"] == artifacts
-    assert packet["latest_algorithm_identity"] == ledger["algorithm_identity"]
-    assert packet["latest_prompt_identity"] == ledger["prompt_identity"]
-    assert packet["latest_executed_at_utc"] == ledger["queried_at_utc"]
     seal_path = EVIDENCE_ROOT / "review-seal.json"
     seal = _json(seal_path)
     summary_digest = hashlib.sha256(
@@ -64,11 +61,6 @@ def test_second_operator_c_cycle_is_digest_bound_and_latest() -> None:
     assert seal["review_status"] == "approved_negative_conclusion"
     assert seal["human_acceptance"] == "not_requested"
     assert seal["runtime_activation"] == "not_authorized"
-    assert packet["latest_evidence_review_summary_sha256"] == summary_digest
-    assert (
-        packet["latest_evidence_review_seal_sha256"]
-        == hashlib.sha256(seal_path.read_bytes()).hexdigest()
-    )
 
 
 def test_second_operator_c_cycle_records_bounded_negative_result() -> None:
