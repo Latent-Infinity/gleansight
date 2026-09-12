@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "packet_kind": "operator_g_readiness_inventory",
+  "created_at_utc": "2026-09-08T00:00:00Z",
+  "authorization_state": "report_only",
+  "runtime_authorized": false,
+  "resurrection_authorized": false,
+  "evidence_sufficient": false,
+  "source_bindings": [
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/failure-record-contract.yaml",
+      "role": "canonical_failure_record_contract",
+      "sha256": "b7eca17a5c29dfa869a2f19dbd37c0bd7a13634a1a620317cc9032cbc438f4c0"
+    },
+    {
+      "path": "docs/reviews/nsqd-operator-activation-2026-08-30/operator-g.yaml",
+      "role": "current_operator_g_plan",
+      "sha256": "e5053771a27c593049028aec592c1ea4be01ee71abbd95ca160335b389088870"
+    },
+    {
+      "path": "tests/nsqd/operator_dg_contract_support.py",
+      "role": "synthetic_pending_record_fixture",
+      "sha256": "cd2d66c778e5f8889571760c13152bdb99074c008accc98c479241d53392bb1e"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/measurements.jsonl",
+      "role": "tau_measurement_candidates",
+      "sha256": "0af46ae4aa2404c29b92af375228bcc2e20b3ad816b9bd5fdce4fe3cb9456bf6"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidates.json",
+      "role": "unexecuted_candidate_studies",
+      "sha256": "ac01c344973175e0c3270711403fe5bdb0a80977eb5781717a40cf729ca509f0"
+    },
+    {
+      "path": "docs/reviews/nsqd-tau-calibration-2026-08-29/candidate-hashes.json",
+      "role": "autonomous_label_packet_index",
+      "sha256": "e74e6abeb433eda7e8398a274329c1f7dbcd6374c3c4718af1c69650d1239704"
+    }
+  ],
+  "searched_scopes": [
+    "docs/**/*.{json,jsonl,yaml,yml,toml,md}",
+    "src/**/*.{py,json,jsonl,yaml,yml,toml}",
+    "tests/**/*.{py,json,jsonl,yaml,yml,toml,md}"
+  ],
+  "canonical_contract_application": {
+    "source_class": "registered_experiment_artifact",
+    "required_identity_fields": [
+      "failure_record_id",
+      "domain_policy_id",
+      "experiment_id",
+      "source_class",
+      "immutable_source_artifact_digests"
+    ],
+    "required_original_condition_fields": [
+      "code_revision",
+      "data_snapshot_ids",
+      "configuration_digest",
+      "model_or_method_identity",
+      "started_at_utc",
+      "completed_at_utc"
+    ],
+    "original_conditions_scope": "complete_registered_experiment_conditions_only",
+    "required_outcome_fields": [
+      "failure_class",
+      "bounded_observation",
+      "measured_results",
+      "evidence_artifact_digests"
+    ],
+    "outcome_scope": "measured_failure_evidence_not_absence_of_success",
+    "required_review_fields": [
+      "review_status",
+      "human_reviewer",
+      "human_approved_at_utc",
+      "approved_record_digest"
+    ],
+    "digest_bound_artifacts_required": true,
+    "independent_human_approval_required": true,
+    "measurable_changed_condition_trigger_required": true,
+    "explicit_restart_condition_required": true,
+    "allowed_resurrection_scopes": ["review_only", "test_only"],
+    "approved_record_immutable": true,
+    "approved_record_mutation_rule": "corrections_create_new_record_with_supersession_link",
+    "supersession_link_field": "supersedes_failure_record_id",
+    "decision_separation": {
+      "record_admission": "canonical_contract_validation_only",
+      "operator_g_eligibility": "separate_changed_trigger_and_restart_gate",
+      "packet_inclusion": "separate_independent_human_authorization",
+      "restart_authorization": "separate_human_review_without_runtime_authority"
+    }
+  },
+  "candidate_inventory": [
+    {
+      "candidate_class": "synthetic_operator_g_test_fixture",
+      "observed_count": 1,
+      "qualifying_count": 0,
+      "reason_code": "synthetic_pending_fixture_not_artifact"
+    },
+    {
+      "candidate_class": "tau_calibration_measurement",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "tau_measurement_not_registered_experiment"
+    },
+    {
+      "candidate_class": "unexecuted_candidate_study",
+      "observed_count": 120,
+      "qualifying_count": 0,
+      "reason_code": "unexecuted_study_no_measured_results"
+    },
+    {
+      "candidate_class": "pytest_or_contract_test_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_test_failure_without_experiment_evidence"
+    },
+    {
+      "candidate_class": "job_error",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_job_error_code"
+    },
+    {
+      "candidate_class": "sufficiency_failure",
+      "observed_count": 0,
+      "qualifying_count": 0,
+      "reason_code": "forbidden_sufficiency_failure"
+    }
+  ],
+  "qualifying_approved_record_count": 0,
+  "records": []
+}
