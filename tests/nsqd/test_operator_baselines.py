@@ -27,7 +27,7 @@ from nsqd.domain.tau_measurement import tau_measurement_artifact_digest
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
+PACKET_ROOT = REPO_ROOT / "evidence/archive/reviews/v1/nsqd-jepa-ideas-gaps-2026-09-01"
 
 
 def _json(name: str) -> dict[str, Any]:

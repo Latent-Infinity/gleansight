@@ -10,8 +10,9 @@ import pytest
 import nsqd.domain.operator_baselines as opb
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
-PROJECTION_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-projection-review-2026-08-28" / "final"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
+PACKET_ROOT = REVIEWS_ROOT / "nsqd-jepa-ideas-gaps-2026-09-01"
+PROJECTION_ROOT = REVIEWS_ROOT / "nsqd-projection-review-2026-08-28" / "final"
 
 
 def _json(name: str) -> dict[str, Any]:

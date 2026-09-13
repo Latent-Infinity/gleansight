@@ -8,11 +8,12 @@ import tomllib
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib import request as urllib_request
 
 from nsqd.app.use_cases import DivergeUseCase, GroundUseCase, ProjectPaperUseCase, ScoreUseCase
 from nsqd.composition import build_container, build_local_ollama_embedder
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_baselines import lancedb_tree_digest, verify_scratch_execution_receipt
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.snapshot import canonical_json, sha256_hex
@@ -26,11 +27,20 @@ from nsqd.domain.trusted_files import (
     sha256_file_digest,
 )
 from nsqd.null_adapters import FixedClock
+from nsqd.ports import ParaphraseEmbedder
 from papers.config.settings import load_settings, packaged_defaults_path
 
+if TYPE_CHECKING:
+    from scripts._jepa_baseline_output import fresh_scratch_path, write_replay_bundle
+elif __name__ == "__main__" and not __package__:
+    from _jepa_baseline_output import fresh_scratch_path, write_replay_bundle
+else:
+    from scripts._jepa_baseline_output import fresh_scratch_path, write_replay_bundle
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PACKET_DIR = REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
-PROJECTION_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-projection-review-2026-08-28" / "final"
+PACKET_LOGICAL_ROOT = Path("docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01")
+PACKET_DIR = resolve_artifact_path(REPO_ROOT, PACKET_LOGICAL_ROOT)
+PROJECTION_ROOT = Path("docs/reviews/nsqd-projection-review-2026-08-28/final")
 FIXTURE_ROOT = REPO_ROOT / "tests" / "fixtures" / "approved" / "nsqd"
 APPROVED_ORDER = [
     "DATA-NSQD-03",
@@ -116,7 +126,7 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def _prepare_embedder() -> tuple[object, dict[str, str]]:
+def _prepare_embedder() -> tuple[ParaphraseEmbedder, dict[str, str]]:
     settings = load_settings(defaults_path=packaged_defaults_path(), base_dir=REPO_ROOT)
     embedder = build_local_ollama_embedder(settings.embeddings)
     metadata = _ollama_model_metadata(
@@ -195,11 +205,11 @@ def _project_inputs() -> list[tuple[str, str, dict[str, Any]]]:
         else:
             manifest = final_manifest[record_id]
             path = PROJECTION_ROOT / manifest["path"]
-        relative_path = path.relative_to(REPO_ROOT)
+        relative_path = path.relative_to(REPO_ROOT) if path.is_absolute() else path
         root = (
             FIXTURE_ROOT.relative_to(REPO_ROOT)
             if record_id.startswith("DATA-")
-            else PROJECTION_ROOT.relative_to(REPO_ROOT)
+            else PROJECTION_ROOT
         )
         payload = load_verified_yaml_mapping(
             repo_root=REPO_ROOT,
@@ -211,7 +221,7 @@ def _project_inputs() -> list[tuple[str, str, dict[str, Any]]]:
     return rows
 
 
-def _build_container(scratch_dir: Path, embedder: object):
+def _build_container(scratch_dir: Path, embedder: ParaphraseEmbedder):
     scratch_dir = _guard_scratch_dir(scratch_dir)
     if scratch_dir.exists():
         raise ValueError("scratch_dir must be a fresh non-existent directory")
@@ -462,7 +472,7 @@ def _replay(packet_dir: Path, scratch_dir: Path, *, verify_current_receipt: bool
         for row in baseline[section_name]:
             candidate = deepcopy(row["candidate_artifact"]["candidate"])
             candidate.pop("dval", None)
-            kwargs = {
+            kwargs: dict[str, Any] = {
                 "candidate": candidate,
                 "generator_run_id": str(row["candidate_artifact"]["generator_run_id"]),
                 "axioms": deepcopy(row["candidate_artifact"]["axioms"]),
@@ -540,20 +550,42 @@ def _replay(packet_dir: Path, scratch_dir: Path, *, verify_current_receipt: bool
         "model": model,
         "generated_operator_a": generated_a,
         "generated_operator_b": generated_b,
+        "execution_receipt": local_receipt,
         "receipt_runtime": local_runtime,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--scratch-dir", type=Path)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Replay retained JEPA Operator A/B baselines. Ordinary runs write "
+            "output/jepa-baseline-replay/<UTC-run-id>."
+        )
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="fresh directory below output/ or system temp; default: "
+        "output/jepa-baseline-replay/<UTC-run-id>",
+    )
+    parser.add_argument(
+        "--scratch-dir",
+        type=Path,
+        help="fresh direct child of the system temp root; default: generated automatically",
+    )
     parser.add_argument("--packet-dir", type=Path, default=PACKET_DIR)
     parser.add_argument("--write-generated-json", action="store_true")
     parser.add_argument("--verify-current-receipt", action="store_true")
     args = parser.parse_args()
+    packet_dir = (
+        args.packet_dir
+        if args.packet_dir.is_absolute()
+        else resolve_artifact_path(REPO_ROOT, args.packet_dir)
+    )
 
     if args.verify_current_receipt:
-        current = _load_json(args.packet_dir / "baseline-evidence.json")
+        current = _load_json(packet_dir / "baseline-evidence.json")
         runtime = verify_scratch_execution_receipt(
             current["execution_receipt"],
             scratch_runtime=current["scratch_runtime"],
@@ -570,12 +602,17 @@ def main() -> int:
         )
         return 0
 
-    if args.scratch_dir is None:
-        parser.error("--scratch-dir is required unless --verify-current-receipt is set")
-    result = _replay(args.packet_dir, args.scratch_dir, verify_current_receipt=False)
+    scratch_dir = args.scratch_dir or fresh_scratch_path()
+    result = _replay(packet_dir, scratch_dir, verify_current_receipt=False)
     if args.write_generated_json:
-        output = args.scratch_dir / "replay-summary.json"
+        output = scratch_dir / "replay-summary.json"
         output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_dir = write_replay_bundle(
+        repo_root=REPO_ROOT,
+        output_dir=args.output_dir,
+        scratch_dir=scratch_dir,
+        result=result,
+    )
     print(
         json.dumps(
             {
@@ -583,6 +620,8 @@ def main() -> int:
                 "corpus_version": result["corpus_version"],
                 "operator_a_count": len(result["generated_operator_a"]),
                 "operator_b_count": len(result["generated_operator_b"]),
+                "output_dir": str(output_dir),
+                "scratch_dir": str(scratch_dir),
                 "verified_current_receipt": False,
             },
             sort_keys=True,

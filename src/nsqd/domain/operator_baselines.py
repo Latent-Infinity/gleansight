@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.card import card_decision, missing_card_fields
 from nsqd.domain.diverge import (
     normalize_axiom_rows,
@@ -344,8 +345,10 @@ def _require_baseline_execution(value: Mapping[str, object]) -> dict[str, Any]:
         manifest_rel = _require_safe_repo_relative_path(
             _required_string(manifest, "manifest_path"), expected=expected_path
         )
-        manifest_path = (REPO_ROOT / manifest_rel).resolve(strict=False)
-        expected_manifest_path = (REPO_ROOT / expected_path).resolve(strict=False)
+        manifest_path = resolve_artifact_path(REPO_ROOT, manifest_rel).resolve(strict=False)
+        expected_manifest_path = resolve_artifact_path(REPO_ROOT, expected_path).resolve(
+            strict=False
+        )
         if manifest_path != expected_manifest_path:
             raise ValueError("source_manifests manifest_path is outside the approved root")
         if manifest_path in seen_source_manifests:
@@ -425,8 +428,10 @@ def _require_projection_bindings(value: object) -> dict[str, object]:
         excerpt_rel = _require_safe_repo_relative_path(
             _required_string(binding, "approved_excerpt")
         )
-        manifest_path = (REPO_ROOT / manifest_rel).resolve(strict=False)
-        expected_manifest_path = (REPO_ROOT / expected_manifest_rel).resolve(strict=False)
+        manifest_path = resolve_artifact_path(REPO_ROOT, manifest_rel).resolve(strict=False)
+        expected_manifest_path = resolve_artifact_path(REPO_ROOT, expected_manifest_rel).resolve(
+            strict=False
+        )
         if manifest_path != expected_manifest_path:
             raise ValueError("projection binding manifest_path is outside the approved root")
         manifest_bytes = read_verified_repo_file(
@@ -442,14 +447,14 @@ def _require_projection_bindings(value: object) -> dict[str, object]:
             raise ValueError("manifest row id does not match approved_record_id")
         row_projection_name = _required_string(manifest_row, "path")
         row_excerpt_name = _required_string(manifest_row, "excerpt_path")
-        expected_projection_path = (REPO_ROOT / expected_root_rel / row_projection_name).resolve(
-            strict=False
-        )
-        expected_excerpt_path = (REPO_ROOT / expected_root_rel / row_excerpt_name).resolve(
-            strict=False
-        )
-        projection_path = (REPO_ROOT / projection_rel).resolve(strict=False)
-        excerpt_path = (REPO_ROOT / excerpt_rel).resolve(strict=False)
+        expected_projection_path = resolve_artifact_path(
+            REPO_ROOT, expected_root_rel / row_projection_name
+        ).resolve(strict=False)
+        expected_excerpt_path = resolve_artifact_path(
+            REPO_ROOT, expected_root_rel / row_excerpt_name
+        ).resolve(strict=False)
+        projection_path = resolve_artifact_path(REPO_ROOT, projection_rel).resolve(strict=False)
+        excerpt_path = resolve_artifact_path(REPO_ROOT, excerpt_rel).resolve(strict=False)
         if projection_path != expected_projection_path:
             raise ValueError("projection binding projection_path is outside the approved root")
         if excerpt_path != expected_excerpt_path:
