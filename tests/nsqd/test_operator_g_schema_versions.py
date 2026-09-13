@@ -19,23 +19,25 @@ from nsqd.domain.operator_g_census import (
     RecordLocator,
     classify_failure_record,
 )
-from tests.nsqd.operator_dg_contract_support import operator_g_contract, operator_g_record
+from tests.nsqd.operator_dg_contract_support import operator_g_record
 from tests.nsqd.operator_g_census_support import registered_record
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 V2_CONTRACT_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "reviews"
-    / "nsqd-operator-g-failure-record-contract-2026-09-11-v2"
-    / "failure-record-contract-v2.yaml"
+    REPO_ROOT / "evidence/contracts/nsqd/operator-g/v2/failure-record-contract-v2.yaml"
 )
+V1_CONTRACT_PATH = REPO_ROOT / "evidence/contracts/nsqd/operator-g/v1/failure-record-contract.yaml"
 V1_DIGEST = "094c42fb51da2d52154b5a4ca8c06bc89b7b0d33edd6e75dd99c24e6a7602b60"
 
 
 def _v2_contract() -> dict[str, StructuredInput]:
     loaded: StructuredInput = yaml.safe_load(V2_CONTRACT_PATH.read_text(encoding="utf-8"))
     return contract_validation.as_mapping(loaded, "Operator G v2 contract fixture")
+
+
+def _v1_contract() -> dict[str, StructuredInput]:
+    loaded: StructuredInput = yaml.safe_load(V1_CONTRACT_PATH.read_text(encoding="utf-8"))
+    return contract_validation.as_mapping(loaded, "Operator G v1 contract fixture")
 
 
 @pytest.mark.parametrize("review_status", ["pending", "rejected"])
@@ -47,11 +49,11 @@ def test_shipped_v1_record_remains_readable_digest_stable_and_ineligible(
     assert review is not None
     review["review_status"] = review_status
 
-    validated = validate_operator_g_failure_record(record, contract=operator_g_contract())
+    validated = validate_operator_g_failure_record(record, contract=_v1_contract())
     candidate = classify_failure_record(
         validated,
         locator=RecordLocator("legacy-v1.json#0"),
-        contract=operator_g_contract(),
+        contract=_v1_contract(),
         trusted_approvals=frozenset(),
         trusted_evidence_artifacts=frozenset(),
         available_paths_by_digest={},
@@ -75,7 +77,7 @@ def test_v1_approved_record_cannot_gain_authority() -> None:
     review["approved_record_digest"] = operator_g_failure_record_digest(record)
 
     with pytest.raises(ValueError, match="schema_version"):
-        validate_operator_g_failure_record(record, contract=operator_g_contract())
+        validate_operator_g_failure_record(record, contract=_v1_contract())
 
 
 @pytest.mark.parametrize(
@@ -102,7 +104,7 @@ def test_v1_structural_validation_remains_fail_closed(
     nested[field] = value
 
     with pytest.raises(ValueError, match=message):
-        validate_operator_g_failure_record(record, contract=operator_g_contract())
+        validate_operator_g_failure_record(record, contract=_v1_contract())
 
 
 def test_expanded_v2_record_validates_against_standalone_contract() -> None:

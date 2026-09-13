@@ -7,10 +7,11 @@ from pathlib import Path
 
 import yaml
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_g_types import StructuredValue
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REVIEWS_ROOT = REPO_ROOT / "docs" / "reviews"
+REVIEWS_ROOT = resolve_artifact_path(REPO_ROOT, Path("docs/reviews"))
 C_PREDECESSOR = REVIEWS_ROOT / "nsqd-operator-c-evidence-resolution-2026-09-09"
 C_SUCCESSOR = REVIEWS_ROOT / "nsqd-operator-c-evidence-resolution-2026-09-11-readme-correction"
 F_PREDECESSOR = REVIEWS_ROOT / "nsqd-operator-f-readiness-2026-09-08"
@@ -24,7 +25,11 @@ G_TYPED_SUCCESSOR = (
     REVIEWS_ROOT / "nsqd-operator-g-readiness-census-2026-09-11-typed-contract-cleanup"
 )
 G_CURRENT = REVIEWS_ROOT / "nsqd-operator-g-readiness-census-2026-09-12-schema-closure"
-G_V2_CONTRACT = REVIEWS_ROOT / "nsqd-operator-g-failure-record-contract-2026-09-11-v2"
+G_V2_ARCHIVE = REVIEWS_ROOT / "nsqd-operator-g-failure-record-contract-2026-09-11-v2"
+G_V2_CONTRACT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("evidence/contracts/nsqd/operator-g/v2/failure-record-contract-v2.yaml"),
+)
 DETACHED_TECHNICAL_REVIEW_ARTIFACTS = {
     "technical-review-summary.json",
     "technical-review-seal.json",
@@ -78,7 +83,7 @@ def test_historical_packet_trees_remain_byte_identical() -> None:
         for path in REVIEWS_ROOT.iterdir()
         if path.is_dir()
         and path.name.startswith("nsqd-operator-g-")
-        and path not in {G_CODE_CORRECTION, G_TYPED_SUCCESSOR, G_CURRENT, G_V2_CONTRACT}
+        and path not in {G_CODE_CORRECTION, G_TYPED_SUCCESSOR, G_CURRENT, G_V2_ARCHIVE}
     )
 
     assert _tree_digest(c_directories) == (
@@ -114,7 +119,7 @@ def test_historical_packet_trees_remain_byte_identical() -> None:
 
 
 def test_operator_g_v2_contract_is_verified_outside_historical_packet_tree() -> None:
-    contract_path = G_V2_CONTRACT / "failure-record-contract-v2.yaml"
+    contract_path = G_V2_CONTRACT
     contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
 
     assert isinstance(contract, dict)
@@ -230,7 +235,7 @@ def test_status_successor_preserves_evidence_and_replay_targets_successor() -> N
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert module.RETAINED_SOURCE_DIR == STATUS_PREDECESSOR
-    assert module.OUTPUT_DIR == STATUS_SUCCESSOR
+    assert not hasattr(module, "OUTPUT_DIR")
 
 
 def test_activation_overlay_references_successors_without_g_reverse_binding() -> None:

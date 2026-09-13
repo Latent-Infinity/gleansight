@@ -10,7 +10,7 @@ import yaml
 from nsqd.domain.operator_g_types import StructuredValue
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REVIEWS_ROOT = REPO_ROOT / "docs" / "reviews"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
 F_SUCCESSOR = REVIEWS_ROOT / "nsqd-operator-f-readiness-2026-09-12-implementation-binding"
 ACTIVATION_SUCCESSOR = REVIEWS_ROOT / "nsqd-operator-activation-2026-09-12-pointer-sync"
 AUTHORITY_CLARIFICATION = (

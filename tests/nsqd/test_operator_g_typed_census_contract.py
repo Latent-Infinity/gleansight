@@ -14,7 +14,7 @@ from nsqd.domain.operator_g_census import (
     classify_failure_record,
 )
 from nsqd.domain.operator_g_readiness import readiness_source_bindings
-from nsqd.infrastructure.operator_g_census_files import OUTPUT_DIRECTORIES
+from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT, DEFAULT_SCOPE
 from tests.nsqd.operator_g_census_support import census_contract
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -104,7 +104,5 @@ def test_readiness_source_bindings_cover_exact_operator_g_release_surface() -> N
     }
 
 
-def test_contract_closure_is_the_only_exact_output_exclusion() -> None:
-    assert OUTPUT_DIRECTORIES == frozenset(
-        {"docs/reviews/nsqd-operator-g-readiness-census-2026-09-12-schema-closure"}
-    )
+def test_default_scope_is_the_canonical_admitted_inventory() -> None:
+    assert DEFAULT_SCOPE.roots == (APPROVED_INPUT_ROOT,)

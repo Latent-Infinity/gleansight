@@ -25,9 +25,10 @@ from nsqd.domain.operator_g_evidence import TrustedOperatorGEvidenceArtifact
 from nsqd.domain.operator_g_types import StructuredValue
 from nsqd.infrastructure.operator_g_census_files import (
     DEFAULT_LIMITS,
-    ROOTS,
+    DEFAULT_SCOPE,
     STRUCTURED_SUFFIXES,
     CensusLimits,
+    CensusScope,
     ScannedFile,
     discover,
     read_trusted_evidence_paths,
@@ -40,7 +41,7 @@ from nsqd.infrastructure.operator_g_census_formats import (
     record_candidates,
 )
 
-ALGORITHM_VERSION: Final = "operator-g-evidence-census/v4"
+ALGORITHM_VERSION: Final = "operator-g-evidence-census/v5"
 SYNTHETIC_FIXTURE: Final = "tests/nsqd/operator_dg_contract_support.py"
 
 
@@ -51,9 +52,10 @@ def census_operator_g_evidence(
     trusted_approvals: frozenset[TrustedOperatorApproval] = frozenset(),
     trusted_evidence_artifacts: frozenset[TrustedOperatorGEvidenceArtifact] = frozenset(),
     limits: CensusLimits = DEFAULT_LIMITS,
+    scope: CensusScope = DEFAULT_SCOPE,
 ) -> OperatorGCensus:
     configuration = CensusConfiguration(
-        ROOTS,
+        scope.roots,
         tuple(sorted(STRUCTURED_SUFFIXES)),
         limits.max_files,
         limits.max_file_bytes,
@@ -61,11 +63,12 @@ def census_operator_g_evidence(
         limits.max_depth,
         limits.max_structured_depth,
     )
-    files, issues = discover(repository_root, limits)
+    files, issues = discover(repository_root, limits, scope)
     available_paths_by_digest = read_trusted_evidence_paths(
         repository_root,
         (artifact.path for artifact in trusted_evidence_artifacts),
         limits,
+        scope,
     )
     candidates: list[CandidateEvidence] = []
     for file in files:

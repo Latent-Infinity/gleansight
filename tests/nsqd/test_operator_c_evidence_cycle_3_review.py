@@ -8,8 +8,9 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ACTIVATION_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
-EVIDENCE_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-2026-09-07"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
+ACTIVATION_ROOT = REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30"
+EVIDENCE_ROOT = REVIEWS_ROOT / "nsqd-operator-c-evidence-2026-09-07"
 PACKET_DIGEST = "8eb17c52eaa85cc35618a7008db1c1603f351f3cc4333821994c17d468021d18"
 type JsonScalar = None | bool | int | float | str
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]

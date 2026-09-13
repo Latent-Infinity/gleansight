@@ -9,7 +9,7 @@ from typing import Final
 from nsqd.domain.operator_g_types import StructuredValue
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-REVIEWS_ROOT: Final = REPO_ROOT / "docs" / "reviews"
+REVIEWS_ROOT: Final = REPO_ROOT / "evidence/archive/reviews/v1"
 REVIEWED_AT: Final = "2026-09-12T02:17:15Z"
 REVIEWER: Final[dict[str, StructuredValue]] = {
     "identity": "Oracle / independent technical reviewer",

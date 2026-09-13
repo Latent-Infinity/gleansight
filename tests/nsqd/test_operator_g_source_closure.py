@@ -11,22 +11,8 @@ from tests.nsqd.operator_g_census_support import census_contract, initialize_rep
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
 REQUIRED_ARTIFACTS: Final = {
-    "docs/reviews/nsqd-operator-g-failure-record-contract-2026-09-11-v2/"
-    "failure-record-contract-v2.yaml",
-    "docs/reviews/nsqd-operator-g-readiness-census-2026-09-11-typed-contract-cleanup/"
-    "packet-manifest.json",
-    "docs/reviews/nsqd-operator-g-readiness-census-2026-09-11-typed-contract-cleanup/"
-    "technical-review-summary.json",
-    "docs/reviews/nsqd-operator-g-readiness-census-2026-09-11-typed-contract-cleanup/"
-    "technical-review-seal.json",
-    "docs/reviews/nsqd-operator-f-readiness-2026-09-12-implementation-binding/packet-manifest.json",
-    "docs/reviews/nsqd-operator-f-readiness-2026-09-12-implementation-binding/"
-    "technical-review-summary.json",
-    "docs/reviews/nsqd-operator-f-readiness-2026-09-12-implementation-binding/"
-    "technical-review-seal.json",
-    "docs/reviews/nsqd-operator-activation-2026-09-12-pointer-sync/packet-manifest.json",
-    "docs/reviews/nsqd-operator-activation-2026-09-12-pointer-sync/technical-review-summary.json",
-    "docs/reviews/nsqd-operator-activation-2026-09-12-pointer-sync/technical-review-seal.json",
+    "evidence/contracts/nsqd/operator-g/v1/failure-record-contract.yaml",
+    "evidence/contracts/nsqd/operator-g/v2/failure-record-contract-v2.yaml",
 }
 
 
@@ -91,10 +77,11 @@ def test_g_source_bindings_cover_transitive_local_import_closure() -> None:
     assert bound_paths == _transitive_local_import_closure(bound_paths)
 
 
-def test_g_source_bindings_cover_current_contract_and_reviewed_upstream_artifacts() -> None:
+def test_g_source_bindings_cover_canonical_contracts_without_generated_reports() -> None:
     bound_paths = {binding.path for binding in readiness_source_bindings(REPO_ROOT)}
 
     assert REQUIRED_ARTIFACTS <= bound_paths
+    assert not any(path.startswith("docs/") or path.startswith("output/") for path in bound_paths)
 
 
 def test_out_of_scope_and_agent_state_are_ignored(tmp_path: Path) -> None:

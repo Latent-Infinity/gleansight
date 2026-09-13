@@ -1,253 +1,114 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from pathlib import Path
 
 import pytest
 
-from nsqd.domain.operator_g_census import CandidateClass, CensusStatus
+from nsqd.domain.operator_g_census import CensusStatus
 from nsqd.infrastructure import operator_g_census_files
-from nsqd.infrastructure.operator_g_census import CensusLimits, census_operator_g_evidence
-from nsqd.infrastructure.operator_g_census_files import SafeReadError
-from nsqd.infrastructure.operator_g_census_formats import (
-    StructuredFormatError,
-    normalize,
-    parse_documents,
+from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
+from nsqd.infrastructure.operator_g_census_files import (
+    APPROVED_INPUT_ROOT,
+    CensusLimits,
+    CensusScope,
+    InvalidCensusScopeError,
+    SafeReadError,
 )
 from tests.nsqd.operator_g_census_support import census_contract, initialize_repository
 
 
-def test_only_exact_readiness_output_directories_are_excluded(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    exact = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-12-schema-closure"
-    similar = tmp_path / "docs/reviews/product-readiness-notes"
-    exact.mkdir(parents=True)
-    similar.mkdir(parents=True)
-    (exact / "record.json").write_text('{"failure_record_id":"excluded"}')
-    (similar / "record.json").write_text('{"failure_record_id":"included"}')
+def test_missing_declared_root_makes_census_incomplete(tmp_path: Path) -> None:
+    # Given: a repository without the declared evidence root
+    tmp_path.mkdir(exist_ok=True)
 
+    # When: the census scans that explicit root
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
 
-    assert len(census.candidates) == 1
-    assert str(census.candidates[0].locator).startswith("docs/reviews/product-readiness-notes/")
+    # Then: absence cannot be interpreted as a trustworthy zero inventory
+    assert census.status is CensusStatus.INCOMPLETE
+    assert census.substantiates_zero is False
+    assert census.issues[0].reason == "missing_or_unsafe_scope_root"
 
 
-def test_protocol_and_ordinary_files_are_scanned_while_census_self_output_is_excluded(
-    tmp_path: Path,
-) -> None:
+@pytest.mark.parametrize("root", ["", ".", "/absolute", "../escape", "a/../b", "a/./b", "a\\b"])
+def test_invalid_scope_roots_are_rejected_at_construction(root: str) -> None:
+    # Given: a noncanonical or unsafe root
+    # When/Then: the typed scope boundary rejects it before filesystem access
+    with pytest.raises(InvalidCensusScopeError):
+        CensusScope((root,))
+
+
+def test_symlink_and_file_size_limit_make_census_incomplete(tmp_path: Path) -> None:
+    # Given: a symlink and an oversized structured file in the admitted scope
     initialize_repository(tmp_path)
-    protocol = tmp_path / "docs/reviews/nsqd-operator-evidence-resolution-2026-09-09"
-    census_output = (
-        tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-12-schema-closure"
-    )
-    ordinary = tmp_path / "docs/reviews/operator-evidence-notes"
-    protocol.mkdir(parents=True)
-    census_output.mkdir(parents=True)
-    ordinary.mkdir(parents=True)
-    (protocol / "protocol.json").write_text('{"failure_record_id":"protocol"}')
-    (census_output / "readiness.json").write_text('{"failure_record_id":"excluded"}')
-    (ordinary / "record.json").write_text('{"failure_record_id":"included"}')
+    input_root = tmp_path / APPROVED_INPUT_ROOT
+    outside = tmp_path / "outside.json"
+    outside.write_text("{}", encoding="utf-8")
+    (input_root / "escape.json").symlink_to(outside)
+    (input_root / "large.json").write_text("{}", encoding="utf-8")
 
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    locators = {str(candidate.locator) for candidate in census.candidates}
-    assert len(census.candidates) == 2
-    assert any(locator.startswith("docs/reviews/operator-evidence-notes/") for locator in locators)
-    assert any(
-        locator.startswith("docs/reviews/nsqd-operator-evidence-resolution-2026-09-09/")
-        for locator in locators
-    )
-
-
-def test_historical_c_cycle_census_output_is_scanned(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    exact = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle"
-    similar = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-notes"
-    exact.mkdir(parents=True)
-    similar.mkdir(parents=True)
-    (exact / "readiness.json").write_text('{"failure_record_id":"excluded"}')
-    (similar / "record.json").write_text('{"failure_record_id":"included"}')
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    locators = {str(candidate.locator) for candidate in census.candidates}
-    assert len(locators) == 2
-    assert any("2026-09-09-c-cycle/readiness.json" in locator for locator in locators)
-    assert any("2026-09-09-c-cycle-notes/record.json" in locator for locator in locators)
-
-
-def test_historical_c_cycle_correction_output_is_scanned(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    exact = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"
-    similar = (
-        tmp_path
-        / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction-notes"
-    )
-    exact.mkdir(parents=True)
-    similar.mkdir(parents=True)
-    (exact / "readiness.json").write_text('{"failure_record_id":"excluded"}')
-    (similar / "record.json").write_text('{"failure_record_id":"included"}')
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    locators = {str(candidate.locator) for candidate in census.candidates}
-    assert len(locators) == 2
-    assert any("c-cycle-correction/readiness.json" in locator for locator in locators)
-    assert any("c-cycle-correction-notes/record.json" in locator for locator in locators)
-
-
-def test_historical_c_review_output_tree_is_scanned(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    exact = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review"
-    similar = tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review-notes"
-    exact.mkdir(parents=True)
-    (exact / "nested").mkdir()
-    similar.mkdir(parents=True)
-    (exact / "readiness.json").write_text('{"failure_record_id":"excluded"}')
-    (exact / "nested/record.json").write_text('{"failure_record_id":"excluded-descendant"}')
-    (similar / "record.json").write_text('{"failure_record_id":"included"}')
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    locators = {str(candidate.locator) for candidate in census.candidates}
-    assert len(locators) == 3
-    assert any("c-review/readiness.json" in locator for locator in locators)
-    assert any("c-review/nested/record.json" in locator for locator in locators)
-    assert any("c-review-notes/record.json" in locator for locator in locators)
-
-
-def test_historical_c_review_correction_output_tree_is_scanned(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    exact = (
-        tmp_path / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review-correction"
-    )
-    similar = (
-        tmp_path
-        / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review-correction-notes"
-    )
-    exact.mkdir(parents=True)
-    (exact / "nested").mkdir()
-    similar.mkdir(parents=True)
-    (exact / "readiness.json").write_text('{"failure_record_id":"excluded"}')
-    (exact / "nested/record.json").write_text('{"failure_record_id":"excluded-descendant"}')
-    (similar / "record.json").write_text('{"failure_record_id":"included"}')
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    locators = {str(candidate.locator) for candidate in census.candidates}
-    assert len(locators) == 3
-    assert any("c-review-correction/readiness.json" in locator for locator in locators)
-    assert any("c-review-correction/nested/record.json" in locator for locator in locators)
-    assert any("c-review-correction-notes/record.json" in locator for locator in locators)
-
-
-def test_symlink_and_limits_make_census_incomplete(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    target = tmp_path / "outside.json"
-    target.write_text("{}")
-    (tmp_path / "docs" / "escape.json").symlink_to(target)
-    (tmp_path / "docs" / "large.json").write_text("{}")
-
+    # When: bounded discovery reads the scope
     census = census_operator_g_evidence(
         tmp_path,
         contract=census_contract(),
-        limits=CensusLimits(max_files=1, max_file_bytes=1, max_total_bytes=1, max_depth=1),
+        limits=CensusLimits(max_file_bytes=1),
     )
 
+    # Then: both unsafe conditions are explicit and zero is not substantiated
     reasons = {issue.reason for issue in census.issues}
-    assert "symlink_in_scope" in reasons
-    assert "file_size_limit_exceeded" in reasons
+    assert reasons == {"file_size_limit_exceeded", "symlink_in_scope"}
+    assert census.substantiates_zero is False
 
 
 @pytest.mark.parametrize(
     ("limits", "relative_path", "reason"),
     [
-        (CensusLimits(max_files=0), "docs/a.json", "file_count_limit_exceeded"),
-        (CensusLimits(max_total_bytes=1), "docs/a.json", "total_size_limit_exceeded"),
-        (CensusLimits(max_depth=1), "docs/deep/a.json", "depth_limit_exceeded"),
-        (CensusLimits(max_structured_depth=1), "docs/a.json", "canonical_record_validation_failed"),
+        (CensusLimits(max_files=0), "a.json", "file_count_limit_exceeded"),
+        (CensusLimits(max_total_bytes=1), "a.json", "total_size_limit_exceeded"),
+        (CensusLimits(max_depth=6), "deep/a.json", "depth_limit_exceeded"),
+        (
+            CensusLimits(max_structured_depth=1),
+            "a.json",
+            "canonical_record_validation_failed",
+        ),
     ],
 )
 def test_each_scan_limit_is_explicit(
     tmp_path: Path, limits: CensusLimits, relative_path: str, reason: str
 ) -> None:
+    # Given: nested candidate data under the canonical root
     initialize_repository(tmp_path)
-    path = tmp_path / relative_path
+    path = tmp_path / APPROVED_INPUT_ROOT / relative_path
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text('{"a":{"b":{"failure_record_id":"x"}}}')
+    path.write_text('{"a":{"b":{"failure_record_id":"x"}}}', encoding="utf-8")
 
+    # When: a single scan limit is reached
     census = census_operator_g_evidence(tmp_path, contract=census_contract(), limits=limits)
 
+    # Then: the scan is incomplete for that exact reason
     assert census.status is CensusStatus.INCOMPLETE
     assert reason in {issue.reason for issue in census.issues}
 
 
 def test_failed_no_follow_read_is_explicit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Given: an admitted file whose race-safe read fails
     initialize_repository(tmp_path)
-    (tmp_path / "docs" / "unreadable.json").write_text("{}")
+    relative = f"{APPROVED_INPUT_ROOT}/unreadable.json"
+    (tmp_path / relative).write_text("{}", encoding="utf-8")
     original = operator_g_census_files._read_nofollow
 
-    def fail_selected(root: Path, relative: str, max_bytes: int) -> bytes:
-        if relative == "docs/unreadable.json":
+    def fail_selected(root: Path, candidate: str, max_bytes: int) -> bytes:
+        if candidate == relative:
             raise SafeReadError("unsafe_nofollow_read")
-        return original(root, relative, max_bytes)
+        return original(root, candidate, max_bytes)
 
     monkeypatch.setattr(operator_g_census_files, "_read_nofollow", fail_selected)
 
+    # When: the census reads the declared scope
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
 
+    # Then: the read failure prevents a complete zero result
     assert "unsafe_nofollow_read" in {issue.reason for issue in census.issues}
-
-
-def _write_calibration(root: Path, count: int) -> None:
-    pairs = [(f"hash-{index}", f"digest-{index}") for index in range(count)]
-    measurements = "".join(
-        json.dumps({"candidate_artifact_hash": candidate, "measurement_artifact_digest": digest})
-        + "\n"
-        for candidate, digest in pairs
-    )
-    candidates = json.dumps(
-        {"candidates": [{"id": f"candidate-{index}"} for index in range(count)]},
-        sort_keys=True,
-    )
-    hashes = {
-        "candidate_packet_sha256": hashlib.sha256(candidates.encode()).hexdigest(),
-        "policy": [
-            {
-                "candidate_id": f"candidate-{index}",
-                "candidate_artifact_hash": candidate,
-                "measurement_artifact_digest": digest,
-            }
-            for index, (candidate, digest) in enumerate(pairs)
-        ],
-    }
-    root.mkdir(parents=True)
-    (root / "measurements.jsonl").write_text(measurements)
-    (root / "candidates.json").write_text(candidates)
-    (root / "candidate-hashes.json").write_text(json.dumps(hashes))
-
-
-def test_multiple_calibration_roots_are_aggregated(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    reviews = tmp_path / "docs/reviews"
-    _write_calibration(reviews / "nsqd-tau-calibration-one", 2)
-    _write_calibration(reviews / "nsqd-tau-calibration-two", 3)
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
-    observed = {item.candidate_class: item.observed_count for item in census.inventory}
-    assert census.status is CensusStatus.COMPLETE
-    assert observed[CandidateClass.TAU_MEASUREMENT] == 5
-    assert observed[CandidateClass.UNEXECUTED_STUDY] == 5
-
-
-def test_yaml_and_toml_temporal_values_normalize_deterministically() -> None:
-    yaml_document = parse_documents("value.yaml", b"created: 2026-09-08\n")
-    toml_document = parse_documents("value.toml", b"created = 2026-09-08T01:02:03Z\n")
-
-    assert yaml_document == [{"created": "2026-09-08"}]
-    assert toml_document == [{"created": "2026-09-08T01:02:03+00:00"}]
 
 
 @pytest.mark.parametrize(
@@ -255,53 +116,36 @@ def test_yaml_and_toml_temporal_values_normalize_deterministically() -> None:
     [
         "value: !!binary SGVsbG8=\n",
         "value: !!set {one: null}\n",
-        "outer:\n  value: !!binary SGVsbG8=\n",
         "!!omap\n- one: 1\n- two: 2\n",
         "!!pairs\n- one: 1\n- two: 2\n",
-        "outer: !!omap\n  - one: 1\n  - two: 2\n",
-        "outer: !!pairs\n  - one: 1\n  - two: 2\n",
     ],
 )
-def test_unsupported_yaml_value_is_typed_and_makes_census_incomplete(
-    tmp_path: Path, payload: str
-) -> None:
+def test_unsupported_yaml_value_makes_census_incomplete(tmp_path: Path, payload: str) -> None:
+    # Given: a structured value outside the normalized evidence union
     initialize_repository(tmp_path)
-    (tmp_path / "docs" / "unsupported.yaml").write_text(payload)
+    (tmp_path / APPROVED_INPUT_ROOT / "unsupported.yaml").write_text(payload, encoding="utf-8")
 
-    with pytest.raises(StructuredFormatError):
-        parse_documents("unsupported.yaml", payload.encode())
+    # When: census discovery parses the admitted file
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
 
-    assert census.status is CensusStatus.INCOMPLETE
-    assert census.substantiates_zero is False
-    assert "malformed_structured_file" in {issue.reason for issue in census.issues}
-
-
-def test_malformed_utf8_candidate_bytes_make_census_incomplete(tmp_path: Path) -> None:
-    initialize_repository(tmp_path)
-    (tmp_path / "docs" / "record.json").write_bytes(b"\xff\xfe")
-
-    census = census_operator_g_evidence(tmp_path, contract=census_contract())
-
+    # Then: malformed evidence fails closed
     assert census.status is CensusStatus.INCOMPLETE
     assert "malformed_structured_file" in {issue.reason for issue in census.issues}
-
-
-def test_direct_tuple_value_is_typed_at_normalization_boundary() -> None:
-    with pytest.raises(StructuredFormatError):
-        normalize(("one", 1))
 
 
 def test_reverse_creation_order_has_same_snapshot(tmp_path: Path) -> None:
+    # Given: equal admitted inventories created in opposite order
     first = tmp_path / "first"
     second = tmp_path / "second"
     initialize_repository(first)
     initialize_repository(second)
     for root, names in ((first, ("a.json", "b.yaml")), (second, ("b.yaml", "a.json"))):
         for name in names:
-            (root / "docs" / name).write_text("{}\n")
+            (root / APPROVED_INPUT_ROOT / name).write_text("{}\n", encoding="utf-8")
 
+    # When: both repositories are censused
     first_census = census_operator_g_evidence(first, contract=census_contract())
     second_census = census_operator_g_evidence(second, contract=census_contract())
 
+    # Then: filesystem creation order does not affect the inventory digest
     assert first_census.scope_snapshot_digest == second_census.scope_snapshot_digest

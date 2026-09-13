@@ -14,14 +14,12 @@ from tests.nsqd.operator_f_pilot_support import (
 )
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-READINESS_PATH: Final = (
-    REPO_ROOT / "docs/reviews/nsqd-operator-f-readiness-2026-09-08/readiness.json"
-)
+REVIEWS_ROOT: Final = REPO_ROOT / "evidence/archive/reviews/v1"
+READINESS_PATH: Final = REVIEWS_ROOT / "nsqd-operator-f-readiness-2026-09-08/readiness.json"
 PILOT_PATH: Final = (
-    REPO_ROOT
-    / "docs/reviews/nsqd-operator-activation-2026-08-30/operator-f-validation-target-pilot.json"
+    REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30/operator-f-validation-target-pilot.json"
 )
-PROJECTION_ROOT: Final = REPO_ROOT / "docs/reviews/nsqd-projection-review-2026-08-28/final"
+PROJECTION_ROOT: Final = REVIEWS_ROOT / "nsqd-projection-review-2026-08-28/final"
 READINESS_SHA256: Final = "a1af10fcccd421aa2491ca6d75fba6bf29c127585bf7031adc367b4dc4c511dd"
 
 

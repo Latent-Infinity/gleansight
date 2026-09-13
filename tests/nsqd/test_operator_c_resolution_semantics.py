@@ -10,7 +10,7 @@ from tests.nsqd.operator_c_resolution_test_support import TamperCase, _tampered_
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
 REJECTED_PACKET_ROOT: Final = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-2026-09-09-resolution"
+    REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-c-evidence-2026-09-09-resolution"
 )
 REJECTED_ARTIFACT_SHA256: Final = {
     "README.md": "34d5d5391ddaf0afbe4c7a6ae1973b7fc91620a496e95e03096635ad2f28cd0c",

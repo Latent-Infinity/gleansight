@@ -22,8 +22,10 @@ from nsqd.domain.operator_f import (
 
 CONTRACT_PATH = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / "evidence"
+    / "archive"
     / "reviews"
+    / "v1"
     / "nsqd-operator-activation-2026-08-30"
     / "axis-candidate-contract.yaml"
 )

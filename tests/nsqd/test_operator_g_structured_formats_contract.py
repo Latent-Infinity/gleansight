@@ -10,6 +10,7 @@ import pytest
 from nsqd.domain.operator_g_census import CensusStatus
 from nsqd.domain.operator_g_types import StructuredValue
 from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
+from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from nsqd.infrastructure.operator_g_census_formats import (
     CalibrationFile,
     StructuredFormatError,
@@ -223,7 +224,7 @@ def test_calibration_counts_and_reconciliation_remain_stable() -> None:
 def test_structured_rejection_keeps_census_incomplete(tmp_path: Path) -> None:
     # Given: a YAML value the normalized union rejects
     initialize_repository(tmp_path)
-    (tmp_path / "docs" / "unsupported.yaml").write_text("value: !!binary SGVsbG8=\n")
+    (tmp_path / APPROVED_INPUT_ROOT / "unsupported.yaml").write_text("value: !!binary SGVsbG8=\n")
     # When: the census scans the repository
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
     # Then: malformed structured input still fails the census closed

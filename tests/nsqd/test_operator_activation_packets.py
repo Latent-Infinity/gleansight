@@ -11,9 +11,10 @@ from nsqd.domain.diverge import operator_decisions
 from nsqd.domain.snapshot import is_utc_datetime
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
-DOCS_ROOT = PACKET_ROOT.parents[1]
+DOCS_ROOT = Path(__file__).resolve().parents[2] / "docs"
 PACKET_IDS = ("c", "d", "e", "f", "g")
 
 

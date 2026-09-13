@@ -16,6 +16,7 @@ from nsqd.domain.operator_g_evidence import (
     TrustedOperatorGEvidenceArtifact,
 )
 from nsqd.infrastructure.operator_g_census import CensusLimits, census_operator_g_evidence
+from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from tests.nsqd.operator_g_census_support import (
     approved_record,
     census_contract,
@@ -56,7 +57,7 @@ def test_wrong_or_partial_evidence_role_registry_does_not_qualify(tmp_path: Path
         trusted_evidence_artifacts(
             digest, roles=(OperatorGEvidenceRole.IMMUTABLE_SOURCE_ARTIFACT,)
         ),
-        trusted_evidence_artifacts(digest, path="docs/wrong.json"),
+        trusted_evidence_artifacts(digest, path=f"{APPROVED_INPUT_ROOT}/wrong.json"),
         trusted_evidence_artifacts("0" * 64),
     )
 
@@ -95,7 +96,7 @@ def test_exact_trusted_unstructured_evidence_bytes_qualify(tmp_path: Path, suffi
     # Given: approved structured metadata bound to exact trusted unstructured bytes
     initialize_repository(tmp_path)
     content = b"\x00\xfftrusted-evidence\n"
-    evidence_path = f"docs/evidence{suffix}"
+    evidence_path = f"{APPROVED_INPUT_ROOT}/evidence{suffix}"
     (tmp_path / evidence_path).write_bytes(content)
     digest = hashlib.sha256(content).hexdigest()
     record = approved_record(digest)
@@ -123,7 +124,7 @@ def test_unsafe_trusted_unstructured_evidence_fails_closed(
     initialize_repository(tmp_path)
     trusted_content = b"trusted-binary-evidence"
     digest = hashlib.sha256(trusted_content).hexdigest()
-    evidence_path = "docs/evidence.bin"
+    evidence_path = f"{APPROVED_INPUT_ROOT}/evidence.bin"
     match failure:
         case "missing":
             pass
@@ -167,7 +168,11 @@ def test_submitted_trusted_evidence_metadata_is_not_promoted(tmp_path: Path) -> 
     submitted = {
         "record": record,
         "trusted_evidence_artifacts": [
-            {"role": role.value, "path": "docs/evidence.json", "sha256": digest}
+            {
+                "role": role.value,
+                "path": f"{APPROVED_INPUT_ROOT}/evidence.json",
+                "sha256": digest,
+            }
             for role in OperatorGEvidenceRole
         ],
     }
@@ -188,7 +193,7 @@ def test_symlinked_trusted_evidence_does_not_qualify(tmp_path: Path) -> None:
     outside = tmp_path / "outside.json"
     outside.write_bytes(b"{}\n")
     digest = hashlib.sha256(outside.read_bytes()).hexdigest()
-    (tmp_path / "docs" / "evidence.json").symlink_to(outside)
+    (tmp_path / APPROVED_INPUT_ROOT / "evidence.json").symlink_to(outside)
     record = approved_record(digest)
     write_record(tmp_path, record)
 

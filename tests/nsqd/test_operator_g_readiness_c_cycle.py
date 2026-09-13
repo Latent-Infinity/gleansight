@@ -5,13 +5,18 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_g_census import StructuredValue
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = (
-    REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"
+PACKET_ROOT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"),
 )
-PREDECESSOR_ROOT = REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle"
+PREDECESSOR_ROOT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle"),
+)
 PREDECESSOR_MANIFEST = "../nsqd-operator-g-readiness-census-2026-09-09-c-cycle/packet-manifest.json"
 PREDECESSOR_DIGEST = "d984bab7ad819fdfd45031d840900b9f0bb74241ae319f5473fe4bb5d3272bad"
 C_CYCLE_MANIFEST = (
@@ -95,10 +100,9 @@ def test_c_cycle_source_bindings_preserve_corrected_c_trigger() -> None:
         assert len(digest) == 64
 
     assert observed_roles[C_CYCLE_MANIFEST] == "operator_c_cycle_trigger"
-    assert hashlib.sha256((REPO_ROOT / C_CYCLE_MANIFEST).read_bytes()).hexdigest() == (
-        C_CYCLE_MANIFEST_SHA256
-    )
-    assert _json(REPO_ROOT / C_CYCLE_MANIFEST)["packet_digest"] == C_CYCLE_PACKET_DIGEST
+    physical_manifest = resolve_artifact_path(REPO_ROOT, Path(C_CYCLE_MANIFEST))
+    assert hashlib.sha256(physical_manifest.read_bytes()).hexdigest() == (C_CYCLE_MANIFEST_SHA256)
+    assert _json(physical_manifest)["packet_digest"] == C_CYCLE_PACKET_DIGEST
 
 
 def test_c_cycle_manifest_replays_deterministically() -> None:

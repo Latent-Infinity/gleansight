@@ -18,12 +18,15 @@ from nsqd.domain.operator_e import (
 from nsqd.domain.snapshot import canonical_json, sha256_hex
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 PROJECTION_ROOT = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / "evidence"
+    / "archive"
     / "reviews"
+    / "v1"
     / "nsqd-projection-review-2026-08-28"
     / "final"
 )
@@ -31,7 +34,8 @@ APPROVED_NSQD_ROOT = (
     Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "approved" / "nsqd"
 )
 JEPA_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-jepa-ideas-gaps-2026-09-01"
 )
 DIGEST = "a" * 64
 RESULTS_DIGEST = "b" * 64

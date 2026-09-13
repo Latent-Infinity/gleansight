@@ -8,16 +8,14 @@ from nsqd.domain import contract_validation
 from nsqd.domain.contract_validation import StructuredInput
 
 D_PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 D_CONTRACT_PATH = D_PACKET_ROOT / "analogical-transport-contract.yaml"
 G_CONTRACT_PATH = D_PACKET_ROOT / "failure-record-contract.yaml"
 G_V2_CONTRACT_PATH = (
     Path(__file__).resolve().parents[2]
-    / "docs"
-    / "reviews"
-    / "nsqd-operator-g-failure-record-contract-2026-09-11-v2"
-    / "failure-record-contract-v2.yaml"
+    / "evidence/contracts/nsqd/operator-g/v2/failure-record-contract-v2.yaml"
 )
 
 

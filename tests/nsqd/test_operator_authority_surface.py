@@ -8,10 +8,10 @@ from typing import Any
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DOCS_ROOT = REPO_ROOT / "docs"
-PACKET_ROOT = DOCS_ROOT / "reviews" / "nsqd-operator-activation-2026-08-30"
-FOLLOWUP_ROOT = DOCS_ROOT / "reviews" / "nsqd-operator-c-evidence-2026-09-08"
-RESOLUTION_ROOT = DOCS_ROOT / "reviews" / "nsqd-operator-c-evidence-resolution-2026-09-09"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
+PACKET_ROOT = REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30"
+FOLLOWUP_ROOT = REVIEWS_ROOT / "nsqd-operator-c-evidence-2026-09-08"
+RESOLUTION_ROOT = REVIEWS_ROOT / "nsqd-operator-c-evidence-resolution-2026-09-09"
 
 
 def _load_operator_c() -> dict[str, Any]:

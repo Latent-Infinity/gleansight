@@ -11,12 +11,15 @@ from nsqd.domain.novelty import NOVELTY_THRESHOLD_TAU
 from nsqd.domain.operator_e import bind_operator_e_inventory
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 PROJECTION_ROOT = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / "evidence"
+    / "archive"
     / "reviews"
+    / "v1"
     / "nsqd-projection-review-2026-08-28"
     / "final"
 )

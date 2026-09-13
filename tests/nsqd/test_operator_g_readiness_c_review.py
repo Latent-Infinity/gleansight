@@ -6,12 +6,16 @@ from pathlib import Path
 
 import yaml
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_g_census import StructuredValue
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review"
-PREDECESSOR_ROOT = (
-    REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"
+PACKET_ROOT = resolve_artifact_path(
+    REPO_ROOT, Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review")
+)
+PREDECESSOR_ROOT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"),
 )
 PREDECESSOR_MANIFEST = (
     "../nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction/packet-manifest.json"
@@ -37,9 +41,10 @@ def _json(path: Path) -> dict[str, StructuredValue]:
 
 def test_operator_c_authority_binds_confirmed_negative_review_separately() -> None:
     packet = yaml.safe_load(
-        (REPO_ROOT / "docs/reviews/nsqd-operator-activation-2026-08-30/operator-c.yaml").read_text(
-            encoding="utf-8"
-        )
+        resolve_artifact_path(
+            REPO_ROOT,
+            Path("docs/reviews/nsqd-operator-activation-2026-08-30/operator-c.yaml"),
+        ).read_text(encoding="utf-8")
     )
 
     assert packet["latest_evidence_packet_digest"] == C_PACKET_DIGEST

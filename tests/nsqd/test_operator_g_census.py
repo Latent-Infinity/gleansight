@@ -11,6 +11,7 @@ from nsqd.domain.operator_g import (
 )
 from nsqd.domain.operator_g_census import CandidateClass, CensusStatus, ReasonCode
 from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
+from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from tests.nsqd.operator_g_census_support import (
     approved_record,
     census_contract,
@@ -25,14 +26,14 @@ from tests.nsqd.operator_g_census_support import (
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_real_repository_census_replays_exact_inventory() -> None:
+def test_real_repository_census_has_canonical_empty_admitted_inventory() -> None:
     census = census_operator_g_evidence(REPO_ROOT, contract=census_contract())
 
     assert census.status is CensusStatus.COMPLETE
-    assert census.scope_file_count == 354
+    assert census.scope_file_count == 0
     assert (
         census.scope_snapshot_digest
-        == "b930b81be31ebdad3e9007c6b96963939dc73915da6a896f8914ba9e3b2abbb4"
+        == "5bf616b287e543198411e45b09fe1a9b0815a274b81781d6c44a4192daf6d0fb"
     )
     assert census.trusted_approval_count == 0
     assert census.trusted_evidence_artifact_count == 0
@@ -41,10 +42,7 @@ def test_real_repository_census_replays_exact_inventory() -> None:
     assert observed == {
         CandidateClass.JOB_ERROR: 0,
         CandidateClass.SUFFICIENCY_FAILURE: 0,
-        CandidateClass.SYNTHETIC_FIXTURE: 1,
-        CandidateClass.TAU_MEASUREMENT: 120,
         CandidateClass.TEST_FAILURE: 0,
-        CandidateClass.UNEXECUTED_STUDY: 120,
     }
 
 
@@ -72,7 +70,7 @@ def test_incomplete_scan_cannot_retain_a_qualifying_record_digest(tmp_path: Path
     evidence_digest = write_evidence(tmp_path)
     record = approved_record(evidence_digest)
     write_record(tmp_path, record)
-    (tmp_path / "docs" / "malformed.json").write_bytes(b"\xff\xfe")
+    (tmp_path / APPROVED_INPUT_ROOT / "malformed.json").write_bytes(b"\xff\xfe")
 
     # When: the repository evidence census scans the incomplete scope
     census = census_operator_g_evidence(
@@ -105,7 +103,7 @@ def test_untrusted_or_missing_evidence_cannot_substantiate_zero(
     record = approved_record(evidence_digest)
     write_record(tmp_path, record)
     if remove_evidence:
-        (tmp_path / "docs" / "evidence.json").unlink()
+        (tmp_path / APPROVED_INPUT_ROOT / "evidence.json").unlink()
     approvals = frozenset({trusted_approval(record)}) if trust else frozenset()
     evidence_trust = trusted_evidence_artifacts(evidence_digest) if trust else frozenset()
 
@@ -149,7 +147,9 @@ def test_forbidden_and_malformed_candidates_fail_closed(tmp_path: Path) -> None:
     forbidden = approved_record(write_evidence(tmp_path))
     forbidden["source_class"] = "job_error_code"
     write_record(tmp_path, forbidden, "forbidden.json")
-    (tmp_path / "docs" / "malformed.json").write_text('{"failure_record_id":', encoding="utf-8")
+    (tmp_path / APPROVED_INPUT_ROOT / "malformed.json").write_text(
+        '{"failure_record_id":', encoding="utf-8"
+    )
 
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
 
@@ -185,11 +185,12 @@ def test_every_forbidden_record_class_is_nonqualifying(tmp_path: Path, source_cl
 def test_supported_formats_and_nested_locators_are_sorted(tmp_path: Path) -> None:
     initialize_repository(tmp_path)
     payload = {"outer": [{"failure_record_id": "pending"}]}
-    (tmp_path / "docs" / "d.yaml").write_text("outer:\n  - failure_record_id: pending\n")
-    (tmp_path / "docs" / "c.yml").write_text("outer:\n  - failure_record_id: pending\n")
-    (tmp_path / "docs" / "b.jsonl").write_text(json.dumps(payload) + "\n")
-    (tmp_path / "docs" / "a.json").write_text(json.dumps(payload))
-    (tmp_path / "docs" / "e.toml").write_text('failure_record_id = "pending"\n')
+    input_root = tmp_path / APPROVED_INPUT_ROOT
+    (input_root / "d.yaml").write_text("outer:\n  - failure_record_id: pending\n")
+    (input_root / "c.yml").write_text("outer:\n  - failure_record_id: pending\n")
+    (input_root / "b.jsonl").write_text(json.dumps(payload) + "\n")
+    (input_root / "a.json").write_text(json.dumps(payload))
+    (input_root / "e.toml").write_text('failure_record_id = "pending"\n')
 
     census = census_operator_g_evidence(tmp_path, contract=census_contract())
 

@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
+
 type JsonScalar = None | bool | int | float | str
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 type JsonMapping = dict[str, JsonValue]
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-REVIEWS_ROOT: Final = REPO_ROOT / "docs" / "reviews"
+REVIEWS_ROOT: Final = resolve_artifact_path(REPO_ROOT, Path("docs/reviews"))
 SUMMARY_NAME: Final = "technical-review-summary.json"
 SEAL_NAME: Final = "technical-review-seal.json"
 REVIEWED_AT: Final = "2026-09-11T18:46:01Z"

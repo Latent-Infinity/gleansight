@@ -10,14 +10,41 @@ from typing import Final
 
 from nsqd.domain.operator_g_census import CensusIssue
 
-ROOTS: Final = ("docs", "src", "tests")
+APPROVED_INPUT_ROOT: Final = "evidence/approved/nsqd/operator-g/failure-records/v1"
 STRUCTURED_SUFFIXES: Final = (".json", ".jsonl", ".toml", ".yaml", ".yml")
 SYNTHETIC_FIXTURE: Final = "tests/nsqd/operator_dg_contract_support.py"
-OUTPUT_DIRECTORIES: Final = frozenset(
-    {
-        "docs/reviews/nsqd-operator-g-readiness-census-2026-09-12-schema-closure",
-    }
-)
+
+
+@dataclass(frozen=True, slots=True)
+class InvalidCensusScopeError(ValueError):
+    root: str
+
+    def __str__(self) -> str:
+        return f"census scope root must be canonical and repository-relative: {self.root}"
+
+
+@dataclass(frozen=True, slots=True)
+class CensusScope:
+    roots: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.roots:
+            raise InvalidCensusScopeError("")
+        for root in self.roots:
+            path = PurePosixPath(root)
+            if (
+                not root
+                or not path.parts
+                or root != path.as_posix()
+                or path.is_absolute()
+                or "\\" in root
+                or any(part in {"", ".", ".."} for part in path.parts)
+            ):
+                raise InvalidCensusScopeError(root)
+
+
+DEFAULT_SCOPE: Final = CensusScope((APPROVED_INPUT_ROOT,))
+LEGACY_REPOSITORY_SCOPE: Final = CensusScope(("docs", "src", "tests"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +74,9 @@ class SafeReadError(Exception):
 DEFAULT_LIMITS: Final = CensusLimits()
 
 
-def discover(root: Path, limits: CensusLimits) -> tuple[list[ScannedFile], list[CensusIssue]]:
+def discover(
+    root: Path, limits: CensusLimits, scope: CensusScope = DEFAULT_SCOPE
+) -> tuple[list[ScannedFile], list[CensusIssue]]:
     files: list[ScannedFile] = []
     issues: list[CensusIssue] = []
     total_bytes = 0
@@ -55,10 +84,10 @@ def discover(root: Path, limits: CensusLimits) -> tuple[list[ScannedFile], list[
         return [], [CensusIssue(".", "unsafe_repository_root")]
     if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
         return [], [CensusIssue(".", "no_follow_reads_unsupported")]
-    for scope in ROOTS:
-        scope_path = root / scope
+    for scope_root in scope.roots:
+        scope_path = root / scope_root
         if scope_path.is_symlink() or not scope_path.is_dir():
-            issues.append(CensusIssue(scope, "missing_or_unsafe_scope_root"))
+            issues.append(CensusIssue(scope_root, "missing_or_unsafe_scope_root"))
             continue
         for relative in _walk(scope_path, root, limits.max_depth, issues):
             if not _eligible(relative):
@@ -81,7 +110,10 @@ def discover(root: Path, limits: CensusLimits) -> tuple[list[ScannedFile], list[
 
 
 def read_trusted_evidence_paths(
-    root: Path, paths: Iterable[str], limits: CensusLimits
+    root: Path,
+    paths: Iterable[str],
+    limits: CensusLimits,
+    scope: CensusScope = DEFAULT_SCOPE,
 ) -> Mapping[str, frozenset[str]]:
     if (
         root.is_symlink()
@@ -97,9 +129,8 @@ def read_trusted_evidence_paths(
         if (
             index >= limits.max_files
             or not path.parts
-            or path.parts[0] not in ROOTS
+            or not _in_scope(path, scope)
             or len(path.parts) - 1 > limits.max_depth
-            or _excluded(relative)
         ):
             continue
         try:
@@ -152,8 +183,13 @@ def _excluded(relative: str) -> bool:
         ".pytest_cache",
         ".ruff_cache",
     }
-    return bool(set(parts) & excluded_parts) or any(
-        relative == output or relative.startswith(f"{output}/") for output in OUTPUT_DIRECTORIES
+    return bool(set(parts) & excluded_parts)
+
+
+def _in_scope(path: PurePosixPath, scope: CensusScope) -> bool:
+    return any(
+        path.parts[: len(PurePosixPath(root).parts)] == PurePosixPath(root).parts
+        for root in scope.roots
     )
 
 

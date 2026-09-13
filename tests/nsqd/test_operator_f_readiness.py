@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from tests.nsqd.operator_f_pilot_support import (
     HISTORICAL_RESULT_DIGEST,
     HISTORICAL_RESULT_SHA256,
@@ -16,7 +17,7 @@ from tests.nsqd.operator_f_pilot_support import (
 from tests.nsqd.operator_readiness_expectations import EXPECTED_F_PROTOCOL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-f-readiness-2026-09-08"
+PACKET_ROOT = REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-f-readiness-2026-09-08"
 EXPECTED_SOURCE_PATHS = {
     "docs/reviews/nsqd-operator-activation-2026-08-30/operator-f.yaml",
     "docs/reviews/nsqd-operator-activation-2026-08-30/axis-candidate-contract.yaml",
@@ -96,7 +97,8 @@ def _validate_packet(packet_root: Path) -> dict[str, object]:
         digest = binding["sha256"]
         assert isinstance(path, str)
         assert isinstance(digest, str) and len(digest) == 64
-        assert hashlib.sha256((REPO_ROOT / path).read_bytes()).hexdigest() == digest
+        physical_path = resolve_artifact_path(REPO_ROOT, Path(path))
+        assert hashlib.sha256(physical_path.read_bytes()).hexdigest() == digest
 
     inventory = _mapping(packet["inventory"])
     assert set(inventory) == {

@@ -4,16 +4,21 @@ import hashlib
 import json
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_g_census import StructuredValue
 from nsqd.domain.operator_g_readiness import project_zero_readiness, readiness_source_bindings
 from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
 from tests.nsqd.operator_g_census_support import census_contract
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = (
-    REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review-correction"
+PACKET_ROOT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review-correction"),
 )
-PREDECESSOR_ROOT = REPO_ROOT / "docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review"
+PREDECESSOR_ROOT = resolve_artifact_path(
+    REPO_ROOT,
+    Path("docs/reviews/nsqd-operator-g-readiness-census-2026-09-09-c-review"),
+)
 PREDECESSOR_MANIFEST = (
     "../nsqd-operator-g-readiness-census-2026-09-09-c-review/packet-manifest.json"
 )
@@ -44,7 +49,7 @@ def test_c_review_correction_is_stale_but_live_census_remains_complete_zero() ->
     assert isinstance(historical_scope_file_count, int)
     assert historical_scope_file_count == 294
     assert packet_census["scope_snapshot_digest"] == SNAPSHOT_DIGEST
-    assert census.scope_file_count > historical_scope_file_count
+    assert census.scope_file_count == 0
     assert census.scope_snapshot_digest != SNAPSHOT_DIGEST
     assert census.trusted_approval_count == 0
     assert census.trusted_evidence_artifact_count == 0

@@ -20,7 +20,7 @@ from tests.nsqd.operator_c_followup_support import (
 )
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-PACKET_ROOT: Final = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-2026-09-08"
+PACKET_ROOT: Final = REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-c-evidence-2026-09-08"
 CORE_ARTIFACT_NAMES: Final = {
     "README.md",
     "acquisition-receipts.json",

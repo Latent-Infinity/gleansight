@@ -13,7 +13,8 @@ from nsqd.domain.operator_f import (
 )
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 PROPOSAL_PATH = PACKET_ROOT / "axis-candidate-proposal-validation-target.yaml"
 JEPA_RESULTS_PATH = PACKET_ROOT.parent / "nsqd-jepa-ideas-gaps-2026-09-01" / "results.json"

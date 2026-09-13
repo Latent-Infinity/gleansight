@@ -11,8 +11,7 @@ from nsqd.domain.operator_g import (
     validate_operator_g_failure_record,
 )
 from nsqd.domain.operator_g_census import StructuredValue
-from tests.nsqd.operator_dg_contract_support import operator_g_contract_v2
-from tests.nsqd.operator_g_census_support import registered_record
+from tests.nsqd.operator_g_census_support import census_contract, registered_record
 
 
 def test_existing_valid_record_remains_report_only_and_ineligible() -> None:
@@ -20,7 +19,7 @@ def test_existing_valid_record_remains_report_only_and_ineligible() -> None:
     record = registered_record()
 
     # When: it crosses the record-validation boundary
-    validated = validate_operator_g_failure_record(record, contract=operator_g_contract_v2())
+    validated = validate_operator_g_failure_record(record, contract=census_contract())
 
     # Then: technical validity grants neither eligibility nor authority
     assert validated["authorization_state"] == "report_only"
@@ -85,7 +84,7 @@ def test_frozen_record_field_deletion_fails_closed(path: tuple[str, ...]) -> Non
 
     # When/Then: validation rejects the incomplete record
     with pytest.raises(ValueError):
-        validate_operator_g_failure_record(record, contract=operator_g_contract_v2())
+        validate_operator_g_failure_record(record, contract=census_contract())
 
 
 @pytest.mark.parametrize(
@@ -112,7 +111,7 @@ def test_frozen_record_field_malformed_value_fails_closed(
 
     # When/Then: validation rejects it
     with pytest.raises(ValueError):
-        validate_operator_g_failure_record(record, contract=operator_g_contract_v2())
+        validate_operator_g_failure_record(record, contract=census_contract())
 
 
 @pytest.mark.parametrize(
@@ -144,7 +143,7 @@ def test_reviewer_identity_and_session_must_each_differ_from_producer(
     # When/Then: either collision rejects approval
     with pytest.raises(ValueError, match="independent"):
         validate_operator_g_failure_record(
-            record, contract=operator_g_contract_v2(), trusted_approvals=frozenset({trusted})
+            record, contract=census_contract(), trusted_approvals=frozenset({trusted})
         )
 
 
@@ -165,7 +164,7 @@ def test_external_approval_requires_exact_session_and_scope_binding(field: str) 
     # When/Then: tuple substitution cannot satisfy exact external trust
     with pytest.raises(ValueError, match="trusted approval"):
         validate_operator_g_failure_record(
-            record, contract=operator_g_contract_v2(), trusted_approvals=frozenset({stale})
+            record, contract=census_contract(), trusted_approvals=frozenset({stale})
         )
 
 
@@ -188,7 +187,7 @@ def test_registration_digest_and_approval_digest_are_independent_bindings() -> N
     # When/Then: stale pre-execution registration still rejects
     with pytest.raises(ValueError, match="registration_digest"):
         validate_operator_g_failure_record(
-            record, contract=operator_g_contract_v2(), trusted_approvals=frozenset({trusted})
+            record, contract=census_contract(), trusted_approvals=frozenset({trusted})
         )
 
 
@@ -211,7 +210,7 @@ def test_approval_must_follow_execution_completion() -> None:
     # When/Then: execution and review UTC ordering rejects it
     with pytest.raises(ValueError, match="approval.*completion"):
         validate_operator_g_failure_record(
-            record, contract=operator_g_contract_v2(), trusted_approvals=frozenset({trusted})
+            record, contract=census_contract(), trusted_approvals=frozenset({trusted})
         )
 
 

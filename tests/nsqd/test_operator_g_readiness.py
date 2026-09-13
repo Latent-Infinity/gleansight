@@ -5,6 +5,7 @@ import json
 import shutil
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_g_census import StructuredValue
 from nsqd.domain.operator_g_readiness import readiness_source_bindings, sealed_zero_matches
 from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
@@ -19,31 +20,21 @@ from tests.nsqd.operator_g_census_support import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKET_ROOT = (
-    REPO_ROOT
-    / "docs"
-    / "reviews"
-    / "nsqd-operator-g-readiness-census-2026-09-09-c-review-correction"
+
+
+def _historical_root(name: str) -> Path:
+    return resolve_artifact_path(REPO_ROOT, Path(f"docs/reviews/{name}"))
+
+
+PACKET_ROOT = _historical_root("nsqd-operator-g-readiness-census-2026-09-09-c-review-correction")
+CURRENT_PREDECESSOR_ROOT = _historical_root("nsqd-operator-g-readiness-census-2026-09-09-c-review")
+CORRECTION_PREDECESSOR_ROOT = _historical_root(
+    "nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"
 )
-CURRENT_PREDECESSOR_ROOT = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-g-readiness-census-2026-09-09-c-review"
-)
-CORRECTION_PREDECESSOR_ROOT = (
-    REPO_ROOT
-    / "docs"
-    / "reviews"
-    / "nsqd-operator-g-readiness-census-2026-09-09-c-cycle-correction"
-)
-CYCLE_PREDECESSOR_ROOT = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-g-readiness-census-2026-09-09-c-cycle"
-)
-PROTOCOL_PREDECESSOR_ROOT = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-g-readiness-census-2026-09-09-protocol"
-)
-CENSUS_PREDECESSOR_ROOT = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-g-readiness-census-2026-09-08"
-)
-ORIGINAL_PREDECESSOR_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-g-readiness-2026-09-08"
+CYCLE_PREDECESSOR_ROOT = _historical_root("nsqd-operator-g-readiness-census-2026-09-09-c-cycle")
+PROTOCOL_PREDECESSOR_ROOT = _historical_root("nsqd-operator-g-readiness-census-2026-09-09-protocol")
+CENSUS_PREDECESSOR_ROOT = _historical_root("nsqd-operator-g-readiness-census-2026-09-08")
+ORIGINAL_PREDECESSOR_ROOT = _historical_root("nsqd-operator-g-readiness-2026-09-08")
 ORIGINAL_PREDECESSOR_DIGEST = "d1e6ef13c8d8f366228a02f92e1848854e9e9d20baff6ff2fb81842e28561be0"
 CENSUS_PREDECESSOR_DIGEST = "96e13bb1c2a183b4e797ea1309f0b2f0d4659a05778d0151a4045b44e23c4ee2"
 PROTOCOL_PREDECESSOR_DIGEST = "47fa35d858a186a9b1c416cfe7c1003d177aa2c91d72ebd7c5e20d80810efcb8"

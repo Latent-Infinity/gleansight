@@ -36,6 +36,15 @@ from tests.nsqd.test_operator_a import AS_OF, MISSING, _finance_statuses
 
 ENABLED_OPERATORS = frozenset({"A", "E"})
 SNAPSHOT_ID = "8" * 64
+OPERATOR_E_OVERRIDE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "evidence"
+    / "archive"
+    / "reviews"
+    / "v1"
+    / "nsqd-operator-activation-2026-08-30"
+    / "operator-e.override.toml"
+)
 MISSING_DESCRIPTOR = {
     "mechanism": "behavioral",
     "target": "returns",
@@ -394,17 +403,10 @@ def test_container_defaults_omit_e_and_config_can_add_e(tmp_path: Path) -> None:
 
 
 def test_committed_override_explicitly_enables_operator_e() -> None:
-    override_path = (
-        Path(__file__).resolve().parents[2]
-        / "docs"
-        / "reviews"
-        / "nsqd-operator-activation-2026-08-30"
-        / "operator-e.override.toml"
-    )
     defaults = load_settings(defaults_path=packaged_defaults_path())
     configured = load_settings(
         defaults_path=packaged_defaults_path(),
-        override_path=override_path,
+        override_path=OPERATOR_E_OVERRIDE_PATH,
     )
     assert enabled_operators_from_settings(defaults) == frozenset({"A"})
     assert enabled_operators_from_settings(configured) == ENABLED_OPERATORS
@@ -414,17 +416,10 @@ def test_committed_override_explicitly_enables_operator_e() -> None:
 
 
 def test_committed_override_runs_operator_e_through_real_composition(tmp_path: Path) -> None:
-    override_path = (
-        Path(__file__).resolve().parents[2]
-        / "docs"
-        / "reviews"
-        / "nsqd-operator-activation-2026-08-30"
-        / "operator-e.override.toml"
-    )
     container = _container(
         tmp_path / "nsqd.sqlite",
         tmp_path / "corpus.lancedb",
-        config=override_path,
+        config=OPERATOR_E_OVERRIDE_PATH,
     )
     assert container.ctx.enabled_operators == ENABLED_OPERATORS
     result = handle_diverge(container.ctx, _operator_e_job())

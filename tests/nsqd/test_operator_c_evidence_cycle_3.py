@@ -16,7 +16,7 @@ from tests.nsqd.operator_c_evidence_cycle_3_support import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-2026-09-07"
+EVIDENCE_ROOT = REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-c-evidence-2026-09-07"
 type JsonScalar = None | bool | int | float | str
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 

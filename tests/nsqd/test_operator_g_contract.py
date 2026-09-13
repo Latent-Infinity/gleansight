@@ -6,15 +6,13 @@ from typing import cast
 
 import pytest
 
-from nsqd.domain.contract_validation import StructuredInput
 from nsqd.domain.operator_g import (
     operator_g_failure_record_digest,
     validate_operator_g_failure_contract,
     validate_operator_g_failure_record,
 )
-from tests.nsqd.operator_dg_contract_support import (
-    operator_g_contract_v2 as _contract,
-)
+from nsqd.domain.operator_g_types import StructuredValue
+from tests.nsqd.operator_g_census_support import census_contract as _contract
 from tests.nsqd.operator_g_census_support import registered_record as _record
 
 
@@ -56,7 +54,7 @@ def test_operator_g_failure_record_requires_evidence_bound_changed_conditions() 
 )
 def test_operator_g_failure_record_rejects_unsafe_or_incomplete_rows(
     field: str,
-    value: StructuredInput,
+    value: StructuredValue,
     message: str,
 ) -> None:
     record = _record_value()
@@ -85,7 +83,7 @@ def test_operator_g_failure_record_rejects_invented_or_self_approved_failure() -
 )
 def test_operator_g_failure_contract_rejects_drift(
     field: str,
-    value: StructuredInput,
+    value: StructuredValue,
     message: str,
 ) -> None:
     contract = _contract()
@@ -132,7 +130,7 @@ def test_operator_g_rejects_caller_mutated_canonical_failure_classes(mutation: s
 
 @pytest.mark.parametrize("schema_version", [0, 3, True, 1.0, "1"])
 def test_operator_g_contract_and_record_require_integer_schema_version(
-    schema_version: StructuredInput,
+    schema_version: StructuredValue,
 ) -> None:
     contract = _contract()
     contract["schema_version"] = schema_version

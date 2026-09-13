@@ -39,6 +39,10 @@ def project_zero_readiness(
     census_value["scope_snapshot_digest"] = census.scope_snapshot_digest
     census_value["scope_file_count"] = census.scope_file_count
     census_value["repository_roots"] = list(configuration.roots)
+    census_value["input_scope"] = {
+        "kind": "versioned_evidence_roots",
+        "roots": list(configuration.roots),
+    }
     census_value["structured_extensions"] = [
         suffix.removeprefix(".") for suffix in configuration.structured_suffixes
     ]

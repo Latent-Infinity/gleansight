@@ -16,12 +16,15 @@ from nsqd.domain.operator_e import (
 )
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 PROJECTION_ROOT = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / "evidence"
+    / "archive"
     / "reviews"
+    / "v1"
     / "nsqd-projection-review-2026-08-28"
     / "final"
 )
@@ -29,7 +32,8 @@ APPROVED_NSQD_ROOT = (
     Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "approved" / "nsqd"
 )
 JEPA_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-jepa-ideas-gaps-2026-09-01"
 )
 BROADER_NAME = "operator-e-broader-prior-art.json"
 SOURCE_CANDIDATE_SHA256 = "c2fee6a3a925dd8c55812c533b588972bd98ee036ed13481ac6a573b362f3783"

@@ -9,7 +9,7 @@ import yaml
 from nsqd.domain.operator_g_types import StructuredValue
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REVIEWS_ROOT = REPO_ROOT / "docs" / "reviews"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
 PREDECESSOR = REVIEWS_ROOT / "nsqd-operator-activation-2026-09-11-remediation"
 CLARIFICATION = REVIEWS_ROOT / "nsqd-operator-activation-2026-09-11-authority-clarification"
 HISTORICAL_ACTIVATION = REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30"

@@ -12,7 +12,7 @@ type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
 PACKET_ROOT: Final = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-resolution-2026-09-09"
+    REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-c-evidence-resolution-2026-09-09"
 )
 PROTOCOL_CUTOFF: Final = "2026-09-09T15:11:38Z"
 QUERY_COMPLETION: Final = "2026-09-09T20:27:38Z"

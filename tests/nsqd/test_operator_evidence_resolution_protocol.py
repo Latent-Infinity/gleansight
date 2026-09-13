@@ -12,7 +12,9 @@ from pydantic import ValidationError
 from tests.nsqd.operator_evidence_resolution_protocol_support import validate_packet
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-PACKET_ROOT: Final = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-evidence-resolution-2026-09-09"
+PACKET_ROOT: Final = (
+    REPO_ROOT / "evidence/archive/reviews/v1/nsqd-operator-evidence-resolution-2026-09-09"
+)
 REMEDIATION_FREEZE_UTC: Final = "2026-09-09T15:11:38Z"
 PROTOCOL_SHA256: Final = "e1a800081299c89a39fda4f1f0cab08260e888add305d2609163051ad437f742"
 PACKET_DIGEST: Final = "460986b339301e9012d56d34e5dca93bcfa30493d23b60317b9e992f9a5dc69c"

@@ -9,13 +9,13 @@ from typing import Any, Final
 import yaml
 
 import nsqd.domain.operator_f_pilot as operator_f
+from nsqd.domain.artifact_paths import resolve_artifact_path
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[2]
-PACKET_ROOT: Final = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
-PROJECTION_ROOT: Final = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-projection-review-2026-08-28" / "final"
-)
-JEPA_ROOT: Final = REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
+REVIEWS_ROOT: Final = REPO_ROOT / "evidence" / "archive" / "reviews" / "v1"
+PACKET_ROOT: Final = REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30"
+PROJECTION_ROOT: Final = REVIEWS_ROOT / "nsqd-projection-review-2026-08-28" / "final"
+JEPA_ROOT: Final = REVIEWS_ROOT / "nsqd-jepa-ideas-gaps-2026-09-01"
 POLICY_PATH: Final = (
     REPO_ROOT / "tests" / "fixtures" / "approved" / "nsqd" / "policies" / "finance-1.toml"
 )
@@ -140,7 +140,7 @@ def _load_json(path: Path) -> dict[str, Any]:
 def historical_operator_f_inputs() -> operator_f.OperatorFPilotInputs:
     """Build trusted pilot inputs from independently pinned approved sources."""
     for relative_path, expected_hash in _PINNED_SOURCE_HASHES.items():
-        assert _sha256(REPO_ROOT / relative_path) == expected_hash
+        assert _sha256(resolve_artifact_path(REPO_ROOT, Path(relative_path))) == expected_hash
 
     proposal = _load_yaml(PACKET_ROOT / "axis-candidate-proposal-validation-target.yaml")
     manifest = tomllib.loads((PROJECTION_ROOT / "manifest.toml").read_text(encoding="utf-8"))
@@ -202,7 +202,9 @@ def historical_operator_f_inputs() -> operator_f.OperatorFPilotInputs:
         for index in range(1, 6)
     )
     source_artifacts = tuple(
-        operator_f.OperatorFSourceArtifact(path=path, sha256=_sha256(REPO_ROOT / path))
+        operator_f.OperatorFSourceArtifact(
+            path=path, sha256=_sha256(resolve_artifact_path(REPO_ROOT, Path(path)))
+        )
         for path in (*source_paths[:-1], *projection_paths, source_paths[-1:][0])
     )
     return operator_f.OperatorFPilotInputs(

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 
 import nsqd.domain.operator_f_pilot as operator_f
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from tests.nsqd.operator_f_pilot_support import (
     HISTORICAL_RESULT_DIGEST,
     HISTORICAL_RESULT_SHA256,
@@ -173,7 +175,7 @@ def test_committed_pilot_binds_every_source_byte_and_preserves_non_authority() -
 
     # Then every declared source digest matches disk and no authority is inferred
     for binding in result.source_artifacts:
-        source_path = REPO_ROOT / binding.path
+        source_path = resolve_artifact_path(REPO_ROOT, Path(binding.path))
         assert hashlib.sha256(source_path.read_bytes()).hexdigest() == binding.sha256
     assert result.proposal_id == "F-PROP-001"
     assert result.source_snapshot_id == SNAPSHOT_ID

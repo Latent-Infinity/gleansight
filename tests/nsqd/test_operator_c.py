@@ -10,12 +10,15 @@ from nsqd.domain.diverge import require_operator
 from nsqd.domain.operator_c import bind_operator_c_pair, classify_source_paper_id
 
 PACKET_ROOT = (
-    Path(__file__).resolve().parents[2] / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
+    Path(__file__).resolve().parents[2]
+    / "evidence/archive/reviews/v1/nsqd-operator-activation-2026-08-30"
 )
 PROJECTION_ROOT = (
     Path(__file__).resolve().parents[2]
-    / "docs"
+    / "evidence"
+    / "archive"
     / "reviews"
+    / "v1"
     / "nsqd-projection-review-2026-08-28"
     / "final"
 )

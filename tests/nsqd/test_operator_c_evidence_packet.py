@@ -8,8 +8,9 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ACTIVATION_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-activation-2026-08-30"
-EVIDENCE_ROOT = REPO_ROOT / "docs" / "reviews" / "nsqd-operator-c-evidence-2026-08-31"
+REVIEWS_ROOT = REPO_ROOT / "evidence/archive/reviews/v1"
+ACTIVATION_ROOT = REVIEWS_ROOT / "nsqd-operator-activation-2026-08-30"
+EVIDENCE_ROOT = REVIEWS_ROOT / "nsqd-operator-c-evidence-2026-08-31"
 
 
 def _json(path: Path) -> dict[str, object]:

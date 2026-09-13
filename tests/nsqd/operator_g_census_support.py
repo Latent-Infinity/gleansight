@@ -6,6 +6,8 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 
+import yaml
+
 from nsqd.domain.operator_approval import OperatorApprovalKind, TrustedOperatorApproval
 from nsqd.domain.operator_g import (
     operator_g_failure_record_digest,
@@ -16,8 +18,14 @@ from nsqd.domain.operator_g_evidence import (
     OperatorGEvidenceRole,
     TrustedOperatorGEvidenceArtifact,
 )
+from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from nsqd.infrastructure.operator_g_census_formats import normalize
-from tests.nsqd.operator_dg_contract_support import operator_g_contract_v2, operator_g_record
+from tests.nsqd.operator_dg_contract_support import operator_g_record
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+V2_CONTRACT_PATH = (
+    REPOSITORY_ROOT / "evidence/contracts/nsqd/operator-g/v2/failure-record-contract-v2.yaml"
+)
 
 
 def registered_record() -> dict[str, StructuredValue]:
@@ -77,18 +85,21 @@ def registered_record() -> dict[str, StructuredValue]:
 
 
 def initialize_repository(root: Path) -> None:
-    for scope in ("docs", "src", "tests"):
-        (root / scope).mkdir(parents=True)
+    (root / APPROVED_INPUT_ROOT).mkdir(parents=True)
+    for legacy_root in ("docs", "src", "tests"):
+        (root / legacy_root).mkdir()
 
 
-def write_evidence(root: Path, content: bytes = b"{}\n") -> str:
+def write_evidence(
+    root: Path, content: bytes = b"{}\n", *, input_root: str = APPROVED_INPUT_ROOT
+) -> str:
     digest = hashlib.sha256(content).hexdigest()
-    (root / "docs" / "evidence.json").write_bytes(content)
+    (root / input_root / "evidence.json").write_bytes(content)
     return digest
 
 
 def census_contract() -> dict[str, StructuredValue]:
-    contract = normalize(json.loads(json.dumps(operator_g_contract_v2())))
+    contract = normalize(yaml.safe_load(V2_CONTRACT_PATH.read_text(encoding="utf-8")))
     assert isinstance(contract, dict)
     return contract
 
@@ -148,16 +159,20 @@ def trusted_approval(record: Mapping[str, StructuredValue]) -> TrustedOperatorAp
 def trusted_evidence_artifacts(
     digest: str,
     *,
-    path: str = "docs/evidence.json",
+    path: str = f"{APPROVED_INPUT_ROOT}/evidence.json",
     roles: tuple[OperatorGEvidenceRole, ...] = tuple(OperatorGEvidenceRole),
 ) -> frozenset[TrustedOperatorGEvidenceArtifact]:
     return frozenset(TrustedOperatorGEvidenceArtifact(role, path, digest) for role in roles)
 
 
 def write_record(
-    root: Path, record: Mapping[str, StructuredValue], name: str = "record.json"
+    root: Path,
+    record: Mapping[str, StructuredValue],
+    name: str = "record.json",
+    *,
+    input_root: str = APPROVED_INPUT_ROOT,
 ) -> Path:
-    path = root / "docs" / name
+    path = root / input_root / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
     return path
