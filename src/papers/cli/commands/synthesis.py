@@ -14,6 +14,11 @@ def ask(
     project: str | None = typer.Option(None, help="Scope to a specific project ID"),
     num_docs: int = typer.Option(5, help="Number of documents to retrieve for context"),
     model: str = typer.Option("gpt-4o-mini", help="LLM model to use"),
+    investigation_plan: bool = typer.Option(
+        False,
+        "--investigation-plan",
+        help="Produce a validated replication-first investigation plan",
+    ),
 ) -> None:
     container = cli_app.get_container()
     try:
@@ -22,13 +27,14 @@ def ask(
             project_id=project,
             num_retrieved_docs=num_docs,
             llm_model=model,
+            investigation_plan=investigation_plan,
         )
     except Exception as exc:
         cli_app.console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
     cli_app.console.print()
-    cli_app.console.print(answer)
+    cli_app.console.print(answer, markup=not investigation_plan)
 
     if sources:
         cli_app.console.print()

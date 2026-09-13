@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -20,6 +22,9 @@ from papers.app.ports import (
     VectorIndex,
 )
 from papers.app.use_cases.synthesis import SynthesizeFromCorpusUseCase
+from papers.domain.errors import OutputValidationFailed
+from papers.domain.investigation_plan import InvestigationPlan, SourceReference
+from tests.investigation_plan_test_data import valid_investigation_plan_payload
 
 # --- Fake Implementations of Protocols ---
 
@@ -374,3 +379,156 @@ class TestSynthesizeFromCorpusUseCase:
             use_case.synthesize(self.question)
 
         assert len(setup_mocks["llm_client"].calls) == 1  # LLM was called before error
+
+    def test_investigation_plan_mode_validates_and_renders_structured_response(
+        self, setup_mocks, monkeypatch
+    ) -> None:
+        captured_sources: list[tuple[SourceReference, ...]] = []
+
+        def capture_prompt(
+            question: str,
+            context: str,
+            sources: Sequence[SourceReference],
+        ) -> str:
+            captured_sources.append(tuple(sources))
+            return "structured-plan-prompt"
+
+        monkeypatch.setattr(
+            "papers.app.use_cases.synthesis.build_investigation_plan_prompt",
+            capture_prompt,
+        )
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        setup_mocks["llm_client"].response_text = json.dumps(
+            valid_investigation_plan_payload(self.question)
+        )
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        report, sources = use_case.synthesize(self.question, investigation_plan=True)
+
+        llm_call = setup_mocks["llm_client"].calls[0]
+        assert llm_call["profile"]["chat_options"]["response_format"]["type"] == "json_schema"
+        assert llm_call["prompt"] == "structured-plan-prompt"
+        assert captured_sources == [
+            (
+                SourceReference(
+                    paper_id="paper-1",
+                    title="Paper 1 on Stochastic Optimization",
+                ),
+            )
+        ]
+        schema = llm_call["profile"]["chat_options"]["response_format"]["json_schema"]["schema"]
+        assert schema == InvestigationPlan.model_json_schema()
+        assert "## Baseline Replication" in report
+        assert sources == [{"paper_id": "paper-1", "title": "Paper 1 on Stochastic Optimization"}]
+
+    @pytest.mark.parametrize(
+        ("strategy", "comparison_scope"),
+        [
+            ("constrained_reproduction", "no_direct_comparison"),
+            ("conceptual_reimplementation", "mechanism_only"),
+        ],
+    )
+    def test_investigation_plan_mode_rejects_unknown_substitution(
+        self,
+        setup_mocks,
+        strategy: str,
+        comparison_scope: str,
+    ) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        payload = valid_investigation_plan_payload(self.question)
+        payload["baseline_replication"]["strategy"] = strategy
+        payload["baseline_replication"]["comparison_scope"] = comparison_scope
+        payload["baseline_replication"]["deviations"] = [
+            {
+                "claim_kind": "fact",
+                "evidence_status": "unknown",
+                "value": None,
+                "source_refs": [],
+                "uncertainty_rationale": "The required substitution has not been selected.",
+            }
+        ]
+        setup_mocks["llm_client"].response_text = json.dumps(payload)
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        with pytest.raises(OutputValidationFailed, match="failed validation"):
+            use_case.synthesize(self.question, investigation_plan=True)
+
+    def test_investigation_plan_mode_rejects_false_missing_item(self, setup_mocks) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        payload = valid_investigation_plan_payload(self.question)
+        payload["baseline_replication"]["missing_information"] = ["None identified"]
+        setup_mocks["llm_client"].response_text = json.dumps(payload)
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        with pytest.raises(OutputValidationFailed, match="failed validation"):
+            use_case.synthesize(self.question, investigation_plan=True)
+
+    def test_investigation_plan_mode_rejects_invalid_llm_payload(self, setup_mocks) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        setup_mocks["llm_client"].response_text = '{"question": "incomplete"}'
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        with pytest.raises(OutputValidationFailed, match="investigation plan failed validation"):
+            use_case.synthesize(self.question, investigation_plan=True)
+
+    def test_investigation_plan_mode_rejects_unsupplied_execution_evidence(
+        self, setup_mocks
+    ) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        payload = valid_investigation_plan_payload(self.question)
+        payload["baseline_replication"]["steps"][0].update(
+            {"status": "verified", "evidence_refs": ["run-not-supplied"]}
+        )
+        setup_mocks["llm_client"].response_text = json.dumps(payload)
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        with pytest.raises(OutputValidationFailed, match="without supplied execution evidence"):
+            use_case.synthesize(self.question, investigation_plan=True)
+
+    def test_default_synthesis_does_not_request_structured_output(self, setup_mocks) -> None:
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        answer, _sources = use_case.synthesize(self.question)
+
+        assert answer == self.llm_answer
+        assert "response_format" not in setup_mocks["llm_client"].calls[0]["profile"]
+
+    def test_investigation_plan_mode_rejects_question_mismatch(self, setup_mocks) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        payload = valid_investigation_plan_payload(self.question)
+        payload["question"] = "An unrelated model-authored question"
+        setup_mocks["llm_client"].response_text = json.dumps(payload)
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        with pytest.raises(OutputValidationFailed, match="question does not match"):
+            use_case.synthesize(self.question, investigation_plan=True)
+
+    def test_investigation_plan_mode_binds_normalized_requested_question(self, setup_mocks) -> None:
+        requested_question = "  Which result should be replicated?\n  Before ablation.  "
+        normalized_question = "Which result should be replicated? Before ablation."
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        setup_mocks["llm_client"].response_text = json.dumps(
+            valid_investigation_plan_payload(normalized_question.lower())
+        )
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        report, _sources = use_case.synthesize(requested_question, investigation_plan=True)
+
+        assert f"**Question:** {normalized_question}" in report
+
+    def test_investigation_plan_provider_schema_is_recursively_strict(self, setup_mocks) -> None:
+        setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]
+        setup_mocks["llm_client"].response_text = json.dumps(
+            valid_investigation_plan_payload(self.question)
+        )
+        use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
+
+        use_case.synthesize(self.question, investigation_plan=True)
+
+        schema = setup_mocks["llm_client"].calls[0]["profile"]["chat_options"]["response_format"][
+            "json_schema"
+        ]["schema"]
+        for definition in schema["$defs"].values():
+            if definition.get("type") == "object":
+                assert set(definition["required"]) == set(definition["properties"])
+                assert definition["additionalProperties"] is False

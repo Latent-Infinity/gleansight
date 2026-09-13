@@ -6,6 +6,9 @@ from typing import Any
 
 from typer.testing import CliRunner
 
+from papers.domain import InvestigationPlan, render_investigation_plan_markdown
+from tests.investigation_plan_test_data import valid_investigation_plan_payload
+
 
 @dataclass
 class FakeSearch:
@@ -72,6 +75,7 @@ class FakeSynthesize:
         num_retrieved_docs: int = 5,
         llm_profile: dict[str, Any] | None = None,
         llm_model: str = "gpt-4o-mini",
+        investigation_plan: bool = False,
     ) -> tuple[str, list[dict[str, Any]]]:
         self.calls.append(
             {
@@ -80,6 +84,7 @@ class FakeSynthesize:
                 "tags": tags,
                 "num_retrieved_docs": num_retrieved_docs,
                 "llm_model": llm_model,
+                "investigation_plan": investigation_plan,
             }
         )
         if self.mock_exception:
@@ -217,3 +222,69 @@ def test_ask_command_no_sources(monkeypatch) -> None:
 
     assert result.exit_code == 0
     assert "No relevant documents found." in result.output
+
+
+def test_ask_command_investigation_plan_mode(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    synth = FakeSynthesize(answer="# Investigation Plan")
+    container = FakeContainer(
+        search=FakeSearch(),
+        filter_extractions=FakeFilter(),
+        aggregate_extractions=FakeAggregate(),
+        synthesize_from_corpus=synth,
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(
+        cli_app.app,
+        ["ask", "Plan the next study", "--investigation-plan"],
+    )
+
+    assert result.exit_code == 0
+    assert "Investigation Plan" in result.output
+    assert synth.calls[0]["investigation_plan"] is True
+
+
+def test_ask_command_investigation_plan_preserves_bracketed_metadata(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    report = render_investigation_plan_markdown(
+        InvestigationPlan.model_validate(valid_investigation_plan_payload())
+    )
+    synth = FakeSynthesize(answer=report)
+    container = FakeContainer(
+        search=FakeSearch(),
+        filter_extractions=FakeFilter(),
+        aggregate_extractions=FakeAggregate(),
+        synthesize_from_corpus=synth,
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(cli_app.app, ["ask", "Plan study", "--investigation-plan"])
+
+    assert result.exit_code == 0
+    assert "[not_started]" in result.output
+    assert "paper-1" in result.output
+    assert "[fact/reported; sources: paper-1" in result.output
+    assert "basis: Assumes one pilot run" in result.output
+    assert "single comparable GPU." in result.output
+
+
+def test_ask_command_plain_answer_keeps_rich_markup_behavior(monkeypatch) -> None:
+    cli_app = importlib.import_module("papers.cli.app")
+    runner = CliRunner()
+    synth = FakeSynthesize(answer="[bold]Ordinary answer[/bold]")
+    container = FakeContainer(
+        search=FakeSearch(),
+        filter_extractions=FakeFilter(),
+        aggregate_extractions=FakeAggregate(),
+        synthesize_from_corpus=synth,
+    )
+    monkeypatch.setattr(cli_app, "get_container", lambda: container)
+
+    result = runner.invoke(cli_app.app, ["ask", "Normal question"])
+
+    assert result.exit_code == 0
+    assert "Ordinary answer" in result.output
+    assert "[bold]" not in result.output

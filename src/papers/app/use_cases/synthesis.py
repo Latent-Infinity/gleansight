@@ -10,6 +10,17 @@ from papers.app.ports import (
     PaperStore,
     VectorIndex,
 )
+from papers.domain.investigation_plan import SourceReference
+from papers.domain.investigation_prompt import (
+    build_investigation_plan_prompt,
+    investigation_plan_schema,
+)
+from papers.domain.investigation_renderer import render_investigation_plan_markdown
+from papers.domain.investigation_validation import (
+    InvestigationPlanValidationContext,
+    normalize_investigation_question,
+    parse_investigation_plan_json,
+)
 
 
 class SynthesizeFromCorpusUseCase:
@@ -37,6 +48,7 @@ class SynthesizeFromCorpusUseCase:
         num_retrieved_docs: int = 5,
         llm_profile: dict[str, Any] | None = None,
         llm_model: str = "gpt-4o-mini",
+        investigation_plan: bool = False,
     ) -> tuple[str, list[dict[str, Any]]]:
         """Synthesize an answer from the most relevant readable corpus documents."""
         if num_retrieved_docs < 1:
@@ -112,9 +124,35 @@ Context:
 {context}
 
 Question: {question}"""
+        profile = llm_profile or {}
+        if investigation_plan:
+            prompt_sources = tuple(SourceReference.model_validate(source) for source in sources)
+            normalized_question = normalize_investigation_question(question)
+            prompt = build_investigation_plan_prompt(normalized_question, context, prompt_sources)
+            profile = dict(profile)
+            chat_options = dict(profile.get("chat_options", {}))
+            chat_options["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "investigation_plan",
+                    "strict": True,
+                    "schema": investigation_plan_schema(),
+                },
+            }
+            profile["chat_options"] = chat_options
         llm_response = self.llm_client.complete(
             prompt=prompt,
-            profile=llm_profile or {},
+            profile=profile,
             model=llm_model,
         )
+        if investigation_plan:
+            plan = parse_investigation_plan_json(
+                llm_response.text,
+                InvestigationPlanValidationContext(
+                    expected_question=question,
+                    allowed_source_ids=frozenset(source["paper_id"] for source in sources),
+                    allowed_execution_evidence_refs=frozenset(),
+                ),
+            )
+            return render_investigation_plan_markdown(plan), sources
         return llm_response.text, sources
