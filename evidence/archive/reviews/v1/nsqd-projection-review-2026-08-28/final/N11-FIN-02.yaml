@@ -1,0 +1,34 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-FIN-02
+source_fixture_id: N11-FIN-02-SOURCE
+domain_policy_id: finance/1
+paper_id: 416297a1-11d4-403a-8f76-53f1be15d7af
+source_paper_id: arxiv:2409.17392
+title: "Trading through Earnings Seasons using Self-Supervised Contrastive Representation Learning"
+source_excerpt_path: excerpts/finance-cet.md
+source_markdown_sha256: 8899b360fd7093286af98a343bf13a2f8529beef2786e6eadbfde00da942cfef
+source_abstract_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+paraphrase: >-
+  CET separately encodes minute-level price-volume sequences and quarterly earnings
+  features, combines the resulting stock-context and earnings-context representations into
+  a joint context vector, and trains that representation stage with InfoNCE-based
+  contrastive predictive coding to maximize agreement with future price-volume latents
+  while using negatives drawn from periods at least five days before announcements. A
+  supervised head is then fine-tuned to predict next-minute up/down/hold movement during
+  the five business days after earnings releases.
+paraphrase_sha256: 73fce69a2dd7d7a4cd71b8bf089e0e75a1ce9e010491f3cb848198e1354a98b1
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+coordinates:
+  mechanism: shock-propagation
+  target: signal-decay
+  horizon: event-time
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

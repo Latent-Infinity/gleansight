@@ -1,0 +1,27 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-OPT-03
+source_fixture_id: N11-OPT-03-SOURCE
+domain_policy_id: optimization/1
+paper_id: ebd81b51-736f-43e9-8338-2ee5cc287565
+source_paper_id: 08f8241c666e58b7dcda27a4aaf506138d32910c
+title: "Distributed Momentum-Based Frank-Wolfe Algorithm for Stochastic Optimization"
+source_excerpt_path: excerpts/optimization-dmfw.md
+source_markdown_sha256: a1bccbc12e0f676969bacbe1471dc9b1d651514f9224a251dbcb5347bf50b348
+source_abstract_sha256: abd9816eac1f52c23912b10ff377596bd4d136f4648d56f2309799e156ab3ed6
+paraphrase: >-
+  DMFW solves constrained stochastic objectives over a network without Euclidean
+  projections. Each agent combines consensus and gradient-tracking updates with recursive
+  and Nesterov momentum, then solves a Frank-Wolfe linear minimization subproblem over the
+  shared convex compact feasible set; fixed-size stochastic batches are allowed.
+paraphrase_sha256: 43e983666fa13cc45ca492764e73af02722861db5d82e8bc6fa21337abbd06a5
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

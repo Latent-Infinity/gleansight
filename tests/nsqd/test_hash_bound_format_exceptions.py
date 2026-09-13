@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-EXCEPTIONS_PATH = REPO_ROOT / "docs" / "reviews" / "hash-bound-format-exceptions.json"
+EXCEPTIONS_PATH = (
+    REPO_ROOT / "evidence" / "archive" / "reviews" / "v1" / "hash-bound-format-exceptions.json"
+)
 CHECKER_PATH = REPO_ROOT / "scripts" / "check_hash_bound_format.py"
 EXPECTED_EXCEPTIONS = [
     {

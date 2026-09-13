@@ -1,0 +1,27 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-OPT-05
+source_fixture_id: N11-OPT-05-SOURCE
+domain_policy_id: optimization/1
+paper_id: 05795fc8-60bd-43b9-81d8-2ac8419d8a34
+source_paper_id: a6cb366736791bcccc5c8639de5a8f9636bf87e8
+title: "Adam: A Method for Stochastic Optimization"
+source_excerpt_path: excerpts/optimization-adam.md
+source_markdown_sha256: 34882ef69d084d0567f1200e780b222b5325f60b02726b5b4260f525d42a621e
+source_abstract_sha256: c5eb4db28270bf7ad397219b44b7829629eac8b984f4cd1b3a6bcf0a6d7134f6
+paraphrase: >-
+  Adam uses bias-corrected exponential moving averages of first and second raw gradient
+  moments to assign coordinate-wise adaptive steps for stochastic objectives. It requires
+  only first-order gradients and little memory while remaining invariant to diagonal
+  gradient rescaling.
+paraphrase_sha256: cb10f6dae6225d393dc0c31a7feeb5882c608750e9b5e5d7ad7d728a01ac996f
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 4
+  limit: 8

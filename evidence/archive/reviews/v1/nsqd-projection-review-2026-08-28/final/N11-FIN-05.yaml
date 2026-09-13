@@ -1,0 +1,28 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-FIN-05
+source_fixture_id: N11-FIN-05-SOURCE
+domain_policy_id: finance/1
+paper_id: 72a11ef7-b299-4c73-92b7-bdcc8d673c52
+source_paper_id: doi:10.1145/3533271.3561687
+title: "Denoised Labels for Financial Time-Series Data via Self-Supervised Learning"
+source_excerpt_path: excerpts/finance-denoised-labels.md
+source_markdown_sha256: 1347adc049591baac68831c9ce2a50817f7fd8feb116c51e2f26e5ab57bd634d
+source_abstract_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+paraphrase: >-
+  The pretext stage feeds a denoising autoencoder a corrupted input formed by repeating the
+  raw price series across channels and trains it to reconstruct a smoother moving-average
+  feature matrix. Up/stationary/down labels are then recomputed from the reconstructed price
+  series and evaluated with a downstream SVM and binary trading strategies on daily S&P
+  500, one-minute Bitcoin, and limit-order datasets.
+paraphrase_sha256: 953ba5bc975eaa35931ea06b827018cbd288e04462fca8dc984ec7a399a2b747
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

@@ -1,0 +1,33 @@
+schema_version: 1
+kind: corpus-paper-paraphrase
+id: N11-FIN-03
+source_fixture_id: N11-FIN-03-SOURCE
+domain_policy_id: finance/1
+paper_id: e247cc84-de90-4d94-aa03-21ea4031c5ab
+source_paper_id: doi:10.1016/j.eswa.2024.123538
+title: "Fx-spot predictions with state-of-the-art transformer and time embeddings"
+source_excerpt_path: excerpts/finance-fx-transformer.md
+source_markdown_sha256: 74382586d45e0dc0353dd695f95bddfe3e6664ce9337f7f1392a11aa43636389
+source_abstract_sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+paraphrase: >-
+  The study forecasts 10-minute closing-bid returns for EUR/USD, USD/JPY, and GBP/USD with
+  a Transformer encoder that concatenates multivariate FX and cross-asset technical and
+  fundamental inputs with positional encoding and Time2Vec embeddings before self-attention
+  and pooled prediction layers. Its comparison against LSTM and ARIMA tests whether richer
+  multivariate inputs help the Transformer exploit intraday cross-market linkages better
+  than univariate setups.
+paraphrase_sha256: 55efae9d2d9f5569f04a2dbb87a78d49c0f8afa3350e36bf1cf9ecbe1f2a3dc6
+paraphrase_source: model_assisted
+review_status: approved
+review_workflow: writer-reviewer/1
+review_rounds: 4
+human_reviewer: product
+human_approved_at: "2026-08-28T23:46:44+00:00"
+projector_version: paper-projector/1
+coordinates:
+  mechanism: flow-driven
+  target: returns
+  horizon: intraday
+overlap_check:
+  max_contiguous_source_tokens: 3
+  limit: 8

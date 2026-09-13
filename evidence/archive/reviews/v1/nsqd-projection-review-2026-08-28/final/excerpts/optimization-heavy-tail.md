@@ -1,0 +1,9 @@
+## High-Probability Bounds for Stochastic Optimization and Variational Inequalities: the Case of Unbounded Variance
+
+## Abstract
+
+During recent years the interest of optimization and machine learning communities in highprobability convergence of stochastic optimization methods has been growing. One of the main reasons for this is that high-probability complexity bounds are more accurate and less studied than in-expectation ones. However, SOTA highprobability non-asymptotic convergence results are derived under strong assumptions such as the boundedness of the gradient noise variance or of the objective's gradient itself. In this paper, we propose several algorithms with highprobability convergence results under less restrictive assumptions. In particular, we derive new high-probability convergence results under the assumption that the gradient/operator noise has bounded central α -th moment for α ∈ (1 , 2] in the following setups: (i) smooth non-convex / Polyak-Łojasiewicz / convex / strongly convex / quasi-strongly convex minimization problems, (ii) Lipschitz / star-cocoercive and monotone / quasi-strongly monotone variational inequalities. These results justify the usage of the considered methods for solving problems that do not fit standard functional classes studied in stochastic optimization.
+
+In particular, we consider stochastic unconstrained optimization problems where ξ is a random variable with distribution D . Such problems often arise in machine learning, where f ξ ( x ) represents the loss function on the data sample ξ.
+
+When α = 2 , the above assumption recovers the standard uniformly bounded variance assumption. However, Assumption 1.1 allows the variance of the estimator to be unbounded when α ∈ (1 , 2) , i.e., the noise can follow some heavy-tailed distribution.

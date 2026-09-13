@@ -1,0 +1,9 @@
+## Fx-spot predictions with state-of-the-art transformer and time embeddings
+
+## A B S T R A C T
+
+The  transformer  architecture  with  its  attention  mechanism  is  the  state-of-the-art  deep  learning  method  for sequence learning tasks and has achieved superior results in many areas such as NLP. Utilizing the transformer architecture for the prediction of sequential time series such as financial time series has hardly been investigated in previous studies. In this research paper, the transformer architecture with time embeddings is used in foreign exchange (FX) trading, the world ' s largest financial market, and tests its suitability. A systematic comparison is made  between  transformer  and  benchmark  models.  It  also  examined  which  influence  multivariate,  crosssectional input data have on the forecasting performance of the various models. The goal of the paper is to contribute to the empirical literature on FX forecasting by introducing a transformer with time embeddings to the forecasting  community  and  assessing  the  accuracy  of  corresponding  models  by  forecasting  exchange  rate movements. Empirical results indicate the suitability of transformer models for FX-Spot forecasting in general but also evidence the need for transformer models for multivariate, cross-sectional input data to outperform other state-of-the-art neural networks such as LSTM.
+
+The first goal of the paper is to contribute to the empirical literature on FX forecasting by introducing and assessing the performance of a transformer  with  time  embeddings.  In  particular,  the  paper  reports original results from a comparative analysis of transformer based neural networks versus LSTM and ARIMA. Considering three FX spot rates, the different models are assessed regarding financial and statistical metrics.
+
+Third, the focus on intraday predictions from a 10-minute observation  period  was  identified  as  a  research  gap.

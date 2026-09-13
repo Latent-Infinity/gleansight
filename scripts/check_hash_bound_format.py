@@ -7,8 +7,12 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Final
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
+
 REPO_ROOT: Final = Path(__file__).resolve().parents[1]
-EXCEPTIONS_PATH: Final = REPO_ROOT / "docs" / "reviews" / "hash-bound-format-exceptions.json"
+EXCEPTIONS_PATH: Final = resolve_artifact_path(
+    REPO_ROOT, Path("docs/reviews/hash-bound-format-exceptions.json")
+)
 
 
 def _trailing_whitespace_count(contents: bytes) -> int:
@@ -47,7 +51,7 @@ def _load_exceptions(path: Path) -> dict[str, tuple[str, int]]:
 
 def validate_exception_inventory(repo_root: Path, exceptions_path: Path) -> None:
     for relative, (expected_digest, expected_count) in _load_exceptions(exceptions_path).items():
-        contents = (repo_root / relative).read_bytes()
+        contents = resolve_artifact_path(repo_root, Path(relative)).read_bytes()
         if hashlib.sha256(contents).hexdigest() != expected_digest:
             raise ValueError(f"format exception digest mismatch: {relative}")
         if _trailing_whitespace_count(contents) != expected_count:
@@ -62,10 +66,16 @@ def validate_paths(repo_root: Path, exceptions_path: Path, paths: Iterable[Path]
         count = _trailing_whitespace_count(contents)
         if count == 0:
             continue
-        try:
-            relative = path.resolve().relative_to(repo_root.resolve()).as_posix()
-        except ValueError:
-            relative = path.as_posix()
+        relative = path.as_posix()
+        for logical_path in exceptions:
+            if path.resolve() == resolve_artifact_path(repo_root, Path(logical_path)).resolve():
+                relative = logical_path
+                break
+        else:
+            try:
+                relative = path.resolve().relative_to(repo_root.resolve()).as_posix()
+            except ValueError:
+                relative = path.as_posix()
         expected = exceptions.get(relative)
         if expected is None:
             raise ValueError(f"unlisted trailing whitespace: {relative}")
@@ -103,6 +113,12 @@ def _validate_git_diff_check(repo_root: Path, exceptions_path: Path) -> None:
         text=True,
     )
     exceptions = _load_exceptions(exceptions_path)
+    physical_exceptions = {
+        resolve_artifact_path(repo_root, Path(logical_path))
+        .relative_to(repo_root)
+        .as_posix(): logical_path
+        for logical_path in exceptions
+    }
     unexpected: list[str] = []
     skip_content = False
     for line in completed.stdout.splitlines():
@@ -110,7 +126,8 @@ def _validate_git_diff_check(repo_root: Path, exceptions_path: Path) -> None:
             skip_content = False
             continue
         if line.endswith(": trailing whitespace."):
-            relative = line.split(":", maxsplit=1)[0]
+            physical_relative = line.split(":", maxsplit=1)[0]
+            relative = physical_exceptions.get(physical_relative, physical_relative)
             if relative in exceptions:
                 skip_content = True
                 continue

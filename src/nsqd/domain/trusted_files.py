@@ -6,6 +6,8 @@ import stat
 from pathlib import Path
 from typing import Any
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
+
 MAX_VERIFIED_REPO_TEXT_BYTES = 8 * 1024 * 1024
 
 
@@ -31,11 +33,12 @@ def read_verified_repo_file(
         candidate_path.relative_to(expected_root_path)
     except ValueError as exc:
         raise ValueError(f"{field} is outside the approved root") from exc
+    physical_relative_path = resolve_artifact_path(repo_root, relative_path).relative_to(repo_root)
     descriptors: list[int] = []
     try:
         directory = os.open(repo_root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         descriptors.append(directory)
-        for component in relative_path.parts[:-1]:
+        for component in physical_relative_path.parts[:-1]:
             directory = os.open(
                 component,
                 os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
@@ -43,7 +46,7 @@ def read_verified_repo_file(
             )
             descriptors.append(directory)
         file_descriptor = os.open(
-            relative_path.parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory
+            physical_relative_path.parts[-1], os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory
         )
         descriptors.append(file_descriptor)
         before = os.fstat(file_descriptor)
