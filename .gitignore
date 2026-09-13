@@ -208,6 +208,7 @@ __marimo__/
 
 # Project data/artifacts
 data/
+/output/
 !tests/fixtures/approved/
 !tests/fixtures/approved/**
 *.db

@@ -264,7 +264,8 @@ def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
     tmp_path: Path,
 ) -> None:
     captured: dict[str, object] = {}
-    output = tmp_path / "tau-review.json"
+    output_dir = tmp_path / "autonomous-run"
+    output = output_dir / "review.json"
     candidates = object()
     approved = frozenset({"a" * 64})
     container = SimpleNamespace(
@@ -316,6 +317,13 @@ def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
     monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
     monkeypatch.setattr(cli_module, "AutonomousTauLabelingUseCase", FakeAutonomousUseCase)
     monkeypatch.setattr(cli_module, "build_openai_compat_client", fake_client)
+    monkeypatch.setattr(
+        cli_module,
+        "create_run_directory",
+        lambda _root, _workflow, _output=None: (
+            output_dir.mkdir(parents=True, exist_ok=True) or output_dir
+        ),
+    )
 
     digest_a = "b" * 64
     digest_b = "c" * 64
@@ -327,8 +335,6 @@ def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
             digest_a,
             "--candidate-artifact-hash",
             digest_b,
-            "--output",
-            str(output),
         ],
     )
 
@@ -374,7 +380,8 @@ def test_evaluate_autonomous_tau_reviews_cli_revalidates_and_merges_packets(
             encoding="utf-8",
         )
         inputs.append(path)
-    output = tmp_path / "merged.json"
+    output_dir = tmp_path / "evaluation-run"
+    output = output_dir / "evaluation.json"
     container = SimpleNamespace(
         ctx=SimpleNamespace(candidates=object(), approved_projection_digests=frozenset())
     )
@@ -423,6 +430,13 @@ def test_evaluate_autonomous_tau_reviews_cli_revalidates_and_merges_packets(
     monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
     monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
     monkeypatch.setattr(cli_module, "AutonomousTauPacketEvaluationUseCase", FakeEvaluationUseCase)
+    monkeypatch.setattr(
+        cli_module,
+        "create_run_directory",
+        lambda _root, _workflow, _output=None: (
+            output_dir.mkdir(parents=True, exist_ok=True) or output_dir
+        ),
+    )
     result = CliRunner().invoke(
         app,
         [
@@ -435,8 +449,6 @@ def test_evaluate_autonomous_tau_reviews_cli_revalidates_and_merges_packets(
             str(inputs[0]),
             "--input",
             str(inputs[1]),
-            "--output",
-            str(output),
             "--require-balanced",
         ],
     )
@@ -460,6 +472,36 @@ def test_load_autonomous_tau_rows_rejects_oversized_packet(
 
     with pytest.raises(ValueError, match="exceeds byte limit"):
         cli_module._load_autonomous_tau_rows([packet])
+
+
+def test_load_autonomous_tau_rows_resolves_logical_review_input(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    logical = Path("docs/reviews/tau/run.json")
+    physical = tmp_path / "evidence/archive/reviews/v1/tau/run.json"
+    physical.parent.mkdir(parents=True)
+    row = {"candidate_artifact_hash": "a" * 64}
+    physical.write_text(
+        json.dumps({"rows": [row], "packet_digest": autonomous_tau_review_packet_digest([row])}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli_module, "REPO_ROOT", tmp_path)
+
+    assert cli_module._load_autonomous_tau_rows([logical]) == [row]
+
+
+def test_tau_report_output_rejects_archive_destination(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(cli_module, "REPO_ROOT", tmp_path)
+    with pytest.raises(ValueError, match="output"):
+        cli_module._tau_report_output(
+            tmp_path / "evidence/archive/reviews/v1/tau.json",
+            workflow="autonomous-tau-review",
+            filename="review.json",
+        )
 
 
 def test_autonomous_tau_review_cli_reports_frontier_config_error_only_on_escalation(

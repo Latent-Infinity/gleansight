@@ -18,6 +18,7 @@ from nsqd.app.use_cases import (
     TauMeasurementEvidenceUseCase,
 )
 from nsqd.composition import build_container, build_local_ollama_embedder
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.diverge import enabled_operators_from_settings
 from nsqd.domain.harvest import HarvestRejected
@@ -27,6 +28,7 @@ from nsqd.domain.status import STATUS_WINDOW_DAYS
 from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
+from nsqd.infrastructure.workflow_output import create_run_directory
 from nsqd.ports import ParaphraseEmbedder
 from nsqd.project_runtime import load_verified_projection, run_project
 from nsqd.runner import run_job
@@ -46,6 +48,7 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 DEFAULT_NSQD_DB = Path("data/nsqd/nsqd.sqlite")
 DEFAULT_NSQD_INDEX = Path("data/nsqd/corpus.lancedb")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 _cli_options: dict[str, Path | None] = {"config": None}
 
 
@@ -207,7 +210,10 @@ MAX_AUTONOMOUS_TAU_PACKET_BYTES = 8 * 1024 * 1024
 
 def _load_autonomous_tau_rows(inputs: list[Path]) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    for path in inputs:
+    for input_path in inputs:
+        path = (
+            input_path if input_path.is_absolute() else resolve_artifact_path(REPO_ROOT, input_path)
+        )
         if path.stat().st_size > MAX_AUTONOMOUS_TAU_PACKET_BYTES:
             raise ValueError(f"autonomous tau packet exceeds byte limit: {path}")
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -225,6 +231,19 @@ def _load_autonomous_tau_rows(inputs: list[Path]) -> list[dict[str, object]]:
             raise ValueError(f"autonomous tau packet digest drift: {path}")
         rows.extend(packet_rows)
     return rows
+
+
+def _tau_report_output(output: Path | None, *, workflow: str, filename: str) -> Path:
+    if output is None:
+        return create_run_directory(REPO_ROOT, workflow) / filename
+    path = output if output.is_absolute() else REPO_ROOT / output
+    if path.exists():
+        raise FileExistsError(path)
+    try:
+        create_run_directory(REPO_ROOT, workflow, path.parent)
+    except FileExistsError:
+        pass
+    return path
 
 
 def _build_autonomous_tau_use_case(
@@ -465,17 +484,27 @@ def tau_measurement_inventory(
 @app.command("autonomous-tau-review")
 def autonomous_tau_review(
     candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
-    output: Annotated[Path, typer.Option("--output")],
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            help="Report file (default: output/autonomous-tau-review/<UTC-run-id>/review.json)",
+        ),
+    ] = None,
     config: Annotated[Path | None, typer.Option("--config")] = None,
     db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
     index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
 ) -> None:
     try:
+        output_path = _tau_report_output(
+            output,
+            workflow="autonomous-tau-review",
+            filename="review.json",
+        )
         result = _build_autonomous_tau_use_case(db=db, index=index, config=config).run(
             candidate_artifact_hashes
         )
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(_canonical_json_text(result), encoding="utf-8")
+        output_path.write_text(_canonical_json_text(result), encoding="utf-8")
     except ConfigurationError as exc:
         _fail_configuration(exc)
     except (ImportError, OSError, PipelineError, ValueError) as exc:
@@ -485,7 +514,7 @@ def autonomous_tau_review(
             {
                 "approved_pair_count": result["packet"]["approved_pair_count"],
                 "ambiguous_pair_count": result["packet"]["ambiguous_pair_count"],
-                "output": str(output),
+                "output": str(output_path),
                 "packet_digest": result["packet_digest"],
             },
             sort_keys=True,
@@ -497,13 +526,27 @@ def autonomous_tau_review(
 def evaluate_autonomous_tau_reviews(
     candidate_artifact_hashes: Annotated[list[str], typer.Option("--candidate-artifact-hash")],
     inputs: Annotated[list[Path], typer.Option("--input")],
-    output: Annotated[Path, typer.Option("--output")],
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            help=(
+                "Report file (default: "
+                "output/evaluate-autonomous-tau-reviews/<UTC-run-id>/evaluation.json)"
+            ),
+        ),
+    ] = None,
     require_balanced: Annotated[bool, typer.Option("--require-balanced")] = False,
     config: Annotated[Path | None, typer.Option("--config")] = None,
     db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
     index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
 ) -> None:
     try:
+        output_path = _tau_report_output(
+            output,
+            workflow="evaluate-autonomous-tau-reviews",
+            filename="evaluation.json",
+        )
         settings = _standalone_settings(config)
         container = _container(db, index, config)
         evidence = TauMeasurementEvidenceUseCase(
@@ -519,8 +562,7 @@ def evaluate_autonomous_tau_reviews(
             _load_autonomous_tau_rows(inputs),
             require_balanced=require_balanced,
         )
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(_canonical_json_text(result), encoding="utf-8")
+        output_path.write_text(_canonical_json_text(result), encoding="utf-8")
     except ConfigurationError as exc:
         _fail_configuration(exc)
     except (ImportError, OSError, PipelineError, ValueError) as exc:
@@ -530,7 +572,7 @@ def evaluate_autonomous_tau_reviews(
             {
                 "approved_pair_count": result["packet"]["approved_pair_count"],
                 "ambiguous_pair_count": result["packet"]["ambiguous_pair_count"],
-                "output": str(output),
+                "output": str(output_path),
                 "packet_digest": result["packet_digest"],
             },
             sort_keys=True,

@@ -6,6 +6,7 @@ from typing import cast
 
 import yaml
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from scripts.build_tau_near_duplicate_candidates import build_packet
 
 
@@ -39,3 +40,6 @@ def test_near_duplicate_candidate_packet_is_deterministic_and_label_free(tmp_pat
         assert fixture["kind"] == "candidate-requirement-card"
         assert forbidden.isdisjoint(fixture)
         assert "near_duplicate" not in json.dumps(fixture)
+        source_path = Path(str(row["source_projection_path"]))
+        if source_path.parts[:2] == ("docs", "reviews"):
+            assert resolve_artifact_path(root, source_path).is_file()

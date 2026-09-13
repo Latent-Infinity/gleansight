@@ -9,8 +9,13 @@ from pathlib import Path
 import yaml
 
 from nsqd.app.use_cases import artifact_hash_for
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.snapshot import canonical_json, sha256_hex
+from nsqd.infrastructure.workflow_output import create_run_directory
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = "tau-near-duplicate-candidates"
 
 
 @dataclass(frozen=True)
@@ -31,8 +36,8 @@ FRAMINGS = (
 
 
 def _sources(root: Path) -> tuple[SourceProjection, ...]:
-    projection_dir = root / "docs/reviews/nsqd-projection-review-2026-08-28/final"
-    fixture_dir = root / "tests/fixtures/approved/nsqd"
+    projection_dir = Path("docs/reviews/nsqd-projection-review-2026-08-28/final")
+    fixture_dir = Path("tests/fixtures/approved/nsqd")
     return (
         SourceProjection(
             projection_dir / "N11-FIN-01.yaml",
@@ -101,7 +106,10 @@ def _sources(root: Path) -> tuple[SourceProjection, ...]:
 
 
 def _reviewed_projection_digests(root: Path) -> dict[str, str]:
-    manifest_path = root / "docs/reviews/nsqd-projection-review-2026-08-28/final/manifest.toml"
+    manifest_path = resolve_artifact_path(
+        root,
+        Path("docs/reviews/nsqd-projection-review-2026-08-28/final/manifest.toml"),
+    )
     manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
     return {
         str(row["id"]): str(row["reviewed_projection_sha256"])
@@ -159,7 +167,7 @@ def build_packet(root: Path, output_dir: Path) -> dict[str, object]:
     policy_counts = {"finance/1": 0, "optimization/1": 0}
     output_dir.mkdir(parents=True, exist_ok=True)
     for source in _sources(root):
-        source_bytes = source.path.read_bytes()
+        source_bytes = resolve_artifact_path(root, source.path).read_bytes()
         projection = yaml.safe_load(source_bytes)
         if not isinstance(projection, dict):
             raise ValueError(f"projection must be a mapping: {source.path}")
@@ -190,7 +198,7 @@ def build_packet(root: Path, output_dir: Path) -> dict[str, object]:
                     "candidate_artifact_hash": artifact_hash_for(fixture),
                     "domain_policy_id": policy_id,
                     "source_projection_id": source_id,
-                    "source_projection_path": str(source.path.relative_to(root)),
+                    "source_projection_path": str(source.path),
                     "source_projection_file_sha256": sha256_hex(source_bytes),
                     "reviewed_projection_digest": reviewed_digest,
                     "axiom": (
@@ -216,11 +224,15 @@ def build_packet(root: Path, output_dir: Path) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Fresh output directory (default: output/tau-near-duplicate-candidates/<UTC-run-id>)",
+    )
     args = parser.parse_args()
-    root = Path(__file__).resolve().parents[1]
-    packet = build_packet(root, args.output_dir)
-    (args.output_dir / "manifest.json").write_text(
+    output_dir = create_run_directory(REPO_ROOT, WORKFLOW, args.output_dir)
+    packet = build_packet(REPO_ROOT, output_dir)
+    (output_dir / "manifest.json").write_text(
         json.dumps(packet, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )

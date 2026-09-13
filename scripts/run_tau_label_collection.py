@@ -7,7 +7,12 @@ import sys
 import time
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
+from nsqd.infrastructure.workflow_output import create_run_directory
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = "tau-label-collection"
 
 
 def load_checkpoint(path: Path, *, candidate_artifact_hash: str) -> dict[str, object]:
@@ -32,6 +37,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--packet-dir", type=Path, required=True)
     parser.add_argument("--candidate-manifest", type=Path)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Run directory to resume (default: output/tau-label-collection/<UTC-run-id>)",
+    )
     parser.add_argument("--worker-index", type=int, required=True)
     parser.add_argument("--worker-count", type=int, required=True)
     parser.add_argument("--policy", choices=("finance/1", "optimization/1"))
@@ -52,8 +62,19 @@ def main() -> int:
     if args.subprocess_timeout_s < 1:
         parser.error("subprocess timeout must be positive")
 
-    packet_dir: Path = args.packet_dir
-    manifest_path = args.candidate_manifest or packet_dir / "candidate-hashes.json"
+    packet_dir = (
+        args.packet_dir
+        if args.packet_dir.is_absolute()
+        else resolve_artifact_path(REPO_ROOT, args.packet_dir)
+    )
+    if args.candidate_manifest is None:
+        manifest_path = packet_dir / "candidate-hashes.json"
+    else:
+        manifest_path = (
+            args.candidate_manifest
+            if args.candidate_manifest.is_absolute()
+            else resolve_artifact_path(REPO_ROOT, args.candidate_manifest)
+        )
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     policies = (args.policy,) if args.policy else ("finance/1", "optimization/1")
     if isinstance(payload.get("candidates"), list):
@@ -67,7 +88,17 @@ def main() -> int:
     selected = hashes[args.worker_index :: args.worker_count]
     if args.limit is not None:
         selected = selected[: args.limit]
-    output_dir = packet_dir / "autonomous-label-rows"
+    if args.output_dir is None:
+        output_run = create_run_directory(REPO_ROOT, WORKFLOW)
+    else:
+        output_run = (
+            args.output_dir if args.output_dir.is_absolute() else REPO_ROOT / args.output_dir
+        ).resolve(strict=False)
+        try:
+            output_run = create_run_directory(REPO_ROOT, WORKFLOW, output_run)
+        except FileExistsError:
+            pass
+    output_dir = output_run / "autonomous-label-rows"
     output_dir.mkdir(exist_ok=True)
     target_matches = 0
     if args.target_label is not None:

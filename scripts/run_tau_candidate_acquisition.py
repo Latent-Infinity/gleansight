@@ -9,6 +9,11 @@ from pathlib import Path
 import yaml
 
 from nsqd.app.use_cases import artifact_hash_for
+from nsqd.domain.artifact_paths import resolve_artifact_path
+from nsqd.infrastructure.workflow_output import create_run_directory
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = "tau-candidate-acquisition"
 
 
 def _mapping(value: object, *, name: str) -> dict[str, object]:
@@ -45,7 +50,14 @@ def _write_checkpoint(path: Path, payload: dict[str, object]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help=(
+            "Checkpoint file (default: "
+            "output/tau-candidate-acquisition/<UTC-run-id>/acquired-candidates.json)"
+        ),
+    )
     parser.add_argument("--policy", choices=("finance/1", "optimization/1"))
     parser.add_argument("--limit", type=int)
     parser.add_argument("--db", type=Path)
@@ -57,8 +69,22 @@ def main() -> int:
     if args.subprocess_timeout_s < 1:
         parser.error("subprocess timeout must be positive")
 
+    manifest_path = (
+        args.manifest
+        if args.manifest.is_absolute()
+        else resolve_artifact_path(REPO_ROOT, args.manifest)
+    )
+    if args.output is None:
+        output_path = create_run_directory(REPO_ROOT, WORKFLOW) / "acquired-candidates.json"
+    else:
+        output_path = args.output if args.output.is_absolute() else REPO_ROOT / args.output
+        try:
+            create_run_directory(REPO_ROOT, WORKFLOW, output_path.parent)
+        except FileExistsError:
+            pass
+
     manifest = _mapping(
-        json.loads(args.manifest.read_text(encoding="utf-8")),
+        json.loads(manifest_path.read_text(encoding="utf-8")),
         name="manifest",
     )
     raw_rows = manifest.get("candidates")
@@ -74,9 +100,9 @@ def main() -> int:
         raise ValueError("no candidates selected")
 
     output: dict[str, object]
-    if args.output.exists():
+    if output_path.exists():
         output = _mapping(
-            json.loads(args.output.read_text(encoding="utf-8")),
+            json.loads(output_path.read_text(encoding="utf-8")),
             name="checkpoint",
         )
     else:
@@ -98,7 +124,7 @@ def main() -> int:
         if isinstance(row, dict) and row.get("candidate_artifact_hash")
     }
 
-    fixture_dir = args.manifest.parent
+    fixture_dir = manifest_path.parent
     for position, row in enumerate(rows, start=1):
         expected_hash = str(row["candidate_artifact_hash"])
         if expected_hash in completed:
@@ -170,7 +196,7 @@ def main() -> int:
             }
         )
         completed.add(expected_hash)
-        _write_checkpoint(args.output, output)
+        _write_checkpoint(output_path, output)
         print(f"ok {position}/{len(rows)} {expected_hash}", flush=True)
     return 0
 

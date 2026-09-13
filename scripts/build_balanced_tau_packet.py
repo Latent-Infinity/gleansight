@@ -6,12 +6,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.snapshot import canonical_json, sha256_hex
 from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
+from nsqd.infrastructure.workflow_output import create_run_directory
 
 POLICIES = ("finance/1", "optimization/1")
 LABELS = ("near_duplicate", "novel")
 TARGET_PER_CLASS = 30
+REPO_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = "balanced-tau-packet"
 
 
 def select_balanced_rows(packet_dir: Path) -> list[dict[str, str]]:
@@ -66,15 +70,64 @@ def select_balanced_rows(packet_dir: Path) -> list[dict[str, str]]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--packet-dir", type=Path, required=True)
-    parser.add_argument("--selection-output", type=Path, required=True)
-    parser.add_argument("--evaluation-output", type=Path, required=True)
+    parser.add_argument(
+        "--selection-output",
+        type=Path,
+        help=(
+            "Selection file (default: "
+            "output/balanced-tau-packet/<UTC-run-id>/balanced-selection.json)"
+        ),
+    )
+    parser.add_argument(
+        "--evaluation-output",
+        type=Path,
+        help=(
+            "Evaluation file (default: "
+            "output/balanced-tau-packet/<UTC-run-id>/balanced-evaluation.json)"
+        ),
+    )
     parser.add_argument("--config", type=Path)
     parser.add_argument("--subprocess-timeout-s", type=int, default=300)
     args = parser.parse_args()
     if args.subprocess_timeout_s < 1:
         parser.error("subprocess timeout must be positive")
 
-    selected = select_balanced_rows(args.packet_dir)
+    packet_dir = (
+        args.packet_dir
+        if args.packet_dir.is_absolute()
+        else resolve_artifact_path(REPO_ROOT, args.packet_dir)
+    )
+    run_dir: Path | None = None
+    if args.selection_output is None or args.evaluation_output is None:
+        run_dir = create_run_directory(REPO_ROOT, WORKFLOW)
+    if args.selection_output is None:
+        assert run_dir is not None
+        selection_output = run_dir / "balanced-selection.json"
+    else:
+        selection_output = (
+            args.selection_output
+            if args.selection_output.is_absolute()
+            else REPO_ROOT / args.selection_output
+        ).resolve(strict=False)
+    if args.evaluation_output is None:
+        assert run_dir is not None
+        evaluation_output = run_dir / "balanced-evaluation.json"
+    else:
+        evaluation_output = (
+            args.evaluation_output
+            if args.evaluation_output.is_absolute()
+            else REPO_ROOT / args.evaluation_output
+        ).resolve(strict=False)
+    for output_path in (selection_output, evaluation_output):
+        if output_path.exists():
+            raise FileExistsError(output_path)
+        if output_path.parent != run_dir:
+            try:
+                create_run_directory(REPO_ROOT, WORKFLOW, output_path.parent)
+            except FileExistsError:
+                pass
+
+    selected = select_balanced_rows(packet_dir)
     selection = {
         "schema_version": 1,
         "selection_rule": "policy then label then candidate artifact hash; first 30",
@@ -82,7 +135,7 @@ def main() -> int:
         "rows": selected,
         "rows_sha256": sha256_hex(canonical_json(selected)),
     }
-    args.selection_output.write_text(
+    selection_output.write_text(
         json.dumps(selection, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
@@ -91,7 +144,7 @@ def main() -> int:
         command.extend(("--candidate-artifact-hash", row["candidate_artifact_hash"]))
     for row in selected:
         command.extend(("--input", row["input"]))
-    command.extend(("--output", str(args.evaluation_output), "--require-balanced"))
+    command.extend(("--output", str(evaluation_output), "--require-balanced"))
     if args.config is not None:
         command.extend(("--config", str(args.config)))
     try:
