@@ -573,6 +573,11 @@ infra = [
     { name = "lancedb" },
     { name = "sentence-transformers" },
 ]
+research = [
+    { name = "httpx" },
+    { name = "numpy" },
+    { name = "torch" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -599,6 +604,11 @@ infra = [
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "lancedb", specifier = ">=0.14.0" },
     { name = "sentence-transformers", specifier = ">=3.0.0" },
+]
+research = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "numpy", specifier = ">=2,<3" },
+    { name = "torch", specifier = ">=2.10,<2.11" },
 ]
 
 [[package]]
