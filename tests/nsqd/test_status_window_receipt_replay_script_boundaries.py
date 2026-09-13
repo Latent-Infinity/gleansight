@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -19,11 +18,11 @@ from tests.nsqd.status_window_receipt_replay_support import (
 )
 
 
-def test_output_confinement_accepts_sealed_and_system_temp_destinations(tmp_path: Path) -> None:
+def test_output_confinement_accepts_created_system_temp_destination(tmp_path: Path) -> None:
     replay = _load_replay_module()
+    temp_output = replay.create_run_directory(REPO_ROOT, replay.WORKFLOW, tmp_path / "replay")
 
-    assert replay._require_output_dir(replay.OUTPUT_DIR) == replay.OUTPUT_DIR.resolve()
-    assert replay._require_output_dir(tmp_path / "replay") == (tmp_path / "replay").resolve()
+    assert replay._require_output_dir(temp_output) == temp_output
 
 
 def test_verify_current_receipt_runs_exact_historical_verifier(
@@ -64,43 +63,39 @@ def test_replay_script_rejects_untrusted_packet_arg_and_confines_output_dir(tmp_
     assert rejected.returncode != 0
 
     replay = _load_replay_module()
-    assert replay._require_output_dir(replay.OUTPUT_DIR) == replay.OUTPUT_DIR.resolve()
-
-    safe_temp = tmp_path / "status-window-replay"
-    assert replay._require_output_dir(safe_temp) == safe_temp.resolve()
-
-    tmp_alias = Path("/tmp") / "status-window-replay-alias"
-    assert replay._require_output_dir(tmp_alias) == tmp_alias.resolve(strict=False)
-
-    tempdir_alias = Path(tempfile.gettempdir()) / "status-window-replay-tempdir-alias"
-    assert replay._require_output_dir(tempdir_alias) == tempdir_alias.resolve(strict=False)
+    safe_temp = replay.create_run_directory(
+        REPO_ROOT, replay.WORKFLOW, tmp_path / "status-window-replay"
+    )
+    assert replay._require_output_dir(safe_temp) == safe_temp
 
     blocked_repo = REPO_ROOT / "docs" / "unsafe-status-window-replay"
-    with pytest.raises(ValueError, match="sealed output directory|allowlisted system temp root"):
-        replay._require_output_dir(blocked_repo)
+    with pytest.raises(ValueError, match="output"):
+        replay.create_run_directory(REPO_ROOT, replay.WORKFLOW, blocked_repo)
 
     escaped = tmp_path / "nested" / ".." / "escape"
     with pytest.raises(ValueError, match="parent traversal"):
-        replay._require_output_dir(escaped)
+        replay.create_run_directory(REPO_ROOT, replay.WORKFLOW, escaped)
 
     symlink_parent = tmp_path / "symlink-parent"
     symlink_parent.symlink_to(tmp_path, target_is_directory=True)
     with pytest.raises(ValueError, match="symlink"):
-        replay._require_output_dir(symlink_parent / "status-window-replay")
+        replay.create_run_directory(
+            REPO_ROOT, replay.WORKFLOW, symlink_parent / "status-window-replay"
+        )
 
     real = tmp_path / "real-dir"
     real.mkdir()
     symlink_leaf = tmp_path / "symlink-leaf"
     symlink_leaf.symlink_to(real, target_is_directory=True)
     with pytest.raises(ValueError, match="symlink"):
-        replay._require_output_dir(symlink_leaf)
+        replay.create_run_directory(REPO_ROOT, replay.WORKFLOW, symlink_leaf)
 
 
 def test_repository_confinement_takes_precedence_over_system_temp_ancestry() -> None:
     replay = _load_replay_module()
 
-    with pytest.raises(ValueError, match="sealed output directory"):
-        replay._require_output_dir(REPO_ROOT / "nested-replay-output")
+    with pytest.raises(ValueError, match="repo_root/output"):
+        replay.create_run_directory(REPO_ROOT, replay.WORKFLOW, REPO_ROOT / "nested-replay-output")
 
 
 def test_dangling_output_directory_symlink_is_rejected_before_cli_writes(
@@ -133,9 +128,8 @@ def test_dangling_output_directory_symlink_is_rejected_before_cli_writes(
             "calendar-replay-artifact.json",
             "extracted-timestamp-rows.json",
             "review-summary.json",
-            "README.md",
-            "succession.json",
-            "packet-manifest.json",
+            "report.md",
+            "run-metadata.json",
         )
     )
 
@@ -146,9 +140,8 @@ def test_dangling_output_directory_symlink_is_rejected_before_cli_writes(
         "calendar-replay-artifact.json",
         "extracted-timestamp-rows.json",
         "review-summary.json",
-        "README.md",
-        "succession.json",
-        "packet-manifest.json",
+        "report.md",
+        "run-metadata.json",
     ),
 )
 @pytest.mark.parametrize("dangling", (False, True), ids=("existing", "dangling"))
@@ -162,9 +155,8 @@ def test_output_child_symlink_is_rejected_before_any_write(
         "calendar-replay-artifact.json",
         "extracted-timestamp-rows.json",
         "review-summary.json",
-        "README.md",
-        "succession.json",
-        "packet-manifest.json",
+        "report.md",
+        "run-metadata.json",
     )
     sentinel = b"unchanged-sentinel"
     outside = tmp_path / "outside"

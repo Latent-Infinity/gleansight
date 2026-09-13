@@ -10,8 +10,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.operator_baselines import verify_scratch_execution_receipt
 from nsqd.domain.trusted_files import (
+    read_verified_repo_file,
     read_verified_repo_text,
     require_non_symlink_leaf,
     require_non_symlink_path,
@@ -19,47 +21,39 @@ from nsqd.domain.trusted_files import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_PACKET_DIR = REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01"
-RETAINED_SOURCE_DIR = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-status-window-calendar-replay-2026-09-02"
+SOURCE_PACKET_DIR = resolve_artifact_path(
+    REPO_ROOT, Path("docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01")
 )
-OUTPUT_DIR = (
-    REPO_ROOT / "docs" / "reviews" / "nsqd-status-window-calendar-replay-2026-09-11-command-sync"
+RETAINED_SOURCE_DIR = resolve_artifact_path(
+    REPO_ROOT, Path("docs/reviews/nsqd-status-window-calendar-replay-2026-09-02")
 )
 ARTIFACT_NAME = "calendar-replay-artifact.json"
 ROWS_NAME = "extracted-timestamp-rows.json"
 SUMMARY_NAME = "review-summary.json"
-README_NAME = "README.md"
-SUCCESSION_NAME = "succession.json"
-MANIFEST_NAME = "packet-manifest.json"
+REPORT_NAME = "report.md"
+RUN_METADATA_NAME = "run-metadata.json"
 MAX_PACKET_FILE_BYTES = 8 * 1024 * 1024
-ALLOWED_TEMP_ROOTS = tuple(
-    {
-        Path(tempfile.gettempdir()).resolve(strict=False),
-        Path(tempfile.gettempdir()),
-        Path("/tmp").resolve(strict=False),
-        Path("/tmp"),
-    }
-)
 
 
 class ReplayValidationError(ValueError):
     pass
 
 
-def _load_json(path: Path) -> dict[str, Any]:
+def _load_bytes(path: Path) -> bytes:
     absolute = path if path.is_absolute() else REPO_ROOT / path
     filesystem_root = Path(absolute.anchor)
     relative_path = absolute.relative_to(filesystem_root)
-    value = json.loads(
-        read_verified_repo_text(
-            repo_root=filesystem_root,
-            relative_path=relative_path,
-            expected_root=relative_path.parent,
-            field=str(path),
-            max_bytes=MAX_PACKET_FILE_BYTES,
-        )
+    return read_verified_repo_file(
+        repo_root=filesystem_root,
+        relative_path=relative_path,
+        expected_root=relative_path.parent,
+        field=str(path),
+        max_bytes=MAX_PACKET_FILE_BYTES,
     )
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    value = json.loads(_load_bytes(path))
     if not isinstance(value, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return value
@@ -108,7 +102,7 @@ def _write_output_files(output_descriptor: int, files: Mapping[str, bytes]) -> N
         for name in files:
             descriptor = os.open(
                 name,
-                os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                 0o666,
                 dir_fd=output_descriptor,
             )
@@ -118,8 +112,6 @@ def _write_output_files(output_descriptor: int, files: Mapping[str, bytes]) -> N
             descriptors[name] = descriptor
         for name, content in files.items():
             descriptor = descriptors[name]
-            os.ftruncate(descriptor, 0)
-            os.lseek(descriptor, 0, os.SEEK_SET)
             remaining = memoryview(content)
             while remaining:
                 written = os.write(descriptor, remaining)
@@ -164,76 +156,34 @@ def _connect_read_only(db_path: Path) -> sqlite3.Connection:
     return connection
 
 
-def _require_output_path_without_descendant_symlinks(path: Path) -> None:
-    absolute = path if path.is_absolute() else REPO_ROOT / path
-    current = Path(absolute.anchor) if absolute.anchor else Path(".")
-    parts = absolute.parts[1:] if absolute.anchor else absolute.parts
-    allowed_alias_prefixes: set[Path] = set()
-    for root in ALLOWED_TEMP_ROOTS:
-        lexical = root if root.is_absolute() else root.resolve(strict=False)
-        allowed_alias_prefixes.add(lexical)
-        allowed_alias_prefixes.update(lexical.parents)
-        resolved = lexical.resolve(strict=False)
-        allowed_alias_prefixes.add(resolved)
-        allowed_alias_prefixes.update(resolved.parents)
-    for part in parts:
-        current = current / part
-        if current.is_symlink() and current not in allowed_alias_prefixes:
-            raise ValueError("output_dir must not resolve through a symlink")
-
-
-def _allowed_temp_output_dir(path: Path) -> Path | None:
-    expanded = path.expanduser()
-    resolved = expanded.resolve(strict=False)
-    for root in ALLOWED_TEMP_ROOTS:
-        root_resolved = root.resolve(strict=False)
-        if expanded == root or root in expanded.parents:
-            require_non_symlink_path_within_root(
-                path=resolved, root=root_resolved, field="output_dir"
-            )
-            return resolved
-        if resolved == root_resolved or root_resolved in resolved.parents:
-            require_non_symlink_path_within_root(
-                path=resolved, root=root_resolved, field="output_dir"
-            )
-            return resolved
-    return None
-
-
 def _require_output_dir(path: Path) -> Path:
-    candidate = path.expanduser()
-    if candidate.is_absolute() and ".." in candidate.parts:
-        raise ValueError("output_dir must not contain parent traversal")
-    if not candidate.is_absolute() and ".." in candidate.parts:
-        raise ValueError("output_dir must not contain parent traversal")
-    _require_output_path_without_descendant_symlinks(candidate)
-    repo_candidate = candidate if candidate.is_absolute() else REPO_ROOT / candidate
-    repo_resolved = repo_candidate.resolve(strict=False)
-    root_resolved = REPO_ROOT.resolve(strict=False)
-    if repo_resolved == OUTPUT_DIR.resolve(strict=False):
-        require_non_symlink_path(repo_candidate, field="output_dir")
+    expanded = path.expanduser()
+    absolute = expanded if expanded.is_absolute() else REPO_ROOT / expanded
+    current = Path(absolute.anchor)
+    allowed_temp_aliases = {
+        Path(tempfile.gettempdir()),
+        Path("/tmp"),
+    }
+    for component in absolute.parts[1:]:
+        current /= component
+        if current.is_symlink() and current not in allowed_temp_aliases:
+            raise ValueError("output_dir must not resolve through a symlink")
+    candidate = absolute.resolve(strict=False)
+    require_non_symlink_path(candidate, field="output_dir")
+    require_non_symlink_leaf(path=candidate, field="output_dir")
+    if not candidate.is_dir():
+        raise ValueError("output_dir must be a created run directory")
+    repository = REPO_ROOT.resolve()
+    repository_output = repository / "output"
+    if repository_output in candidate.parents:
         require_non_symlink_path_within_root(
-            path=repo_candidate,
-            root=REPO_ROOT,
-            field="output_dir",
+            path=candidate, root=repository_output, field="output_dir"
         )
-        require_non_symlink_leaf(path=repo_candidate, field="output_dir")
-        if repo_candidate.exists() and not repo_candidate.is_dir():
-            raise ValueError("output_dir must be a directory")
-        return OUTPUT_DIR.resolve()
-    if (
-        repo_candidate == REPO_ROOT
-        or REPO_ROOT in repo_candidate.parents
-        or repo_resolved == root_resolved
-        or root_resolved in repo_resolved.parents
-    ):
-        raise ReplayValidationError("repository output_dir must be the sealed output directory")
-    temp_match = _allowed_temp_output_dir(candidate)
-    if temp_match is not None:
-        require_non_symlink_leaf(path=temp_match, field="output_dir")
-        if candidate.exists() and not candidate.is_dir():
-            raise ValueError("output_dir must be a directory")
-        return temp_match
-    raise ValueError(
-        "output_dir must stay inside the sealed output directory or an allowlisted system temp root"
-    )
+        return candidate
+    if candidate == repository or repository in candidate.parents:
+        raise ValueError("output_dir must be below repo_root/output")
+    temp_root = Path(os.path.realpath(tempfile.gettempdir()))
+    if temp_root in candidate.parents:
+        require_non_symlink_path_within_root(path=candidate, root=temp_root, field="output_dir")
+        return candidate
+    raise ValueError("output_dir must be below repo_root/output or the system temporary directory")

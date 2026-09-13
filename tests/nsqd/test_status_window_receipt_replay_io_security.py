@@ -125,3 +125,27 @@ def test_output_directory_swap_cannot_redirect_replay_write(
         replay._write_outputs(output_dir, records=_records(), artifact=artifact)
 
     assert list(outside.iterdir()) == []
+
+
+def test_writer_rejects_repository_archive_when_repository_is_under_temp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    replay = _load_replay_module()
+    repository = tmp_path / "repository"
+    archive_dir = repository / "evidence" / "archive" / "reviews" / "v1" / "replay"
+    archive_dir.mkdir(parents=True)
+    artifact = _artifact(
+        current_as_of=datetime(2026, 9, 2, 6, 45, tzinfo=UTC),
+        boundary_as_of=datetime(2028, 9, 2, 6, 45, tzinfo=UTC),
+    )
+    monkeypatch.setattr(replay._io, "REPO_ROOT", repository)
+    monkeypatch.setattr(
+        replay._io,
+        "_open_output_dir_nofollow",
+        lambda _path: (_ for _ in ()).throw(AssertionError("writer boundary was bypassed")),
+    )
+
+    with pytest.raises(ValueError, match="repo_root/output"):
+        replay._write_outputs(archive_dir, records=_records(), artifact=artifact)
+
+    assert list(archive_dir.iterdir()) == []

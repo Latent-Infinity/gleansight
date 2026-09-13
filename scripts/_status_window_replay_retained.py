@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -13,7 +14,6 @@ from nsqd.domain.status_window_replay import (
     build_status_window_replay_summary,
     validate_status_window_replay_artifact,
 )
-from nsqd.domain.trusted_files import sha256_file_digest
 
 if TYPE_CHECKING:
     from scripts import _status_window_replay_io as _io
@@ -32,8 +32,8 @@ def load_retained_records(
     rows_payload = _io._load_json(rows_path)
     artifact = validate_status_window_replay_artifact(_io._load_json(artifact_path))
     summary = _io._load_json(summary_path)
-    rows_sha256 = sha256_file_digest(rows_path, max_bytes=_io.MAX_PACKET_FILE_BYTES)
-    artifact_sha256 = sha256_file_digest(artifact_path, max_bytes=_io.MAX_PACKET_FILE_BYTES)
+    rows_sha256 = hashlib.sha256(_io._load_bytes(rows_path)).hexdigest()
+    artifact_sha256 = hashlib.sha256(_io._load_bytes(artifact_path)).hexdigest()
     if summary != build_status_window_replay_summary(
         artifact,
         rows_sha256=rows_sha256,

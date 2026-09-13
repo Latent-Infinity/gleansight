@@ -20,6 +20,7 @@ from nsqd.domain.trusted_files import (
     read_verified_repo_file,
     read_verified_repo_text,
 )
+from nsqd.infrastructure.workflow_output import create_run_directory
 
 if TYPE_CHECKING:
     from scripts import _status_window_replay_io as _io
@@ -36,15 +37,16 @@ else:
 
 REPO_ROOT = _io.REPO_ROOT
 MAX_PACKET_FILE_BYTES = _io.MAX_PACKET_FILE_BYTES
-OUTPUT_DIR = _io.OUTPUT_DIR
 RETAINED_SOURCE_DIR = _io.RETAINED_SOURCE_DIR
 ARTIFACT_NAME = _io.ARTIFACT_NAME
+WORKFLOW = "status-window-replay"
+PROMOTED_PROJECTION_ROOT = Path("evidence/approved/nsqd/projections/n11/v1")
 _connect_read_only = _io._connect_read_only
 _require_output_dir = _io._require_output_dir
 _verify_historical_receipt = _io._verify_historical_receipt
 _build_artifact = _packet._build_artifact
 _write_outputs = _packet._write_outputs
-_readme_text = _packet._readme_text
+_report_text = _packet._report_text
 
 
 def _approved_projection_rows() -> dict[str, dict[str, Any]]:
@@ -52,15 +54,7 @@ def _approved_projection_rows() -> dict[str, dict[str, Any]]:
 
     rows: dict[str, dict[str, Any]] = {}
     manifest_specs = (
-        (
-            REPO_ROOT
-            / "docs"
-            / "reviews"
-            / "nsqd-projection-review-2026-08-28"
-            / "final"
-            / "manifest.toml",
-            Path("docs/reviews/nsqd-projection-review-2026-08-28/final"),
-        ),
+        (REPO_ROOT / PROMOTED_PROJECTION_ROOT / "manifest.toml", PROMOTED_PROJECTION_ROOT),
         (
             REPO_ROOT / "tests" / "fixtures" / "approved" / "nsqd" / "manifest.toml",
             Path("tests/fixtures/approved/nsqd"),
@@ -126,9 +120,7 @@ def _approved_projection_rows() -> dict[str, dict[str, Any]]:
                 manifest_reviewed_projection is not None
                 and str(manifest_reviewed_projection) != reviewed_digest
             ):
-                raise ValueError(
-                    "manifest row reviewed_projection_sha256 does not match projection contract"
-                )
+                raise ValueError("manifest reviewed_projection_sha256 does not match projection")
             coords = payload.get("coordinates")
             if not isinstance(coords, dict):
                 coords = payload.get("research_descriptor")
@@ -161,9 +153,7 @@ def _extract_records(db_path: Path) -> list[dict[str, Any]]:
             (EXPECTED_SNAPSHOT_ID,),
         ).fetchone()
         if snapshot is None:
-            raise ValueError(
-                "approved snapshot is missing from the verified historical scratch sqlite"
-            )
+            raise ValueError("approved snapshot is missing from the historical scratch sqlite")
         corpus_version = int(snapshot["corpus_version"])
         if corpus_version != EXPECTED_CORPUS_VERSION:
             raise ValueError("approved snapshot corpus_version is invalid")
@@ -180,9 +170,7 @@ def _extract_records(db_path: Path) -> list[dict[str, Any]]:
                 raise ValueError("snapshot member is missing from nsqd_corpus_records")
             payload = json.loads(str(row["payload_json"]))
             if str(payload.get("record_id")) != str(record_id):
-                raise ValueError(
-                    "snapshot member payload record_id does not match snapshot membership"
-                )
+                raise ValueError("snapshot payload record_id does not match snapshot membership")
             harvested_at = str(payload.get("harvested_at") or "")
             if harvested_at != EXPECTED_HARVESTED_AT:
                 raise ValueError(
@@ -191,9 +179,7 @@ def _extract_records(db_path: Path) -> list[dict[str, Any]]:
                 )
             approved = approved_rows.get(str(record_id))
             if approved is None:
-                raise ValueError(
-                    "snapshot member must bind to an approved projection row for status replay"
-                )
+                raise ValueError("snapshot member must bind to an approved projection row")
             if str(approved["projected_record_id"]) != str(record_id):
                 raise ValueError(
                     "snapshot member projection_record_id does not match "
@@ -232,8 +218,19 @@ def _load_retained_records() -> list[dict[str, Any]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Replay the retained status-window analysis. Generated runs default to "
+            "output/status-window-replay/<UTC-run-id>."
+        )
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="fresh directory below output/ or system temp; default: "
+        "output/status-window-replay/<UTC-run-id>",
+    )
     verification = parser.add_mutually_exclusive_group()
     verification.add_argument("--verify-current-receipt", action="store_true")
     verification.add_argument("--verify-retained-replay", action="store_true")
@@ -255,8 +252,10 @@ def main() -> int:
         print(json.dumps(result, sort_keys=True))
         return 0
     artifact = _build_artifact(records, sqlite_sha256=EXPECTED_SQLITE_SHA256)
-    _write_outputs(args.output_dir, records=records, artifact=artifact)
-    result["artifact_path"] = str(_require_output_dir(args.output_dir) / ARTIFACT_NAME)
+    output_dir = create_run_directory(REPO_ROOT, WORKFLOW, args.output_dir)
+    _write_outputs(output_dir, records=records, artifact=artifact)
+    result["artifact_path"] = str(output_dir / ARTIFACT_NAME)
+    result["output_dir"] = str(output_dir)
     print(json.dumps(result, sort_keys=True))
     return 0
 

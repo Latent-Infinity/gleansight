@@ -95,7 +95,7 @@ def test_approved_projection_rows_use_exact_projection_record_identity(monkeypat
 
     def fake_read_verified_repo_text(**kwargs):
         rel = kwargs["relative_path"].as_posix()
-        if rel.endswith("final/manifest.toml") or rel.endswith("approved/nsqd/manifest.toml"):
+        if rel.endswith("n11/v1/manifest.toml") or rel.endswith("approved/nsqd/manifest.toml"):
             return "unused-manifest"
         raise AssertionError(rel)
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -26,13 +26,10 @@ from nsqd.domain.status_window_replay import (
 
 if TYPE_CHECKING:
     from scripts import _status_window_replay_io as _io
-    from scripts._status_window_replay_successor import build_successor_metadata
 elif __package__:
     from . import _status_window_replay_io as _io
-    from ._status_window_replay_successor import build_successor_metadata
 else:
     import _status_window_replay_io as _io
-    from _status_window_replay_successor import build_successor_metadata
 
 
 def _build_artifact(records: list[dict[str, Any]], *, sqlite_sha256: str) -> dict[str, Any]:
@@ -117,26 +114,36 @@ def _write_outputs(
     )
     summary_bytes = (json.dumps(summary, indent=2, sort_keys=True) + "\n").encode("utf-8")
     packet_bytes = {
-        _io.README_NAME: _readme_text().encode("utf-8"),
+        _io.REPORT_NAME: _report_text().encode("utf-8"),
         _io.ARTIFACT_NAME: artifact_bytes,
         _io.ROWS_NAME: rows_bytes,
         _io.SUMMARY_NAME: summary_bytes,
     }
-    succession_bytes, manifest_bytes = build_successor_metadata(packet_bytes)
-    packet_bytes[_io.SUCCESSION_NAME] = succession_bytes
-    packet_bytes[_io.MANIFEST_NAME] = manifest_bytes
+    metadata = {
+        "schema_version": 1,
+        "workflow": "status-window-replay",
+        "run_id": resolved_output.name,
+        "generated_at_utc": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "modeled_historical_timestamp_utc": EXPECTED_HARVESTED_AT,
+        "artifact_sha256": {
+            name: hashlib.sha256(content).hexdigest() for name, content in packet_bytes.items()
+        },
+    }
+    packet_bytes[_io.RUN_METADATA_NAME] = (
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
     with _io._open_output_dir_nofollow(resolved_output) as output_descriptor:
         _io._write_output_files(output_descriptor, packet_bytes)
 
 
-def _readme_text() -> str:
+def _report_text() -> str:
     return "\n".join(
         [
             "# Status-window calendar replay",
             "",
-            "**State:** `review_pending`; report-only research artifact; runtime unauthorized",
+            "**Authorization:** report-only analysis; runtime unauthorized",
             "",
-            "This directory seals a portable replay comparing the current inclusive",
+            "This run compares the current inclusive",
             "730-day status window against a 24-calendar-month UTC clamp replay over",
             "the approved snapshot",
             "`bb63826c4c648027fdae12c92b714e2be12b434c5530af211718c491a1afe8a5`",
@@ -150,9 +157,9 @@ def _readme_text() -> str:
             "They are **not** proven original 2026-08-29 production-harvest",
             "timestamps because snapshot ids do not bind `harvested_at`.",
             "",
-            "`sealed_at_utc` records the original packet sealing time, not the",
+            "The artifact's `sealed_at_utc` records the historical model packet time, not the",
             "source harvest time, current-as-of replay time, or derived future",
-            "sensitivity time.",
+            "sensitivity time. `run-metadata.json` separately records this run's actual UTC time.",
             "",
             "## Scenarios",
             "",
@@ -169,63 +176,9 @@ def _readme_text() -> str:
             "  replay.",
             "- `calendar-replay-artifact.json` — portable self-validating replay",
             "  artifact with scenarios and canonical digest.",
-            "- `review-summary.json` — file digests and verification notes for human",
+            "- `review-summary.json` — domain artifact digests and verification notes for human",
             "  review.",
-            "- `succession.json` — immutable predecessor identity and non-transferable",
-            "  review semantics for this command-only successor.",
-            "- `packet-manifest.json` — exact successor artifact hashes and packet digest.",
-            "",
-            "## Verify",
-            "",
-            "```bash",
-            "uv run pytest " + "\\",
-            "  tests/nsqd/test_operator_activation_packets.py " + "\\",
-            "  tests/nsqd/test_operator_approval_boundary.py " + "\\",
-            "  tests/nsqd/test_operator_authority_surface.py " + "\\",
-            "  tests/nsqd/test_operator_c.py " + "\\",
-            "  tests/nsqd/test_operator_c_evidence_packet.py " + "\\",
-            "  tests/nsqd/test_operator_c_evidence_cycle_2.py " + "\\",
-            "  tests/nsqd/test_operator_c_evidence_cycle_3.py " + "\\",
-            "  tests/nsqd/test_operator_c_evidence_cycle_3_review.py " + "\\",
-            "  tests/nsqd/test_operator_c_followup.py " + "\\",
-            "  tests/nsqd/test_operator_d_contract.py " + "\\",
-            "  tests/nsqd/test_operator_d_contract_edges.py " + "\\",
-            "  tests/nsqd/test_operator_e.py " + "\\",
-            "  tests/nsqd/test_operator_e_cooccurrence.py " + "\\",
-            "  tests/nsqd/test_operator_e_report_only_candidates.py " + "\\",
-            "  tests/nsqd/test_operator_e_broader_prior_art.py " + "\\",
-            "  tests/nsqd/test_operator_e_runtime.py " + "\\",
-            "  tests/nsqd/test_operator_f_contract.py " + "\\",
-            "  tests/nsqd/test_operator_f_validation_target.py " + "\\",
-            "  tests/nsqd/test_operator_f_pilot.py " + "\\",
-            "  tests/nsqd/test_operator_f_pilot_inputs.py " + "\\",
-            "  tests/nsqd/test_operator_f_pilot_result_validation.py " + "\\",
-            "  tests/nsqd/test_operator_f_readiness.py " + "\\",
-            "  tests/nsqd/test_operator_g_contract.py " + "\\",
-            "  tests/nsqd/test_operator_g_census.py " + "\\",
-            "  tests/nsqd/test_operator_g_census_boundaries.py " + "\\",
-            "  tests/nsqd/test_operator_g_evidence_trust.py " + "\\",
-            "  tests/nsqd/test_operator_g_readiness.py " + "\\",
-            "  tests/nsqd/test_operator_g_readiness_semantics.py " + "\\",
-            "  tests/nsqd/test_operator_baselines.py " + "\\",
-            "  tests/nsqd/test_status_window_ablation.py " + "\\",
-            "  tests/nsqd/test_status_window_receipt_replay.py " + "\\",
-            "  tests/nsqd/test_status_window_receipt_replay_validation.py " + "\\",
-            "  tests/nsqd/test_status_window_receipt_replay_projection_identity.py " + "\\",
-            "  tests/nsqd/test_status_window_receipt_replay_script_boundaries.py " + "\\",
-            "  tests/nsqd/test_map.py " + "\\",
-            "  tests/nsqd/test_cli.py " + "\\",
-            "  tests/nsqd/test_operator_a.py " + "\\",
-            "  tests/nsqd/test_operator_b.py " + "\\",
-            "  -q --no-cov",
-            "uv run python scripts/replay_status_window_ablation.py " + "\\",
-            "  --verify-current-receipt",
-            "uv run python scripts/replay_status_window_ablation.py " + "\\",
-            "  --verify-retained-replay",
-            "uv run python scripts/replay_status_window_ablation.py " + "\\",
-            "  --output-dir "
-            "docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync",
-            "```",
+            "- `run-metadata.json` — actual run UTC and SHA-256 checksums for this bundle.",
             "",
         ]
     )

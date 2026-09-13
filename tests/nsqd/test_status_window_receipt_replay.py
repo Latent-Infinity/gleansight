@@ -8,6 +8,7 @@ import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.status_window_replay import (
     EXPECTED_EXTRACTED_RECORDS_DIGEST,
     SEALED_AT_UTC,
@@ -164,7 +165,7 @@ def test_ev_n20_commands_match_exactly_between_authority_docs() -> None:
 def test_current_g_digest_matches_readiness_manifest() -> None:
     plan = (REPO_ROOT / "docs" / "development-plan-ns-qd.md").read_text(encoding="utf-8")
     relative_packet_root, plan_digest = _current_g_readiness_reference(plan)
-    packet_root = REPO_ROOT / relative_packet_root
+    packet_root = resolve_artifact_path(REPO_ROOT, relative_packet_root)
     manifest = json.loads((packet_root / "packet-manifest.json").read_text(encoding="utf-8"))
     digest = manifest["packet_digest"]
     assert re.fullmatch(r"[0-9a-f]{64}", digest)
@@ -180,65 +181,46 @@ def test_boundary_sensitivity_is_derived_from_receipt_bound_harvested_at() -> No
 
 
 def test_replay_script_rebuild_is_byte_reproducible(tmp_path: Path) -> None:
-    output_dir = tmp_path / "status-window-replay"
-    command = [
-        "uv",
-        "run",
-        "python",
-        "scripts/replay_status_window_ablation.py",
-        "--output-dir",
-        str(output_dir),
-    ]
+    first_output = tmp_path / "first-status-window-replay"
+    second_output = tmp_path / "second-status-window-replay"
+    command = ["uv", "run", "python", "scripts/replay_status_window_ablation.py"]
 
-    first = subprocess.run(command, check=False, capture_output=True, text=True)
+    first = subprocess.run(
+        [*command, "--output-dir", str(first_output)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
     assert first.returncode == 0, first.stderr
     first_digests = {
-        name: _sha256(output_dir / name)
+        name: _sha256(first_output / name)
         for name in (
             "calendar-replay-artifact.json",
             "extracted-timestamp-rows.json",
             "review-summary.json",
         )
     }
-    first_readme = (output_dir / "README.md").read_text(encoding="utf-8")
+    retained = resolve_artifact_path(
+        REPO_ROOT, Path("docs/reviews/nsqd-status-window-calendar-replay-2026-09-02")
+    )
 
-    second = subprocess.run(command, check=False, capture_output=True, text=True)
+    second = subprocess.run(
+        [*command, "--output-dir", str(second_output)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
     assert second.returncode == 0, second.stderr
     second_digests = {
-        name: _sha256(output_dir / name)
+        name: _sha256(second_output / name)
         for name in (
             "calendar-replay-artifact.json",
             "extracted-timestamp-rows.json",
             "review-summary.json",
         )
     }
-    second_readme = (output_dir / "README.md").read_text(encoding="utf-8")
-
     assert second_digests == first_digests
-    assert second_readme == first_readme
-    assert "## Verify" in second_readme
-    readme_lines = second_readme.splitlines()
-    assert any(line.startswith("uv run pytest") and line.endswith("\\") for line in readme_lines)
-    assert any(
-        line.startswith("  tests/nsqd/test_status_window_receipt_replay.py") and line.endswith("\\")
-        for line in readme_lines
-    )
-    assert any(
-        line.startswith("  tests/nsqd/test_operator_e_broader_prior_art.py") and line.endswith("\\")
-        for line in readme_lines
-    )
-    assert any(
-        line.startswith("uv run python scripts/replay_status_window_ablation.py")
-        and line.endswith("\\")
-        for line in readme_lines
-    )
-    assert "  --verify-current-receipt" in readme_lines
-    assert (
-        "  --output-dir docs/reviews/nsqd-status-window-calendar-replay-2026-09-11-command-sync"
-        in readme_lines
-    )
-    assert _readme_collectors(first_readme) == COLLECTORS
-    assert _readme_collectors(second_readme) == COLLECTORS
+    assert first_digests == {name: _sha256(retained / name) for name in first_digests}
 
 
 def test_authority_docs_as_of_dates_match_current_g_census() -> None:
@@ -247,8 +229,9 @@ def test_authority_docs_as_of_dates_match_current_g_census() -> None:
 
 
 def test_jepa_readme_records_completed_execution_bundle_review() -> None:
-    readme = (
-        REPO_ROOT / "docs" / "reviews" / "nsqd-jepa-ideas-gaps-2026-09-01" / "README.md"
-    ).read_text(encoding="utf-8")
+    readme_path = resolve_artifact_path(
+        REPO_ROOT, Path("docs/reviews/nsqd-jepa-ideas-gaps-2026-09-01/README.md")
+    )
+    readme = readme_path.read_text(encoding="utf-8")
     assert "completed execution-bundle review" in readme
     assert "pending execution-bundle review" not in readme

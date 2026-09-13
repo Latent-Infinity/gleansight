@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
+from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.snapshot import canonical_json, sha256_hex
 from nsqd.domain.status import STATUS_WINDOW_DAYS
 from nsqd.domain.status_window_replay import (
@@ -20,12 +21,11 @@ from nsqd.domain.status_window_replay import (
 
 HARVESTED_AT = "2026-09-02T06:45:00+00:00"
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SEALED_ARTIFACT_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "reviews"
-    / "nsqd-status-window-calendar-replay-2026-09-02"
-    / "calendar-replay-artifact.json"
+SEALED_ARTIFACT_PATH = resolve_artifact_path(
+    REPO_ROOT,
+    Path(
+        "docs/reviews/nsqd-status-window-calendar-replay-2026-09-02/calendar-replay-artifact.json"
+    ),
 )
 
 
