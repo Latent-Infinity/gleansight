@@ -16,6 +16,16 @@ Core stack highlights:
 - Vector index: LanceDB
 - Blobs: local filesystem
 
+## Repository artifacts
+
+- `output/<workflow>/<UTC-run-id>/` contains ignored, generated workflow results. Each run gets a fresh directory; these results are not evidence inputs or approvals.
+- `evidence/archive/reviews/v1/` contains immutable historical golden inputs relocated byte for byte from `docs/reviews/`. It is read-only: do not regenerate it or add correction packets.
+- `evidence/approved/` and `evidence/contracts/` contain canonical approved inputs and versioned contracts.
+- `data/` contains ignored application state, including the SQLite database, LanceDB index, and imported/derived blobs.
+- `tests/fixtures/` contains stable test inputs. Tests must not use it as a destination for newly generated workflow output.
+
+See [`evidence/README.md`](evidence/README.md) for the evidence boundary and [`docs/workflows/analysis.md`](docs/workflows/analysis.md) for JEPA report, baseline replay, and investigation-plan commands.
+
 ## Development setup (uv)
 
 Best practices:
@@ -74,6 +84,20 @@ uv run python -m nsqd project \
 ```
 
 The projection fixture does not self-approve: the operator-supplied manifest is the trust bootstrap, and the runtime only allowlists the fixture after verifying the approved manifest row and fixture bytes.
+
+Render the deterministic retained-evidence JEPA gaps report:
+
+```bash
+uv run python scripts/report_jepa_ideas_gaps.py
+```
+
+Request an active, schema-validated LLM investigation plan from the existing configured provider:
+
+```bash
+uv run python -m papers.cli ask QUESTION --investigation-plan --project PROJECT_ID --num-docs 5 --model MODEL
+```
+
+The report command performs no literature search, model training, backtest, or approval. The `ask` flag plans an investigation but does not execute or approve one; omitting `--investigation-plan` preserves ordinary question answering.
 
 ## UI
 

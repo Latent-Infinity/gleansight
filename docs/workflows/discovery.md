@@ -25,3 +25,7 @@ uv run python -m papers.cli import CANDIDATE_ID --project PROJECT_ID --tag TAG_I
 Equivalent: `papers import CANDIDATE_ID --project PROJECT_ID --tag TAG_ID`
 
 Re-importing an already-imported candidate attaches missing projects/tags and does not enqueue a second download.
+
+## Storage boundary
+
+Discovery and import update ignored application state under `data/`: the SQLite database, LanceDB index, and paper blobs. `tests/fixtures/` remains test input, not a destination for imports or newly generated output. Workflow reports belong under ignored `output/<workflow>/<UTC-run-id>/`; neither application state nor generated reports belong in `evidence/` or `docs/archive/`.
