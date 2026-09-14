@@ -8,7 +8,7 @@ import torch
 from research.financial_jepa.contracts import DevelopmentData, ExperimentConfig, Variant, YieldRow
 from research.financial_jepa.dataset import prepare_splits
 from research.financial_jepa.model import build_model, compute_loss, shuffled_targets, update_ema
-from research.financial_jepa.training import train_variant
+from research.financial_jepa.training import train_variant, train_variant_recorded
 from tests.research.support import curve
 
 
@@ -112,3 +112,34 @@ def test_training_is_deterministic_and_different_seeds_differ() -> None:
     assert first.selected_epoch == repeated.selected_epoch
     assert _state_digest(first.model_state) == _state_digest(repeated.model_state)
     assert _state_digest(first.model_state) != _state_digest(alternate.model_state)
+
+
+def test_recorded_training_preserves_pre_refactor_golden() -> None:
+    config = ExperimentConfig.synthetic(context_length=3, future_length=2, batch_size=2, epochs=2)
+    rows: list[YieldRow] = []
+    for year, base in ((2017, 1.0), (2018, 2.0), (2022, 3.0)):
+        rows.extend(
+            YieldRow(
+                date(year, 1, 1) + timedelta(days=index),
+                curve(base + 0.03 * index, 0.05),
+                False,
+            )
+            for index in range(22)
+        )
+    prepared = prepare_splits(tuple(rows), config)
+    development = DevelopmentData(prepared.train, prepared.validation)
+
+    recorded = train_variant_recorded(development, config, Variant.REGULARIZED, seed=17)
+    legacy = train_variant(development, config, Variant.REGULARIZED, seed=17)
+
+    assert recorded.result.selected_epoch == legacy.selected_epoch == 2
+    assert recorded.result.validation_mse == legacy.validation_mse == 0.7429499626159668
+    assert recorded.result.state_sha256 == legacy.state_sha256
+    assert recorded.result.state_sha256 == (
+        "55d1c9fe9639a354d59fa84db0b69e50d50a6a2c31c39843f323272a2710fcdd"
+    )
+    assert len(recorded.epochs) == 2
+    assert recorded.epochs[0].batch_count == 9
+    assert recorded.epochs[0].window_count == 18
+    assert recorded.epochs[1].checkpoint_updated is True
+    assert _state_digest(recorded.initial_model_state) != recorded.result.state_sha256
