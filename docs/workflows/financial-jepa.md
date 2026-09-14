@@ -4,6 +4,9 @@ YieldJEPA is an isolated mechanism study using U.S. Treasury-published Daily Tre
 Curve Rates. It is not an exact Fin-JEPA replication and does not use the original paper's code,
 private data, checkpoints, or reported metrics.
 
+The separate development-only four-way diagnostic workflow is documented in
+[`financial-jepa-diagnostics.md`](financial-jepa-diagnostics.md).
+
 ## Environment
 
 Install the locked research and development groups:
