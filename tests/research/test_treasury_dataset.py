@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from research.financial_jepa.contracts import Deadline, ExperimentConfig, ProtocolError, YieldRow
-from research.financial_jepa.dataset import prepare_splits
+from research.financial_jepa.dataset import prepare_development, prepare_splits
 from research.financial_jepa.provenance import rights_metadata
 from research.financial_jepa.treasury import (
     AcquisitionRequest,
@@ -116,6 +116,32 @@ def test_prepare_splits_rejects_zero_standard_deviation_raw_training_rows() -> N
 
     with pytest.raises(ProtocolError, match="zero standard deviation"):
         prepare_splits(rows, config)
+
+
+def test_prepare_development_has_no_test_field_and_rejects_heldout_rows_before_scaling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = ExperimentConfig.synthetic(
+        context_length=2, future_length=1, batch_size=2, epochs=1
+    ).model_copy(update={"years": tuple(range(2001, 2022))})
+    rows = _rows(date(2017, 1, 1), 6, 1.0) + _rows(date(2018, 1, 1), 6, 2.0)
+    fitted = False
+
+    def forbidden_fit(_: tuple[YieldRow, ...]) -> None:
+        nonlocal fitted
+        fitted = True
+
+    monkeypatch.setattr("research.financial_jepa.dataset._fit_scaler", forbidden_fit)
+
+    with pytest.raises(ProtocolError, match="outside development years"):
+        prepare_development(rows + _rows(date(2022, 1, 1), 6, 3.0), config)
+
+    assert fitted is False
+    monkeypatch.undo()
+    prepared = prepare_development(rows, config)
+    assert not hasattr(prepared, "test")
+    assert prepared.train.windows
+    assert prepared.validation.windows
 
 
 def test_methodology_date_and_large_gap_create_hard_boundaries() -> None:

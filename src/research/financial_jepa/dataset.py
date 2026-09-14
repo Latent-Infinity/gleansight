@@ -19,6 +19,7 @@ from research.financial_jepa.contracts import (
     WindowSet,
     YieldRow,
 )
+from research.financial_jepa.diagnostic_contracts import PreparedDevelopment
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,4 +134,33 @@ def prepare_splits(rows: tuple[YieldRow, ...], config: ExperimentConfig) -> Prep
         validation=_window_set(validation_rows, scaler, config),
         test=_window_set(test_rows, scaler, config),
         scaler=scaler,
+    )
+
+
+def prepare_development(
+    rows: tuple[YieldRow, ...], config: ExperimentConfig
+) -> PreparedDevelopment:
+    if not rows:
+        raise ProtocolError("yield dataset is empty")
+    if config.years != tuple(range(2001, 2022)):
+        raise ProtocolError("development configuration must contain exactly 2001 through 2021")
+    if any(row.observed_on.year not in config.years for row in rows):
+        raise ProtocolError("yield dataset contains rows outside development years")
+    ordered = tuple(sorted(rows, key=lambda row: row.observed_on))
+    dates = tuple(row.observed_on for row in ordered)
+    if len(dates) != len(set(dates)):
+        raise ProtocolError("yield dataset contains duplicate dates")
+    if any(not np.isfinite(row.yields).all() for row in ordered):
+        raise ProtocolError("yield dataset contains nonfinite values")
+    train_rows = tuple(row for row in ordered if row.observed_on.year <= 2017)
+    validation_rows = tuple(row for row in ordered if row.observed_on.year >= 2018)
+    if not train_rows or not validation_rows:
+        raise ProtocolError("yield dataset contains an empty development split")
+    scaler = _fit_scaler(train_rows)
+    return PreparedDevelopment(
+        train=_window_set(train_rows, scaler, config),
+        validation=_window_set(validation_rows, scaler, config),
+        scaler=scaler,
+        train_rows=train_rows,
+        validation_rows=validation_rows,
     )
