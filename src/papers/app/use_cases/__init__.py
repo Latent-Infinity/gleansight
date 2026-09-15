@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from papers.app.ideation_contracts import IdeateProjectRequest, PlanIdeaRequest
 from papers.app.use_cases.admin import (
     RebuildTitleAbstractIndexUseCase,
     RebuildVectorIndexUseCase,
@@ -14,6 +15,10 @@ from papers.app.use_cases.discovery import (
     DiscoverCandidatesUseCase,
     ImportCandidateUseCase,
     RejectCandidateUseCase,
+)
+from papers.app.use_cases.ideation import (
+    IdeateProjectUseCase,
+    PlanIdeaUseCase,
 )
 from papers.app.use_cases.pipeline import (
     EnqueueConvertUseCase,
@@ -59,4 +64,8 @@ __all__ = [
     "RebuildTitleAbstractIndexUseCase",
     "RebuildVectorIndexUseCase",
     "SynthesizeFromCorpusUseCase",
+    "IdeateProjectRequest",
+    "IdeateProjectUseCase",
+    "PlanIdeaRequest",
+    "PlanIdeaUseCase",
 ]

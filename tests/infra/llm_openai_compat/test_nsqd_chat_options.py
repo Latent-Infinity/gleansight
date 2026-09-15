@@ -38,6 +38,7 @@ def test_openai_compat_complete_merges_chat_options_and_metadata() -> None:
 
     assert captured["payload"]["temperature"] == 0
     assert captured["payload"]["seed"] == 17
+    assert "reasoning_effort" not in captured["payload"]
     assert captured["payload"]["response_format"]["type"] == "json_schema"
     assert captured["payload"]["response_format"]["json_schema"] == {
         "name": "tau",
