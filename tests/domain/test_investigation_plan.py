@@ -131,6 +131,19 @@ def test_provider_schema_requires_every_property_recursively() -> None:
     assert blocked_reason_types == {"string", "null"}
 
 
+@pytest.mark.parametrize("status", ["not_started", "verified"])
+def test_replication_step_rejects_blocked_reason_unless_blocked(status: str) -> None:
+    payload = valid_investigation_plan_payload()
+    step = payload["baseline_replication"]["steps"][0]
+    step["status"] = status
+    step["blocked_reason"] = "This contradicts the selected status."
+    if status == "verified":
+        step["evidence_refs"] = ["run:1"]
+
+    with pytest.raises(ValidationError, match="blocked reason"):
+        InvestigationPlan.model_validate(payload)
+
+
 @pytest.mark.parametrize("step_status", ["not_started", "blocked"])
 def test_exact_target_allows_unknown_equivalence_without_direct_comparison(
     step_status: str,

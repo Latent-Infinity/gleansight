@@ -177,11 +177,14 @@ class ReplicationStep(ContractModel):
     def validate_status_evidence(self) -> Self:
         match self.status:
             case StepStatus.not_started:
-                pass
+                if self.blocked_reason is not None:
+                    raise ContractValueError("blocked reason is only valid for blocked steps")
             case StepStatus.blocked:
                 if self.blocked_reason is None:
                     raise ContractValueError("blocked steps require a reason")
             case StepStatus.verified:
+                if self.blocked_reason is not None:
+                    raise ContractValueError("blocked reason is only valid for blocked steps")
                 if not self.evidence_refs:
                     raise ContractValueError("verified steps require execution evidence references")
             case unreachable:

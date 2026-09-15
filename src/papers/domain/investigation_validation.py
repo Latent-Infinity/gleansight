@@ -29,7 +29,11 @@ def parse_investigation_plan_json(
     try:
         plan = InvestigationPlan.model_validate(data)
     except PydanticValidationError as exc:
-        raise OutputValidationFailed("investigation plan failed validation") from exc
+        summary = "; ".join(
+            f"{'.'.join(str(part) for part in error['loc'])}: {error['type']} ({error['msg']})"
+            for error in exc.errors(include_input=False)
+        )
+        raise OutputValidationFailed(f"investigation plan failed validation: {summary}") from exc
     if context is None:
         return plan
     expected_question = normalize_investigation_question(context.expected_question)
