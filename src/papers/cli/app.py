@@ -8,7 +8,7 @@ from typing import Annotated, Any
 import typer
 from rich.console import Console
 
-from papers.app import use_cases
+from papers.app import ports, use_cases
 from papers.app.composition_root import build_container
 from papers.config.settings import (
     DEFAULT_OLLAMA_BASE_URL,
@@ -50,6 +50,9 @@ class CLIContainer:
     rebuild_index: use_cases.RebuildVectorIndexUseCase
     rebuild_fts: use_cases.RebuildTitleAbstractIndexUseCase
     synthesize_from_corpus: use_cases.SynthesizeFromCorpusUseCase
+    ideate_project: use_cases.IdeateProjectUseCase
+    plan_idea: use_cases.PlanIdeaUseCase
+    profile_store: ports.ProfileStore
 
 
 _cli_options: dict[str, Any] = {
@@ -96,6 +99,8 @@ def get_container() -> CLIContainer:
     candidate_store = getattr(base, "candidate_store", PiccoloCandidateStore())
     extraction_store = PiccoloExtractionStore()
     papers_fts = PiccoloPaperFTS()
+    project_store = PiccoloProjectStore()
+    paper_project_store = PiccoloPaperProjectStore()
     run_analysis = use_cases.RunAnalysisUseCase(
         job_queue=base.job_queue,
         prompt_store=base.prompt_store,
@@ -157,6 +162,19 @@ def get_container() -> CLIContainer:
             llm_client=base.llm_client,
             paper_project_store=PiccoloPaperProjectStore(),
         ),
+        ideate_project=use_cases.IdeateProjectUseCase(
+            project_store=project_store,
+            paper_project_store=paper_project_store,
+            paper_store=base.paper_store,
+            blob_store=base.blob_store,
+            llm_client=base.llm_client,
+            repo_root=Path.cwd(),
+        ),
+        plan_idea=use_cases.PlanIdeaUseCase(
+            llm_client=base.llm_client,
+            repo_root=Path.cwd(),
+        ),
+        profile_store=base.profile_store,
     )
     return _container
 
@@ -164,6 +182,7 @@ def get_container() -> CLIContainer:
 # Command modules import this file; load them after `app` exists.
 from papers.cli.commands import admin as admin_commands  # noqa: E402
 from papers.cli.commands import discovery as discovery_commands  # noqa: E402
+from papers.cli.commands import ideation as ideation_commands  # noqa: E402
 from papers.cli.commands import pipeline as pipeline_commands  # noqa: E402
 from papers.cli.commands import query as query_commands  # noqa: E402
 from papers.cli.commands import synthesis as synthesis_commands  # noqa: E402
@@ -173,3 +192,4 @@ app.add_typer(pipeline_commands.app)
 app.add_typer(query_commands.app)
 app.add_typer(admin_commands.app)
 app.add_typer(synthesis_commands.app)
+app.add_typer(ideation_commands.app)
