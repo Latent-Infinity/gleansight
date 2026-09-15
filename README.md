@@ -9,7 +9,7 @@ Framework PRD: [`docs/prd-ns-qd.md`](docs/prd-ns-qd.md) · Requirements: [`docs/
 Evidence-layer closeout: [`docs/development-plan-open-work.md`](docs/development-plan-open-work.md)
 Fact ledger: [`docs/fact-ledger.md`](docs/fact-ledger.md) · Evidence index: [`docs/evidence-index.md`](docs/evidence-index.md)
 Discovery review tracker: [`docs/review-nsqd-action-items.md`](docs/review-nsqd-action-items.md)
-Workflows: [`docs/workflows/discovery.md`](docs/workflows/discovery.md) · [`docs/workflows/analysis.md`](docs/workflows/analysis.md) · [`docs/workflows/querying.md`](docs/workflows/querying.md)
+Workflows: [`docs/workflows/discovery.md`](docs/workflows/discovery.md) · [`docs/workflows/analysis.md`](docs/workflows/analysis.md) · [`docs/workflows/querying.md`](docs/workflows/querying.md) · [`docs/workflows/ideation.md`](docs/workflows/ideation.md)
 
 Core stack highlights:
 - Metadata store: Piccolo ORM (SQLite backend)
@@ -98,6 +98,16 @@ uv run python -m papers.cli ask QUESTION --investigation-plan --project PROJECT_
 ```
 
 The report command performs no literature search, model training, backtest, or approval. The `ask` flag plans an investigation but does not execute or approve one; omitting `--investigation-plan` preserves ordinary question answering.
+
+Run bounded project-wide ideation followed by a frozen selected-idea planning handoff:
+
+```bash
+uv run python -m papers.cli ideate-project PROJECT_ID "What testable gaps remain?"
+uv run python -m papers.cli plan-idea output/project-ideation/RUN_ID IDEA_ID
+```
+
+These commands use direct project membership enumeration and frozen, hash-bound excerpts. See the
+[project-wide ideation workflow](docs/workflows/ideation.md) for limits and evidence caveats.
 
 ## UI
 
