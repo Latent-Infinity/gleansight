@@ -142,6 +142,8 @@ def test_digest_approval_requires_explicit_confirmation() -> None:
     screen = ProjectScreen(_Services(approve_digest=approve_digest)).build()
     digest_row = screen.controls[2].controls[1]
     digest, confirmation, approve = digest_row.controls
+    assert digest.width == 320
+    assert digest_row.wrap is True
     digest.value = "ab" * 32
     _click(approve)
     assert approved == []
@@ -149,6 +151,26 @@ def test_digest_approval_requires_explicit_confirmation() -> None:
     confirmation.value = "APPROVE"
     _click(approve)
     assert approved == ["ab" * 32]
+    assert confirmation.value == ""
+
+    digest.value = "cd" * 32
+    _click(approve)
+    assert approved == ["ab" * 32]
+
+
+def test_digest_approval_consumes_confirmation_before_callback_failure() -> None:
+    def approve_digest(*, digest: str) -> dict[str, object]:
+        raise RuntimeError(digest)
+
+    screen = ProjectScreen(_Services(approve_digest=approve_digest)).build()
+    digest_row = screen.controls[2].controls[1]
+    digest, confirmation, approve = digest_row.controls
+    digest.value = "ab" * 32
+    confirmation.value = "APPROVE"
+
+    _click(approve)
+
+    assert confirmation.value == ""
 
 
 def test_tau_evaluate_requires_review_inputs_and_states_non_authority() -> None:

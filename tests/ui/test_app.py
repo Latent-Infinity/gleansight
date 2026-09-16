@@ -70,6 +70,8 @@ class FakeWindow:
 class FakePage:
     def __init__(self) -> None:
         self.controls: list = []
+        self.height = 800
+        self.on_resize = None
         self.title = ""
         self.theme_mode = None
         self.window = FakeWindow()
@@ -136,7 +138,10 @@ def test_navigation_updates_route_and_screen() -> None:
 
     root_row = page.controls[0]
     assert isinstance(root_row, ft.Row)
-    nav = root_row.controls[0]
+    nav_scroller = root_row.controls[0]
+    assert isinstance(nav_scroller, ft.Column)
+    assert nav_scroller.height == 780
+    nav = nav_scroller.controls[0]
     content = root_row.controls[2]
     assert isinstance(nav, ft.NavigationRail)
     assert isinstance(content, ft.Container)
@@ -155,9 +160,13 @@ def test_navigation_exposes_every_registered_workflow_label() -> None:
     page = FakePage()
     app.build(page)
     root_row = page.controls[0]
-    nav = root_row.controls[0]
+    nav_scroller = root_row.controls[0]
 
+    assert isinstance(nav_scroller, ft.Column)
+    assert nav_scroller.scroll is ft.ScrollMode.AUTO
+    nav = nav_scroller.controls[0]
     assert isinstance(nav, ft.NavigationRail)
+    assert nav.height == len(app.state.ROUTES) * 72
     assert [destination.label for destination in nav.destinations] == [
         "Search",
         "Paper",
@@ -179,3 +188,9 @@ def test_navigation_exposes_every_registered_workflow_label() -> None:
         "Ideation",
     ]
     assert app.state.route_for_index(17) == "/ideation"
+
+    page.height = 600
+    assert page.on_resize is not None
+    with patch.object(ft.Control, "update", return_value=None):
+        page.on_resize(MagicMock())
+    assert nav_scroller.height == 580

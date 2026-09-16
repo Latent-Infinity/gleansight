@@ -13,9 +13,9 @@ class ProjectScreen:
     services: object
 
     def build(self) -> ft.Control:
-        projection = ft.TextField(label="Projection path", expand=True)
-        manifest = ft.TextField(label="Approval manifest path", expand=True)
-        digest = ft.TextField(label="Approved digest", expand=True)
+        projection = ft.TextField(label="Projection path", width=320)
+        manifest = ft.TextField(label="Approval manifest path", width=320)
+        digest = ft.TextField(label="Approved digest", width=320)
         confirmation = ft.TextField(label="Type APPROVE", width=160)
         output = ft.Text(value="", selectable=True)
 
@@ -48,6 +48,8 @@ class ProjectScreen:
             elif approver is None:
                 output.value = "Approve digest is not configured."
             else:
+                confirmation.value = ""
+                confirmation.update()
                 try:
                     result = approver(digest=digest_value)
                     output.value = json.dumps(result, indent=2, default=str)

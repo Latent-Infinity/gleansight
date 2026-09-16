@@ -169,6 +169,7 @@ class UIApp:
             selected_index=self.state.index_for_route(self.state.current_route),
             label_type=ft.NavigationRailLabelType.ALL,
             min_width=72,
+            height=len(self.state.ROUTES) * 72,
             destinations=[
                 ft.NavigationRailDestination(
                     icon=pick_icon("SEARCH", "SEARCH_OUTLINED", "SEARCH_SHARP"), label="Search"
@@ -245,6 +246,17 @@ class UIApp:
         )
 
         content = ft.Container(expand=True)
+        nav_scroller = ft.Column(
+            [nav],
+            height=max(float(page.height or page.window.height or 800) - 20, 0),
+            scroll=ft.ScrollMode.AUTO,
+        )
+
+        def resize_navigation(_: ft.ControlEvent) -> None:
+            nav_scroller.height = max(float(page.height or page.window.height or 800) - 20, 0)
+            nav_scroller.update()
+
+        page.on_resize = resize_navigation
 
         def render() -> None:
             try:
@@ -257,7 +269,7 @@ class UIApp:
         page.add(
             ft.Row(
                 [
-                    nav,
+                    nav_scroller,
                     ft.VerticalDivider(width=1),
                     content,
                 ],
