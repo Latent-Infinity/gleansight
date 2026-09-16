@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 import flet as ft
 
+from papers.ui.errors import public_ui_error
+
 
 @dataclass
 class SynthesisScreen:
@@ -71,7 +73,7 @@ class SynthesisScreen:
                 ]
                 _set_status(f"Synthesized from {len(sources)} source(s).")
             except Exception as exc:
-                error_text.value = f"Error: {exc}"
+                error_text.value = f"Error: {public_ui_error(exc)}"
                 _set_status("Synthesis failed.", is_error=True)
             finally:
                 progress_bar.visible = False
@@ -95,7 +97,8 @@ class SynthesisScreen:
                             on_click=on_ask,
                             tooltip="Synthesize an answer from your paper corpus.",
                         ),
-                    ]
+                    ],
+                    wrap=True,
                 ),
                 progress_bar,
                 error_text,
