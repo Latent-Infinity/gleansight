@@ -113,10 +113,19 @@ def test_app_state_caches_screen_instances() -> None:
     assert isinstance(unknown, ft.Text)
     assert app.state.route_for_index(2) == "/monitor"
     assert app.state.index_for_route("/query") == 3
-    assert app.state.route_for_index(5) == "/map"
-    assert app.state.route_for_index(6) == "/archive"
-    assert app.state.route_for_index(7) == "/card"
-    assert app.state.index_for_route("/map") == 5
+    assert app.state.route_for_index(5) == "/harvest"
+    assert app.state.route_for_index(6) == "/map"
+    assert app.state.route_for_index(7) == "/diverge"
+    assert app.state.route_for_index(8) == "/ground"
+    assert app.state.route_for_index(9) == "/gate"
+    assert app.state.route_for_index(10) == "/project"
+    assert app.state.route_for_index(11) == "/acquire"
+    assert app.state.route_for_index(12) == "/rescore"
+    assert app.state.route_for_index(13) == "/tau"
+    assert app.state.route_for_index(14) == "/skeleton"
+    assert app.state.route_for_index(15) == "/archive"
+    assert app.state.route_for_index(16) == "/card"
+    assert app.state.index_for_route("/map") == 6
 
 
 def test_navigation_updates_route_and_screen() -> None:
@@ -139,3 +148,34 @@ def test_navigation_updates_route_and_screen() -> None:
     assert app.state.current_route == "/paper"
     assert content.content is app.state.get_screen(1)
     assert content.content is not initial_content
+
+
+def test_navigation_exposes_every_registered_workflow_label() -> None:
+    app = UIApp(_build_services())
+    page = FakePage()
+    app.build(page)
+    root_row = page.controls[0]
+    nav = root_row.controls[0]
+
+    assert isinstance(nav, ft.NavigationRail)
+    assert [destination.label for destination in nav.destinations] == [
+        "Search",
+        "Paper",
+        "Monitor",
+        "Query",
+        "Synthesis",
+        "Harvest",
+        "Map",
+        "Diverge",
+        "Ground",
+        "Gate",
+        "Project",
+        "Acquire",
+        "Rescore",
+        "Tau",
+        "Skeleton",
+        "Archive",
+        "Card",
+        "Ideation",
+    ]
+    assert app.state.route_for_index(17) == "/ideation"
