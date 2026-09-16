@@ -63,6 +63,17 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     assert services.delete_job is mock_container.job_queue.delete_job
     assert services.bulk_delete_jobs is mock_container.job_queue.bulk_delete_jobs
     assert services.bulk_cancel_jobs is mock_container.job_queue.bulk_cancel_jobs
+    assert callable(services.harvest_records)
+    assert callable(services.diverge_candidate)
+    assert callable(services.ground_candidate)
+    assert callable(services.gate_candidate)
+    assert callable(services.project_records)
+    assert callable(services.approve_digest)
+    assert callable(services.acquire_corpus)
+    assert callable(services.run_paper_jobs)
+    assert callable(services.rescore_card)
+    assert callable(services.tau_command)
+    assert callable(services.run_skeleton_loop)
 
 
 def test_main_calls_run_app_with_services(tmp_path):
