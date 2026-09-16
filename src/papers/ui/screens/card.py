@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 import flet as ft
 
+from papers.ui.errors import public_ui_error
+
 
 @dataclass
 class CardScreen:
@@ -30,7 +32,7 @@ class CardScreen:
                         else json.dumps(card, indent=2, default=str)
                     )
                 except Exception as exc:
-                    output.value = f"Error: {exc}"
+                    output.value = f"Error: {public_ui_error(exc)}"
             output.update()
 
         return ft.Column(
@@ -41,7 +43,7 @@ class CardScreen:
                     color=ft.Colors.GREY_700,
                     size=12,
                 ),
-                ft.Row([card_input, ft.Button("Load", on_click=load)]),
+                ft.Row([card_input, ft.Button("Load", on_click=load)], wrap=True),
                 output,
             ],
             expand=True,

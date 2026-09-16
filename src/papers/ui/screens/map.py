@@ -7,6 +7,8 @@ from typing import Any
 
 import flet as ft
 
+from papers.ui.errors import public_ui_error
+
 
 @dataclass
 class MapScreen:
@@ -41,7 +43,7 @@ class MapScreen:
                     }
                     output.value = json.dumps(payload, indent=2)
                 except Exception as exc:
-                    output.value = f"Error: {exc}"
+                    output.value = f"Error: {public_ui_error(exc)}"
             output.update()
 
         return ft.Column(
@@ -58,7 +60,8 @@ class MapScreen:
                         policy_input,
                         state_input,
                         ft.Button("Load", on_click=load),
-                    ]
+                    ],
+                    wrap=True,
                 ),
                 output,
             ],
