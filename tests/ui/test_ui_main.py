@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import papers.ui.__main__ as main_module
+import papers.ui.paper_services as paper_services
 from papers.config.settings import ConfigurationError
 from papers.ui.app import UIServices
 
@@ -38,11 +39,11 @@ def test_build_ui_services_returns_ui_services(tmp_path):
         patch.object(main_module, "load_settings", return_value=mock_settings),
         patch.object(main_module, "build_container", return_value=mock_container),
         patch.object(main_module, "compose_default_runtime") as mock_compose,
-        patch.object(main_module, "PiccoloCandidateStore"),
-        patch.object(main_module, "PiccoloExtractionStore"),
-        patch.object(main_module, "PiccoloPaperExternalIdStore"),
-        patch.object(main_module, "PiccoloPaperProjectStore"),
-        patch.object(main_module, "PiccoloPaperFTS"),
+        patch.object(paper_services, "PiccoloCandidateStore"),
+        patch.object(paper_services, "PiccoloExtractionStore"),
+        patch.object(paper_services, "PiccoloPaperExternalIdStore"),
+        patch.object(paper_services, "PiccoloPaperProjectStore"),
+        patch.object(paper_services, "PiccoloPaperFTS"),
     ):
         services = main_module.build_ui_services()
 
