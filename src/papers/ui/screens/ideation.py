@@ -20,8 +20,8 @@ class IdeationScreen:
     services: object
 
     def build(self) -> ft.Control:
-        project_id = ft.TextField(label="Project id", expand=True)
-        question = ft.TextField(label="Project-wide question", expand=True)
+        project_id = ft.TextField(label="Project id", width=320)
+        question = ft.TextField(label="Project-wide question", width=320)
         profile = ft.TextField(label="Profile override", width=180, value="")
         model = ft.TextField(label="Model override", width=180, value="")
         critic_model = ft.TextField(label="Critic model override", width=180, value="")
@@ -30,14 +30,14 @@ class IdeationScreen:
         max_excerpts = ft.TextField(label="Excerpts/paper", value="6", width=140)
         timeout = ft.TextField(label="Timeout seconds", value="300", width=140)
         max_tokens = ft.TextField(label="Max tokens", value="8000", width=140)
-        bundle = ft.TextField(label="Verified ideation bundle", expand=True)
-        idea_id = ft.TextField(label="Idea id", expand=True)
+        bundle = ft.TextField(label="Verified ideation bundle", width=320)
+        idea_id = ft.TextField(label="Idea id", width=320)
         plan_profile = ft.TextField(label="Profile override", width=180, value="")
         plan_model = ft.TextField(label="Model override", width=180, value="")
         plan_timeout = ft.TextField(label="Timeout seconds", value="300", width=140)
         plan_tokens = ft.TextField(label="Max tokens", value="8000", width=140)
         selection_note = ft.TextField(
-            label="Selection note", value="operator-selected draft idea", expand=True
+            label="Selection note", value="operator-selected draft idea", width=320
         )
         output = ft.Text(value="", selectable=True)
 

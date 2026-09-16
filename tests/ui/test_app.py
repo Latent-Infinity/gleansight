@@ -163,7 +163,7 @@ def test_navigation_exposes_every_registered_workflow_label() -> None:
     nav_scroller = root_row.controls[0]
 
     assert isinstance(nav_scroller, ft.Column)
-    assert nav_scroller.scroll is ft.ScrollMode.AUTO
+    assert nav_scroller.scroll is ft.ScrollMode.ALWAYS
     nav = nav_scroller.controls[0]
     assert isinstance(nav, ft.NavigationRail)
     assert nav.height == len(app.state.ROUTES) * 72

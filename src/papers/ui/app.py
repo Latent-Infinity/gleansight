@@ -249,7 +249,7 @@ class UIApp:
         nav_scroller = ft.Column(
             [nav],
             height=max(float(page.height or page.window.height or 800) - 20, 0),
-            scroll=ft.ScrollMode.AUTO,
+            scroll=ft.ScrollMode.ALWAYS,
         )
 
         def resize_navigation(_: ft.ControlEvent) -> None:

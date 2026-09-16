@@ -82,6 +82,8 @@ def test_ideation_screen_runs_bounded_generation_and_planning() -> None:
     bundle, idea_id = plan_form.controls[0].controls
     plan_profile, plan_model, plan_timeout, plan_tokens = plan_form.controls[1].controls
     selection_note, plan = plan_form.controls[2].controls
+    assert project_id.width == question.width == 320
+    assert bundle.width == idea_id.width == selection_note.width == 320
     bundle.value = "output/project-ideation/run"
     idea_id.value = "idea-1"
     _click(plan)
