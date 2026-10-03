@@ -70,6 +70,32 @@ def test_synthesis_uses_project_evidence(populated: ApiRuntime, providers: None)
     # Given
     project_id = readable_project(populated)
     call(populated, "indexes.rebuild-vector", {})
+    from papers.app.use_cases.synthesis_sources import SynthesisRetrieval
+
+    base = populated.papers
+    sources = SynthesisRetrieval(
+        base.embedder,
+        base.vector_index,
+        base.paper_store,
+        base.blob_store,
+        base.paper_project_store,
+    ).retrieve("What is learned?", project_id, 5)
+    llm = base.llm_client
+    assert isinstance(llm, LLM)
+    llm.responses.append(
+        json.dumps(
+            {
+                "status": "supported",
+                "claims": [
+                    {
+                        "text": "Masked representations are learned.",
+                        "references": [source.model_dump() for source in sources],
+                    }
+                ],
+                "limitations": [],
+            }
+        )
+    )
     # When
     result = record(
         populated,
@@ -82,8 +108,8 @@ def test_synthesis_uses_project_evidence(populated: ApiRuntime, providers: None)
         },
     )
     # Then
-    assert result["answer"] == "Grounded answer"
-    assert result["sources"] == [{"paper_id": "paper-1", "title": "Adaptive learning"}]
+    assert "Masked representations are learned." in str(result["answer"])
+    assert result["sources"] == [source.model_dump() for source in sources]
 
 
 def test_ideation_and_selected_plan_write_verified_bundles(

@@ -76,6 +76,16 @@ def test_build_ui_services_returns_ui_services(tmp_path):
     assert callable(services.tau_command)
     assert callable(services.run_skeleton_loop)
 
+    with patch.object(paper_services, "worker_active", return_value=True):
+        with pytest.raises(ValueError, match="Managed worker owns execution"):
+            services.run_next_job()
+    mock_container.job_runner.run_next.assert_not_called()
+    assert services.run_paper_jobs is not None
+    with patch.object(main_module, "worker_active", return_value=True, create=True):
+        with pytest.raises(ValueError, match="Managed worker owns execution"):
+            services.run_paper_jobs(max_jobs=1)
+    mock_compose.return_value.paper_runner.run_next.assert_not_called()
+
 
 def test_main_calls_run_app_with_services(tmp_path):
     """Test that main() builds services and calls run_app."""

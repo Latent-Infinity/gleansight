@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
+from papers.ui.components.citation_exports import CitationExportControls
+
 
 def _next_job_type(stage: str | None) -> str | None:
     """Determine the next job type based on the current pipeline stage."""
@@ -115,6 +117,11 @@ class QueryScreen:
                     return 0
                 raise ValueError("Boolean constraints must be true/false/1/0.")
             return raw_value
+
+        citation_exports = CitationExportControls(
+            getattr(self.services, "export_papers", None),
+            lambda text, error: _set_status(text, is_error=error),
+        )
 
         def _build_result_card(hit: dict[str, Any]) -> ft.Control:
             paper = hit.get("paper") or {}
@@ -351,6 +358,7 @@ class QueryScreen:
                     border_radius=8,
                     content=ft.Column(
                         [
+                            citation_exports.checkbox(str(paper_id)),
                             ft.Text(title, size=16, weight=ft.FontWeight.BOLD),
                             ft.Text(authors, size=12, color=ft.Colors.GREY_700),
                             ft.Row(
@@ -389,6 +397,7 @@ class QueryScreen:
 
         def _render_results(enriched: list[dict[str, Any]]) -> None:
             nonlocal last_results
+            citation_exports.selected_ids.clear()
             last_results = enriched
             results_view.controls = [_build_result_card(hit) for hit in enriched]
             _safe_update(results_view)
@@ -610,6 +619,7 @@ class QueryScreen:
                     ]
                 ),
                 status_bar,
+                citation_exports.build(),
                 results_view,
             ],
             expand=True,

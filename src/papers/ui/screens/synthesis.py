@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
+from papers.domain.synthesis_grounding import GroundedSource
 from papers.ui.errors import public_ui_error
+from papers.ui.screens.synthesis_sources import SourcePassage
 
 
 @dataclass
@@ -16,6 +18,18 @@ class SynthesisScreen:
         instructions = ft.Text(
             value="Ask a question and get an answer synthesized from your paper corpus.",
             color=ft.Colors.GREY_700,
+        )
+        list_projects = getattr(self.services, "list_projects", None)
+        projects = list_projects() if list_projects is not None else []
+        project_scope = ft.Dropdown(
+            label="Project scope",
+            value="",
+            width=320,
+            options=[ft.DropdownOption(key="", text="All papers")]
+            + [
+                ft.DropdownOption(key=str(project["project_id"]), text=str(project["name"]))
+                for project in projects
+            ],
         )
         question_input = ft.TextField(label="Your Question", width=320)
         answer_display = ft.Markdown(
@@ -66,13 +80,22 @@ class SynthesisScreen:
 
             try:
                 synthesize_uc = self.services.synthesize_from_corpus
-                answer, sources = synthesize_uc.synthesize(question=question)
+                answer, sources = synthesize_uc.synthesize(
+                    question=question,
+                    project_id=project_scope.value or None,
+                    llm_model=str(
+                        self.services.ui_settings.get("llm_default_model") or "gpt-4o-mini"
+                    ),
+                )
 
                 answer_display.value = answer
                 sources_display.controls = [
-                    ft.Text(s.get("title", "Untitled"), size=12) for s in sources
+                    SourcePassage(
+                        GroundedSource.model_validate(s), self.services.get_paper_markdown
+                    ).build()
+                    for s in sources
                 ]
-                _set_status(f"Synthesized from {len(sources)} source(s).")
+                _set_status(f"Synthesized with {len(sources)} cited passage(s).")
             except Exception as exc:
                 error_text.value = f"Error: {public_ui_error(exc)}"
                 _set_status("Synthesis failed.", is_error=True)
@@ -90,6 +113,7 @@ class SynthesisScreen:
         return ft.Column(
             [
                 instructions,
+                project_scope,
                 ft.Row(
                     [
                         question_input,
@@ -111,6 +135,7 @@ class SynthesisScreen:
                 status_bar,
             ],
             expand=True,
+            scroll=ft.ScrollMode.AUTO,
         )
 
 

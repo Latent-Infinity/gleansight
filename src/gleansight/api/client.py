@@ -16,6 +16,7 @@ from gleansight.api.models import (
 )
 from gleansight.api.operation import RegisteredOperation
 from gleansight.api.runtime import ApiConfiguration, ApiRuntime
+from gleansight.workers.isolation import REGISTRY_EXECUTION_LOCK
 from papers.domain.errors import (
     BaseModuleError,
     ConfigurationError,
@@ -26,6 +27,7 @@ from papers.domain.errors import (
     NotReadyError,
     PipelineError,
 )
+from papers.infra.piccolo.database import PiccoloDatabase
 
 
 class GleansightAPI:
@@ -57,6 +59,10 @@ class GleansightAPI:
         return self._lookup(name).describe()
 
     def call(self, name: str, parameters: Mapping[str, JsonValue]) -> Result:
+        with REGISTRY_EXECUTION_LOCK, PiccoloDatabase.preserve_table_bindings():
+            return self._call(name, parameters)
+
+    def _call(self, name: str, parameters: Mapping[str, JsonValue]) -> Result:
         try:
             data = self._lookup(name).invoke(self._runtime, parameters)
         except OperationError as exc:

@@ -1,7 +1,7 @@
 """Discoverable NSQD workflow and operational read API."""
 
 from gleansight.api.models import EmptyRequest
-from gleansight.api.nsqd import acquisition, reads, requests, tau, workflows
+from gleansight.api.nsqd import acquisition, portfolios, reads, requests, tau, workflows
 from gleansight.api.operation import Operation, RegisteredOperation
 
 
@@ -183,4 +183,5 @@ def operations() -> tuple[RegisteredOperation, ...]:
             reads.ReadResource("nsqd_jobs", "job_id").get,
         )
     )
+    result.extend(portfolios.operations())
     return tuple(result)

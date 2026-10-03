@@ -17,6 +17,7 @@ from gleansight.api.papers.job_requests import (
     RunBounded,
 )
 from gleansight.api.runtime import ApiRuntime
+from gleansight.workers.supervisor import worker_active
 from papers.app.use_cases.admin import RecoverStuckJobsUseCase
 from papers.infra.piccolo.stores import PiccoloJobQueue
 
@@ -74,10 +75,12 @@ def bulk_cancel(runtime: ApiRuntime, request: JobIds) -> JsonValue:
 
 
 def run_next(runtime: ApiRuntime, request: EmptyRequest) -> JsonValue:
+    _require_unsupervised(runtime)
     return {"processed": runtime.papers.job_runner.run_next(datetime.now(UTC))}
 
 
 def run_bounded(runtime: ApiRuntime, request: RunBounded) -> JsonValue:
+    _require_unsupervised(runtime)
     runner = runtime.papers.job_runner
     processed = 0
     for _ in range(request.max_jobs):
@@ -88,10 +91,18 @@ def run_bounded(runtime: ApiRuntime, request: RunBounded) -> JsonValue:
 
 
 def recover(runtime: ApiRuntime, request: Recover) -> JsonValue:
+    _require_unsupervised(runtime)
     database(runtime)
     return json_result(
         RecoverStuckJobsUseCase(PiccoloJobQueue(), timedelta(seconds=request.stuck_after_seconds))()
     )
+
+
+def _require_unsupervised(runtime: ApiRuntime) -> None:
+    if worker_active(runtime.settings.data.db_path):
+        raise OperationError(
+            "conflict", "Stop the supervised worker before synchronous execution or recovery."
+        )
 
 
 def operations() -> tuple[RegisteredOperation, ...]:

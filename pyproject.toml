@@ -20,11 +20,13 @@ dependencies = [
   "flet[desktop,web]>=1.0.3,<2",
   "pyyaml>=6.0.3",
   "httpx>=0.28.1",
+  "mcp==2.3.0",
 ]
 
 [project.scripts]
 papers = "papers.cli.app:app"
 gleansight = "gleansight.cli:app"
+gleansight-mcp = "gleansight.mcp.cli:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -63,15 +63,21 @@ class PiccoloDatabase:
     def engine(self) -> SQLiteEngine:
         return self._engine
 
+    @staticmethod
     @contextmanager
-    def temporary_table_bindings(self) -> Iterator[None]:
+    def preserve_table_bindings() -> Iterator[None]:
         previous = tuple(getattr(table._meta, "_db", None) for table in _TABLES)
-        self.bind_tables()
         try:
             yield
         finally:
             for table, database in zip(_TABLES, previous, strict=True):
                 table._meta._db = database
+
+    @contextmanager
+    def temporary_table_bindings(self) -> Iterator[None]:
+        with self.preserve_table_bindings():
+            self.bind_tables()
+            yield
 
     def initialize_schema(self) -> None:
         from papers.infra.piccolo.migrations.runner import apply_forward_migrations

@@ -5,6 +5,9 @@ description: Run Gleansight's local paper research and NSQD discovery workflows 
 
 # Gleansight workflows
 
+For exports, comparison, screening, review records, supervised workers, backups, acquisition
+attribution and MCP access, read [references/roadmap.md](references/roadmap.md).
+
 Use the public operation catalog. From the repository, `uv run gleansight api operations` lists compact metadata; add `--with-schemas` for every input schema. `uv run gleansight api describe OPERATION` returns one full schema and effects; `uv run gleansight api call OPERATION --input-json '{...}'` invokes it. `--input-file PATH` also accepts `-` for stdin. The Python equivalent is `GleansightAPI(ApiConfiguration(...)).operations()`, `.describe(name)`, and `.call(name, parameters)` from `gleansight.api`. Metadata discovery does not initialize storage or providers.
 
 Choose an operation by its description, inspect its schema before constructing inputs, and check the returned `status`. All calls return a versioned `ok` or `error` envelope; CLI errors exit nonzero. Use stable operation names, never internal stores, as the mutation interface. For details specific to a paper task, read [references/papers.md](references/papers.md). For NSQD, read [references/nsqd.md](references/nsqd.md). The complete embedded and CLI contract is in [docs/agent-api.md](../../docs/agent-api.md).

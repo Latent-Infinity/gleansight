@@ -1,6 +1,9 @@
 from gleansight.api.operation import RegisteredOperation
 from gleansight.api.papers import (
     candidates,
+    comparisons,
+    exports,
+    grounding,
     indexes,
     jobs,
     pipeline,
@@ -9,6 +12,8 @@ from gleansight.api.papers import (
     query,
     records,
     research,
+    reviews,
+    screening,
     taxonomy,
 )
 
@@ -26,4 +31,9 @@ def operations() -> tuple[RegisteredOperation, ...]:
         *profiles.operations(),
         *research.operations(),
         *indexes.operations(),
+        *exports.operations(),
+        *comparisons.operations(),
+        *grounding.operations(),
+        *reviews.operations(),
+        *screening.operations(),
     )

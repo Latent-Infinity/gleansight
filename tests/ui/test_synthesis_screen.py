@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 import flet as ft
 
 from papers.ui.screens.synthesis import SynthesisScreen
+from tests.domain.test_synthesis_grounding import source as grounded_source
 from tests.ui.fake_services import complete_ui_services
 
 # ---------------------------------------------------------------------------
@@ -59,8 +60,8 @@ class FakeSynthesizeFromCorpusUseCase:
     answer: str = "Mocked Synthesis Answer"
     sources: list[dict[str, Any]] = field(
         default_factory=lambda: [
-            {"paper_id": "paper-1", "title": "Mock Paper 1"},
-            {"paper_id": "paper-2", "title": "Mock Paper 2"},
+            grounded_source().model_dump(),
+            grounded_source().model_dump(),
         ]
     )
     mock_exception: type[Exception] | None = None
@@ -234,3 +235,18 @@ def test_synthesis_screen_ask_button_triggers_synthesis() -> None:
 
     assert len(mock_uc.call_args) == 1
     assert mock_uc.call_args[0]["question"] == "Test via button click"
+
+
+def test_project_selection_and_configured_model_reach_use_case() -> None:
+    mock_uc = FakeSynthesizeFromCorpusUseCase()
+    services = _build_synthesis_services(
+        synthesize_from_corpus=mock_uc,
+        list_projects=lambda: [{"project_id": "project-selected", "name": "Selected project"}],
+        ui_settings={"llm_default_model": "configured-local-model"},
+    )
+    col = SynthesisScreen(services).build()
+    dropdown = _find_all(col, ft.Dropdown)[0]
+    dropdown.value = "project-selected"
+    _trigger_ask(col, "What does the selected project show?")
+    assert mock_uc.call_args[0]["project_id"] == "project-selected"
+    assert mock_uc.call_args[0]["llm_model"] == "configured-local-model"

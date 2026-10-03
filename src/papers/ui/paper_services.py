@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from gleansight.workers.supervisor import worker_active
 from nsqd.composition import NsqdContainer
 from nsqd.infra.paper_runtime import markdown_reader
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
@@ -28,6 +29,12 @@ def build_paper_service_values(base: AppContainer, settings: Settings) -> dict[s
     candidate_store = PiccoloCandidateStore()
     extraction_store = PiccoloExtractionStore()
     external_id_store = PiccoloPaperExternalIdStore()
+
+    def run_next_job() -> bool:
+        if worker_active(settings.data.db_path):
+            raise ValueError("Managed worker owns execution; stop it before manual execution.")
+        return base.job_runner.run_next(datetime.now(UTC))
+
     return {
         "discover": use_cases.DiscoverCandidatesUseCase(
             scholar_client=base.scholar_client,
@@ -59,7 +66,7 @@ def build_paper_service_values(base: AppContainer, settings: Settings) -> dict[s
         "list_paper": base.paper_store.get,
         "list_runs": base.analysis_store.list_runs,
         "list_jobs": lambda status, limit: base.job_queue.list_jobs(status=status, limit=limit),
-        "run_next_job": lambda: base.job_runner.run_next(datetime.now(UTC)),
+        "run_next_job": run_next_job,
         "enqueue_job": lambda job_type, paper_id, run_id, payload: base.job_queue.enqueue(
             job_type, paper_id, run_id, payload
         ),
@@ -80,6 +87,7 @@ def build_paper_service_values(base: AppContainer, settings: Settings) -> dict[s
             paper_project_store=PiccoloPaperProjectStore(),
         ),
         "ui_settings": {
+            "llm_default_model": settings.llm.default_model,
             "search_max_results": settings.ui.search_max_results,
             "scholar_api_key_set": bool(settings.scholar.api_key),
             "scholar_rate_limit": settings.scholar.rate_limit_per_second,

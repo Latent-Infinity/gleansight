@@ -151,6 +151,9 @@ class FakeBlobStore(BlobStore):
             assert encoding == "utf-8"
             return self._content
 
+        def read_bytes(self) -> bytes:
+            return self._content.encode()
+
         def exists(self) -> bool:
             return self._exists
 
@@ -191,7 +194,17 @@ class FakeLLMClient(LLMClient):
         self.calls.append({"prompt": prompt, "profile": profile, "model": model})
         if self.mock_llm_exception:
             raise self.mock_llm_exception("LLM Mock Error")
-        return LLMResponse(text=self.response_text, tokens_in=100, tokens_out=50, cost_usd=0.01)
+        response = self.response_text
+        if "Evidence JSON:\n" in prompt and not response.startswith("{"):
+            references = json.loads(prompt.split("Evidence JSON:\n", 1)[1])
+            response = json.dumps(
+                {
+                    "status": "supported",
+                    "claims": [{"text": self.response_text, "references": references}],
+                    "limitations": [],
+                }
+            )
+        return LLMResponse(text=response, tokens_in=100, tokens_out=50, cost_usd=0.01)
 
 
 @dataclass
@@ -269,7 +282,7 @@ class TestSynthesizeFromCorpusUseCase:
         assert "This is the content of Paper 3." in llm_call["prompt"]
 
         # Verify output
-        assert answer == self.llm_answer
+        assert self.llm_answer in answer
         assert len(sources) == len(self.paper_ids)
         assert {s["paper_id"] for s in sources} == set(self.paper_ids)
         assert {s["title"] for s in sources} == {
@@ -293,7 +306,7 @@ class TestSynthesizeFromCorpusUseCase:
         assert "This is the content of Paper 3." not in llm_call["prompt"]  # Paper 3 not in project
 
         # Verify output sources are only from the project
-        assert answer == self.llm_answer
+        assert self.llm_answer in answer
         assert len(sources) == 2  # Only paper-1 and paper-2 in project
         assert {s["paper_id"] for s in sources} == {"paper-1", "paper-2"}
 
@@ -320,7 +333,7 @@ class TestSynthesizeFromCorpusUseCase:
 
         use_case.synthesize(self.question)
 
-        assert setup_mocks["llm_client"].calls[0]["profile"] == {}
+        assert set(setup_mocks["llm_client"].calls[0]["profile"]) == {"chat_options"}
 
     def test_project_scope_requires_project_store(self, setup_mocks):
         setup_mocks["paper_project_store"] = None
@@ -336,7 +349,7 @@ class TestSynthesizeFromCorpusUseCase:
 
         answer, sources = use_case.synthesize(self.question)
 
-        assert answer == "No relevant documents found."
+        assert "No relevant documents found." in answer
         assert sources == []
         assert setup_mocks["llm_client"].calls == []
 
@@ -360,7 +373,8 @@ class TestSynthesizeFromCorpusUseCase:
 
         _answer, sources = use_case.synthesize(self.question)
 
-        assert sources == [{"paper_id": "paper-1", "title": "Untitled"}]
+        assert sources[0]["title"] == "Untitled"
+        assert sources[0]["markdown_sha256"]
 
     def test_synthesis_use_case_handles_no_retrieved_documents(self, setup_mocks):
         """
@@ -491,13 +505,13 @@ class TestSynthesizeFromCorpusUseCase:
         with pytest.raises(OutputValidationFailed, match="without supplied execution evidence"):
             use_case.synthesize(self.question, investigation_plan=True)
 
-    def test_default_synthesis_does_not_request_structured_output(self, setup_mocks) -> None:
+    def test_default_synthesis_requests_grounded_structured_output(self, setup_mocks) -> None:
         use_case = SynthesizeFromCorpusUseCase(**setup_mocks)
 
         answer, _sources = use_case.synthesize(self.question)
 
-        assert answer == self.llm_answer
-        assert "response_format" not in setup_mocks["llm_client"].calls[0]["profile"]
+        assert self.llm_answer in answer
+        assert "response_format" in setup_mocks["llm_client"].calls[0]["profile"]["chat_options"]
 
     def test_investigation_plan_mode_rejects_question_mismatch(self, setup_mocks) -> None:
         setup_mocks["vector_index"].query_results = [("paper-1", 1.0)]

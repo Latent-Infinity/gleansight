@@ -49,14 +49,30 @@ class PlanIdea(ResearchOptions):
 def ask(runtime: ApiRuntime, request: Ask) -> JsonValue:
     profile = llm_profile(runtime, request.profile_id)
     base = runtime.papers
-    result, sources = SynthesizeFromCorpusUseCase(
+    use_case = SynthesizeFromCorpusUseCase(
         embedder=base.embedder,
         vector_index=base.vector_index,
         paper_store=base.paper_store,
         blob_store=base.blob_store,
         llm_client=base.llm_client,
         paper_project_store=base.paper_project_store,
-    ).synthesize(
+    )
+    if not request.investigation_plan:
+        grounded = use_case.synthesize_grounded(
+            question=request.question,
+            project_id=request.project_id,
+            num_retrieved_docs=request.num_retrieved_docs,
+            llm_profile=profile,
+            llm_model=request.model or runtime.settings.llm.default_model,
+        )
+        return json_result(
+            {
+                "answer": grounded.render(),
+                "sources": [source.model_dump() for source in grounded.sources],
+                "grounding": grounded.model_dump(),
+            }
+        )
+    result, sources = use_case.synthesize(
         question=request.question,
         project_id=request.project_id,
         num_retrieved_docs=request.num_retrieved_docs,

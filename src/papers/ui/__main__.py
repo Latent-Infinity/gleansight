@@ -6,6 +6,7 @@ from typing import Any
 
 import yaml
 
+from gleansight.workers.supervisor import worker_active
 from nsqd.app.use_cases import MapSnapshotUseCase
 from nsqd.harvest import parse_harvest_file
 from nsqd.infra.paper_runtime import compose_default_runtime
@@ -22,6 +23,9 @@ from papers.config.settings import (
 from papers.ui.app import UIServices, run_app
 from papers.ui.paper_services import build_paper_service_values, build_projection_callbacks
 from papers.ui.path_policy import resolve_ui_input
+from papers.ui.review_services import build_review_services
+from papers.ui.roadmap_services import build_roadmap_services
+from papers.ui.screening_services import build_screening_services
 from papers.ui.tau_services import build_tau_callback
 from papers.ui.workflow_services import build_ideation_callbacks, build_rank_callback
 
@@ -167,7 +171,11 @@ def build_ui_services(
         if max_jobs < 1:
             raise ValueError("max_jobs must be >= 1")
         processed = 0
-        while processed < max_jobs and runtime.paper_runner.run_next(nsqd.clock.now()):
+        while processed < max_jobs:
+            if worker_active(settings.data.db_path):
+                raise ValueError("Managed worker owns execution; stop it before manual execution.")
+            if not runtime.paper_runner.run_next(nsqd.clock.now()):
+                break
             processed += 1
         return {"processed": processed}
 
@@ -210,7 +218,12 @@ def build_ui_services(
     )
 
     return UIServices(
-        **build_paper_service_values(base, settings),
+        **{
+            **build_paper_service_values(base, settings),
+            **build_roadmap_services(base, repo_root=repo_root),
+            **build_review_services(base, repo_root=repo_root),
+            **build_screening_services(base),
+        },
         map_snapshot=lambda **kwargs: MapSnapshotUseCase(
             snapshots=nsqd.ctx.snapshots,
             records=nsqd.ctx.records,

@@ -1,0 +1,6 @@
+[
+  {"name":"unsupported-question","question":"Does treatment improve long-term survival?","papers":["# Results\nTreatment improved short-term accuracy."],"status":"insufficient","claims":[],"limitations":["The available paper does not measure survival."]},
+  {"name":"conflicting-papers","question":"Does treatment improve accuracy?","papers":["# Results\nTreatment improved accuracy.","# Results\nTreatment did not improve accuracy."],"status":"conflicting","claims":[{"text":"The first study reports improved accuracy.","paper":0},{"text":"The second study reports no accuracy improvement.","paper":1}],"limitations":["The studies conflict; these excerpts cannot explain the discrepancy."]},
+  {"name":"incorrect-citation","question":"Does treatment improve accuracy?","papers":["# Results\nTreatment improved accuracy."],"status":"supported","claims":[{"text":"Treatment improves accuracy.","paper":0}],"limitations":[],"tamper":"quote"},
+  {"name":"empty-project","question":"Does treatment improve accuracy?","papers":[],"status":"insufficient","claims":[],"limitations":["No relevant documents found."]}
+]

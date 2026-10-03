@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from papers.app import ports
 from papers.app.observability import MetricsSink, NoopMetrics
@@ -27,6 +27,9 @@ from papers.domain.policies import (
     render_prompt_template,
     validate_extraction_output,
 )
+
+if TYPE_CHECKING:
+    from papers.infra.piccolo.database import PiccoloDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +65,7 @@ class HandlerContext:
     # Optional discover dependencies
     scholar_client: ports.ScholarClient | None = None
     candidate_store: ports.CandidateStore | None = None
+    database: PiccoloDatabase | None = None
 
 
 @dataclass(frozen=True)
@@ -746,6 +750,16 @@ def _finish_analysis(
 def handle_discover(job: ports.Job, ctx: HandlerContext) -> HandlerResult:
     if ctx.scholar_client is None or ctx.candidate_store is None:
         return HandlerResult.failed("discover handler dependencies are not configured")
+
+    if "saved_search_id" in job.payload:
+        if ctx.database is None:
+            return HandlerResult.failed("saved discovery database is not configured")
+        from papers.app.use_cases.saved_discovery import SavedDiscoveryService
+
+        SavedDiscoveryService(ctx.database, ctx.scholar_client).rerun(
+            str(job.payload["saved_search_id"]), job.job_id, managed=True
+        )
+        return HandlerResult.succeeded()
 
     query = str(job.payload.get("query", "")).strip()
     if not query:

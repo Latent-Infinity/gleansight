@@ -140,6 +140,7 @@ def build_container(
     )
 
     handler_context = HandlerContext(
+        database=db,
         paper_store=paper_store,
         job_queue=job_queue,
         blob_store=blob_store,

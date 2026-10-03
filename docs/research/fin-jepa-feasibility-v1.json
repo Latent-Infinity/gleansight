@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "protocol_id": "fin-jepa-feasibility-v1",
+  "audited_at": "2026-10-03T16:26:01Z",
+  "decision": "defer_exact_replication",
+  "baseline_smoke_status": "not_run_prerequisites_unresolved",
+  "reduced_study_authorized_by_this_record": false,
+  "paper_equivalence_established": false,
+  "paper": {"doi": "10.2139/ssrn.6855118", "title": "Fin-JEPA: Joint-Embedding Predictive Representation Learning for Financial Time Series"},
+  "source": {
+    "repository": "https://github.com/cedricwyh/fin-jepa",
+    "commit": "58506d6e31ecb2c65f9c69ea1f1bc146ef08f8b9",
+    "files_sha256": {
+      "README.md": "e95bbb8ce6f07b1780bb8cadd88ccb07c8353a83c918b02df76b5ed848ce862b",
+      "docs/jepa_paper.tex": "3b652f82d4ccd27d54e11c9b054e429fa41bc289aa2c82e5ec920416bf813bc6",
+      "model.py": "b80e96492195fcdaffb3ea374d6c7412ce44ecb36573ac66727c0fb6effa8ab9",
+      "hf/train_jepa.py": "b4d20bf97f1cdaaae775a24195f14768001ec971742a32201ab8fb0b6556b5cb",
+      "hf/prepare_dataset.py": "4551b6d28a595adcf688a97c6279fff37706fa990c340cf7a2e91ec1841a4eae",
+      "compare_arch.py": "c64500f399de4dbaeaaca64469fed67d58ec5ac3f10683a900af26d75a165996",
+      "experiment_e.py": "f3a3f10f7e50cdb421b99b1b6de9fcadc675286b91ea43024cc9e51e953e9ec0"
+    }
+  },
+  "prerequisites": [
+    {"id": "code_access", "classification": "verified", "evidence": "Public repository cloned read-only at the recorded commit. Upstream code was not executed."},
+    {"id": "code_license_declaration", "classification": "reported", "source_file": "README.md", "evidence": "README declares MIT; the tracked tree has no LICENSE file. Permission scope and dependency licenses need confirmation before reuse."},
+    {"id": "full_dataset_access", "classification": "reported", "source_file": "docs/jepa_paper.tex", "evidence": "Reproducibility statement identifies the full feature dataset as private."},
+    {"id": "training_dataset_endpoint", "classification": "verified", "evidence": "Unauthenticated GET https://huggingface.co/api/datasets/cedwyh/fin-jepa-data returned HTTP 401 at audit time; it does not establish whether authorized access is obtainable."},
+    {"id": "checkpoint_access", "classification": "reported", "source_file": "docs/jepa_paper.tex", "evidence": "Full checkpoint/logs are in private cedricwyh/chan-jepa. No checkpoint was supplied for this audit."},
+    {"id": "paper_dataset", "classification": "reported", "source_file": "docs/jepa_paper.tex", "evidence": "6230 equities, 22 features, 30 context and 10 target steps; train 2010-2023, selection 2024, test 2025-2026."},
+    {"id": "substitute_data_access", "classification": "verified", "evidence": "Public dataset perctrix/Stock-China-daily API returned HTTP 200, private=false, gated=false, declared license apache-2.0, revision 1cdaed826ecb77f1ce0412cae16c049a46701750. Data bytes, provenance, redistribution rights and feature equivalence were not verified."},
+    {"id": "substitute_feature_protocol", "classification": "verified", "source_file": "hf/prepare_dataset.py", "evidence": "Preparation selects up to 800 sorted tickers, computes 11 features and 65-step windows, and normalizes combined data before any split. This differs from the paper baseline."},
+    {"id": "timestamp_alignment", "classification": "unknown", "evidence": "Full dataset's exchange timezone, as-of adjustments, delisting coverage, constituent selection and per-feature availability timestamps are unavailable."},
+    {"id": "leakage_safe_split", "classification": "unknown", "evidence": "Paper reports chronological years, but public train_jepa.py divides concatenated sequences by row position. Date membership, cross-boundary windows and train-only preprocessing cannot be established for private data."},
+    {"id": "architecture", "classification": "reported", "source_file": "docs/jepa_paper.tex", "evidence": "Abstract describes four predictor layers; selected v4_deep_d64 results describe six. Resolve the exact checkpoint/config before asserting equivalence."},
+    {"id": "public_training_defaults", "classification": "verified", "source_file": "hf/train_jepa.py", "evidence": "CLI defaults: latent64, encoder4, predictor6, SIGReg projections128/lambda0.1, batch512, AdamW lr0.001/weight_decay0.00001, cosine schedule, epochs200. These are executable defaults, not a verified reconstruction of the reported 50-epoch run."},
+    {"id": "seeds_and_environment", "classification": "unknown", "evidence": "No complete pinned environment and seed ledger tying the reported full-scale run to the public source was established."},
+    {"id": "compute", "classification": "reported", "source_file": "docs/jepa_paper.tex", "evidence": "Reported full training uses A10G and 50 epochs. Local device compatibility, memory, wall time and cost have not been measured."},
+    {"id": "substitute_protocol", "classification": "proposed", "evidence": "If access cannot be obtained, register an independently named public-data protocol with explicit universe/features, timestamp rules, train-only transforms, chronological non-overlapping target boundaries and separate untouched evaluation. Never label Treasury YieldJEPA or this substitute an exact Fin-JEPA replication."}
+  ],
+  "release_gates": [
+    "Confirm code/data permission and record artifact revisions and hashes.",
+    "Resolve architecture, feature, universe, timestamp and split identities; list every substitution.",
+    "Freeze seeds, dependencies, selection metric and resource limits in a new protocol before execution.",
+    "Run a permissible bounded smoke with finite loss/gradients, dimensional checks and leakage assertions; retain environment, timing and memory evidence.",
+    "Only after smoke verification register a reduced study; reserve evaluation before selection and retain paired date/seed identities.",
+    "Paper-equivalent metrics require demonstrated equivalence, not merely similar model architecture."
+  ]
+}

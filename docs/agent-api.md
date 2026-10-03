@@ -1,5 +1,10 @@
 # Gleansight agent API
 
+The [added workflow guide](workflows/roadmap-capabilities.md) covers exports, source review,
+analysis comparison, screening, researcher decisions, background workers, backups and
+acquisition attribution. The [local MCP adapter](workflows/local-mcp.md) exposes the same
+registry and approval checks to stdio clients.
+
 The local Python API and `gleansight api` JSON CLI share one operation catalog. Use them for supported paper research and NSQD workflows. The catalog exposes operation descriptions, effects, approval requirements, and validated input schemas without opening storage or providers.
 
 ```bash

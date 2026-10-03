@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import flet as ft
 
+from papers.ui.components.idea_review_desk import IdeaReviewDesk
 from papers.ui.errors import public_ui_error
 
 
@@ -33,6 +34,7 @@ class IdeationScreen:
         max_tokens = ft.TextField(label="Max tokens", value="8000", width=140)
         bundle = ft.TextField(label="Verified ideation bundle", width=320)
         idea_id = ft.TextField(label="Idea id", width=320)
+        review_id = ft.TextField(label="Selected review id", width=320, read_only=True)
         plan_profile = ft.TextField(label="Profile override", width=180, value="")
         plan_model = ft.TextField(label="Model override", width=180, value="")
         plan_timeout = ft.TextField(label="Timeout seconds", value="300", width=140)
@@ -68,22 +70,35 @@ class IdeationScreen:
             output.update()
 
         def plan(_: ft.Event[ft.Button]) -> None:
-            operation = getattr(self.services, "plan_idea", None)
+            reviewed_operation = getattr(self.services, "plan_reviewed_idea", None)
+            operation = reviewed_operation or getattr(self.services, "plan_idea", None)
             if not str(bundle.value or "").strip() or not str(idea_id.value or "").strip():
                 output.value = "Verified bundle path and idea id are required."
+            elif reviewed_operation is not None and not review_id.value:
+                output.value = "Inspect and keep an idea before planning it."
             elif operation is None:
                 output.value = "Idea planning is not configured."
             else:
                 try:
-                    result = operation(
-                        bundle_path=str(bundle.value).strip(),
-                        idea_id=str(idea_id.value).strip(),
-                        profile_id=str(plan_profile.value or "").strip() or None,
-                        model=str(plan_model.value or "").strip() or None,
-                        timeout_s=_integer(plan_timeout, "Timeout"),
-                        max_tokens=_integer(plan_tokens, "Max tokens"),
-                        selection_note=str(selection_note.value or "").strip(),
-                    )
+                    if reviewed_operation is not None:
+                        result = reviewed_operation(
+                            review_id=str(review_id.value),
+                            profile_id=str(plan_profile.value or "").strip() or None,
+                            model=str(plan_model.value or "").strip() or None,
+                            timeout_s=_integer(plan_timeout, "Timeout"),
+                            max_tokens=_integer(plan_tokens, "Max tokens"),
+                            selection_note=str(selection_note.value or "").strip(),
+                        )
+                    else:
+                        result = operation(
+                            bundle_path=str(bundle.value).strip(),
+                            idea_id=str(idea_id.value).strip(),
+                            profile_id=str(plan_profile.value or "").strip() or None,
+                            model=str(plan_model.value or "").strip() or None,
+                            timeout_s=_integer(plan_timeout, "Timeout"),
+                            max_tokens=_integer(plan_tokens, "Max tokens"),
+                            selection_note=str(selection_note.value or "").strip(),
+                        )
                     output.value = json.dumps(result, indent=2, default=str)
                 except Exception as exc:
                     output.value = f"Error: {public_ui_error(exc)}"
@@ -112,6 +127,8 @@ class IdeationScreen:
                 ft.Row([bundle, idea_id], wrap=True),
                 ft.Row([plan_profile, plan_model, plan_timeout, plan_tokens], wrap=True),
                 ft.Row([selection_note, ft.Button("Plan selected idea", on_click=plan)], wrap=True),
+                review_id,
+                IdeaReviewDesk(self.services, bundle, idea_id, review_id, project_id).build(),
             ],
             spacing=8,
         )

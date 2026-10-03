@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import flet as ft
+from pydantic import JsonValue
 
 from papers.ui.screens.acquire import AcquireScreen
 from papers.ui.screens.archive import ArchiveScreen
@@ -27,6 +28,21 @@ from papers.ui.screens.tau import TauScreen
 
 if TYPE_CHECKING:
     from papers.app import use_cases
+    from papers.app.use_cases.citation_exports import ExportPapersUseCase
+    from papers.domain.analysis_comparison import (
+        CohortReport,
+        CohortSelection,
+        RunComparison,
+        RunInspection,
+        SavedCohort,
+    )
+    from papers.ui.review_services import (
+        InspectIdeaReviews,
+        ListIdeaBundles,
+        PlanReviewedIdea,
+        RecordIdeaReview,
+    )
+    from papers.ui.screening_services import ScreeningService
 
 
 @dataclass
@@ -70,6 +86,18 @@ class UIServices:
     ideate_project: Callable[..., dict[str, Any]] | None = None
     plan_idea: Callable[..., dict[str, Any]] | None = None
     rank_archive: Callable[..., dict[str, Any]] | None = None
+    export_papers: ExportPapersUseCase | None = None
+    inspect_analysis: Callable[[str], RunInspection] | None = None
+    compare_analysis: Callable[[str, str], RunComparison] | None = None
+    save_analysis_cohort: Callable[[CohortSelection], SavedCohort] | None = None
+    compare_analysis_cohort: Callable[[str], CohortReport] | None = None
+    list_analysis_cohorts: Callable[[], tuple[SavedCohort, ...]] | None = None
+    list_projects: Callable[[], list[dict[str, JsonValue]]] | None = None
+    list_idea_bundles: ListIdeaBundles | None = None
+    review_ideas: InspectIdeaReviews | None = None
+    record_idea_review: RecordIdeaReview | None = None
+    plan_reviewed_idea: PlanReviewedIdea | None = None
+    screening: ScreeningService | None = None
 
 
 class AppState:

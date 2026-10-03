@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
+from papers.ui.components.screening import ScreeningControls
+
 
 def _pick_icon(*names: str) -> ft.IconData:
     for name in names:
@@ -640,6 +642,10 @@ class SearchScreen:
         return ft.Column(
             [
                 instructions,
+                ScreeningControls(
+                    service=getattr(self.services, "screening", None),
+                    projects=self.services.list_projects or (lambda: []),
+                ).build(),
                 status_text,
                 ft.Row(
                     [

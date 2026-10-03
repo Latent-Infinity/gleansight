@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
+from papers.ui.components.analysis_review import AnalysisReviewActions, build_analysis_review
+
 
 def _next_job_type(stage: str | None) -> str | None:
     """Determine the next job type based on the current pipeline stage."""
@@ -347,7 +349,13 @@ class PaperDetailScreen:
                                         width=120,
                                     ),
                                     ft.Text(
-                                        value=f"${run.get('cost_usd', 0):.4f}", size=11, width=90
+                                        value=(
+                                            f"${run['cost_usd']:.4f}"
+                                            if run.get("cost_usd") is not None
+                                            else "unknown"
+                                        ),
+                                        size=11,
+                                        width=90,
                                     ),
                                 ],
                                 spacing=8,
@@ -356,6 +364,22 @@ class PaperDetailScreen:
                     )
             else:
                 runs_controls.append(ft.Text(value="No analysis runs.", italic=True, size=12))
+
+            inspect_analysis = getattr(self.services, "inspect_analysis", None)
+            compare_analysis = getattr(self.services, "compare_analysis", None)
+            if runs and inspect_analysis is not None and compare_analysis is not None:
+                runs_controls.append(
+                    build_analysis_review(
+                        tuple(str(run["run_id"]) for run in runs),
+                        AnalysisReviewActions(
+                            inspect=inspect_analysis,
+                            compare=compare_analysis,
+                            save_cohort=getattr(self.services, "save_analysis_cohort", None),
+                            compare_cohort=getattr(self.services, "compare_analysis_cohort", None),
+                            list_cohorts=getattr(self.services, "list_analysis_cohorts", None),
+                        ),
+                    )
+                )
 
             # --- Extractions section ---
             extractions = list_extractions(paper_id, None)
