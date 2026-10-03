@@ -15,7 +15,7 @@ class MapScreen:
     services: object
 
     def build(self) -> ft.Control:
-        snapshot_input = ft.TextField(label="Snapshot id", expand=True)
+        snapshot_input = ft.TextField(label="Snapshot id", width=320)
         policy_input = ft.TextField(label="Domain policy id", value="finance/1", width=220)
         state_input = ft.TextField(label="Snapshot state", value="calibration", width=180)
         output = ft.Text(value="", selectable=True)

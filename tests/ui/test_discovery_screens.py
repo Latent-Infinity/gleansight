@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 import flet as ft
+import pytest
 
 from papers.ui.screens.acquire import AcquireScreen
 from papers.ui.screens.archive import ArchiveScreen
@@ -16,6 +17,7 @@ from papers.ui.screens.map import MapScreen
 from papers.ui.screens.project import ProjectScreen
 from papers.ui.screens.rescore import RescoreScreen
 from papers.ui.screens.skeleton import SkeletonScreen
+from papers.ui.screens.synthesis import SynthesisScreen
 from papers.ui.screens.tau import TauScreen
 
 
@@ -35,6 +37,40 @@ class _Services:
     rescore_card: object = None
     tau_command: object = None
     run_skeleton_loop: object = None
+
+
+@pytest.mark.parametrize(
+    "screen_type",
+    [
+        AcquireScreen,
+        ArchiveScreen,
+        CardScreen,
+        DivergeScreen,
+        GateScreen,
+        GroundScreen,
+        HarvestScreen,
+        MapScreen,
+        RescoreScreen,
+        SkeletonScreen,
+        SynthesisScreen,
+    ],
+)
+def test_wrapped_forms_give_text_fields_bounded_width(screen_type: type) -> None:
+    controls = [screen_type(_Services()).build()]
+    wrapped_fields = 0
+    while controls:
+        match controls.pop():
+            case ft.Row(wrap=True, controls=children):
+                for child in children:
+                    if isinstance(child, ft.TextField):
+                        # Flutter Wrap gives children unbounded horizontal space.
+                        assert child.expand is None
+                        assert child.width is not None and child.width > 0
+                        wrapped_fields += 1
+                controls.extend(children)
+            case ft.Column(controls=children) | ft.Row(controls=children):
+                controls.extend(children)
+    assert wrapped_fields > 0
 
 
 def _click(button: ft.Button) -> None:

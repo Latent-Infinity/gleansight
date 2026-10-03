@@ -13,7 +13,7 @@ class CardScreen:
     services: object
 
     def build(self) -> ft.Control:
-        card_input = ft.TextField(label="Card id", expand=True)
+        card_input = ft.TextField(label="Card id", width=320)
         output = ft.Text(value="", selectable=True)
 
         def load(_: ft.ControlEvent) -> None:

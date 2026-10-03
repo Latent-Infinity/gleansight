@@ -8,7 +8,7 @@
 
 gleansight **is** the NS/QD-**inspired** discovery platform. Current paper features remain and are the default harvest path for scholarly literature.
 
-**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and Map/Archive/Card screens. Approved DATA-NSQD-03 now exercises an honest `finance/1 production_valid` path with zero `ALG-SUF` failures.
+**Maturity:** Evidence pipeline **executable**. Discovery includes harvest, projection, map, Operator A, live grounding, pack-aware sufficiency, bounded acquisition with default paper-runtime composition, the `gleansight` CLI, and NSQD loop screens in the desktop app. Approved DATA-NSQD-03 now exercises an honest `finance/1 production_valid` path with zero `ALG-SUF` failures.
 
 **Document roles**
 
@@ -55,7 +55,7 @@ Agents in the PRD are **use-cases + CLI/UI commands**. Unified entrypoint `glean
 | Discovery package | `src/nsqd/` | New bounded context; not `liq-ideation` |
 | Discovery CLI (N1/N2) | `python -m nsqd skeleton`, `python -m nsqd harvest` | Thin vertical slices |
 | CLI | `gleansight` + existing `papers` | One product; no break of current scripts |
-| UI | One Flet app: evidence screens stay; Map, Archive, Card added | Same desktop |
+| UI | One Flet app: evidence screens stay; NSQD loop screens added | Same desktop |
 | Vector store | LanceDB: existing paper table **and** a corpus-paraphrase collection | **HD-NSQD-01 closed: LanceDB.** Qdrant is out of scope |
 | Embeddings | Qwen3-lineage Ollama embedder (`qwen3-embedding:latest`) for papers and corpus paraphrases | Same family for both indexes; later Qwen embedding tags replace this setting |
 | Card/corpus metadata | Piccolo + `data/blobs/nsqd/` | Rule of Three |
@@ -129,7 +129,7 @@ HD-NSQD-02 is **closed** (product is gleansight, packages as above). HD-NSQD-01 
 ### Product surfaces
 
 - **FR-U1** Unified `gleansight` CLI. `papers` remains. Lifecycle/evidence: **EV-N18 Required**.
-- **FR-U2** Map/Archive/Card UI in the existing Flet app. Lifecycle/evidence: **EV-N18 Required**.
+- **FR-U2** NSQD loop screens in the existing Flet app (originally Map/Archive/Card; now also Harvest, Diverge, Ground, Gate, Project, Acquire, Rescore, Tau, Skeleton, Ideation). Lifecycle/evidence: **EV-N18 Required**.
 - **FR-U3** Thin clients only; use-cases own orchestration.
 
 ---

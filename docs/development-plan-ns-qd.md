@@ -1,14 +1,16 @@
 # Development Plan: gleansight NS/QD-inspired discovery
 
+**Status**: Complete; required baseline verified 2026-10-02. See [closeout evidence](nsqd-plan-closeout.md).
+
 **Guide Version**: 2.0
 **Mode**: Vertical-Slice
 **Plan Type**: Existing-System Feature
-**Planning Horizon**: Rolling-Wave (NSQD-N0, N0A, N1 expanded; N2+ listed)
+**Planning Horizon**: Completed baseline (NSQD-N0 through N11, including N0A/N2a/N2b)
 **Plan Set**: gleansight
 **Builds On**: `docs/development-plan-open-work.md` (evidence closeout; **hard deps** below)
 **Phase ID prefix**: `NSQD-N*` (never reuse closeout `V0`/`V0B`/`V1`/`V2`)
 **Inherited Facts**: all `Active` rows in `docs/fact-ledger.md`
-**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.69 wording (same file, revision)
+**Supersedes**: `docs/development-plan-ns-qd.md` v1.6.73 wording (same file, revision)
 **PRD Trace**: `docs/prd-ns-qd.md` + `docs/requirements-ns-qd.md` + `docs/algorithm-contract-nsqd.md` (`LOCAL-NSQD-*`)
 **Domain Policy**: Sufficiency, descriptors, viability rubrics, corpus views, and promotion verdicts are versioned by `domain_policy_id`. Verdicts are keyed by `(snapshot_id, domain_policy_id)`; one subject cannot satisfy or unlock another.
 **Real Data Policy**: Approved, provenance-bound source records and projections only. Committed fixtures remain the reproducible test baseline: DATA-NSQD-01/02 are **requirement-card** fixtures (`smoke_only`), never corpus records; DATA-NSQD-04 receives no `finance/1` sufficiency credit; DATA-NSQD-03 is bound to its primary-source excerpt and reviewed projection. Packet 2b may additionally use local, digest-bound measurements over approved corpus records without committing source PDFs or private text.
@@ -139,9 +141,10 @@ NS-QD does not weaken, bypass, or redefine this gate. `pyproject.toml` `fail_und
 | 1.6.68 | 2026-09-09 | Freeze the pre-outcome C/F/G research, review, retention, and stop protocols and seal the inclusive Operator G census successor. Packet digests: protocol `460986b3…69c`, G `47fa35d8…cb8`. The census scans both protocol JSON files, excludes only its exact self-output directory, binds 280 structured files, and finds zero trusted approvals, zero trusted evidence artifacts, and zero qualifying records. C/D/F/G authority semantics remain unchanged and runtime-disabled; no eligibility, inclusion, restart, resurrection, schema, CLI, or runtime authority is granted. Focused gates: protocol 20 passed; inclusive G 71 passed; C/F/G baseline 47 passed. |
 | 1.6.69 | 2026-09-09 | Reconcile current C/G pointers to the corrected append-only successor packets. Corrected C preserves the rejected interim packet as failed history, marks shuffled-control provenance `unavailable_nonreproducible`, keeps both typed edges and their composition unsupported with empty candidate outputs, and has no independent Todo 6 review summary or seal. Corrected G supersedes the prior census with a complete 292-file scope, zero trusted approvals, zero qualifying records, and all authorization flags false. C/D/F/G remain runtime-disabled; E remains experimental and off by default. |
 | 1.6.70 | 2026-09-10 | Record the completed independent Todo 6 technical review of the C packet and update current authority to the final G c-review-correction successor. The C review confirms only the bounded negative report-only conclusion: both typed edges and their composition remain unsupported, evidence is insufficient, shuffle derivation is `unavailable_nonreproducible`, and human/schema/runtime/Todo 7 authority remains false. Final G is a complete 294-file census with zero trusted approvals, zero qualifying records, and all authority flags false; C/D/F/G remain runtime-disabled and E remains off by default. |
-| 1.6.71 | 2026-09-13 | Expose the remaining core NSQD loop in the desktop UI: Harvest, Diverge (A/B only), Ground, and Gate, beside Map, Archive, and Card. Deferred operators C–G stay unavailable. |
-| 1.6.72 | 2026-09-13 | Add the remaining CLI-backed desktop screens: Project (including digest approval), Acquire (including paper jobs), Rescore, Tau (export/inventory/review/evaluate), and Skeleton. Diverge remains A/B-only. |
-| 1.6.72 | 2026-09-13 | Add the remaining CLI-backed desktop screens: Project (including digest approval), Acquire (including paper jobs), Rescore, Tau (export/inventory/review/evaluate), and Skeleton. Diverge remains A/B-only. |
+| 1.6.71 | 2026-09-13 | Expose remaining core NSQD loop in desktop UI: Harvest, Diverge (A/B only), Ground, Gate, beside Map, Archive, Card. CLI Diverge stays A/B-only; C, D, F, and G stay deferred while E remains experimental and off by default. |
+| 1.6.72 | 2026-09-13 | Add remaining CLI-backed desktop screens: Project (including digest approval), Acquire (including paper jobs), Rescore, Tau (export/inventory/review/evaluate), and Skeleton. Diverge remains A/B-only. |
+| 1.6.73 | 2026-09-17 | Audit against plan/requirements: add `gleansight rescore`, lock the full discovery command list in EV-N18 help tests, and reconcile N4/N10/FR-U2/product maturity with current A/B/E authority and NSQD loop screens. Four-command gate: 2716 passed, 2 skipped, 92.35%. |
+| 1.6.74 | 2026-10-02 | Close required N0-N11 baseline after all 22 evidence commands, retained calibration/replay checks, and 18-screen Flet QA at 1200x800 and 768x600. Correct rescore JSON output and wrapped form widths; preserve operator authority and historical evidence. Four-command gate: 2729 passed, 2 skipped, 92.35%; dedicated NSQD: 1860 passed, 92.65%. See `docs/nsqd-plan-closeout.md`. |
 
 ---
 
@@ -734,16 +737,16 @@ TDD order is **domain → application → adapters → E2E**. EV-N00 is the **la
 
 **Close note (2026-08-22):** `status_table` and `MapSnapshotUseCase` emit a complete ALG-STATUS table for an explicit `domain_policy_id`. Finance covers the 336-cell universe and optimization covers the 8-cell universe. Records are filtered by policy before placement; unlisted coordinates are left unplaced. Snapshot states and expected/inspected/disagreement/invalid-reason cell metadata are validated against the selected policy, while every `smoke_only` cell remains Unknown as required. Expected cells come from the policy (or an injected override); morphospace inspection is keyed by `archive_cell_key`. `map` now runs through its callable handler and persisted `nsqd_jobs` dispatch path, including the executable smoke skeleton; migration `007_nsqd_map_job_type` upgrades existing databases and rolls back atomically on copy failure. Rank can consume the table without callers inventing per-cell statuses. No `ALG.STATUS` ablation was run; DATA-NSQD-03 was not invented. Four-command gate: 932 passed, 1 skipped, 92.39% repository coverage; dedicated NSQD command: 356 passed, 94.59% coverage.
 
-### NSQD-N4 Operator A harden (B–G still deferred)
+### NSQD-N4 Operator A harden
 
 **Depends On:** N3
 **Acceptance:** Axiom list → Operator A only.
 
 - [x] Structured axiom rows (FR-M3); empty/blank lists rejected
-- [x] `generating_operator` / artifact operator is `A`; B–G rejected
+- [x] `generating_operator` / artifact operator is `A`; B–G rejected at N4 close
 - [x] ALG-SEL target-cell selection from the pack-scoped status table
 - [x] Empty target cell has no parent card; parent must be the cell elite when present
-- [x] Operators B–G remain deferred
+- [x] At N4 close, operators B–G remained deferred; later slices composition-gated B and experimental off-by-default E (C, D, F, G stay deferred)
 
 **Close note (2026-08-22):** Diverge accepts a structured axiom list and always records operator `A`. Deferred operators B–G are rejected. A supplied status table must exactly cover the candidate's registered policy universe. ALG-SEL prefers Missing/Sparse/Code-gap/Benchmark-gap/Stalled cells with no elite, then the lowest-viability stored elite, then the smaller cell id (including an all-Unknown table); a caller-supplied target must agree with that result, and any structured axiom `cell_id` must be in-policy and match it. Parent context is validated against the actual elite loaded from the archive, and empty targets cannot carry a parent. Initial candidate persistence is atomic: repeating the same semantic generation, including the legacy single-axiom Operator A shape, is idempotent, while different axioms, operator context, parent, target, or generator run at the same candidate hash raise an immutable-artifact conflict instead of overwriting, including competing inserts. Single-string `axiom` payloads remain valid as a one-row list so the smoke skeleton is unchanged. No `ALG.STATUS` ablation was run; DATA-NSQD-03 was not invented. Four-command gate: 932 passed, 1 skipped, 92.39% repository coverage; dedicated NSQD command: 356 passed, 94.59% coverage.
 
@@ -860,16 +863,18 @@ Imported papers and LLM output are operational staging data, not approved NSQD c
 
 ### NSQD-N10 Surfaces (FR-U1/U2)
 
-**Depends On:** N6 promotion + N9; production acquisition completion is independent remaining work
+**Depends On:** N6 promotion + N9
 **Facts:** NSQD.SURFACE.UNIFIED.v1 → EV-N18
-**Acceptance:** `gleansight` unified CLI; Map/Archive/Card UI.
+**Acceptance:** `gleansight` unified CLI; NSQD loop screens in the Flet app.
 
-- [x] `gleansight` entrypoint lists harvest, map, diverge, ground, gate, archive
+- [x] `gleansight` entrypoint lists harvest, map, diverge, ground, gate, archive, plus later project, acquire, rescore, tau, and skeleton commands
 - [x] Existing `papers` CLI remains
 - [x] Thin commands call existing use-cases / `nsqd_jobs` dispatch
-- [x] Flet app keeps Search/Paper/Monitor/Query/Synthesis and adds Map, Archive, Card
+- [x] Flet app keeps Search/Paper/Monitor/Query/Synthesis and adds Harvest, Map, Diverge, Ground, Gate, Project, Acquire, Rescore, Tau, Skeleton, Archive, Card, and Ideation
 
 **Close note (2026-08-22):** `gleansight` is the product CLI and reuses the discovery Typer app (`python -m nsqd` still works). Map/diverge/ground/gate/archive are thin wrappers over persisted jobs and rank evaluation. The desktop app adds Map, Archive, and Card screens beside the evidence screens. DATA-NSQD-03 was not invented. Four-command gate: 1021 passed, 1 skipped, 91.91% repository coverage; dedicated NSQD command: 434 passed, 92.99% coverage.
+
+**Closeout verification (2026-10-02):** EV-N18 passes 88 tests. All 18 Flet screens render at 1200x800 and 768x600. Rescore validation and dispatch pass; approval confirmation is consumed once on success and failure. Browser QA uses inert service callbacks; persisted jobs and corpus evidence are verified separately. See [closeout evidence](nsqd-plan-closeout.md).
 
 ### NSQD-N11 Packet 2b real measurements and autonomous labels
 

@@ -44,11 +44,13 @@ def test_skeleton_help_lists_command() -> None:
     assert "export-tau-measurements" in result.output
     assert "tau-measurement-inventory" in result.output
     assert "evaluate-autonomous-tau-reviews" in result.output
+    assert "autonomous-tau-review" in result.output
     assert "gate" in result.output
     assert "archive" in result.output
     assert "approve-digest" in result.output
     assert "acquire" in result.output
     assert "run-paper-jobs" in result.output
+    assert "rescore" in result.output
 
 
 def test_diverge_cli_exposes_operator_selection_without_tau() -> None:

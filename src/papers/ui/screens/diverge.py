@@ -15,11 +15,11 @@ class DivergeScreen:
     services: object
 
     def build(self) -> ft.Control:
-        fixture = ft.TextField(label="Candidate fixture path", expand=True)
-        axiom = ft.TextField(label="Axiom", expand=True)
-        snapshot = ft.TextField(label="Snapshot id", expand=True)
+        fixture = ft.TextField(label="Candidate fixture path", width=320)
+        axiom = ft.TextField(label="Axiom", width=320)
+        snapshot = ft.TextField(label="Snapshot id", width=320)
         policy = ft.TextField(label="Domain policy id", value="finance/1", width=180)
-        operator = ft.TextField(label="Operator", value="A", width=80)
+        operator = ft.TextField(label="Operator", value="A", width=120)
         target = ft.TextField(label="Target cell id", width=180)
         axiom_cell = ft.TextField(label="Axiom cell id", width=180)
         state = ft.TextField(label="Snapshot state", value="calibration", width=140)

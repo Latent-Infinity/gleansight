@@ -1,18 +1,39 @@
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from gleansight.cli import app
 from nsqd.composition import build_container
-from nsqd.null_adapters import FixedClock
+from nsqd.null_adapters import FixedClock, HashParaphraseEmbedder
+from nsqd.skeleton import run_skeleton
 
 
 def test_gleansight_help_lists_discovery_commands() -> None:
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0, result.output
-    for name in ("harvest", "map", "diverge", "ground", "gate", "archive"):
+    for name in (
+        "harvest",
+        "map",
+        "diverge",
+        "ground",
+        "gate",
+        "archive",
+        "skeleton",
+        "project",
+        "acquire",
+        "run-paper-jobs",
+        "approve-digest",
+        "rescore",
+        "export-tau-measurements",
+        "tau-measurement-inventory",
+        "autonomous-tau-review",
+        "evaluate-autonomous-tau-reviews",
+    ):
         assert name in result.output
 
 
@@ -186,3 +207,73 @@ def test_gleansight_ground_and_gate_unknown_artifact_fail(tmp_path: Path) -> Non
         ["gate", *shared, "--evaluator-run-id", "eval-1", "--snapshot-state", "calibration"],
     )
     assert gate.exit_code != 0
+
+
+def test_gleansight_rescore_unknown_card_fails(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "rescore",
+            "--card-id",
+            "missing",
+            "--current-snapshot-id",
+            "snap",
+            "--current-corpus-version",
+            "1",
+            "--db",
+            str(tmp_path / "nsqd.sqlite"),
+            "--index",
+            str(tmp_path / "index"),
+        ],
+    )
+    assert result.exit_code != 0
+    assert "error" in result.output.lower()
+
+
+@pytest.mark.parametrize("stale", [False, True])
+def test_gleansight_rescore_reports_persisted_card(
+    tmp_path: Path, stale: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db = tmp_path / "nsqd.sqlite"
+    index = tmp_path / "index"
+    as_of = datetime(2024, 1, 1, tzinfo=UTC)
+    initial = run_skeleton(
+        fixture_path=Path("tests/fixtures/approved/nsqd/gamma-flow.yaml"),
+        axiom="predictors assume stationary return signal",
+        db_path=db,
+        index_path=index,
+        as_of=as_of,
+    )
+    container = build_container(db_path=db, index_path=index, clock=FixedClock(as_of))
+    monkeypatch.setattr("nsqd.cli._standalone_embedder", lambda config: HashParaphraseEmbedder())
+    snapshot_id = "current-snapshot" if stale else initial["snapshot_id"]
+    corpus_version = container.ctx.snapshots.commit(snapshot_id, [], schema_version=1)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "rescore",
+            "--card-id",
+            initial["card"]["card_id"],
+            "--current-snapshot-id",
+            snapshot_id,
+            "--current-corpus-version",
+            str(corpus_version),
+            "--snapshot-state",
+            "smoke_only",
+            "--db",
+            str(db),
+            "--index",
+            str(index),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    reported = json.loads(result.output)
+    card = container.ctx.cards.get_card(reported["card_id"])
+    assert card is not None
+    assert card["snapshot_id"] == snapshot_id
+    assert card["corpus_version"] == corpus_version
+    assert reported["status"] == "succeeded"
+    assert reported["card_decision"] == card["card_decision"] == "rejected"
+    assert reported["viability"] == card["viability"] == 0

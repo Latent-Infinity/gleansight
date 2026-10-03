@@ -13,8 +13,8 @@ class SkeletonScreen:
     services: object
 
     def build(self) -> ft.Control:
-        fixture = ft.TextField(label="Candidate fixture path", expand=True)
-        axiom = ft.TextField(label="Axiom", expand=True)
+        fixture = ft.TextField(label="Candidate fixture path", width=320)
+        axiom = ft.TextField(label="Axiom", width=320)
         output = ft.Text(value="", selectable=True)
 
         def run(_: ft.ControlEvent) -> None:

@@ -16,7 +16,7 @@ class SynthesisScreen:
             value="Ask a question and get an answer synthesized from your paper corpus.",
             color=ft.Colors.GREY_700,
         )
-        question_input = ft.TextField(label="Your Question", expand=True)
+        question_input = ft.TextField(label="Your Question", width=320)
         answer_display = ft.Markdown(
             "",
             selectable=True,

@@ -13,8 +13,8 @@ class GateScreen:
     services: object
 
     def build(self) -> ft.Control:
-        hash_input = ft.TextField(label="Candidate artifact hash", expand=True)
-        snapshot = ft.TextField(label="Snapshot id", expand=True)
+        hash_input = ft.TextField(label="Candidate artifact hash", width=320)
+        snapshot = ft.TextField(label="Snapshot id", width=320)
         version = ft.TextField(label="Corpus version", width=140)
         evaluator = ft.TextField(label="Evaluator run id", width=180)
         state = ft.TextField(label="Snapshot state", value="calibration", width=160)

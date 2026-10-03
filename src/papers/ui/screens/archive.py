@@ -15,7 +15,7 @@ class ArchiveScreen:
     def build(self) -> ft.Control:
         output = ft.ListView(expand=True, spacing=8, padding=8)
         status = ft.Text(value="", size=12)
-        snapshot = ft.TextField(label="Snapshot id", expand=True)
+        snapshot = ft.TextField(label="Snapshot id", width=320)
         policy = ft.TextField(label="Domain policy id", value="finance/1", width=220)
         state = ft.TextField(label="Snapshot state", value="calibration", width=180)
         rank_output = ft.Text(value="", selectable=True)

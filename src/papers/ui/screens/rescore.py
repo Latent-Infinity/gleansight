@@ -13,8 +13,8 @@ class RescoreScreen:
     services: object
 
     def build(self) -> ft.Control:
-        card_id = ft.TextField(label="Card id", expand=True)
-        snapshot = ft.TextField(label="Current snapshot id", expand=True)
+        card_id = ft.TextField(label="Card id", width=320)
+        snapshot = ft.TextField(label="Current snapshot id", width=320)
         version = ft.TextField(label="Current corpus version", width=180)
         state = ft.TextField(label="Snapshot state", value="calibration", width=160)
         output = ft.Text(value="", selectable=True)

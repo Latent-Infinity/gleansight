@@ -13,7 +13,7 @@ class AcquireScreen:
     services: object
 
     def build(self) -> ft.Control:
-        snapshot = ft.TextField(label="Snapshot id", expand=True)
+        snapshot = ft.TextField(label="Snapshot id", width=320)
         policy = ft.TextField(label="Domain policy id", value="finance/1", width=180)
         target = ft.TextField(label="Target", value="calibration", width=140)
         decision = ft.TextField(label="Human decision", width=180)

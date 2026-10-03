@@ -612,6 +612,43 @@ def gate(
 
 
 @app.command()
+def rescore(
+    card_id: Annotated[str, typer.Option("--card-id")],
+    current_snapshot_id: Annotated[str, typer.Option("--current-snapshot-id")],
+    current_corpus_version: Annotated[int, typer.Option("--current-corpus-version")],
+    snapshot_state: Annotated[str, typer.Option("--snapshot-state")] = "calibration",
+    db: Annotated[Path, typer.Option("--db")] = DEFAULT_NSQD_DB,
+    index: Annotated[Path, typer.Option("--index")] = DEFAULT_NSQD_INDEX,
+) -> None:
+    try:
+        container = _container(db, index)
+        result = run_job(
+            container,
+            "rescore",
+            {
+                "card_id": card_id,
+                "current_snapshot_id": current_snapshot_id,
+                "current_corpus_version": current_corpus_version,
+                "snapshot_state": snapshot_state,
+            },
+            container.clock.now(),
+        )
+    except (ImportError, OSError, PipelineError, ValueError) as exc:
+        _fail(exc)
+    typer.echo(
+        json.dumps(
+            {
+                "status": result["status"],
+                "card_id": result["card"]["card_id"],
+                "card_decision": result["card"]["card_decision"],
+                "viability": result["card"]["viability"],
+            },
+            default=str,
+        )
+    )
+
+
+@app.command()
 def archive(
     snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
     domain_policy_id: Annotated[str, typer.Option("--domain-policy-id")],

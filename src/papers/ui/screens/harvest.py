@@ -13,7 +13,7 @@ class HarvestScreen:
     services: object
 
     def build(self) -> ft.Control:
-        file_input = ft.TextField(label="Harvest file path", expand=True)
+        file_input = ft.TextField(label="Harvest file path", width=320)
         output = ft.Text(value="", selectable=True)
 
         def run(_: ft.ControlEvent) -> None:
