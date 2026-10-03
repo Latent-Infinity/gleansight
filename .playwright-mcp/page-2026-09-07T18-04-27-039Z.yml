@@ -1,0 +1,1190 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e2]:
+    - navigation [ref=f9e3]:
+      - text: 
+      - generic [ref=f9e4]:
+        - generic [ref=f9e5]:
+          - link [ref=f9e6] [cursor=pointer]:
+            - /url: /
+            - strong [ref=f9e7]: OpenReview
+            - text: .net
+          - search [ref=f9e8]:
+            - generic [ref=f9e9]:
+              - textbox "term" [ref=f9e10]:
+                - /placeholder: Search articles, authors and reviews...
+              - generic:
+                - generic [aria-hidden]: 
+        - link "Login" [ref=f9e12] [cursor=pointer]:
+          - /url: /login
+    - banner [ref=f9e13]:
+      - link [ref=f9e17] [cursor=pointer]:
+        - /url: /group?id=ICML.cc/2026/Conference
+        - img "back arrow" [ref=f9e18]
+        - text: Go to
+        - strong [ref=f9e19]: ICML 2026 Conference
+        - text: homepage
+    - main [ref=f9e22]:
+      - generic [ref=f9e24]:
+        - generic [ref=f9e25]:
+          - generic [ref=f9e26]:
+            - heading "Joint-Embedding Predictive Learning of Latent Market States in U.S. Equities" [level=2] [ref=f9e27]
+            - link [ref=f9e29] [cursor=pointer]:
+              - /url: /pdf?id=BZfkxSasd3
+              - img "Download PDF" [ref=f9e30]
+          - heading [level=3] [ref=f9e32]:
+            - generic [ref=f9e33]:
+              - link "Simon Mahns" [ref=f9e34] [cursor=pointer]:
+                - /url: /profile?id=~Simon_Mahns1
+              - text: ","
+              - link "Randall Balestriero" [ref=f9e35] [cursor=pointer]:
+                - /url: /profile?id=~Randall_Balestriero1
+              - text: ","
+              - link "Mido Assran" [ref=f9e36] [cursor=pointer]:
+                - /url: /profile?id=~Mido_Assran1
+          - generic [ref=f9e38]:
+            - generic [ref=f9e39]:
+              - generic [aria-hidden] [ref=f9e40]: 
+              - text: "Published: 30 Apr 2026, Last Modified: 24 Jun 2026"
+            - generic [ref=f9e41]:
+              - generic [aria-hidden] [ref=f9e42]: 
+              - text: ICML 2026 regular
+            - generic [ref=f9e43]:
+              - generic [aria-hidden] [ref=f9e44]: 
+              - text: Everyone
+            - generic [ref=f9e45]:
+              - generic [aria-hidden] [ref=f9e46]: 
+              - link "Revisions" [ref=f9e47] [cursor=pointer]:
+                - /url: /revisions?id=BZfkxSasd3
+            - generic [ref=f9e48]:
+              - generic [aria-hidden] [ref=f9e49]: 
+              - link "BibTeX" [ref=f9e50] [cursor=pointer]:
+                - /url: "#"
+            - generic [ref=f9e51]:
+              - generic [aria-hidden] [ref=f9e52]: 
+              - link "CC BY 4.0" [ref=f9e53] [cursor=pointer]:
+                - /url: https://creativecommons.org/licenses/by/4.0/
+          - generic [ref=f9e54]:
+            - generic [ref=f9e55]:
+              - strong [ref=f9e56]: "TL;DR:"
+              - text: We investigate whether a JEPA can learn latent market states from U.S. equity cross-sections, capturing persistent risk-geometry regimes while largely ignoring direction.
+            - generic [ref=f9e57]:
+              - strong [ref=f9e58]: "Abstract:"
+              - paragraph [ref=f9e60]: We investigate whether Joint-Embedding Predictive Architectures (JEPA) can learn useful representations of U.S. equity markets. We jointly train a permutation-invariant tokenizer that maps each trading day's unordered per-asset features to a fixed set of learned factor tokens, together with a temporal JEPA using masked prediction to obtain a compact daily market-state embedding. Our evaluations show that these embeddings are strongly associated with second-moment market structure (realized volatility, correlation concentration, effective factor dimensionality) and weakly associated with market direction. The embedding helps predict gradual recovery dynamics but not sudden stress onsets. Without any text supervision, latent regimes show statistically significant alignment with news-topic shifts.
+            - generic [ref=f9e61]:
+              - strong [ref=f9e62]: "Lay Summary:"
+              - paragraph [ref=f9e64]: "Financial markets move in two ways: direction, whether prices rise or fall tomorrow, driven by surprise news and nearly unpredictable; and the market's \"risk weather\", how turbulent trading is and how tightly stocks move together, which changes slowly. We asked whether a computer could learn to recognize this weather on its own, from daily prices of about 500 U.S. stocks. We used a method that teaches itself by hiding parts of the data and predicting what is missing, so it locks onto slow, underlying predictable patterns and ignores the noise (direction). The resulting representation captured turbulence and how stocks move together, reacted sharply to crashes but not routine announcements, and grouped days that shared similar news without ever reading a headline. It is not a trading system and we make no claims about predicting prices."
+            - generic [ref=f9e65]:
+              - strong [ref=f9e66]: "Originally Submitted Supplementary Material:"
+              - link "zip" [ref=f9e68] [cursor=pointer]:
+                - /url: /attachment?id=BZfkxSasd3&name=supplementary_material
+                - generic [aria-hidden] [ref=f9e69]: 
+                - text: zip
+            - generic [ref=f9e70]:
+              - strong [ref=f9e71]: "Link To Code:"
+              - link "https://github.com/nautsimon/SSL-equities" [ref=f9e73] [cursor=pointer]:
+                - /url: https://github.com/nautsimon/SSL-equities
+            - generic [ref=f9e74]:
+              - strong [ref=f9e75]: "Primary Area:"
+              - text: Deep Learning->Self-Supervised Learning
+            - generic [ref=f9e76]:
+              - strong [ref=f9e77]: "Keywords:"
+              - text: Finance, Self-supervised learning, JEPA
+            - generic [ref=f9e78]:
+              - strong [ref=f9e79]: "Originally Submitted PDF:"
+              - link "pdf" [ref=f9e81] [cursor=pointer]:
+                - /url: /attachment?id=BZfkxSasd3&name=originally_submitted_PDF
+                - generic [aria-hidden] [ref=f9e82]: 
+                - text: pdf
+            - generic [ref=f9e83]:
+              - strong [ref=f9e84]: "Submission Number:"
+              - text: "34783"
+        - generic [ref=f9e86]:
+          - generic [ref=f9e87]:
+            - generic [ref=f9e89]:
+              - log [ref=f9e91]
+              - generic [ref=f9e93]:
+                - generic [ref=f9e94]: Filter by reply type...
+                - combobox "Filter by reply type..." [ref=f9e96]
+            - generic [ref=f9e103]:
+              - log [ref=f9e105]
+              - generic [ref=f9e107]:
+                - generic [ref=f9e108]: Filter by author...
+                - combobox "Filter by author..." [ref=f9e110]
+            - textbox "Search keywords..." [ref=f9e117]
+            - combobox "Order By" [ref=f9e119]:
+              - 'option "Sort: Newest First" [selected]'
+              - 'option "Sort: Oldest First"'
+            - generic [ref=f9e120]:
+              - group "nesting level" [ref=f9e121]:
+                - button "back arrow Linear" [ref=f9e122] [cursor=pointer]:
+                  - img "back arrow" [ref=f9e123]
+                  - generic [ref=f9e124]: Linear
+                - button "back arrow Threaded" [ref=f9e125] [cursor=pointer]:
+                  - img "back arrow" [ref=f9e126]
+                  - generic [ref=f9e127]: Threaded
+                - button "back arrow Nested" [ref=f9e128] [cursor=pointer]:
+                  - img "back arrow" [ref=f9e129]
+                  - generic [ref=f9e130]: Nested
+              - group "collapse level" [ref=f9e131]:
+                - button "− Collapsed" [ref=f9e132] [cursor=pointer]:
+                  - text: −
+                  - generic [ref=f9e133]: Collapsed
+                - button "＝ Default" [ref=f9e134] [cursor=pointer]:
+                  - text: ＝
+                  - generic [ref=f9e135]: Default
+                - button "≡ Expanded" [ref=f9e136] [cursor=pointer]:
+                  - text: ≡
+                  - generic [ref=f9e137]: Expanded
+              - group "copy url" [ref=f9e138]:
+                - button "Copy link" [ref=f9e139] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e140]: 
+          - generic [ref=f9e142]:
+            - generic [aria-hidden] [ref=f9e144]: 
+            - generic [ref=f9e145]:
+              - group:
+                - generic "Everyone" [ref=f9e146] [cursor=pointer]:
+                  - checkbox "Everyone"
+                  - text: Everyone
+                - generic [ref=f9e147] [cursor=pointer]:
+                  - checkbox "Reset"
+                  - generic [aria-hidden] [ref=f9e148]: 
+                  - generic [ref=f9e149]: Reset
+            - emphasis [ref=f9e151]: 17 / 17 replies shown
+        - generic [ref=f9e154]:
+          - generic [ref=f9e155]:
+            - group "Collapse controls" [ref=f9e156]:
+              - button "−" [ref=f9e157] [cursor=pointer]
+              - button "＝" [ref=f9e158] [cursor=pointer]
+              - button "≡" [ref=f9e159] [cursor=pointer]
+            - generic [ref=f9e160]:
+              - heading [level=4] [ref=f9e161]:
+                - strong [ref=f9e162]: Paper Decision
+              - button "Copy URL of note v11di6lpWk" [ref=f9e163] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f9e164]: 
+            - generic [ref=f9e166]:
+              - generic [ref=f9e167]: Decision
+              - generic [ref=f9e168]: by Program Chairs
+              - generic [ref=f9e169]:
+                - generic [aria-hidden] [ref=f9e170]: 
+                - text: "30 Apr 2026, 09:21 (modified: 24 Jun 2026, 16:45)"
+              - generic [ref=f9e171]:
+                - generic [aria-hidden] [ref=f9e172]: 
+                - text: Everyone
+              - generic [ref=f9e173]:
+                - generic [aria-hidden] [ref=f9e174]: 
+                - link "Revisions" [ref=f9e175] [cursor=pointer]:
+                  - /url: /revisions?id=v11di6lpWk
+            - generic [ref=f9e177]:
+              - generic [ref=f9e178]:
+                - strong [ref=f9e179]: "Decision:"
+                - text: Accept (regular)
+              - generic [ref=f9e180]:
+                - strong [ref=f9e181]: "Comment:"
+                - paragraph [ref=f9e183]: "This paper received mixed reviews. The two negative reviews are either low-confidence or rest largely on misreadings of the submission. The two weak-accept reviews were more informative: they raised substantive concerns about volatility confounds, missing econometric baselines, and the absence of domain-specific adaptation, and the rebuttal exchange, and the subsequent rebuttal from the authors meaningfully clarified how the contribution should be framed (e.g., complementary to, rather than superior over, existing econometric tools). Both reviewers were satisfied by this reframing, though neither expressed enthusiasm. The paper also suffers from significant presentation issues flagged by all reviewers, which should be fixed in revision. With the revised framing and the committed presentation fixes incorporated, the paper could sit above the accept threshold."
+              - generic [ref=f9e184]:
+                - strong [ref=f9e185]: "Reference Correctness Check:"
+                - generic [ref=f9e186]:
+                  - paragraph [ref=f9e187]: Some references in the submitted paper were flagged by an automated checker. As you are preparing the camera-ready version, please check the flagged references and correct any inaccuracies (authors, title, venue, arXiv ID, etc.). Note that the automated checker can produce false positives.
+                  - paragraph [ref=f9e188]: "Flagged references:"
+                  - list [ref=f9e189]:
+                    - listitem [ref=f9e190]:
+                      - paragraph [ref=f9e191]:
+                        - text: "Engle, R. Dynamic conditional correlation: A simple class of multivariate generalized autoregressive conditional heteroskedasticity models. Journal of Business and Economic Statistics, 20(3):339–350, 2002. ISSN 07350015. URL"
+                        - link "http://www.jstor.org/stable/1392121" [ref=f9e192] [cursor=pointer]:
+                          - /url: http://www.jstor.org/stable/1392121
+                        - text: .
+                      - heading [level=4] [ref=f9e193]:
+                        - strong [ref=f9e194]: "Issue:"
+                        - text: could not validate full reference
+                    - listitem [ref=f9e195]:
+                      - paragraph [ref=f9e196]: "Lee, J., Lee, Y., Kim, J., Kosiorek, A., Choi, S., and Teh, Y. W. Set transformer: A framework for attention-based permutation-invariant neural networks. In Proceedings of the 36th International Conference on Machine Learning (ICML), 2019."
+                      - heading [level=4] [ref=f9e197]:
+                        - strong [ref=f9e198]: "Issue:"
+                        - text: could not validate authors
+                    - listitem [ref=f9e199]:
+                      - paragraph [ref=f9e200]:
+                        - text: Zaheer, M., Kottur, S., Ravanbakhsh, S., Poczos, B., Salakhutdinov, R. R., and Smola, A. J. Deep sets. In Guyon, I., Luxburg, U. V., Bengio, S., Wallach, H., Fergus, R., Vishwanathan, S., and Garnett, R. (eds.), Advances in Neural Information Processing Systems, volume 30. Curran Associates, Inc., 2017. URL
+                        - link "https://proceedings.neurips.cc/paper_files/paper/2017/file/f2e4747da1aa27e363d86d40ff442fe-Paper.pdf" [ref=f9e201] [cursor=pointer]:
+                          - /url: https://proceedings.neurips.cc/paper_files/paper/2017/file/f2e4747da1aa27e363d86d40ff442fe-Paper.pdf
+                        - text: .
+                      - heading [level=4] [ref=f9e202]:
+                        - strong [ref=f9e203]: "Issue:"
+                        - text: could not validate authors
+          - generic [ref=f9e204]:
+            - group "Collapse controls" [ref=f9e205]:
+              - button "−" [ref=f9e206] [cursor=pointer]
+              - button "＝" [ref=f9e207] [cursor=pointer]
+              - button "≡" [ref=f9e208] [cursor=pointer]
+            - generic [ref=f9e209]:
+              - heading "Official Review of Submission34783 by Reviewer UhzW" [level=4] [ref=f9e210]
+              - button "Copy URL of note cOFqzQxNyH" [ref=f9e211] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f9e212]: 
+            - generic [ref=f9e214]:
+              - generic [ref=f9e215]: Official Review
+              - generic [ref=f9e216]: by Reviewer UhzW
+              - generic [ref=f9e217]:
+                - generic [aria-hidden] [ref=f9e218]: 
+                - text: "18 Mar 2026, 03:18 (modified: 24 Jun 2026, 19:33)"
+              - generic [ref=f9e219]:
+                - generic [aria-hidden] [ref=f9e220]: 
+                - text: Everyone
+              - generic [ref=f9e221]:
+                - generic [aria-hidden] [ref=f9e222]: 
+                - link "Revisions" [ref=f9e223] [cursor=pointer]:
+                  - /url: /revisions?id=cOFqzQxNyH
+            - generic [ref=f9e225]:
+              - generic [ref=f9e226]:
+                - strong [ref=f9e227]: "Summary:"
+                - paragraph [ref=f9e229]: The paper presents a JEPA framework to learn the market-state embeddding from US equity cross-sections. The framework uses Set Transformer to convert equities into learned factor tokens. The paper claim that
+              - generic [ref=f9e230]:
+                - strong [ref=f9e231]: "Strengths And Weaknesses:"
+                - generic [ref=f9e232]:
+                  - paragraph [ref=f9e233]: "Strengths:"
+                  - list [ref=f9e234]:
+                    - listitem [ref=f9e235]: The paper is well-motivated
+                  - paragraph [ref=f9e236]: "Weaknesses:"
+                  - list [ref=f9e237]:
+                    - listitem [ref=f9e238]: The technical contribution of this paper is limited.
+                    - listitem [ref=f9e239]: The presentation can be improved. For example, the notations (SAB, PMA, ISBA) for equation 1 are never introduced
+              - generic [ref=f9e240]:
+                - strong [ref=f9e241]: "Soundness:"
+                - text: "2: fair"
+              - generic [ref=f9e242]:
+                - strong [ref=f9e243]: "Presentation:"
+                - text: "2: fair"
+              - generic [ref=f9e244]:
+                - strong [ref=f9e245]: "Significance:"
+                - text: "2: fair"
+              - generic [ref=f9e246]:
+                - strong [ref=f9e247]: "Originality:"
+                - text: "2: fair"
+              - generic [ref=f9e248]:
+                - strong [ref=f9e249]: "Key Questions For Authors:"
+                - paragraph [ref=f9e251]: NA
+              - generic [ref=f9e252]:
+                - strong [ref=f9e253]: "Limitations:"
+                - paragraph [ref=f9e255]: See weakness part.
+              - generic [ref=f9e256]:
+                - strong [ref=f9e257]: "Overall Recommendation:"
+                - text: "3: Weak reject: A paper with clear merits, but also some weaknesses, which overall outweigh the merits. Papers in this category require revisions before they can be meaningfully built upon by others. Please use sparingly."
+              - generic [ref=f9e258]:
+                - strong [ref=f9e259]: "Confidence:"
+                - text: "1: Your assessment is an educated guess. The submission is not in your area, or the submission was difficult to understand. Math/other details were not carefully checked."
+              - generic [ref=f9e260]:
+                - strong [ref=f9e261]: "Compliance With LLM Reviewing Policy:"
+                - text: Affirmed.
+              - generic [ref=f9e262]:
+                - strong [ref=f9e263]: "Code Of Conduct Acknowledgement:"
+                - text: Affirmed.
+              - generic [ref=f9e264]:
+                - strong [ref=f9e265]: "Final Justification:"
+                - paragraph [ref=f9e267]: I maintain my score. My main concern remains the quality of the presentation, which I believe requires substantial revision
+            - generic [ref=f9e268]:
+              - generic [ref=f9e269]:
+                - group "Collapse controls" [ref=f9e270]:
+                  - button "−" [ref=f9e271] [cursor=pointer]
+                  - button "＝" [ref=f9e272] [cursor=pointer]
+                  - button "≡" [ref=f9e273] [cursor=pointer]
+                - generic [ref=f9e274]:
+                  - heading "Rebuttal by Authors" [level=4] [ref=f9e275]
+                  - button "Copy URL of note irgrq9qNj3" [ref=f9e276] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e277]: 
+                - generic [ref=f9e279]:
+                  - generic [ref=f9e280]: Rebuttal
+                  - generic [ref=f9e281]: by Authors
+                  - generic [ref=f9e282]:
+                    - generic [aria-hidden] [ref=f9e283]: 
+                    - text: "31 Mar 2026, 03:57 (modified: 24 Jun 2026, 21:06)"
+                  - generic [ref=f9e284]:
+                    - generic [aria-hidden] [ref=f9e285]: 
+                    - text: Everyone
+                  - generic [ref=f9e286]:
+                    - generic [aria-hidden] [ref=f9e287]: 
+                    - link "Revisions" [ref=f9e288] [cursor=pointer]:
+                      - /url: /revisions?id=irgrq9qNj3
+                - generic [ref=f9e291]:
+                  - strong [ref=f9e292]: "Rebuttal:"
+                  - generic [ref=f9e293]:
+                    - paragraph [ref=f9e294]: "We respectfully disagree that the technical contribution is limited. The paper studies whether a latent prediction architecture developed for video can produce meaningful representations in a domain that is seemingly orthogonal: unordered, changing daily equity cross-sections with heavy tails, non-stationarity, and no spatial structure. That investigation requires concrete architectural choices (permutation-invariant tokenizer, validity masking, structured temporal masking) and an evaluation suite to characterize what the resulting representation does and does not encode. Both the adaptation and the evaluation are new; no prior work, as far as we know, applies JEPA-style objectives to financial cross-sections or provides this type of multi-angle representation audit (geometry alignment, retrieval, transition prediction, displacement, cross-modal validation). We position this as a foundation that others can build on, not as a claim of solved market prediction, this is out of scope of this paper."
+                    - paragraph [ref=f9e295]: Regarding notation, SAB, ISAB, and PMA refer to components from the Set Transformer framework (Lee et al., 2019), but we agree they should have been briefly introduced. For clarity, SAB is a self-attention block over the set, ISAB uses inducing points for scalable attention, and PMA performs attention-based pooling into a fixed number of tokens. We would add short definitions at first use in revision.
+              - generic [ref=f9e296]:
+                - group "Collapse controls" [ref=f9e297]:
+                  - button "−" [ref=f9e298] [cursor=pointer]
+                  - button "＝" [ref=f9e299] [cursor=pointer]
+                  - button "≡" [ref=f9e300] [cursor=pointer]
+                - heading "Replying to Rebuttal by Authors" [level=5] [ref=f9e302] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e303]: 
+                  - text: Replying to Rebuttal by Authors
+                - generic [ref=f9e304]:
+                  - heading "Rebuttal Acknowledgement by Reviewer UhzW" [level=4] [ref=f9e305]
+                  - button "Copy URL of note MwBzc7ysox" [ref=f9e306] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e307]: 
+                - generic [ref=f9e309]:
+                  - generic [ref=f9e310]: Rebuttal Acknowledgement
+                  - generic [ref=f9e311]: by Reviewer UhzW
+                  - generic [ref=f9e312]:
+                    - generic [aria-hidden] [ref=f9e313]: 
+                    - text: "02 Apr 2026, 05:58 (modified: 24 Jun 2026, 22:24)"
+                  - generic [ref=f9e314]:
+                    - generic [aria-hidden] [ref=f9e315]: 
+                    - text: Everyone
+                  - generic [ref=f9e316]:
+                    - generic [aria-hidden] [ref=f9e317]: 
+                    - link "Revisions" [ref=f9e318] [cursor=pointer]:
+                      - /url: /revisions?id=MwBzc7ysox
+                - generic [ref=f9e320]:
+                  - generic [ref=f9e321]:
+                    - strong [ref=f9e322]: "Acknowledgement:"
+                    - text: (c) Partially resolved or unresolved, but the remaining concerns are not easily addressed in a short rebuttal - Please select this option sparingly and only when you believe that your questions concern the core tenets of the work, and addressing them requires a significant update to the paper.
+                  - generic [ref=f9e323]:
+                    - strong [ref=f9e324]: "Reasons:"
+                    - generic [ref=f9e325]:
+                      - paragraph [ref=f9e326]: Thank you for your rebuttal.
+                      - paragraph [ref=f9e327]: To clarify, I do not have expertise in finance, so I am unable to fully evaluate the domain-specific contributions of this work.
+                      - paragraph [ref=f9e328]:
+                        - text: However, in terms of its contribution to the machine learning community, I feel that the paper does not provide a
+                        - strong [ref=f9e329]: sufficiently self-contained presentation
+                        - text: . For a machine-learning-focused conference, it would be beneficial to include introductory context for the problem setup and relevant financial concepts, as the current version is difficult to follow for readers without a finance background.
+                      - paragraph [ref=f9e330]: As for the real-world significance of the contributions, I believe this would be better assessed by domain experts in finance.
+              - generic [ref=f9e331]:
+                - group "Collapse controls" [ref=f9e332]:
+                  - button "−" [ref=f9e333] [cursor=pointer]
+                  - button "＝" [ref=f9e334] [cursor=pointer]
+                  - button "≡" [ref=f9e335] [cursor=pointer]
+                - heading "Replying to Rebuttal Acknowledgement by Reviewer UhzW" [level=5] [ref=f9e337] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e338]: 
+                  - text: Replying to Rebuttal Acknowledgement by Reviewer UhzW
+                - generic [ref=f9e339]:
+                  - heading "Reply Rebuttal Comment by Authors" [level=4] [ref=f9e340]
+                  - button "Copy URL of note epFSuTb0f8" [ref=f9e341] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e342]: 
+                - generic [ref=f9e344]:
+                  - generic [ref=f9e345]: Reply Rebuttal Comment
+                  - generic [ref=f9e346]: by Authors
+                  - generic [ref=f9e347]:
+                    - generic [aria-hidden] [ref=f9e348]: 
+                    - text: "03 Apr 2026, 00:46 (modified: 24 Jun 2026, 23:51)"
+                  - generic [ref=f9e349]:
+                    - generic [aria-hidden] [ref=f9e350]: 
+                    - text: Everyone
+                  - generic [ref=f9e351]:
+                    - generic [aria-hidden] [ref=f9e352]: 
+                    - link "Revisions" [ref=f9e353] [cursor=pointer]:
+                      - /url: /revisions?id=epFSuTb0f8
+                - generic [ref=f9e356]:
+                  - strong [ref=f9e357]: "Comment:"
+                  - generic [ref=f9e358]:
+                    - paragraph [ref=f9e359]: Thank you for clarifying. We agree that the presentation can be improved for accessibility to a broader ML audience.
+                    - paragraph [ref=f9e360]: "At the same time, we view this primarily as an issue of exposition rather than with contribution. The current submission currently makes the ML setup explicit: Section 1 defines the problem as learning a day-level representation from unordered equity cross-sections using a JEPA objective, and explicitly scopes the work as representation learning. Section 3.3 then defines the specific geometry metrics used in evaluation (corr mean, PC1 share, effective rank)."
+                    - paragraph [ref=f9e361]: Some of the additional details asked for are also present in the submission, but deferred to the appendix. Table 7 provides the full per-equity feature definitions (28 features spanning returns, volatility, volume, and market-relative quantities), and Appendix B.1 defines the Set Transformer components used in Eq. 1.
+                    - paragraph [ref=f9e362]: We agree, however, surfacing a brief high-level summary of these feature groups and key financial qualities in the main body would improve accessibility for readers without a finance background.
+                    - paragraph [ref=f9e363]: In revision, we would address this directly by adding short inline definitions of SAB/ISAB/PMA and a brief main-text summary of the feature groups and financial terms, while keeping fuller implementation details in the appendix. We hope this clarifies the remaining concern and how it can be addressed through improved exposition.
+          - generic [ref=f9e364]:
+            - group "Collapse controls" [ref=f9e365]:
+              - button "−" [ref=f9e366] [cursor=pointer]
+              - button "＝" [ref=f9e367] [cursor=pointer]
+              - button "≡" [ref=f9e368] [cursor=pointer]
+            - generic [ref=f9e369]:
+              - heading "Official Review of Submission34783 by Reviewer KHSw" [level=4] [ref=f9e370]
+              - button "Copy URL of note DjvOu9qKMq" [ref=f9e371] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f9e372]: 
+            - generic [ref=f9e374]:
+              - generic [ref=f9e375]: Official Review
+              - generic [ref=f9e376]: by Reviewer KHSw
+              - generic [ref=f9e377]:
+                - generic [aria-hidden] [ref=f9e378]: 
+                - text: "12 Mar 2026, 07:24 (modified: 24 Jun 2026, 19:33)"
+              - generic [ref=f9e379]:
+                - generic [aria-hidden] [ref=f9e380]: 
+                - text: Everyone
+              - generic [ref=f9e381]:
+                - generic [aria-hidden] [ref=f9e382]: 
+                - link "Revisions" [ref=f9e383] [cursor=pointer]:
+                  - /url: /revisions?id=DjvOu9qKMq
+            - generic [ref=f9e385]:
+              - generic [ref=f9e386]:
+                - strong [ref=f9e387]: "Summary:"
+                - paragraph [ref=f9e389]: This paper presents a self-supervised representation learning framework for U.S. equity markets, combining a permutation-invariant Set Transformer tokenizer with a Joint-Embedding Predictive Architecture (JEPA) temporal encoder. The authors report that the embeddings encode realized volatility and correlation geometry strongly, but encode market direction weakly. An ablation against a Masked Auto-Encoder (MAE) baseline shows JEPA consistently outperforms MAE on structure descriptors.
+              - generic [ref=f9e390]:
+                - strong [ref=f9e391]: "Strengths And Weaknesses:"
+                - generic [ref=f9e392]:
+                  - paragraph [ref=f9e393]: Strengths
+                  - list [ref=f9e394]:
+                    - listitem [ref=f9e395]: "Clear research question: The paper learns a compact market-state embedding that captures second-moment geometry while discarding direction, and then rigorously characterizes what the embedding encodes. The explicit disclaimer that this is a representation learning study, not a trading strategy, is appreciated."
+                    - listitem [ref=f9e396]: "Diverse evaluation methods: Rather than relying on a single metric, the authors design seven complementary evaluations, which collectively triangulate the properties of the learned representation. The temporal purging strategy shows care in preventing leakage."
+                    - listitem [ref=f9e397]: "Honest limitations: The paper openly acknowledges the asymmetry in predictive utility, the dominance of the volatility baseline in geometry alignment, the lag-0 nature of displacement detection, and liquidity selection bias. This intellectual honesty is commendable."
+                  - paragraph [ref=f9e398]: Weakness
+                  - list [ref=f9e399]:
+                    - listitem [ref=f9e400]: "Originality: The core architecture (JEPA with a Set Transformer front-end) is transplanted from video understanding (V-JEPA, I-JEPA) to financial time series with minimal domain-specific modification. The authors do not explain why this transfer is non-trivial—financial return series exhibit fundamentally different statistical properties from video frames: pronounced non-stationarity, strong serial autocorrelation with heavy tails, and multiplicative rather than additive noise structures."
+                    - listitem [ref=f9e401]: "Comparison: The paper's single ablation compares JEPA against MAE—another method originating from computer vision. Given that the introduction extensively cites GARCH, DCC, HAR, and Markov Switching Models as the relevant prior literature, the complete absence of any quantitative comparison against these methods in the empirical evaluation is a critical gap."
+                    - listitem [ref=f9e402]: "Data Adaptation: Financial return cross-sections are non-stationary, exhibit fat tails, volatility clustering, and significant microstructure noise. The paper applies standard per-day cross-sectional z-scoring and temporal z-scoring from training data, but takes no steps to address them."
+              - generic [ref=f9e403]:
+                - strong [ref=f9e404]: "Soundness:"
+                - text: "2: fair"
+              - generic [ref=f9e405]:
+                - strong [ref=f9e406]: "Presentation:"
+                - text: "2: fair"
+              - generic [ref=f9e407]:
+                - strong [ref=f9e408]: "Significance:"
+                - text: "2: fair"
+              - generic [ref=f9e409]:
+                - strong [ref=f9e410]: "Originality:"
+                - text: "2: fair"
+              - generic [ref=f9e411]:
+                - strong [ref=f9e412]: "Key Questions For Authors:"
+                - list [ref=f9e414]:
+                  - listitem [ref=f9e415]: Can you provide any analysis of what each factor token captures? For instance, do the 24 seed vectors in the PMA attend preferentially to equities with specific sector, size, or momentum characteristics? Do specific factor slots consistently activate during particular market regimes (e.g., crisis, recovery)?
+                  - listitem [ref=f9e416]: Could you provide a theoretical or empirical justification for why the standard JEPA objective is well-suited for this domain? For example, how does the model's architecture or loss function address the challenges posed by heavy-tailed, non-stationary financial returns?
+                  - listitem [ref=f9e417]: The paper's introduction acknowledges a rich literature on modeling market states from financial econometrics (e.g., DCC-GARCH, Markov Switching Models). However, these models are absent from the empirical evaluation. Could you elaborate on the rationale for this omission? Including a comparison, especially for the geometry transition prediction task, against a representative econometric model would be critical for contextualizing the performance of your approach and substantiating its contribution.
+              - generic [ref=f9e418]:
+                - strong [ref=f9e419]: "Limitations:"
+                - paragraph [ref=f9e421]: "yes"
+              - generic [ref=f9e422]:
+                - strong [ref=f9e423]: "Overall Recommendation:"
+                - text: "4: Weak accept: Technically solid paper that advances at least one sub-area of AI, with a contribution that others are likely to build on, but with some weaknesses that limit its impact (e.g., limited evaluation). Please use sparingly."
+              - generic [ref=f9e424]:
+                - strong [ref=f9e425]: "Confidence:"
+                - text: "3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked."
+              - generic [ref=f9e426]:
+                - strong [ref=f9e427]: "Compliance With LLM Reviewing Policy:"
+                - text: Affirmed.
+              - generic [ref=f9e428]:
+                - strong [ref=f9e429]: "Code Of Conduct Acknowledgement:"
+                - text: Affirmed.
+              - generic [ref=f9e430]:
+                - strong [ref=f9e431]: "Final Justification:"
+                - paragraph [ref=f9e433]: Based on the current results, the authors have largely addressed my concerns. If these promised changes can faithfully go into the final paper, I am raising my score to 4.
+            - generic [ref=f9e434]:
+              - generic [ref=f9e435]:
+                - group "Collapse controls" [ref=f9e436]:
+                  - button "−" [ref=f9e437] [cursor=pointer]
+                  - button "＝" [ref=f9e438] [cursor=pointer]
+                  - button "≡" [ref=f9e439] [cursor=pointer]
+                - generic [ref=f9e440]:
+                  - heading "Rebuttal by Authors" [level=4] [ref=f9e441]
+                  - button "Copy URL of note VrlzwshuDZ" [ref=f9e442] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e443]: 
+                - generic [ref=f9e445]:
+                  - generic [ref=f9e446]: Rebuttal
+                  - generic [ref=f9e447]: by Authors
+                  - generic [ref=f9e448]:
+                    - generic [aria-hidden] [ref=f9e449]: 
+                    - text: "31 Mar 2026, 04:52 (modified: 24 Jun 2026, 21:06)"
+                  - generic [ref=f9e450]:
+                    - generic [aria-hidden] [ref=f9e451]: 
+                    - text: Everyone
+                  - generic [ref=f9e452]:
+                    - generic [aria-hidden] [ref=f9e453]: 
+                    - link "Revisions" [ref=f9e454] [cursor=pointer]:
+                      - /url: /revisions?id=VrlzwshuDZ
+                - generic [ref=f9e457]:
+                  - strong [ref=f9e458]: "Rebuttal:"
+                  - generic [ref=f9e459]:
+                    - heading [level=3] [ref=f9e460]:
+                      - strong [ref=f9e461]: Domain adaptation and why the JEPA objective fits
+                    - paragraph [ref=f9e462]: "We truly appreciate this point. First, daily equity cross-sections mix persistent structure (volatility clustering, correlation regimes, concentration) with unpredictable noise (idiosyncratic returns, direction). This mix is the fundamental reason that latent prediction fit: compression, dropping what is not predictable across time gaps, rather than forcing reconstruction of every masked variable including the noisy ones."
+                    - paragraph [ref=f9e463]: Regarding the transfer from vision not being automatic--we agree. While the foundational building blocks originate in vision, there are key differences that must be, and are, accounted for.
+                    - list [ref=f9e464]:
+                      - listitem [ref=f9e465]: There is no spatial grid or strict locality, so the tokenizer must be permutation-invariant.
+                      - listitem [ref=f9e466]: The universe changes daily as stocks list, delist, or cross liquidity thresholds; validity masks avoid survivorship bias by attending only to stocks actually present.
+                      - listitem [ref=f9e467]: Returns are heavy-tailed and non-stationary, so normalization is train-only over time and robust within each day (median/MAD).
+                      - listitem [ref=f9e468]: Temporal autocorrelation means naive masking leaks, so structured masking forces prediction across real time separation.
+                    - paragraph [ref=f9e469]: Together these address the specific properties the review raises, non-stationarity, heavy tails, and serial autocorrelation, by forcing the model to learn structure that persists across temporal gaps rather than exploiting shortcuts available in gridded, stationary data.
+                    - paragraph [ref=f9e470]: "We additionally provide the JEPA/MAE ablation as empirical support. Architecture, tokenizer, masking, and data are held fixed. JEPA outperforms MAE in this domain, with the largest gains on PC1 share and effective rank. Both models are weak in direction. That is the expected signature: if latent prediction is filtering noise, reconstruction must allocate capacity across all masked variables including noisier directional components, while latent prediction can discard them."
+                    - heading [level=3] [ref=f9e471]:
+                      - strong [ref=f9e472]: On comparisons with traditional baselines
+                    - paragraph [ref=f9e473]:
+                      - text: "We investigate three additional baselines on the geometry-transition task under the same split and protocol: HAR, a Gaussian hidden Markov model, and a six-descriptor handcrafted market-state baseline ("
+                      - code [ref=f9e474]: logRV21
+                      - text: ","
+                      - code [ref=f9e475]: dispersion
+                      - text: ","
+                      - code [ref=f9e476]: breadth
+                      - text: ","
+                      - code [ref=f9e477]: left_tail
+                      - text: ","
+                      - code [ref=f9e478]: pc1_share
+                      - text: ","
+                      - code [ref=f9e479]: eff_rank
+                      - text: ). JEPA's clearest additive signal is on diversification recovery (
+                      - code [ref=f9e480]: recovery_eff_rank_UP
+                      - text: ":"
+                      - code [ref=f9e481]: 0.690/0.139
+                      - text: to
+                      - code [ref=f9e482]: 0.801/0.323
+                      - text: ROC-AUC / average precision). On geometry fidelity, JEPA remains positively aligned after temporal controls (
+                      - code [ref=f9e483]: Mantel rho = 0.348
+                      - text: at
+                      - code [ref=f9e484]: gap >= 63d
+                      - text: ), although that test alone does not isolate structure beyond volatility. The stress tasks are mixed, and the displacement result is strongest as a descriptive stress indicator rather than a source of broad incremental predictive value.
+                    - paragraph [ref=f9e485]:
+                      - strong [ref=f9e486]: To be precise about the scope
+                      - text: ": the paper is a representation learning study. The goal is to show that a self-supervised model recovers meaningful market structure from raw cross-sectional inputs, not to outperform hand-engineered descriptors. Where traditional descriptors score higher, that reflects their direct construction from the target quantities. Systematically outperforming these is outside this contribution’s scope/claim."
+                    - heading [level=3] [ref=f9e487]:
+                      - strong [ref=f9e488]: On Factor tokens
+                    - paragraph [ref=f9e489]: We analyzed PMA slot behavior using (i) attention enrichment over volatility, momentum, and liquidity/size proxies, (ii) per-slot probes, and (iii) regime-conditioned activation statistics.
+                    - paragraph [ref=f9e490]: The submitted model exhibits consistent but distributed specialization, individual slots show statistically significant biases (e.g., toward high-volatility or low-momentum equities), and slot activations vary across regimes (e.g., elevated activity during high-volatility/high-concentration periods). However, this structure is shared across multiple slots rather than forming discrete one-slot/one-factor mappings. To test whether sharper specialization is possible, we conducted a controlled PMA follow-up with explicit slot-specific pressure (same tokenizer architecture). In that setting, certain slots (e.g., slot_23, slot_4) interestingly show stronger concentration on high-volatility (+0.323, +0.303) and low-momentum (+0.294, +0.271) equities. With our analysis, we concluded that the slots capture factor-relevant structure in a more distributed form than clean/discrete one-slot/one-factor semantics.
+              - generic [ref=f9e491]:
+                - group "Collapse controls" [ref=f9e492]:
+                  - button "−" [ref=f9e493] [cursor=pointer]
+                  - button "＝" [ref=f9e494] [cursor=pointer]
+                  - button "≡" [ref=f9e495] [cursor=pointer]
+                - heading "Replying to Rebuttal by Authors" [level=5] [ref=f9e497] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e498]: 
+                  - text: Replying to Rebuttal by Authors
+                - generic [ref=f9e499]:
+                  - heading "Rebuttal Acknowledgement by Reviewer KHSw" [level=4] [ref=f9e500]
+                  - button "Copy URL of note EbgRLnJGis" [ref=f9e501] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e502]: 
+                - generic [ref=f9e504]:
+                  - generic [ref=f9e505]: Rebuttal Acknowledgement
+                  - generic [ref=f9e506]: by Reviewer KHSw
+                  - generic [ref=f9e507]:
+                    - generic [aria-hidden] [ref=f9e508]: 
+                    - text: "04 Apr 2026, 10:27 (modified: 24 Jun 2026, 22:24)"
+                  - generic [ref=f9e509]:
+                    - generic [aria-hidden] [ref=f9e510]: 
+                    - text: Everyone
+                  - generic [ref=f9e511]:
+                    - generic [aria-hidden] [ref=f9e512]: 
+                    - link "Revisions" [ref=f9e513] [cursor=pointer]:
+                      - /url: /revisions?id=EbgRLnJGis
+                - generic [ref=f9e515]:
+                  - generic [ref=f9e516]:
+                    - strong [ref=f9e517]: "Acknowledgement:"
+                    - text: (b) Partially resolved - I have follow-up questions for the authors.
+                  - generic [ref=f9e518]:
+                    - strong [ref=f9e519]: "Reasons:"
+                    - paragraph [ref=f9e521]: Thank you for the detailed rebuttal. The JEPA vs. MAE ablation as empirical support for the latent prediction hypothesis is a reasonable argument. However, the authors' position that "systematically outperforming hand-engineered descriptors is outside this contribution's scope" is difficult to accept. As the paper's central claim is that JEPA learns "useful representations" of market states. If the representation is evaluated purely against other machine learning objectives (MAE) and not against the domain's established models, the meaning of "useful" is left undefined. Even if the conclusion is that JEPA provides complementary rather than superior value that would itself be a meaningful and honest scientific finding. My overall evaluation of the paper is maintained.
+              - generic [ref=f9e522]:
+                - group "Collapse controls" [ref=f9e523]:
+                  - button "−" [ref=f9e524] [cursor=pointer]
+                  - button "＝" [ref=f9e525] [cursor=pointer]
+                  - button "≡" [ref=f9e526] [cursor=pointer]
+                - heading "Replying to Rebuttal Acknowledgement by Reviewer KHSw" [level=5] [ref=f9e528] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e529]: 
+                  - text: Replying to Rebuttal Acknowledgement by Reviewer KHSw
+                - generic [ref=f9e530]:
+                  - heading "Reply Rebuttal Comment by Authors" [level=4] [ref=f9e531]
+                  - button "Copy URL of note WNcqN9tLOQ" [ref=f9e532] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e533]: 
+                - generic [ref=f9e535]:
+                  - generic [ref=f9e536]: Reply Rebuttal Comment
+                  - generic [ref=f9e537]: by Authors
+                  - generic [ref=f9e538]:
+                    - generic [aria-hidden] [ref=f9e539]: 
+                    - text: "07 Apr 2026, 03:03 (modified: 24 Jun 2026, 23:51)"
+                  - generic [ref=f9e540]:
+                    - generic [aria-hidden] [ref=f9e541]: 
+                    - text: Everyone
+                  - generic [ref=f9e542]:
+                    - generic [aria-hidden] [ref=f9e543]: 
+                    - link "Revisions" [ref=f9e544] [cursor=pointer]:
+                      - /url: /revisions?id=WNcqN9tLOQ
+                - generic [ref=f9e547]:
+                  - strong [ref=f9e548]: "Comment:"
+                  - generic [ref=f9e549]:
+                    - paragraph [ref=f9e550]: We thank reviewer for the continued engagement and the productive discussion. After deliberation, we agree with the reviewer's framing.
+                    - paragraph [ref=f9e551]: "The experiments support this framing directly: under the added domain controls (HAR, Gaussian HMM, and the six-descriptor handcrafted baseline), JEPA provides complementary value beyond what those baselines capture rather than dominating them across every task, with the clearest gain on diversification recovery (recovery_eff_rank_UP). The asymmetry across tasks is itself the finding."
+                    - paragraph [ref=f9e552]:
+                      - strong [ref=f9e553]: We will make this framing explicit in the final version.
+          - generic [ref=f9e554]:
+            - group "Collapse controls" [ref=f9e555]:
+              - button "−" [ref=f9e556] [cursor=pointer]
+              - button "＝" [ref=f9e557] [cursor=pointer]
+              - button "≡" [ref=f9e558] [cursor=pointer]
+            - generic [ref=f9e559]:
+              - heading "Official Review of Submission34783 by Reviewer u7Yx" [level=4] [ref=f9e560]
+              - button "Copy URL of note R2dFpjB2KK" [ref=f9e561] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f9e562]: 
+            - generic [ref=f9e564]:
+              - generic [ref=f9e565]: Official Review
+              - generic [ref=f9e566]: by Reviewer u7Yx
+              - generic [ref=f9e567]:
+                - generic [aria-hidden] [ref=f9e568]: 
+                - text: "26 Feb 2026, 23:27 (modified: 24 Jun 2026, 19:33)"
+              - generic [ref=f9e569]:
+                - generic [aria-hidden] [ref=f9e570]: 
+                - text: Everyone
+              - generic [ref=f9e571]:
+                - generic [aria-hidden] [ref=f9e572]: 
+                - link "Revisions" [ref=f9e573] [cursor=pointer]:
+                  - /url: /revisions?id=R2dFpjB2KK
+            - generic [ref=f9e575]:
+              - generic [ref=f9e576]:
+                - strong [ref=f9e577]: "Summary:"
+                - paragraph [ref=f9e579]: The paper studies how to represent the U.S. stock market using a Joint Embedding Predictive Architecture (JEPA). Its main contribution is a self-supervised framework that aims to capture the market’s risk geometry, rather than just predicting returns or direction. By combining a permutation-invariant tokenizer with a temporal masking task, the authors compress high-dimensional daily cross-sectional stock data into compact market state embeddings. The paper also proposes a comprehensive evaluation setup. Using linear probes, the authors show that the embeddings retain key geometric features such as volatility and correlations. With k-nearest-neighbor (kNN) search, they further demonstrate that nearby embeddings correspond to similar market states. Finally, they compare latent state transitions with external news topics.
+              - generic [ref=f9e580]:
+                - strong [ref=f9e581]: "Strengths And Weaknesses:"
+                - generic [ref=f9e582]:
+                  - paragraph [ref=f9e583]: "Strengths:"
+                  - list [ref=f9e584]:
+                    - listitem [ref=f9e585]: The paper addresses a core challenge in financial modeling by introducing a permutation-invariant cross-sectional tokenizer. This allows the model to handle a changing universe of stocks and the lack of any natural ordering. As a result, heterogeneous and unordered daily asset features are mapped into fixed-dimensional latent factor tokens, leading to more robust and stable representations.
+                    - listitem [ref=f9e586]: The paper explores the use of JEPA for financial time series modeling, which offers a new way to learn non-stationary market states. Instead of using a generative objective like MAE, the model performs masked prediction directly in embedding space. This design encourages the extraction of temporally consistent signals from noisy price movements.
+                    - listitem [ref=f9e587]: The study employs a thorough experimental design to conduct a comprehensive evaluation of the learned embedding representations from multiple perspectives.
+                  - paragraph [ref=f9e588]: Weaknesses：
+                  - list [ref=f9e589]:
+                    - listitem [ref=f9e590]: In the neighborhood semantics (3.2) test, kNN neighbors are similar in volatility and correlation, but not in market direction. The authors say this means the model learns risk structure, not direction. I do not think this is fully supported. Volatility and correlation are more persistent and easier to predict, while returns are noisy, so a masked prediction objective will naturally focus on them. Also, the inputs already include several explicit volatility features (realized, EWMA, etc.). The kNN result may just show the model compresses and mixes these inputs, not that JEPA learns a new structural representation. It would help to rerun the test after removing explicit volatility features.
+                    - listitem [ref=f9e591]: In the geometry fidelity (3.3.1) test, the distance correlation is higher for the volatility-only baseline (0.44) than for the JEPA embedding (0.35). This suggests the embedding geometry may mostly reflect volatility regimes, not an independent abstraction of correlation structure. If a simple volatility proxy already explains much of the correlation-geometry distances, it is hard to see what JEPA adds on this metric. Overall, this result seems to show that the correlation structure is strongly driven by volatility, rather than clearly showing that JEPA learns structure beyond volatility.
+                    - listitem [ref=f9e592]: In the predictive utility (3.3.2) test, the authors compare a logistic regression using only a few geometry scalars with another model that also adds the JEPA embeddings, and they claim the embeddings add extra predictive power. But this is not a balanced comparison. The geometry scalars are a small set of low-dimensional features, while the JEPA embeddings come from full cross-sectional stock data over long windows and are learned with a neural self-supervised method. They contain much more information, so it is not surprising they help. To show what is special about JEPA, the paper should compare it to other representations with similar information and size, or to strong baselines built from the same inputs.
+                    - listitem [ref=f9e593]: In the stress indicator (3.4) experiment, the analysis does not include a systematic comparison with standard risk measures (e.g., realized volatility, VIX-type indices, drawdowns, or liquidity metrics). It is therefore unclear whether the displacement measure adds meaningful information beyond these indicators. If market stress and regime shifts are already well captured by standard measures, embedding displacement may just be a more complex, non-linear version of known risk factors rather than a new source of insight. The authors should run formal tests to show that displacement adds unique, non-redundant information beyond traditional risk benchmarks.
+                    - listitem [ref=f9e594]: In the cross-modal alignment (3.5) experiment, the paper says it also compares against a volatility-only representation in the same retrieval setup, but I could not find those results in the main text or appendix. If they are included, please clearly point to the exact location. More broadly, volatility is a major market driver and is often linked to macro regimes, risk appetite, and event cycles, which can also shape news topics. So any observed alignment between embeddings and news topics may reflect a shared volatility regime, not that the model learns higher-level semantic or structural information.
+                    - listitem [ref=f9e595]: "In the ablation study, JEPA shows much higher correlation than MAE on the structural description metrics. A likely reason is the objective: JEPA aligns in latent space and does not need to reconstruct every raw input dimension, so it can downweight low-signal variables like directional returns. MAE must reconstruct all dimensions, including noisy return components, which can add gradient noise and make it harder to learn stable patterns such as volatility and correlations. So JEPA’s gain on this metric may come more from focusing on what is easy to predict than from inherently better representations. More controlled comparisons are needed to support a stronger claim."
+              - generic [ref=f9e596]:
+                - strong [ref=f9e597]: "Soundness:"
+                - text: "3: good"
+              - generic [ref=f9e598]:
+                - strong [ref=f9e599]: "Presentation:"
+                - text: "3: good"
+              - generic [ref=f9e600]:
+                - strong [ref=f9e601]: "Significance:"
+                - text: "3: good"
+              - generic [ref=f9e602]:
+                - strong [ref=f9e603]: "Originality:"
+                - text: "3: good"
+              - generic [ref=f9e604]:
+                - strong [ref=f9e605]: "Key Questions For Authors:"
+                - list [ref=f9e607]:
+                  - listitem [ref=f9e608]: Could the authors provide more informative and convincing experimental analyses? If so, I would be willing to reconsider and potentially raise my score. Although the model design and training strategy in this paper follow existing, well-established paradigms, I still appreciate the attempt to apply them to a financial setting. My main concern is that, despite the large number of experiments, the current results do not yet seem strong enough to clearly demonstrate the effectiveness and importance of the proposed design choices. At a more fundamental level, most of the evaluation metrics in the paper mainly test the correlation or alignment between the learned embeddings and traditional market structure measures (such as volatility, correlation structure, and geometric descriptors). These results do show that the embeddings capture some structural information, but they mostly demonstrate that the embeddings resemble existing measures, rather than that the embeddings are better than or go beyond them. Thus, the methodological contribution remains unclear on the key question of whether the embeddings offer new information beyond traditional indicators.
+              - generic [ref=f9e609]:
+                - strong [ref=f9e610]: "Limitations:"
+                - paragraph [ref=f9e612]: "yes"
+              - generic [ref=f9e613]:
+                - strong [ref=f9e614]: "Overall Recommendation:"
+                - text: "4: Weak accept: Technically solid paper that advances at least one sub-area of AI, with a contribution that others are likely to build on, but with some weaknesses that limit its impact (e.g., limited evaluation). Please use sparingly."
+              - generic [ref=f9e615]:
+                - strong [ref=f9e616]: "Confidence:"
+                - text: "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work."
+              - generic [ref=f9e617]:
+                - strong [ref=f9e618]: "Compliance With LLM Reviewing Policy:"
+                - text: Affirmed.
+              - generic [ref=f9e619]:
+                - strong [ref=f9e620]: "Code Of Conduct Acknowledgement:"
+                - text: Affirmed.
+              - generic [ref=f9e621]:
+                - strong [ref=f9e622]: "Final Justification:"
+                - paragraph [ref=f9e624]: Although the method and the research question in this paper are not novel, it is still a meaningful attempt. I previously tried an MAE-based approach to study this problem (how to effectively represent market states), but the results were mediocre; this paper introduces JEPA to address it. In the initial version, the experiments had many issues, but the authors added revisions during the rebuttal, which addressed my concerns. The value of this work lies in providing a solid foundation for other researchers through detailed experiments; compared with work that merely stacks models to chase SOTA, I appreciate this type of work more.
+            - generic [ref=f9e625]:
+              - generic [ref=f9e626]:
+                - group "Collapse controls" [ref=f9e627]:
+                  - button "−" [ref=f9e628] [cursor=pointer]
+                  - button "＝" [ref=f9e629] [cursor=pointer]
+                  - button "≡" [ref=f9e630] [cursor=pointer]
+                - generic [ref=f9e631]:
+                  - heading "Rebuttal by Authors" [level=4] [ref=f9e632]
+                  - button "Copy URL of note vJaE648wCo" [ref=f9e633] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e634]: 
+                - generic [ref=f9e636]:
+                  - generic [ref=f9e637]: Rebuttal
+                  - generic [ref=f9e638]: by Authors
+                  - generic [ref=f9e639]:
+                    - generic [aria-hidden] [ref=f9e640]: 
+                    - text: "31 Mar 2026, 04:57 (modified: 24 Jun 2026, 21:06)"
+                  - generic [ref=f9e641]:
+                    - generic [aria-hidden] [ref=f9e642]: 
+                    - text: Everyone
+                  - generic [ref=f9e643]:
+                    - generic [aria-hidden] [ref=f9e644]: 
+                    - link "Revisions" [ref=f9e645] [cursor=pointer]:
+                      - /url: /revisions?id=vJaE648wCo
+                - generic [ref=f9e648]:
+                  - strong [ref=f9e649]: "Rebuttal:"
+                  - generic [ref=f9e650]:
+                    - heading [level=3] [ref=f9e651]:
+                      - strong [ref=f9e652]: Volatility dependence and no-vol retrain (3.2, 3.3.1)
+                    - paragraph [ref=f9e653]:
+                      - text: "We retrained the full model after removing the explicit volatility channels listed in the paper:"
+                      - code [ref=f9e654]: rvol_10
+                      - text: ","
+                      - code [ref=f9e655]: rvol_21
+                      - text: ","
+                      - code [ref=f9e656]: rvol_63
+                      - text: ","
+                      - code [ref=f9e657]: rvol_ratio
+                      - text: ","
+                      - code [ref=f9e658]: ewma_vol_hl10
+                      - text: ","
+                      - code [ref=f9e659]: ewma_vol_hl20
+                      - text: ","
+                      - code [ref=f9e660]: mkt_rvol_21
+                      - text: ", and"
+                      - code [ref=f9e661]: rel_vol
+                      - text: . The signal weakens but clearly persists (
+                      - code [ref=f9e662]: "Mantel rho: 0.348 -> 0.321"
+                      - text: ", mean geometry"
+                      - code [ref=f9e663]: "R^2: 0.408 -> 0.378"
+                      - text: ", recovery AUC gain:"
+                      - code [ref=f9e664]: 0.243 -> 0.138
+                      - text: ).
+                    - paragraph [ref=f9e665]:
+                      - text: The vol-only baseline remains stronger on the Mantel metric (
+                      - code [ref=f9e666]: "0.44"
+                      - text: vs
+                      - code [ref=f9e667]: "0.35"
+                      - text: "), so we do not present 3.3.1 alone as a beyond-volatility result. The point of the no-vol retrain is narrower and important: it argues against a simple passthrough explanation, because after removing those explicit channels the embedding will still retain substantial geometry and recovery signal."
+                    - heading [level=3] [ref=f9e668]:
+                      - strong [ref=f9e669]: Stronger baselines for predictive utility (3.3.2)
+                    - paragraph [ref=f9e670]: The reviewer asked for comparisons against strong baselines built from the same inputs, and against other representations with similar information and capacity. We added both.
+                    - paragraph [ref=f9e671]:
+                      - text: "For strong traditional baselines: HAR, a Gaussian hidden Markov model, and a six-descriptor handcrafted market-state baseline ("
+                      - code [ref=f9e672]: logRV21
+                      - text: ","
+                      - code [ref=f9e673]: dispersion
+                      - text: ","
+                      - code [ref=f9e674]: breadth
+                      - text: ","
+                      - code [ref=f9e675]: left_tail
+                      - text: ","
+                      - code [ref=f9e676]: pc1_share
+                      - text: ","
+                      - code [ref=f9e677]: eff_rank
+                      - text: ", each with daily/weekly/monthly persistence summaries, 18 features total). For the capacity-matched learned comparator: a MAE model with the same frozen tokenizer, same encoder architecture, same data, and same split, differing only in the training objective."
+                    - table [ref=f9e678]:
+                      - rowgroup [ref=f9e679]:
+                        - row [ref=f9e680]:
+                          - columnheader "Task" [ref=f9e681]
+                          - columnheader "Baseline" [ref=f9e682]
+                          - columnheader "+ JEPA" [ref=f9e683]
+                          - columnheader "+ MAE" [ref=f9e684]
+                          - columnheader [ref=f9e685]:
+                            - text: JEPA
+                            - code [ref=f9e686]: Delta
+                          - columnheader [ref=f9e687]:
+                            - text: MAE
+                            - code [ref=f9e688]: Delta
+                      - rowgroup [ref=f9e689]:
+                        - row [ref=f9e690]:
+                          - cell [ref=f9e691]:
+                            - code [ref=f9e692]: recovery_eff_rank_UP
+                          - cell [ref=f9e693]:
+                            - code [ref=f9e694]: 0.690 / 0.139
+                          - cell [ref=f9e695]:
+                            - code [ref=f9e696]: 0.800 / 0.324
+                          - cell [ref=f9e697]:
+                            - code [ref=f9e698]: 0.723 / 0.200
+                          - cell [ref=f9e699]:
+                            - code [ref=f9e700]: +0.110 / +0.185
+                          - cell [ref=f9e701]:
+                            - code [ref=f9e702]: +0.033 / +0.061
+                        - row [ref=f9e703]:
+                          - cell [ref=f9e704]:
+                            - code [ref=f9e705]: stress_corr_mean_UP
+                          - cell [ref=f9e706]:
+                            - code [ref=f9e707]: 0.549 / 0.085
+                          - cell [ref=f9e708]:
+                            - code [ref=f9e709]: 0.671 / 0.093
+                          - cell [ref=f9e710]:
+                            - code [ref=f9e711]: 0.541 / 0.067
+                          - cell [ref=f9e712]:
+                            - code [ref=f9e713]: +0.122 / +0.008
+                          - cell [ref=f9e714]:
+                            - code [ref=f9e715]: "-0.008 / -0.018"
+                        - row [ref=f9e716]:
+                          - cell [ref=f9e717]:
+                            - code [ref=f9e718]: recovery_corr_mean_DOWN
+                          - cell [ref=f9e719]:
+                            - code [ref=f9e720]: 0.969 / 0.818
+                          - cell [ref=f9e721]:
+                            - code [ref=f9e722]: 0.960 / 0.683
+                          - cell [ref=f9e723]:
+                            - code [ref=f9e724]: 0.973 / 0.887
+                          - cell [ref=f9e725]:
+                            - code [ref=f9e726]: "-0.008 / -0.136"
+                          - cell [ref=f9e727]:
+                            - code [ref=f9e728]: +0.004 / +0.069
+                        - row [ref=f9e729]:
+                          - cell [ref=f9e730]:
+                            - code [ref=f9e731]: recovery_pc1_share_DOWN
+                          - cell [ref=f9e732]:
+                            - code [ref=f9e733]: 0.972 / 0.837
+                          - cell [ref=f9e734]:
+                            - code [ref=f9e735]: 0.754 / 0.360
+                          - cell [ref=f9e736]:
+                            - code [ref=f9e737]: 0.937 / 0.770
+                          - cell [ref=f9e738]:
+                            - code [ref=f9e739]: "-0.218 / -0.476"
+                          - cell [ref=f9e740]:
+                            - code [ref=f9e741]: "-0.035 / -0.067"
+                    - paragraph [ref=f9e742]:
+                      - text: Under these stronger controls, the clearest additive value survives on
+                      - code [ref=f9e743]: recovery_eff_rank_UP
+                      - text: (
+                      - code [ref=f9e744]: 0.690 / 0.139 -> 0.800 / 0.324
+                      - text: ), and
+                      - code [ref=f9e745]: stress_corr_mean_UP
+                      - text: "also improves mainly in AUC. MAE is weaker overall. The broader picture is selective rather than uniform, so our conclusion is this: JEPA adds complementary signal on slow diversification recovery from raw inputs, rather than broad dominance over the entire six-descriptor handcrafted baseline."
+                    - heading [level=3] [ref=f9e746]:
+                      - strong [ref=f9e747]: Displacement versus standard risk measures (3.4)
+                    - paragraph [ref=f9e748]:
+                      - text: We added the missing benchmark against standard risk measures on the same held-out split (train
+                      - code [ref=f9e749]: <= 2022
+                      - text: ", val"
+                      - code [ref=f9e750]: "2023"
+                      - text: ", test"
+                      - code [ref=f9e751]: 2024-2025
+                      - text: ).
+                    - list [ref=f9e752]:
+                      - listitem [ref=f9e753]:
+                        - text: "Benchmark signals:"
+                        - code [ref=f9e754]: "|SPX return|"
+                        - text: ", 5d rolling SPX vol, 63d SPX drawdown, VIX level,"
+                        - code [ref=f9e755]: "|VIX change|"
+                        - text: ", HY spread level/change, and a liquidity proxy (cross-sectional median log dollar volume)."
+                      - listitem [ref=f9e756]:
+                        - text: "On top-1% Crash+VIX enrichment, JEPA displacement is competitive with the best individual signals: JEPA"
+                        - code [ref=f9e757]: 14.96x
+                        - text: ","
+                        - code [ref=f9e758]: "|SPX return|"
+                        - code [ref=f9e759]: 14.96x
+                        - text: ", VIX"
+                        - code [ref=f9e760]: 13.30x
+                        - text: ", drawdown"
+                        - code [ref=f9e761]: 11.63x
+                        - text: ", liquidity"
+                        - code [ref=f9e762]: 4.99x
+                        - text: .
+                      - listitem [ref=f9e763]:
+                        - text: For the incremental test (full risk bundle alone versus bundle plus JEPA displacement), Crash+VIX scores
+                        - code [ref=f9e764]: 0.985/0.586
+                        - text: AUC/AP vs
+                        - code [ref=f9e765]: 0.983/0.595
+                        - text: ; All Systematic
+                        - code [ref=f9e766]: 0.716/0.298
+                        - text: vs
+                        - code [ref=f9e767]: 0.715/0.303
+                        - text: . Paired bootstrap intervals for both deltas include zero.
+                    - paragraph [ref=f9e768]: As a standalone signal, JEPA displacement is competitive with the strongest stress indicators. When added to the full traditional risk bundle, the held-out gains are small and the bootstrap CIs cover zero. Thus, we interpret displacement as a useful label-free stress summary, rather than as a clearly independent signal beyond that bundle.
+                    - heading [level=3] [ref=f9e769]:
+                      - strong [ref=f9e770]: News retrieval controls (3.5)
+                    - paragraph [ref=f9e771]:
+                      - text: We ran the retrieval evaluation against explicit baselines. The latent exceeds vol-only at
+                      - code [ref=f9e772]: W >= 5
+                      - text: (
+                      - code [ref=f9e773]: Delta(W=63) = 0.0053
+                      - text: v
+                      - code [ref=f9e774]: "0.0024"
+                      - text: ), and the no vol retrained model is comparable or stronger (
+                      - code [ref=f9e775]: Delta(W=63) = 0.0080
+                      - text: ), so the signal is not reducible to the explicit volatility channels. These results support a genuine alignment signal tied to risk geometry. A compact vol+correlation baseline is also equal or strong at many windows, so we view the news result as supporting evidence for the learned representation rather than the sole basis for a uniqueness claim.
+                    - heading [level=3] [ref=f9e776]:
+                      - strong [ref=f9e777]: JEPA v MAE
+                    - paragraph [ref=f9e778]:
+                      - text: This is a very sharp point and we agree with the reviewer's mechanism. For a controlled comparison, we trained a matched MAE with the same tokenizer, encoder, data, and split, and evaluated both atop the same six-descriptor baseline. JEPA outperforms MAE on all six structure descriptors, and on held-out
+                      - code [ref=f9e779]: recovery_eff_rank_UP
+                      - text: its additive gain is about 3x MAE's, while MAE's gain is not statistically supported. This is the pattern expected if latent prediction is a better fit than reconstruction for persistent risk geometry, and is is part of the motivation for this contribution.
+              - generic [ref=f9e780]:
+                - group "Collapse controls" [ref=f9e781]:
+                  - button "−" [ref=f9e782] [cursor=pointer]
+                  - button "＝" [ref=f9e783] [cursor=pointer]
+                  - button "≡" [ref=f9e784] [cursor=pointer]
+                - heading "Replying to Rebuttal by Authors" [level=5] [ref=f9e786] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e787]: 
+                  - text: Replying to Rebuttal by Authors
+                - generic [ref=f9e788]:
+                  - heading "Rebuttal Acknowledgement by Reviewer u7Yx" [level=4] [ref=f9e789]
+                  - button "Copy URL of note LDcTUfsb9U" [ref=f9e790] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e791]: 
+                - generic [ref=f9e793]:
+                  - generic [ref=f9e794]: Rebuttal Acknowledgement
+                  - generic [ref=f9e795]: by Reviewer u7Yx
+                  - generic [ref=f9e796]:
+                    - generic [aria-hidden] [ref=f9e797]: 
+                    - text: "02 Apr 2026, 00:32 (modified: 24 Jun 2026, 22:24)"
+                  - generic [ref=f9e798]:
+                    - generic [aria-hidden] [ref=f9e799]: 
+                    - text: Everyone
+                  - generic [ref=f9e800]:
+                    - generic [aria-hidden] [ref=f9e801]: 
+                    - link "Revisions" [ref=f9e802] [cursor=pointer]:
+                      - /url: /revisions?id=LDcTUfsb9U
+                - generic [ref=f9e804]:
+                  - generic [ref=f9e805]:
+                    - strong [ref=f9e806]: "Acknowledgement:"
+                    - text: (a) Fully resolved - My concerns have been adequately addressed. If you select this option, please consider adjusting your score accordingly.
+                  - generic [ref=f9e807]:
+                    - strong [ref=f9e808]: "Reasons:"
+                    - paragraph [ref=f9e810]: Thank you for your response. I will adjust the score to 4.
+              - generic [ref=f9e811]:
+                - group "Collapse controls" [ref=f9e812]:
+                  - button "−" [ref=f9e813] [cursor=pointer]
+                  - button "＝" [ref=f9e814] [cursor=pointer]
+                  - button "≡" [ref=f9e815] [cursor=pointer]
+                - heading "Replying to Rebuttal Acknowledgement by Reviewer u7Yx" [level=5] [ref=f9e817] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e818]: 
+                  - text: Replying to Rebuttal Acknowledgement by Reviewer u7Yx
+                - generic [ref=f9e819]:
+                  - heading "Reply Rebuttal Comment by Authors" [level=4] [ref=f9e820]
+                  - button "Copy URL of note LBEPQBWbCl" [ref=f9e821] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e822]: 
+                - generic [ref=f9e824]:
+                  - generic [ref=f9e825]: Reply Rebuttal Comment
+                  - generic [ref=f9e826]: by Authors
+                  - generic [ref=f9e827]:
+                    - generic [aria-hidden] [ref=f9e828]: 
+                    - text: "02 Apr 2026, 18:06 (modified: 24 Jun 2026, 23:51)"
+                  - generic [ref=f9e829]:
+                    - generic [aria-hidden] [ref=f9e830]: 
+                    - text: Everyone
+                  - generic [ref=f9e831]:
+                    - generic [aria-hidden] [ref=f9e832]: 
+                    - link "Revisions" [ref=f9e833] [cursor=pointer]:
+                      - /url: /revisions?id=LBEPQBWbCl
+                - generic [ref=f9e836]:
+                  - strong [ref=f9e837]: "Comment:"
+                  - paragraph [ref=f9e839]: We sincerely thank the reviewer for their constructive and insightful feedback, which has helped clarify several aspects of our work.
+          - generic [ref=f9e840]:
+            - group "Collapse controls" [ref=f9e841]:
+              - button "−" [ref=f9e842] [cursor=pointer]
+              - button "＝" [ref=f9e843] [cursor=pointer]
+              - button "≡" [ref=f9e844] [cursor=pointer]
+            - generic [ref=f9e845]:
+              - heading "Official Review of Submission34783 by Reviewer QSzA" [level=4] [ref=f9e846]
+              - button "Copy URL of note by9X6MQFDv" [ref=f9e847] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f9e848]: 
+            - generic [ref=f9e850]:
+              - generic [ref=f9e851]: Official Review
+              - generic [ref=f9e852]: by Reviewer QSzA
+              - generic [ref=f9e853]:
+                - generic [aria-hidden] [ref=f9e854]: 
+                - text: "20 Feb 2026, 00:55 (modified: 24 Jun 2026, 19:33)"
+              - generic [ref=f9e855]:
+                - generic [aria-hidden] [ref=f9e856]: 
+                - text: Everyone
+              - generic [ref=f9e857]:
+                - generic [aria-hidden] [ref=f9e858]: 
+                - link "Revisions" [ref=f9e859] [cursor=pointer]:
+                  - /url: /revisions?id=by9X6MQFDv
+            - generic [ref=f9e861]:
+              - generic [ref=f9e862]:
+                - strong [ref=f9e863]: "Summary:"
+                - paragraph [ref=f9e865]: This paper proposes a self-supervised learning framework based on JEPA, which treats daily equity cross-sections as unordered sets and compresses them into fixed factor tokens. By performing masked prediction within a latent space, the model filters out high-noise, hard-to-predict directional price or return information while precisely extracting persistent risk geometry features, providing a high-purity continuous state representation for identifying market regime evolution and predicting systemic recovery.
+              - generic [ref=f9e866]:
+                - strong [ref=f9e867]: "Strengths And Weaknesses:"
+                - generic [ref=f9e868]:
+                  - paragraph [ref=f9e869]: "Strengths: 1 Using Joint-Embedding Predictive Learning to study stock market dynamics is a novel and interesting perspective."
+                  - paragraph [ref=f9e870]: 2 The paper does not focus on predicting returns or prices, but instead concentrates on the overall shape and geometric characteristics of the market. This has meaningful implications for modeling financial markets with low signal-to-noise ratios.
+                  - paragraph [ref=f9e871]: "Limitations:"
+                  - paragraph [ref=f9e872]: 1 The paper claims that it can predict the evolution of the market’s latent geometric features and overall risk trends, including market recovery and the end of upward trends, and provide general directional guidance. However, the paper does not provide predictive comparisons with subsequent portfolio performance or overall market movements to demonstrate the accuracy and advantages of its predictions.
+                  - paragraph [ref=f9e873]: 2 The matching between abnormal fluctuations of variables in the latent space and news events is somewhat far-fetched and overly subjective.
+                  - paragraph [ref=f9e874]: 3 It is suggested to discuss the relationship between the proposed conceptual method and anomaly detection in stock market dynamics.
+                  - paragraph [ref=f9e875]: 4 The introduction of the baseline methods is unclear, which affects the readability of the paper.
+                  - paragraph [ref=f9e876]:
+                    - text: 5 The presentation of the paper is poor. Many variables are not defined, and the expressions of formulas and variables are particularly imprecise. For example, the variables in Table 1 are not defined. In particular, in the core formula Equation (3), the function
+                    - generic [ref=f9e877]:
+                      - generic [aria-hidden] [ref=f9e878]:
+                        - generic [ref=f9e879]: s
+                        - generic [ref=f9e881]: g
+                      - math [ref=f9e884]:
+                        - generic [ref=f9e885]: s
+                        - generic [ref=f9e886]: g
+                    - text: is not defined, which seriously affects readability.
+                  - paragraph [ref=f9e887]: 6 The paper does not provide a code link, and I am unable to understand these missing parts from the code.
+              - generic [ref=f9e888]:
+                - strong [ref=f9e889]: "Soundness:"
+                - text: "3: good"
+              - generic [ref=f9e890]:
+                - strong [ref=f9e891]: "Presentation:"
+                - text: "2: fair"
+              - generic [ref=f9e892]:
+                - strong [ref=f9e893]: "Significance:"
+                - text: "3: good"
+              - generic [ref=f9e894]:
+                - strong [ref=f9e895]: "Originality:"
+                - text: "3: good"
+              - generic [ref=f9e896]:
+                - strong [ref=f9e897]: "Key Questions For Authors:"
+                - generic [ref=f9e898]:
+                  - paragraph [ref=f9e899]: 1 The paper claims that it can predict the evolution of the market’s latent geometric features and overall risk trends, including market recovery and the end of upward trends, and provide general directional guidance. However, the paper does not provide predictive comparisons with subsequent portfolio performance or overall market movements to demonstrate the accuracy and advantages of its predictions.
+                  - paragraph [ref=f9e900]: 2 The matching between abnormal fluctuations of variables in the latent space and news events is somewhat far-fetched and overly subjective.
+                  - paragraph [ref=f9e901]: 3 It is suggested to discuss the relationship between the proposed conceptual method and anomaly detection in stock market dynamics.
+                  - paragraph [ref=f9e902]: 4 The introduction of the baseline methods is unclear, which affects the readability of the paper.
+                  - paragraph [ref=f9e903]:
+                    - text: 5 The presentation of the paper is poor. Many variables are not defined, and the expressions of formulas and variables are particularly imprecise. For example, the variables in Table 1 are not defined. In particular, in the core formula Equation (3), the function
+                    - generic [ref=f9e904]:
+                      - generic [aria-hidden] [ref=f9e905]:
+                        - generic [ref=f9e906]: s
+                        - generic [ref=f9e908]: g
+                      - math [ref=f9e911]:
+                        - generic [ref=f9e912]: s
+                        - generic [ref=f9e913]: g
+                    - text: is not defined, which seriously affects readability.
+                  - paragraph [ref=f9e914]: 6 The paper does not provide a code link, and I am unable to understand these missing parts from the code.
+              - generic [ref=f9e915]:
+                - strong [ref=f9e916]: "Limitations:"
+                - paragraph [ref=f9e918]: "Yes"
+              - generic [ref=f9e919]:
+                - strong [ref=f9e920]: "Overall Recommendation:"
+                - text: "3: Weak reject: A paper with clear merits, but also some weaknesses, which overall outweigh the merits. Papers in this category require revisions before they can be meaningfully built upon by others. Please use sparingly."
+              - generic [ref=f9e921]:
+                - strong [ref=f9e922]: "Confidence:"
+                - text: "4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work."
+              - generic [ref=f9e923]:
+                - strong [ref=f9e924]: "Compliance With LLM Reviewing Policy:"
+                - text: Affirmed.
+              - generic [ref=f9e925]:
+                - strong [ref=f9e926]: "Code Of Conduct Acknowledgement:"
+                - text: Affirmed.
+            - generic [ref=f9e927]:
+              - generic [ref=f9e928]:
+                - group "Collapse controls" [ref=f9e929]:
+                  - button "−" [ref=f9e930] [cursor=pointer]
+                  - button "＝" [ref=f9e931] [cursor=pointer]
+                  - button "≡" [ref=f9e932] [cursor=pointer]
+                - generic [ref=f9e933]:
+                  - heading "Rebuttal by Authors" [level=4] [ref=f9e934]
+                  - button "Copy URL of note FvOVpaAcbi" [ref=f9e935] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e936]: 
+                - generic [ref=f9e938]:
+                  - generic [ref=f9e939]: Rebuttal
+                  - generic [ref=f9e940]: by Authors
+                  - generic [ref=f9e941]:
+                    - generic [aria-hidden] [ref=f9e942]: 
+                    - text: "31 Mar 2026, 04:33 (modified: 24 Jun 2026, 21:06)"
+                  - generic [ref=f9e943]:
+                    - generic [aria-hidden] [ref=f9e944]: 
+                    - text: Everyone
+                  - generic [ref=f9e945]:
+                    - generic [aria-hidden] [ref=f9e946]: 
+                    - link "Revisions" [ref=f9e947] [cursor=pointer]:
+                      - /url: /revisions?id=FvOVpaAcbi
+                - generic [ref=f9e950]:
+                  - strong [ref=f9e951]: "Rebuttal:"
+                  - generic [ref=f9e952]:
+                    - heading [level=3] [ref=f9e953]:
+                      - strong [ref=f9e954]: Does not provide predictive comparisons with subsequent portfolio performance or overall market movements to demonstrate the accuracy and advantages of its predictions.
+                    - paragraph [ref=f9e955]:
+                      - text: "We respectfully remind the reviewer that this is not a return-prediction or portfolio-optimization paper, and such comparisons are out of scope. The paper addresses this explicitly in various places: Section 1 (\""
+                      - strong [ref=f9e956]: This is a representation learning study
+                      - text: ". We do not optimize for expected returns or claim implementable trading strategies\") and the Impact Statement (\"we make no claims that the embeddings are suitable for trading, price prediction, return forecasting, market timing, or alpha generation\"). We also report that the representation drops directional information: kNN retrieval shows weak association with market returns and breadth. That is an intended property of the JEPA objective, since the goal is persistent risk geometry. The paper does not claim to predict market movements, and the evaluations are deliberately designed to characterize the structural content of the learned representation, not to test trading performance."
+                    - heading [level=3] [ref=f9e957]:
+                      - strong [ref=f9e958]: The matching between abnormal fluctuations of variables in the latent space and news events is somewhat far-fetched and overly subjective.
+                    - paragraph [ref=f9e959]: "We agree that the top-3 displacement examples and the cluster-level news labels are illustrative and somewhat subjective; they are meant only to give intuition for the latent space, not to serve as the main evidence. The quantitative claims instead rest on formal tests: the displacement enrichment analysis in Sec. 3.4 (OR = 32.3, one-sided Fisher p < 10^-4 for stress days) and the retrieval metric Δ(W) with shuffled nulls and bootstrap CIs."
+                    - heading [level=3] [ref=f9e960]:
+                      - strong [ref=f9e961]: It is suggested to discuss the relationship between the proposed conceptual method and anomaly detection in stock market dynamics.
+                    - paragraph [ref=f9e962]:
+                      - text: We thank the reviewer for this suggestion. Section 3.4 is closely related to anomaly detection, though more precisely the displacement metric
+                      - code [ref=f9e963]: "delta_t = ||z_t - z_{t-1}||_2"
+                      - text: acts as an unsupervised change-point score in learned state space. It is strongly enriched on realized stress days (OR = 32.3), however, not on scheduled announcements (OR = 1.3; one-sided Fisher p = 0.47), consistent with retrospective anomaly detection rather than event forecasting. In rebuttal we further benchmarked it against standard risk signals and found it is competitive with the best individual signals on stress enrichment (see our response to u7Yx).
+                    - heading [level=3] [ref=f9e964]:
+                      - strong [ref=f9e965]: Paper presentation / introduction of the baseline methods is unclear
+                    - paragraph [ref=f9e966]: "We appreciate the reviewer raising this and recognize this as a real concern. The paper uses different baseline families per evaluation, which may have created the impression that baselines were missing when each section has its own controlled comparison (time/volatility/spectrum for geometry alignment; HAR and handcrafted descriptors for transition prediction; shuffled/seasonality/risk-summary controls for news retrieval; JEPA vs MAE and masking ablations for training). We agree that consolidating definitions would help. For reference:"
+                    - list [ref=f9e967]:
+                      - listitem [ref=f9e968]:
+                        - text: "Eq. (3):"
+                        - code [ref=f9e969]: p_phi
+                        - text: maps visible-token encodings (plus mask tokens and positional embeddings) to predictions at masked positions.
+                      - listitem [ref=f9e970]:
+                        - code [ref=f9e971]: SAB
+                        - text: = self-attention block;
+                        - code [ref=f9e972]: ISAB
+                        - text: = inducing-point self-attention;
+                        - code [ref=f9e973]: PMA
+                        - text: = pooling by multihead attention (all from the Set Transformer framework).
+                      - listitem [ref=f9e974]:
+                        - text: "Table 1:"
+                        - code [ref=f9e975]: +/- 21d exclusion
+                        - text: = neighbors within 21 trading days removed;
+                        - code [ref=f9e976]: gap >= 63d
+                        - text: = only day-pairs 63+ days apart;
+                        - code [ref=f9e977]: OR
+                        - text: = odds ratio;
+                        - code [ref=f9e978]: Delta(W)
+                        - text: = news-similarity gain at exclusion window W.
+                    - paragraph [ref=f9e979]: These are the needed clarifications at first use.
+                    - heading [level=3] [ref=f9e980]:
+                      - strong [ref=f9e981]: The paper does not provide a code link, and I am unable to understand these missing parts from the code.
+                    - paragraph [ref=f9e982]: The implementation (including the Set Transformer tokenizer and JEPA architecture) was included as a runnable zip file in the supplementary material. We agree that a clearer pointer in the main text would have helped.
+              - generic [ref=f9e983]:
+                - group "Collapse controls" [ref=f9e984]:
+                  - button "−" [ref=f9e985] [cursor=pointer]
+                  - button "＝" [ref=f9e986] [cursor=pointer]
+                  - button "≡" [ref=f9e987] [cursor=pointer]
+                - heading "Replying to Rebuttal by Authors" [level=5] [ref=f9e989] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e990]: 
+                  - text: Replying to Rebuttal by Authors
+                - generic [ref=f9e991]:
+                  - heading "Rebuttal Acknowledgement by Reviewer QSzA" [level=4] [ref=f9e992]
+                  - button "Copy URL of note FNXG7nJEJh" [ref=f9e993] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e994]: 
+                - generic [ref=f9e996]:
+                  - generic [ref=f9e997]: Rebuttal Acknowledgement
+                  - generic [ref=f9e998]: by Reviewer QSzA
+                  - generic [ref=f9e999]:
+                    - generic [aria-hidden] [ref=f9e1000]: 
+                    - text: "05 Apr 2026, 01:27 (modified: 24 Jun 2026, 22:24)"
+                  - generic [ref=f9e1001]:
+                    - generic [aria-hidden] [ref=f9e1002]: 
+                    - text: Everyone
+                  - generic [ref=f9e1003]:
+                    - generic [aria-hidden] [ref=f9e1004]: 
+                    - link "Revisions" [ref=f9e1005] [cursor=pointer]:
+                      - /url: /revisions?id=FNXG7nJEJh
+                - generic [ref=f9e1007]:
+                  - generic [ref=f9e1008]:
+                    - strong [ref=f9e1009]: "Acknowledgement:"
+                    - text: (b) Partially resolved - I have follow-up questions for the authors.
+                  - generic [ref=f9e1010]:
+                    - strong [ref=f9e1011]: "Reasons:"
+                    - paragraph [ref=f9e1013]: I maintain my scores.
+              - generic [ref=f9e1014]:
+                - group "Collapse controls" [ref=f9e1015]:
+                  - button "−" [ref=f9e1016] [cursor=pointer]
+                  - button "＝" [ref=f9e1017] [cursor=pointer]
+                  - button "≡" [ref=f9e1018] [cursor=pointer]
+                - heading "Replying to Rebuttal Acknowledgement by Reviewer QSzA" [level=5] [ref=f9e1020] [cursor=pointer]:
+                  - generic [aria-hidden] [ref=f9e1021]: 
+                  - text: Replying to Rebuttal Acknowledgement by Reviewer QSzA
+                - generic [ref=f9e1022]:
+                  - heading "Reply Rebuttal Comment by Authors" [level=4] [ref=f9e1023]
+                  - button "Copy URL of note Ud3CDgfeGO" [ref=f9e1024] [cursor=pointer]:
+                    - generic [aria-hidden] [ref=f9e1025]: 
+                - generic [ref=f9e1027]:
+                  - generic [ref=f9e1028]: Reply Rebuttal Comment
+                  - generic [ref=f9e1029]: by Authors
+                  - generic [ref=f9e1030]:
+                    - generic [aria-hidden] [ref=f9e1031]: 
+                    - text: "08 Apr 2026, 02:35 (modified: 24 Jun 2026, 23:51)"
+                  - generic [ref=f9e1032]:
+                    - generic [aria-hidden] [ref=f9e1033]: 
+                    - text: Everyone
+                  - generic [ref=f9e1034]:
+                    - generic [aria-hidden] [ref=f9e1035]: 
+                    - link "Revisions" [ref=f9e1036] [cursor=pointer]:
+                      - /url: /revisions?id=Ud3CDgfeGO
+                - generic [ref=f9e1039]:
+                  - strong [ref=f9e1040]: "Comment:"
+                  - paragraph [ref=f9e1042]: We thank the reviewer for their time and consideration.
+    - contentinfo [ref=f9e1043]:
+      - generic [ref=f9e1044]:
+        - generic [ref=f9e1047]:
+          - link "About OpenReview" [ref=f9e1049] [cursor=pointer]:
+            - /url: /about
+          - link "Contact" [ref=f9e1051] [cursor=pointer]:
+            - /url: /contact
+          - link "FAQ" [ref=f9e1053] [cursor=pointer]:
+            - /url: https://docs.openreview.net/getting-started/frequently-asked-questions
+          - link "Hosting a Venue" [ref=f9e1055] [cursor=pointer]:
+            - /url: /group?id=OpenReview.net/Support
+          - link "Sponsors" [ref=f9e1057] [cursor=pointer]:
+            - /url: /sponsors
+          - generic [ref=f9e1058]:
+            - link "Terms of Use" [ref=f9e1059] [cursor=pointer]:
+              - /url: /legal/terms
+            - text: /
+            - link "Privacy Policy" [ref=f9e1060] [cursor=pointer]:
+              - /url: /legal/privacy
+          - link "All Venues" [ref=f9e1062] [cursor=pointer]:
+            - /url: /venues
+          - link [ref=f9e1064] [cursor=pointer]:
+            - /url: /donate
+            - strong [ref=f9e1065]: Donate
+          - link "News" [ref=f9e1067] [cursor=pointer]:
+            - /url: /group?id=OpenReview.net/News&referrer=[Homepage](/)
+        - paragraph [ref=f9e1070]:
+          - link "OpenReview" [ref=f9e1071] [cursor=pointer]:
+            - /url: /about
+          - text: is a long-term project to advance science through improved peer review with legal nonprofit status. We gratefully acknowledge the support of the
+          - link "OpenReview Sponsors" [ref=f9e1072] [cursor=pointer]:
+            - /url: /sponsors
+          - text: . © 2026 OpenReview
+  - alert [ref=f9e1073]

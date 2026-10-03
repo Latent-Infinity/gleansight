@@ -1,0 +1,34 @@
+- generic [ref=f5e7] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - group:
+            - generic:
+              - button "Search Tab 1 of 18" [ref=f5e8]
+              - button "Paper Tab 2 of 18" [ref=f5e9]
+              - button "Monitor Tab 3 of 18" [ref=f5e10]
+              - button "Query Tab 4 of 18" [ref=f5e11]
+              - button "Synthesis Tab 5 of 18" [ref=f5e12]
+              - button "Harvest Tab 6 of 18" [ref=f5e13]
+              - button "Map Tab 7 of 18" [ref=f5e14]
+              - button "Diverge Tab 8 of 18" [ref=f5e15]
+              - button "Ground Tab 9 of 18" [ref=f5e16]
+              - button "Gate Tab 10 of 18" [ref=f5e17]
+              - button "Project Tab 11 of 18" [active] [ref=f5e18]
+              - button "Acquire Tab 12 of 18" [ref=f5e19]
+              - button "Rescore Tab 13 of 18" [ref=f5e20]
+              - button "Tau Tab 14 of 18" [ref=f5e21]
+              - button "Skeleton Tab 15 of 18" [ref=f5e22]
+              - button "Archive Tab 16 of 18" [ref=f5e23]
+              - button "Card Tab 17 of 18" [ref=f5e24]
+              - button "Ideation Tab 18 of 18" [ref=f5e25]
+          - generic [ref=f5e56]: Project
+          - generic [ref=f5e57]: Admit a human-approved projection, or persist an approved digest.
+          - textbox "Projection path" [ref=f5e59]
+          - textbox "Approval manifest path" [ref=f5e61]
+          - button "Project" [ref=f5e62]
+          - textbox "Approved digest" [ref=f5e64]
+          - textbox "Type APPROVE" [ref=f5e66]
+          - textbox [disabled] [ref=f5e68]
+          - button "Approve digest" [ref=f5e69]

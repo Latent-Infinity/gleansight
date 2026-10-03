@@ -1,0 +1,27 @@
+- generic [ref=f3e7] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - group:
+            - generic:
+              - button "Search Tab 1 of 18" [ref=f3e8]
+              - button "Paper Tab 2 of 18" [ref=f3e9]
+              - button "Monitor Tab 3 of 18" [ref=f3e10]
+              - button "Query Tab 4 of 18" [ref=f3e11]
+              - button "Synthesis Tab 5 of 18" [ref=f3e12]
+              - button "Harvest Tab 6 of 18" [ref=f3e13]
+              - button "Map Tab 7 of 18" [ref=f3e14]
+              - button "Diverge Tab 8 of 18" [ref=f3e15]
+              - button "Ground Tab 9 of 18" [ref=f3e16]
+              - button "Gate Tab 10 of 18" [ref=f3e17]
+              - button "Project Tab 11 of 18" [active] [ref=f3e18]
+              - button "Acquire Tab 12 of 18" [ref=f3e19]
+              - button "Rescore Tab 13 of 18" [ref=f3e20]
+              - button "Tau Tab 14 of 18" [ref=f3e21]
+              - button "Skeleton Tab 15 of 18" [ref=f3e22]
+              - button "Archive Tab 16 of 18" [ref=f3e23]
+              - button "Card Tab 17 of 18" [ref=f3e24]
+              - button "Ideation Tab 18 of 18" [ref=f3e25]
+          - generic [ref=f3e65]: Project
+          - generic [ref=f3e66]: Admit a human-approved projection, or persist an approved digest.

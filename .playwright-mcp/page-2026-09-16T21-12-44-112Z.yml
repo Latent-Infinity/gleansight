@@ -1,0 +1,43 @@
+- generic [ref=f2e7] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - group:
+            - generic:
+              - button "Search Tab 1 of 18" [ref=f2e8]
+              - button "Paper Tab 2 of 18" [ref=f2e9]
+              - button "Monitor Tab 3 of 18" [ref=f2e10]
+              - button "Query Tab 4 of 18" [ref=f2e11]
+              - button "Synthesis Tab 5 of 18" [ref=f2e12]
+              - button "Harvest Tab 6 of 18" [ref=f2e13]
+              - button "Map Tab 7 of 18" [ref=f2e14]
+              - button "Diverge Tab 8 of 18" [ref=f2e15]
+              - button "Ground Tab 9 of 18" [ref=f2e16]
+              - button "Gate Tab 10 of 18" [ref=f2e17]
+              - button "Project Tab 11 of 18" [ref=f2e18]
+              - button "Acquire Tab 12 of 18" [ref=f2e19]
+              - button "Rescore Tab 13 of 18" [ref=f2e20]
+              - button "Tau Tab 14 of 18" [ref=f2e21]
+              - button "Skeleton Tab 15 of 18" [ref=f2e22]
+              - button "Archive Tab 16 of 18" [ref=f2e23]
+              - button "Card Tab 17 of 18" [ref=f2e24]
+              - button "Ideation Tab 18 of 18" [active] [ref=f2e25]
+          - group:
+            - generic [ref=f2e35]: Project Ideation
+            - generic [ref=f2e36]: Generate bounded, evidence-linked ideas, then plan one explicit selection. This does not execute or approve an investigation.
+            - textbox "Profile override" [ref=f2e38]
+            - textbox "Model override" [ref=f2e40]
+            - textbox "Critic model override" [ref=f2e42]
+            - textbox "Max papers" [ref=f2e44]
+            - textbox "Excerpt bytes" [ref=f2e46]
+            - textbox "Excerpts/paper" [ref=f2e48]
+            - textbox "Timeout seconds" [ref=f2e50]
+            - textbox "Max tokens" [ref=f2e52]
+            - button "Ideate project" [ref=f2e53]
+            - textbox "Profile override" [ref=f2e55]
+            - textbox "Model override" [ref=f2e57]
+            - textbox "Timeout seconds" [ref=f2e59]
+            - textbox "Max tokens" [ref=f2e61]
+            - button "Plan selected idea" [ref=f2e62]
+            - textbox [disabled] [ref=f2e64]
