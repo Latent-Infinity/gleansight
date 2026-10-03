@@ -21,6 +21,7 @@ from nsqd.domain.policy import FINANCE_POLICY
 from nsqd.null_adapters import FixedClock
 from nsqd.runner import run_job
 from tests.facts.test_nsqd_acquisition_fallback import FakePaperBridge
+from tests.nsqd.typing_support import AcquisitionCycleOptions
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 FIN_CELL = "mechanism=flow-driven|target=drawdown|horizon=intraday"
@@ -59,7 +60,7 @@ def test_query_plan_is_deterministic() -> None:
 
 
 def test_cycle_identity_is_stable_and_sensitive() -> None:
-    kwargs = {
+    kwargs: AcquisitionCycleOptions = {
         "snapshot_id": "snap",
         "domain_policy_id": "finance/1",
         "failure_signature": ("expected_cell_empty",),
@@ -69,7 +70,8 @@ def test_cycle_identity_is_stable_and_sensitive() -> None:
     first = acquisition_cycle_id(**kwargs)
     second = acquisition_cycle_id(**kwargs)
     assert first == second
-    other = acquisition_cycle_id(**{**kwargs, "snapshot_id": "other"})
+    other_kwargs: AcquisitionCycleOptions = {**kwargs, "snapshot_id": "other"}
+    other = acquisition_cycle_id(**other_kwargs)
     assert other != first
 
 

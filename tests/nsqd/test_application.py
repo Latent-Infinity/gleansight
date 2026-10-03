@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Never
 
 import pytest
 import yaml
@@ -50,10 +51,10 @@ AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 
 
 class _ForbiddenSearch:
-    def query(self, *args: object, **kwargs: object) -> list[object]:
+    def query(self, *args: object, **kwargs: object) -> Never:
         raise AssertionError("paper hybrid search must not be called")
 
-    def search(self, *args: object, **kwargs: object) -> list[object]:
+    def search(self, *args: object, **kwargs: object) -> Never:
         raise AssertionError("live search must not be called")
 
 
@@ -874,15 +875,16 @@ def test_handlers_reject_mismatched_job_type_before_reading_payload(
     handler: Any, expected_type: str
 ) -> None:
     ctx = _ctx()
-    job = NsqdJob(
+    valid_job = NsqdJob(
         job_id="job-1",
-        type="not-" + expected_type,
+        type="diverge",
         status="running",
         payload={},
         attempts=1,
         max_attempts=3,
         run_after=None,
     )
+    job = replace(valid_job, type="not-" + expected_type)
 
     with pytest.raises(ValueError, match=f"expected job.type={expected_type}"):
         handler(ctx, job)

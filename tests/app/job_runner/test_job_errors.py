@@ -17,13 +17,20 @@ from papers.infra.piccolo.stores import (
     PiccoloProfileStore,
     PiccoloPromptStore,
 )
+from tests.support.port_stubs import JobQueueStub, VectorIndexStub
 
 
-class _VectorIndex:
+class _VectorIndex(VectorIndexStub):
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         return []
 
 
@@ -225,7 +232,7 @@ def test_analyze_parse_failed_is_permanent(tmp_path: Path) -> None:
 
 
 @dataclass
-class _FlipCancelQueue:
+class _FlipCancelQueue(JobQueueStub):
     base: PiccoloJobQueue
     _calls: int = 0
 

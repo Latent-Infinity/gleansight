@@ -47,11 +47,11 @@ def build_docling_converter() -> DoclingConverter:
     except Exception as exc:  # pragma: no cover - optional dependency
         raise PipelineError(ErrorCode.CONVERSION_FAILED, "docling not installed") from exc
 
-    format_options = None
+    format_options: dict[InputFormat, FormatOption] | None = None
     try:
         from docling.datamodel.base_models import InputFormat
         from docling.datamodel.pipeline_options import ThreadedPdfPipelineOptions
-        from docling.document_converter import PdfFormatOption
+        from docling.document_converter import FormatOption, PdfFormatOption
         from docling.pipeline.threaded_standard_pdf_pipeline import ThreadedStandardPdfPipeline
 
         pipeline_options = ThreadedPdfPipelineOptions(generate_page_images=True)

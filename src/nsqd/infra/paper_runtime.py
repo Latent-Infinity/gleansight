@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Protocol
 
 from nsqd.composition import NsqdContainer, build_container
 from nsqd.domain.diverge import enabled_operators_from_settings
@@ -13,7 +15,14 @@ from nsqd.infra.papers_bridge import (
     PapersAcquisitionBridge,
 )
 from nsqd.ports import Clock
-from papers.app.use_cases.discovery import DiscoverCandidatesUseCase, ImportCandidateUseCase
+from papers.app import ports
+from papers.app.use_cases.discovery import (
+    CandidateStore as DiscoveryCandidateStore,
+)
+from papers.app.use_cases.discovery import (
+    DiscoverCandidatesUseCase,
+    ImportCandidateUseCase,
+)
 from papers.app.use_cases.pipeline import RunAnalysisUseCase
 
 ACQUISITION_PROMPT_ID = "nsqd-acquisition"
@@ -23,17 +32,67 @@ MAX_MARKDOWN_BYTES = 10 * 1024 * 1024
 ACQUISITION_PROMPT_BODY = DRAFT_PARAPHRASE_PROMPT
 
 
+class PaperJobRunner(Protocol):
+    def run_next(self, now: datetime) -> bool: ...
+
+
+class MarkdownPathStore(Protocol):
+    def get_markdown_path(self, paper_id: str) -> Path | None: ...
+
+
+class PaperLLMSettings(Protocol):
+    @property
+    def default_profile(self) -> str | None: ...
+
+    @property
+    def default_model(self) -> str | None: ...
+
+
+class PaperSettings(Protocol):
+    @property
+    def llm(self) -> PaperLLMSettings | None: ...
+
+
+class PaperRuntimeServices(Protocol):
+    @property
+    def settings(self) -> PaperSettings: ...
+
+    @property
+    def prompt_store(self) -> ports.PromptStore: ...
+
+    @property
+    def profile_store(self) -> ports.ProfileStore: ...
+
+    @property
+    def scholar_client(self) -> ports.ScholarClient: ...
+
+    @property
+    def candidate_store(self) -> DiscoveryCandidateStore: ...
+
+    @property
+    def paper_store(self) -> ports.PaperStore: ...
+
+    @property
+    def job_queue(self) -> ports.JobQueue: ...
+
+    @property
+    def analysis_store(self) -> ports.AnalysisRunStore: ...
+
+    @property
+    def job_runner(self) -> PaperJobRunner: ...
+
+
 @dataclass(frozen=True)
 class NsqdPaperRuntime:
     nsqd: NsqdContainer
-    paper_runner: Any
+    paper_runner: PaperJobRunner
     analysis_defaults: AnalysisDefaults
 
 
 def bootstrap_analysis_defaults(
     *,
-    prompt_store: Any,
-    profile_store: Any,
+    prompt_store: ports.PromptStore,
+    profile_store: ports.ProfileStore,
     llm_base_url: str,
     profile_name: str,
     model_name: str,
@@ -75,7 +134,7 @@ def bootstrap_analysis_defaults(
 
 def compose_default_runtime(
     *,
-    papers: Any,
+    papers: PaperRuntimeServices,
     nsqd_db_path: Path,
     nsqd_index_path: Path,
     llm_base_url: str,
@@ -142,7 +201,7 @@ def compose_default_runtime(
     )
 
 
-def markdown_reader(blob_store: Any) -> Any:
+def markdown_reader(blob_store: MarkdownPathStore | None) -> Callable[[str], str | None]:
     def get_markdown(paper_id: str) -> str | None:
         if blob_store is None:
             return None

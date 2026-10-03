@@ -683,6 +683,7 @@ from __future__ import annotations
 from typing import Protocol, Any
 from datetime import datetime
 
+
 class Job(Protocol):
     job_id: str
     type: str
@@ -693,6 +694,7 @@ class Job(Protocol):
     attempts: int
     max_attempts: int
     run_after: datetime | None
+
 
 class JobQueue(Protocol):
     def enqueue(
@@ -718,8 +720,12 @@ class JobQueue(Protocol):
         """
 
     def mark_succeeded(self, job_id: str, metrics: dict[str, Any] | None = None) -> None: ...
-    def mark_retryable(self, job_id: str, error: str, run_after: datetime, metrics: dict[str, Any] | None = None) -> None: ...
-    def mark_failed(self, job_id: str, error: str, metrics: dict[str, Any] | None = None) -> None: ...
+    def mark_retryable(
+        self, job_id: str, error: str, run_after: datetime, metrics: dict[str, Any] | None = None
+    ) -> None: ...
+    def mark_failed(
+        self, job_id: str, error: str, metrics: dict[str, Any] | None = None
+    ) -> None: ...
     def cancel(self, job_id: str) -> None: ...
     def is_cancelled(self, job_id: str) -> bool: ...
 ```
@@ -727,6 +733,7 @@ class JobQueue(Protocol):
 ### 14.2 PaperStore (patching constraints; implemented via Piccolo ORM)
 ```python
 from typing import Protocol, Any
+
 
 class PaperStore(Protocol):
     # metadata
@@ -757,13 +764,16 @@ class PaperStore(Protocol):
 
     # pipeline stage/health: ONLY job handlers call these
     def advance_pipeline_stage_monotonic(self, paper_id: str, new_stage: str) -> None: ...
-    def set_pipeline_health_error(self, paper_id: str, error_code: str, message: str, job_id: str | None) -> None: ...
+    def set_pipeline_health_error(
+        self, paper_id: str, error_code: str, message: str, job_id: str | None
+    ) -> None: ...
     def clear_pipeline_health_if_recovered(self, paper_id: str, job_type: str) -> None: ...
 ```
 
 ### 14.3 ExtractionStore
 ```python
 from typing import Protocol
+
 
 class Extraction(Protocol):
     entity_type: str
@@ -772,6 +782,7 @@ class Extraction(Protocol):
     value_text: str | None
     value_numeric: float | None
     value_boolean: int | None
+
 
 class ExtractionStore(Protocol):
     def upsert_extractions(
@@ -804,16 +815,23 @@ class ExtractionStore(Protocol):
 from typing import Protocol
 from pathlib import Path
 
+
 class BlobStore(Protocol):
-    def put_pdf(self, src_path: Path) -> tuple[str, Path]: ...                  # (pdf_xxh64, stored_path)
+    def put_pdf(self, src_path: Path) -> tuple[str, Path]: ...  # (pdf_xxh64, stored_path)
     def get_pdf_path(self, pdf_xxh64: str) -> Path | None: ...
-    def put_markdown(self, paper_id: str, markdown: str) -> tuple[Path, str]: ...  # (path, md_xxh64)
+    def put_markdown(
+        self, paper_id: str, markdown: str
+    ) -> tuple[Path, str]: ...  # (path, md_xxh64)
     def get_markdown_path(self, paper_id: str) -> Path | None: ...
-    def put_analysis_artifacts(self, run_id: str, output_md: str, output_json: dict | None, meta_json: dict) -> dict[str, Path]: ...
+    def put_analysis_artifacts(
+        self, run_id: str, output_md: str, output_json: dict | None, meta_json: dict
+    ) -> dict[str, Path]: ...
+
 
 class VectorIndex(Protocol):
     def upsert(self, paper_id: str, embedding: list[float]) -> None: ...
     def query(self, embedding: list[float], limit: int) -> list[tuple[str, float]]: ...
+
 
 class ConverterResult(Protocol):
     ok: bool
@@ -821,14 +839,17 @@ class ConverterResult(Protocol):
     error_code: str | None
     error_message: str | None
 
+
 class Converter(Protocol):
     def pdf_to_markdown(self, pdf_path: Path) -> ConverterResult: ...
     def version(self) -> str: ...  # recorded at execution time
+
 
 class Embedder(Protocol):
     def model_name(self) -> str: ...
     def dimension(self) -> int: ...
     def embed(self, text: str) -> list[float]: ...
+
 
 class LLMResponse(Protocol):
     text: str
@@ -836,8 +857,12 @@ class LLMResponse(Protocol):
     tokens_out: int | None
     cost_usd: float | None
 
+
 class LLMClient(Protocol):
-    def complete(self, *, prompt: str, profile: dict, model: str, timeout_s: int | None = None) -> LLMResponse: ...
+    def complete(
+        self, *, prompt: str, profile: dict, model: str, timeout_s: int | None = None
+    ) -> LLMResponse: ...
+
 
 class ScholarClient(Protocol):
     def search(self, query: str, filters: dict, max_results: int, page_size: int) -> list[dict]: ...

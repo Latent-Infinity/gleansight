@@ -28,7 +28,7 @@ from nsqd.null_adapters import (
     NullMorphospaceStore,
     NullNsqdCandidateStore,
 )
-from nsqd.ports import NsqdJob
+from nsqd.ports import HybridPaperSearch, LivePaperSearch, NsqdJob
 from nsqd.runner import run_job
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
@@ -47,8 +47,8 @@ class _HybridSearch:
 
 def _ctx(
     *,
-    scholar: object | None = None,
-    hybrid: object | None = None,
+    scholar: LivePaperSearch | None = None,
+    hybrid: HybridPaperSearch | None = None,
 ) -> NsqdHandlerContext:
     records = NullCorpusRecordStore()
     snapshots = NullCorpusSnapshotStore()
@@ -579,6 +579,8 @@ def test_rescore_unknown_card_raises() -> None:
 def test_rescore_applies_injected_tau_instead_of_ignoring_composition() -> None:
     embedder = HashParaphraseEmbedder()
     ctx = _ctx()
+    assert isinstance(ctx.records, NullCorpusRecordStore)
+    assert isinstance(ctx.snapshots, NullCorpusSnapshotStore)
     harvest = HarvestUseCase(
         harvest=NullHarvestStore(ctx.records, ctx.snapshots),
         clock=ctx.clock,
@@ -663,6 +665,8 @@ def test_rescore_applies_injected_tau_instead_of_ignoring_composition() -> None:
 def test_rescore_replays_when_stamped_tau_differs_on_same_snapshot() -> None:
     embedder = HashParaphraseEmbedder()
     ctx = _ctx()
+    assert isinstance(ctx.records, NullCorpusRecordStore)
+    assert isinstance(ctx.snapshots, NullCorpusSnapshotStore)
     harvest = HarvestUseCase(
         harvest=NullHarvestStore(ctx.records, ctx.snapshots),
         clock=ctx.clock,

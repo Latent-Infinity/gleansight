@@ -1551,7 +1551,7 @@ def test_private_grounding_and_novelty_guards_recompute_runtime_contracts() -> N
         )
 
     with pytest.raises(ValueError, match="approved projection record"):
-        projected_bindings = cast(dict[str, dict[str, Any]], projected["by_projected_record_id"])
+        projected_bindings = projected["by_projected_record_id"]
         bad_projected = {str(key): value for key, value in projected_bindings.items()}
         bad_projected.pop(grounding["neighbors"][0]["record_id"])
         opb._require_grounding(  # noqa: SLF001

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
@@ -96,7 +96,7 @@ def _format_timestamp(value: Any) -> str:
 
 @dataclass
 class PaperDetailScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
@@ -107,7 +107,7 @@ class PaperDetailScreen:
         content_area = ft.Column([], expand=True, scroll=ft.ScrollMode.AUTO)
         status_bar = ft.Text(value="", size=12)
 
-        def on_load(_: ft.ControlEvent) -> None:
+        def on_load(_: ft.Event[ft.Button]) -> None:
             paper_id = paper_id_input.value or ""
             list_paper = self.services.list_paper
             list_runs = self.services.list_runs
@@ -170,7 +170,7 @@ class PaperDetailScreen:
 
             if get_markdown is not None:
 
-                def _on_view_markdown(e: ft.ControlEvent) -> None:
+                def _on_view_markdown(e: ft.Event[ft.PopupMenuItem]) -> None:
                     page = _get_page(e)
                     if page is None:
                         return
@@ -211,7 +211,7 @@ class PaperDetailScreen:
             if job_type is not None and enqueue_job is not None:
                 _jt = job_type  # capture for closure
 
-                def _on_retry(_: ft.ControlEvent) -> None:
+                def _on_retry(_: ft.Event[ft.PopupMenuItem]) -> None:
                     enqueue_job(_jt, paper_id, None, {})
                     status_bar.value = f"Enqueued {_jt} for {title[:50]}"
                     status_bar.update()
@@ -222,7 +222,7 @@ class PaperDetailScreen:
 
             if pipeline_stage not in (None, "imported") and enqueue_job is not None:
 
-                def _on_redownload(_: ft.ControlEvent) -> None:
+                def _on_redownload(_: ft.Event[ft.PopupMenuItem]) -> None:
                     enqueue_job("download", paper_id, None, {})
                     status_bar.value = f"Enqueued re-download for {title[:50]}"
                     status_bar.update()
@@ -233,7 +233,7 @@ class PaperDetailScreen:
 
             if pipeline_stage not in (None, "imported") and reset_stage_fn is not None:
 
-                def _on_reset(_: ft.ControlEvent) -> None:
+                def _on_reset(_: ft.Event[ft.PopupMenuItem]) -> None:
                     reset_stage_fn(paper_id, "imported")
                     status_bar.value = f"Reset {title[:50]} to imported"
                     status_bar.update()
@@ -244,7 +244,7 @@ class PaperDetailScreen:
 
             if delete_paper_fn is not None:
 
-                def _on_delete(e: ft.ControlEvent) -> None:
+                def _on_delete(e: ft.Event[ft.PopupMenuItem]) -> None:
                     page = _get_page(e)
                     if page is None:
                         return
@@ -426,7 +426,7 @@ class PaperDetailScreen:
                         + [ft.dropdown.Option(version, version) for version in prompt_versions],
                     )
 
-                    def _on_prompt_change(e: ft.ControlEvent) -> None:
+                    def _on_prompt_change(e: ft.Event[ft.Dropdown]) -> None:
                         selected_prompt["value"] = str(e.control.value or "all")
                         _render_extractions()
 
@@ -462,3 +462,7 @@ class PaperDetailScreen:
             ],
             expand=True,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

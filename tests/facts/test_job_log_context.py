@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 
 import pytest
 
@@ -18,13 +17,20 @@ from papers.infra.piccolo.stores import (
     PiccoloProfileStore,
     PiccoloPromptStore,
 )
+from tests.support.port_stubs import VectorIndexStub
 
 
-class _VectorIndex:
+class _VectorIndex(VectorIndexStub):
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         return []
 
 
@@ -94,7 +100,7 @@ def test_job_transition_log_includes_required_fields(
     assert records
     required = ("timestamp", "job_id", "job_type", "status_from", "status_to", "paper_id", "run_id")
     for record in records:
-        typed = cast(logging.LogRecord, record)
+        typed = record
         for field_name in required:
             assert hasattr(typed, field_name), field_name
             assert getattr(typed, field_name) is not None or field_name == "run_id"
@@ -105,6 +111,6 @@ def test_job_transition_log_includes_required_fields(
         and getattr(record, "status_from", None) == "queued"
         and getattr(record, "status_to", None) == "running"
     )
-    typed_started = cast(logging.LogRecord, started)
+    typed_started = started
     assert getattr(typed_started, "paper_id") == "paper"
     assert getattr(typed_started, "run_id") is None

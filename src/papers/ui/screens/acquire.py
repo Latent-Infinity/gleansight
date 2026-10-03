@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,7 +11,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class AcquireScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         snapshot = ft.TextField(label="Snapshot id", width=320)
@@ -20,7 +21,7 @@ class AcquireScreen:
         max_jobs = ft.TextField(label="Max paper jobs", value="1", width=140)
         output = ft.Text(value="", selectable=True)
 
-        def acquire(_: ft.ControlEvent) -> None:
+        def acquire(_: ft.Event[ft.Button]) -> None:
             acquirer = getattr(self.services, "acquire_corpus", None)
             snapshot_id = str(snapshot.value or "").strip()
             if not snapshot_id:
@@ -41,7 +42,7 @@ class AcquireScreen:
                     output.value = f"Error: {public_ui_error(exc)}"
             output.update()
 
-        def run_jobs(_: ft.ControlEvent) -> None:
+        def run_jobs(_: ft.Event[ft.Button]) -> None:
             runner = getattr(self.services, "run_paper_jobs", None)
             if runner is None:
                 output.value = "Paper jobs are not configured."
@@ -84,3 +85,7 @@ class AcquireScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

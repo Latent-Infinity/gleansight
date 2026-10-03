@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from piccolo.columns.base import Column
 from piccolo.engine.sqlite import TransactionType
 from piccolo.querystring import QueryString
 from piccolo.utils.sync import run_sync
@@ -458,7 +459,7 @@ class PiccoloPaperStore(ports.PaperStore):
         paper_id = fields["paper_id"]
         title = fields["title"]
         abstract = fields.get("abstract")
-        payload = {
+        payload: dict[Column, Any] = {
             Paper.paper_id: paper_id,
             Paper.title: title,
             Paper.year: fields.get("year"),
@@ -483,7 +484,7 @@ class PiccoloPaperStore(ports.PaperStore):
     def update_metadata(self, paper_id: str, fields: dict[str, Any]) -> None:
         if not fields:
             return
-        updates = dict(fields)
+        updates: dict[Column | str, Any] = {key: value for key, value in fields.items()}
         if "authors" in updates:
             updates["authors_json"] = json.dumps(updates.pop("authors"))
         updates["updated_at"] = datetime.now(UTC)
@@ -665,7 +666,7 @@ class PiccoloExtractionStore(ports.ExtractionStore):
         prompt_version_id: str,
         extractions: list[ports.Extraction],
     ) -> None:
-        rows = [
+        rows: list[dict[Column, Any]] = [
             {
                 AnalysisExtraction.extraction_id: str(uuid.uuid4()),
                 AnalysisExtraction.run_id: run_id,

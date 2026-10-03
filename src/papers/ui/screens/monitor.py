@@ -4,7 +4,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
@@ -16,7 +16,7 @@ def _truncate(text: str, max_len: int = 50) -> str:
     return text[: max_len - 3].rstrip() + "..."
 
 
-def _get_paper_title(services: object, paper_id: str | None) -> str:
+def _get_paper_title(services: UIServices, paper_id: str | None) -> str:
     """Look up paper title from paper_id, with fallback."""
     if not paper_id:
         return "-"
@@ -44,7 +44,7 @@ def _status_color(status: str, permanent: bool) -> str:
     return colors.get(status, ft.Colors.GREY_400)
 
 
-def _pick_icon(*names: str) -> str:
+def _pick_icon(*names: str) -> ft.IconData:
     for name in names:
         icon = getattr(ft.Icons, name, None)
         if icon is not None:
@@ -68,7 +68,7 @@ class JobsTable(ft.DataTable):
 
     def __init__(
         self,
-        services: object,
+        services: UIServices,
         status_text: ft.Text,
         stats_text: ft.Text,
         bulk_action_row: ft.Row,
@@ -164,7 +164,7 @@ class JobsTable(ft.DataTable):
         permanent = _is_permanent_failure(job)
         status_label = "failed (permanent)" if permanent and status == "failed" else status
 
-        def _on_row_checkbox_changed(e: ft.ControlEvent) -> None:
+        def _on_row_checkbox_changed(e: ft.Event[ft.Checkbox]) -> None:
             if e.control.value:
                 self._selected_job_ids.add(job_id)
             else:
@@ -208,7 +208,7 @@ class JobsTable(ft.DataTable):
         if not paper_id:
             return ft.DataCell(ft.Text(paper_title))
 
-        def on_show(_: ft.ControlEvent) -> None:
+        def on_show(_: ft.Event[ft.TextButton]) -> None:
             list_paper = getattr(self.services, "list_paper", None)
             if list_paper is None:
                 return
@@ -260,7 +260,7 @@ class JobsTable(ft.DataTable):
         if not error:
             return ft.DataCell(ft.Text(value="-"))
 
-        def on_show(_: ft.ControlEvent) -> None:
+        def on_show(_: ft.Event[ft.TextButton]) -> None:
             dialog = ft.AlertDialog(
                 title=ft.Text(value="Job error"),
                 content=ft.Container(
@@ -351,13 +351,13 @@ class JobsTable(ft.DataTable):
             )
             self._show_dialog(dialog)
 
-        def on_retry(_: ft.ControlEvent) -> None:
+        def on_retry(_: ft.Event[ft.PopupMenuItem]) -> None:
             self.page.run_task(_retry)
 
-        def on_dismiss(_: ft.ControlEvent) -> None:
+        def on_dismiss(_: ft.Event[ft.PopupMenuItem]) -> None:
             self.page.run_task(_dismiss)
 
-        def on_delete(_: ft.ControlEvent) -> None:
+        def on_delete(_: ft.Event[ft.PopupMenuItem]) -> None:
             _confirm_delete()
 
         menu_items: list[ft.PopupMenuItem] = []
@@ -381,7 +381,7 @@ class JobsTable(ft.DataTable):
 
     # --- Selection management ---
 
-    def _on_select_all_changed(self, e: ft.ControlEvent) -> None:
+    def _on_select_all_changed(self, e: ft.Event[ft.Checkbox]) -> None:
         checked = bool(e.control.value)
         if checked:
             visible_jobs = self._fetch_jobs()
@@ -406,12 +406,14 @@ class JobsTable(ft.DataTable):
 
     def _update_bulk_action_bar(self) -> None:
         count = len(self._selected_job_ids)
+        selection_text = self._bulk_action_row.controls[0]
+        assert isinstance(selection_text, ft.Text)
         if count > 0:
             self._bulk_action_row.visible = True
-            self._bulk_action_row.controls[0].value = f"{count} selected"
+            selection_text.value = f"{count} selected"
         else:
             self._bulk_action_row.visible = False
-            self._bulk_action_row.controls[0].value = "0 selected"
+            selection_text.value = "0 selected"
         try:
             self._bulk_action_row.update()
         except Exception:
@@ -509,7 +511,7 @@ class JobsTable(ft.DataTable):
         return [job for job in jobs if job.get("status") == self._status_filter]
 
     def _show_dialog(self, dialog: ft.AlertDialog) -> None:
-        def _on_dismiss(_: ft.ControlEvent) -> None:
+        def _on_dismiss(_: ft.Event[ft.DialogControl]) -> None:
             self._active_dialog = None
 
         self._active_dialog = dialog
@@ -527,7 +529,7 @@ class JobsTable(ft.DataTable):
 class RunHistoryTable(ft.DataTable):
     """Read-only run history derived from analyze jobs."""
 
-    def __init__(self, services: object, runs_stats_text: ft.Text) -> None:
+    def __init__(self, services: UIServices, runs_stats_text: ft.Text) -> None:
         super().__init__(
             columns=[
                 ft.DataColumn(label=ft.Text(value="Run ID")),
@@ -665,7 +667,7 @@ def _is_permanent_failure(job: dict[str, Any]) -> bool:
 
 @dataclass
 class MonitorScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
@@ -751,12 +753,12 @@ class MonitorScreen:
         )
         runner_toggle = ft.Switch(label="Auto-run jobs", value=False)
 
-        def on_filter_change(e: ft.ControlEvent | None) -> None:
+        def on_filter_change(e: ft.Event[ft.Dropdown] | None) -> None:
             status_value = e.control.value if e else status_filter.value
             status = None if status_value in (None, "all") else status_value
             jobs_table.set_status_filter(status)
 
-        def on_limit_change(e: ft.ControlEvent | None) -> None:
+        def on_limit_change(e: ft.Event[ft.Dropdown] | None) -> None:
             try:
                 limit_value = e.control.value if e else limit_filter.value
                 limit = int(limit_value or "200")
@@ -765,15 +767,15 @@ class MonitorScreen:
             jobs_table.set_limit(limit)
             run_history_table.set_limit(limit)
 
-        def on_run_filter_change(e: ft.ControlEvent | None) -> None:
+        def on_run_filter_change(e: ft.Event[ft.Dropdown] | None) -> None:
             status = str(e.control.value if e else run_status_filter.value or "completed")
             run_history_table.set_status_filter(status)
 
-        def on_runner_toggle(e: ft.ControlEvent | None) -> None:
+        def on_runner_toggle(e: ft.Event[ft.Switch] | None) -> None:
             enabled = bool(getattr(e.control, "value", False)) if e else False
             jobs_table.set_runner_enabled(enabled)
 
-        def on_refresh(_: ft.ControlEvent | None) -> None:
+        def on_refresh(_: ft.Event[ft.Button] | None) -> None:
             status_value = status_filter.value
             status = None if status_value in (None, "all") else status_value
             try:
@@ -796,7 +798,7 @@ class MonitorScreen:
                 jobs_table._set_status(f"Run once error: {exc}")
             jobs_table.refresh_jobs()
 
-        def on_run_once(_: ft.ControlEvent | None) -> None:
+        def on_run_once(_: ft.Event[ft.OutlinedButton] | None) -> None:
             jobs_table.page.run_task(_run_once)
 
         status_filter.on_select = on_filter_change
@@ -845,3 +847,7 @@ class MonitorScreen:
             ],
             expand=True,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

@@ -5,6 +5,12 @@ from datetime import datetime
 from pathlib import Path
 
 from papers.app.job_runner.handlers import HandlerContext, handle_discover
+from tests.support.port_stubs import (
+    AnalysisRunStoreStub,
+    ProfileStoreStub,
+    PromptStoreStub,
+    VectorIndexStub,
+)
 
 
 class _PaperStore:
@@ -145,11 +151,17 @@ class _Embedder:
         return [0.0]
 
 
-class _Vector:
+class _Vector(VectorIndexStub):
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         return []
 
 
@@ -158,17 +170,17 @@ class _LLM:
         raise AssertionError("not used")
 
 
-class _PromptStore:
+class _PromptStore(PromptStoreStub):
     def get_version(self, prompt_version_id: str):
         return None
 
 
-class _ProfileStore:
+class _ProfileStore(ProfileStoreStub):
     def get(self, profile_id: str):
         return None
 
 
-class _AnalysisStore:
+class _AnalysisStore(AnalysisRunStoreStub):
     def create_run(
         self, run_id: str, paper_id: str, prompt_version_id: str, profile_id: str, model_name: str
     ) -> None:
@@ -185,7 +197,14 @@ class _AnalysisStore:
 
 
 class _Scholar:
-    def search(self, query: str, filters: dict, max_results: int, page_size: int):
+    def search(
+        self,
+        query: str,
+        filters: dict,
+        max_results: int,
+        page_size: int,
+        offset: int = 0,
+    ):
         return [
             {
                 "source_paper_id": "s2-1",

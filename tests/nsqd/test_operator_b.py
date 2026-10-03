@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -17,6 +18,7 @@ from nsqd.domain.diverge import (
     whitespace_cells,
 )
 from nsqd.domain.policy import FINANCE_POLICY
+from nsqd.domain.status import CellStatus
 from nsqd.null_adapters import (
     FixedClock,
     NullCorpusIndex,
@@ -101,7 +103,7 @@ def _operator_b_job() -> NsqdJob:
 
 
 def test_whitespace_cells_are_preferred_statuses_without_elites() -> None:
-    statuses = {
+    statuses: dict[str, CellStatus] = {
         MISSING: "Missing",
         SPARSE: "Sparse",
         STALLED: "Stalled",
@@ -296,8 +298,9 @@ def test_require_enabled_operators_allows_a_or_a_and_b() -> None:
     with pytest.raises(ValueError, match="must include Operator A"):
         require_enabled_operators([])
     for scalar in ("A", "AB", "B", b"AB", {"A": True, "B": True}):
-        with pytest.raises(ValueError, match="must be an iterable of operator ids"):
-            require_enabled_operators(scalar)
+        pytest.raises(ValueError, Mock(wraps=require_enabled_operators), scalar).match(
+            "must be an iterable of operator ids"
+        )
 
 
 def test_build_container_rejects_deferred_operator_in_allowlist(tmp_path: Path) -> None:

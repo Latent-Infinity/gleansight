@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,7 +11,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class RescoreScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         card_id = ft.TextField(label="Card id", width=320)
@@ -19,7 +20,7 @@ class RescoreScreen:
         state = ft.TextField(label="Snapshot state", value="calibration", width=160)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             rescore = getattr(self.services, "rescore_card", None)
             card = str(card_id.value or "").strip()
             snapshot_id = str(snapshot.value or "").strip()
@@ -58,3 +59,7 @@ class RescoreScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

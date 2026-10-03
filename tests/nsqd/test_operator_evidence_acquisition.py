@@ -267,4 +267,4 @@ def test_recording_adapter_does_not_enforce_production_limits(tmp_path: Path) ->
 
 
 def test_f_evaluation_insufficiency_is_not_an_alg_suf_acquisition_failure() -> None:
-    assert acquisition_route(("fewer_than_five_eligible_source_groups",)) == "stop"
+    assert acquisition_route(["fewer_than_five_eligible_source_groups"]) == "stop"

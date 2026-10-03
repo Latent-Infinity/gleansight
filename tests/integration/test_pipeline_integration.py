@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from papers.app.job_runner import HandlerContext, JobRunner
-from papers.app.ports import LLMResponse
+from papers.app.ports import ConverterResult, LLMResponse
 from papers.domain.models import PipelineHealth, PipelineStage
 from papers.infra.blobs_fs.store import FileSystemBlobStore
 from papers.infra.piccolo.database import PiccoloDatabase
@@ -22,25 +22,26 @@ pytestmark = pytest.mark.integration
 
 
 class _VectorIndex:
+    def reset(self) -> None:
+        raise NotImplementedError
+
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self, embedding: list[float], limit: int, *, allowed_ids: set[str] | None = None
+    ) -> list[tuple[str, float]]:
         return []
 
 
 class _Converter:
-    def pdf_to_markdown(self, pdf_path: Path):
-        return type(
-            "Result",
-            (),
-            {
-                "ok": True,
-                "markdown": "This is converted markdown content. " * 6,
-                "error_code": None,
-                "error_message": None,
-            },
-        )()
+    def pdf_to_markdown(self, pdf_path: Path) -> ConverterResult:
+        return ConverterResult(
+            ok=True,
+            markdown="This is converted markdown content. " * 6,
+            error_code=None,
+            error_message=None,
+        )
 
     def version(self) -> str:
         return "1.0"

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,14 +11,14 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class SkeletonScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         fixture = ft.TextField(label="Candidate fixture path", width=320)
         axiom = ft.TextField(label="Axiom", width=320)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             skeleton = getattr(self.services, "run_skeleton_loop", None)
             fixture_path = str(fixture.value or "").strip()
             axiom_text = str(axiom.value or "").strip()
@@ -50,3 +51,7 @@ class SkeletonScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

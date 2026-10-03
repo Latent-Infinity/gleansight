@@ -75,23 +75,22 @@ def test_candidate_requires_title() -> None:
     assert candidate.title == "Title"
 
     with pytest.raises(ValidationError):
-        models.Candidate(
-            candidate_id="cand",
-            source=None,  # type: ignore[arg-type]
-            source_paper_id="spid",
-            title="Title",
-            created_at=_now(),
-            updated_at=_now(),
+        models.Candidate.model_validate(
+            {
+                "candidate_id": "cand",
+                "source": None,
+                "source_paper_id": "spid",
+                "title": "Title",
+                "created_at": _now(),
+                "updated_at": _now(),
+            }
         )
 
 
 def test_project_requires_name() -> None:
     with pytest.raises(ValueError):
-        models.Project(
-            project_id="proj",
-            name=None,  # type: ignore[arg-type]
-            created_at=_now(),
-            updated_at=_now(),
+        models.Project.model_validate(
+            {"project_id": "proj", "name": None, "created_at": _now(), "updated_at": _now()}
         )
 
     project = models.Project(
@@ -131,11 +130,8 @@ def test_prompt_version_allows_schema_for_structured_formats() -> None:
 
 def test_prompt_model_requires_name() -> None:
     with pytest.raises(ValidationError):
-        models.Prompt(
-            prompt_id="prompt",
-            name=None,  # type: ignore[arg-type]
-            created_at=_now(),
-            updated_at=_now(),
+        models.Prompt.model_validate(
+            {"prompt_id": "prompt", "name": None, "created_at": _now(), "updated_at": _now()}
         )
 
     prompt = models.Prompt(
@@ -153,13 +149,15 @@ def test_prompt_model_requires_name() -> None:
 
 def test_prompt_version_requires_body() -> None:
     with pytest.raises(ValidationError):
-        models.PromptVersion(
-            prompt_version_id="01H",
-            prompt_id="01H",
-            version=1,
-            body=None,  # type: ignore[arg-type]
-            output_format=models.OutputFormat.json_only,
-            created_at=_now(),
+        models.PromptVersion.model_validate(
+            {
+                "prompt_version_id": "01H",
+                "prompt_id": "01H",
+                "version": 1,
+                "body": None,
+                "output_format": models.OutputFormat.json_only,
+                "created_at": _now(),
+            }
         )
 
     with pytest.raises(ValidationError):
@@ -203,12 +201,14 @@ def test_tag_type_validation() -> None:
 
 def test_tag_requires_name_and_type() -> None:
     with pytest.raises(ValidationError):
-        models.Tag(
-            tag_id="01H",
-            name=None,  # type: ignore[arg-type]
-            type=models.TagType.subject,
-            created_at=_now(),
-            updated_at=_now(),
+        models.Tag.model_validate(
+            {
+                "tag_id": "01H",
+                "name": None,
+                "type": models.TagType.subject,
+                "created_at": _now(),
+                "updated_at": _now(),
+            }
         )
 
     with pytest.raises(ValidationError):
@@ -245,13 +245,15 @@ def test_endpoint_profile_requires_base_url() -> None:
 
 def test_analysis_run_requires_core_fields() -> None:
     with pytest.raises(ValueError):
-        models.AnalysisRun(
-            run_id="run",
-            paper_id="paper",
-            prompt_version_id="prompt",
-            profile_id="profile",
-            model_name=None,  # type: ignore[arg-type]
-            created_at=_now(),
+        models.AnalysisRun.model_validate(
+            {
+                "run_id": "run",
+                "paper_id": "paper",
+                "prompt_version_id": "prompt",
+                "profile_id": "profile",
+                "model_name": None,
+                "created_at": _now(),
+            }
         )
 
     run = models.AnalysisRun(
@@ -316,13 +318,15 @@ def test_job_requires_enums() -> None:
 
 def test_extraction_requires_field_path() -> None:
     with pytest.raises(ValueError):
-        models.Extraction(
-            extraction_id="ext",
-            run_id="run",
-            paper_id="paper",
-            prompt_version_id="prompt",
-            field_path=None,  # type: ignore[arg-type]
-            created_at=_now(),
+        models.Extraction.model_validate(
+            {
+                "extraction_id": "ext",
+                "run_id": "run",
+                "paper_id": "paper",
+                "prompt_version_id": "prompt",
+                "field_path": None,
+                "created_at": _now(),
+            }
         )
 
     extraction = models.Extraction(

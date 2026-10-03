@@ -37,7 +37,7 @@ def build_evidence_map(
                 )
             )
             continue
-        markdown = path.read_text()
+        markdown = path.read_text(encoding="utf-8")
         markdown_bytes = len(markdown.encode())
         selected = _section_excerpts(markdown, excerpt_bytes, max_excerpts_per_paper)
         paper_excerpts: list[EvidenceExcerpt] = []

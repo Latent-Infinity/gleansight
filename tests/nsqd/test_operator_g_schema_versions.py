@@ -49,11 +49,12 @@ def test_shipped_v1_record_remains_readable_digest_stable_and_ineligible(
     assert review is not None
     review["review_status"] = review_status
 
-    validated = validate_operator_g_failure_record(record, contract=_v1_contract())
+    contract = validate_operator_g_failure_contract(_v1_contract())
+    validated = validate_operator_g_failure_record(record, contract=contract)
     candidate = classify_failure_record(
         validated,
         locator=RecordLocator("legacy-v1.json#0"),
-        contract=_v1_contract(),
+        contract=contract,
         trusted_approvals=frozenset(),
         trusted_evidence_artifacts=frozenset(),
         available_paths_by_digest={},

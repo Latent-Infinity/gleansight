@@ -6,7 +6,7 @@ import shlex
 from pathlib import Path
 
 import typer
-from click import Group
+from typer.core import TyperGroup
 from typer.main import get_command
 
 WORKFLOWS = Path("docs/workflows")
@@ -23,6 +23,7 @@ def _registered_command_names(app: typer.Typer) -> set[str]:
         if command.name:
             names.add(command.name)
     for group in app.registered_groups:
+        assert group.typer_instance is not None
         names |= _registered_command_names(group.typer_instance)
     return names
 
@@ -42,7 +43,7 @@ def _commands_in_text(text: str) -> list[tuple[str, set[str]]]:
 
 def _registered_options(app: typer.Typer) -> dict[str, set[str]]:
     command = get_command(app)
-    assert isinstance(command, Group)
+    assert isinstance(command, TyperGroup)
     return {
         name: {
             option

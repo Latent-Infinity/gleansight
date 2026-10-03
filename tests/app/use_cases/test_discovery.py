@@ -13,6 +13,7 @@ from papers.app.use_cases.discovery import (
 )
 from papers.domain.errors import ConfigurationError, NotFoundError, ValidationError
 from papers.domain.models import PipelineStage
+from tests.support.port_stubs import ProjectStoreStub, TagStoreStub
 
 
 class FakeCandidateStore:
@@ -91,9 +92,14 @@ class FakeJobQueue:
         return job_id
 
 
-class FakeTaxonomyStore:
-    def get(self, item_id: str) -> dict[str, str] | None:
-        return {"id": item_id}
+class FakeProjectStore(ProjectStoreStub):
+    def get(self, project_id: str) -> dict[str, Any] | None:
+        return {"id": project_id}
+
+
+class FakeTagStore(TagStoreStub):
+    def get(self, tag_id: str) -> dict[str, Any] | None:
+        return {"id": tag_id}
 
 
 class FakeScholarClient:
@@ -578,8 +584,8 @@ class TestImportCandidateUseCase:
             candidate_store=candidate_store,
             paper_store=papers,
             job_queue=jobs,
-            project_store=FakeTaxonomyStore(),
-            tag_store=FakeTaxonomyStore(),
+            project_store=FakeProjectStore(),
+            tag_store=FakeTagStore(),
         )
 
         with pytest.raises(ConfigurationError, match="AtomicCandidateImport"):

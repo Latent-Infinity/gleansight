@@ -71,7 +71,7 @@ class PiccoloDatabase:
             yield
         finally:
             for table, database in zip(_TABLES, previous, strict=True):
-                table._meta.db = database
+                table._meta._db = database
 
     def initialize_schema(self) -> None:
         from papers.infra.piccolo.migrations.runner import apply_forward_migrations

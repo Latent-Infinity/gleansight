@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 import tomllib
 from datetime import UTC, datetime
 from pathlib import Path
@@ -96,9 +97,13 @@ def test_policy_fixture_parity_with_registered_policies() -> None:
     ):
         fixture = _policy_fixture(fixture_name)
         assert fixture["policy_id"] == policy.policy_id
-        assert set(fixture["dval_rubric_ids"]) == policy.dval_rubric_ids
+        rubric_ids = fixture["dval_rubric_ids"]
+        assert isinstance(rubric_ids, list)
+        assert set(rubric_ids) == policy.dval_rubric_ids
         assert fixture["min_records"] == policy.min_records
-        assert set(fixture["expected_cells"]) == policy.expected_cells
+        expected_cells = fixture["expected_cells"]
+        assert isinstance(expected_cells, list)
+        assert set(expected_cells) == policy.expected_cells
         assert fixture["required_record_types"] == policy.required_record_types
         assert fixture["recall_probes"] == [list(probe) for probe in policy.recall_probes]
         axes = fixture["axes"]
@@ -111,9 +116,9 @@ def test_registered_policies_are_structurally_immutable() -> None:
     assert isinstance(OPTIMIZATION_POLICY.required_record_types, MappingProxyType)
     assert isinstance(policy_module.POLICIES, MappingProxyType)
     with pytest.raises(TypeError):
-        FINANCE_POLICY.required_record_types["paper"] = 1  # type: ignore[index]
+        getattr(operator, "setitem")(FINANCE_POLICY.required_record_types, "paper", 1)
     with pytest.raises(TypeError):
-        policy_module.POLICIES["new/1"] = FINANCE_POLICY  # type: ignore[index]
+        getattr(operator, "setitem")(policy_module.POLICIES, "new/1", FINANCE_POLICY)
 
 
 def test_incompatible_dval_rubric_is_rejected() -> None:

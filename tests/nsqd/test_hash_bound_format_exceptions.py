@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -57,9 +58,38 @@ def test_exception_validator_rejects_changed_digest_or_count(tmp_path: Path, fie
         _checker().validate_exception_inventory(REPO_ROOT, path)
 
 
-def test_exception_validator_rejects_unlisted_violation(tmp_path: Path) -> None:
-    violating = tmp_path / "unlisted.md"
+@pytest.mark.parametrize("suffix", (".md", ".py", ".yaml"))
+def test_exception_validator_rejects_unlisted_violation(tmp_path: Path, suffix: str) -> None:
+    violating = tmp_path / f"unlisted{suffix}"
     violating.write_bytes(b"unlisted trailing space \n")
 
     with pytest.raises(ValueError, match="unlisted trailing whitespace"):
         _checker().validate_paths(REPO_ROOT, EXCEPTIONS_PATH, (violating,))
+
+
+def test_untracked_png_does_not_trigger_text_whitespace_check(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "initial",
+        ],
+        check=True,
+    )
+    screenshot = tmp_path / "screenshot.png"
+    screenshot.write_bytes(b"\x89PNG\r\n\x1a\nmetadata with space \n")
+
+    checker = _checker()
+    changed_paths = checker._changed_paths(tmp_path)
+    assert changed_paths == (screenshot,)
+    checker.validate_paths(REPO_ROOT, EXCEPTIONS_PATH, changed_paths)

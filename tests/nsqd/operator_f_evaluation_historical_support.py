@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from typing import Final
+from typing import Final, Literal
 
 import pydantic
 import yaml
@@ -37,11 +37,11 @@ class _Inventory(_FrozenModel):
 
 
 class _Readiness(_FrozenModel):
-    authorization_state: str
-    runtime_authorized: bool
-    schema_admission_authorized: bool
-    evidence_sufficient: bool
-    approval_scope: str
+    authorization_state: Literal["report_only"]
+    runtime_authorized: Literal[False]
+    schema_admission_authorized: Literal[False]
+    evidence_sufficient: Literal[False]
+    approval_scope: Literal["evaluation_only"]
     inventory: _Inventory
 
 

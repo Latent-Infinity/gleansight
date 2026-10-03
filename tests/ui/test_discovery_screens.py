@@ -19,6 +19,12 @@ from papers.ui.screens.rescore import RescoreScreen
 from papers.ui.screens.skeleton import SkeletonScreen
 from papers.ui.screens.synthesis import SynthesisScreen
 from papers.ui.screens.tau import TauScreen
+from tests.ui.fake_services import built_column as _column
+from tests.ui.fake_services import built_field as _field
+from tests.ui.fake_services import built_row as _row
+from tests.ui.fake_services import built_text as _text
+from tests.ui.fake_services import complete_ui_services
+from tests.ui.fake_services import row_fields_and_button as _row_fields_and_button
 
 
 @dataclass
@@ -56,7 +62,7 @@ class _Services:
     ],
 )
 def test_wrapped_forms_give_text_fields_bounded_width(screen_type: type) -> None:
-    controls = [screen_type(_Services()).build()]
+    controls = [screen_type(complete_ui_services(_Services())).build()]
     wrapped_fields = 0
     while controls:
         match controls.pop():
@@ -74,9 +80,10 @@ def test_wrapped_forms_give_text_fields_bounded_width(screen_type: type) -> None
 
 
 def _click(button: ft.Button) -> None:
-    assert button.on_click is not None
+    on_click = getattr(button, "on_click")
+    assert callable(on_click)
     with patch.object(ft.Control, "update", return_value=None):
-        button.on_click(MagicMock())
+        on_click(MagicMock())
 
 
 def test_map_screen_loads_and_renders_cell_statuses() -> None:
@@ -90,9 +97,9 @@ def test_map_screen_loads_and_renders_cell_statuses() -> None:
             "cell_statuses": {"mechanism=flow-driven|target=drawdown|horizon=intraday": "Unknown"},
         }
 
-    screen = MapScreen(_Services(map_snapshot=map_snapshot)).build()
+    screen = _column(MapScreen(complete_ui_services(_Services(map_snapshot=map_snapshot))).build())
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
     snapshot_input, _policy_input, _state_input, load = row.controls
     assert isinstance(snapshot_input, ft.TextField)
@@ -108,7 +115,7 @@ def test_map_screen_loads_and_renders_cell_statuses() -> None:
             "snapshot_state": "calibration",
         }
     ]
-    output = screen.controls[3]
+    output = _text(screen.controls[3])
     assert isinstance(output, ft.Text)
     assert '"Unknown": 1' in str(output.value)
 
@@ -117,14 +124,14 @@ def test_map_screen_reports_validation_and_service_errors() -> None:
     def fail(**_kwargs: object) -> dict[str, object]:
         raise ValueError("unknown snapshot_id")
 
-    screen = MapScreen(_Services(map_snapshot=fail)).build()
+    screen = _column(MapScreen(complete_ui_services(_Services(map_snapshot=fail))).build())
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
     snapshot_input, _policy_input, _state_input, load = row.controls
     assert isinstance(snapshot_input, ft.TextField)
     assert isinstance(load, ft.Button)
-    output = screen.controls[3]
+    output = _text(screen.controls[3])
     assert isinstance(output, ft.Text)
 
     _click(load)
@@ -144,7 +151,11 @@ def test_archive_screen_refreshes_elites_and_empty_state() -> None:
             "viability": 5,
         }
     ]
-    screen = ArchiveScreen(_Services(list_archive_elites=lambda: list(rows))).build()
+    screen = _column(
+        ArchiveScreen(
+            complete_ui_services(_Services(list_archive_elites=lambda: list(rows)))
+        ).build()
+    )
     assert isinstance(screen, ft.Column)
     refresh = screen.controls[2]
     status = screen.controls[3]
@@ -156,7 +167,7 @@ def test_archive_screen_refreshes_elites_and_empty_state() -> None:
     _click(refresh)
     assert status.value == "1 elite card(s)"
     assert len(output.controls) == 1
-    assert "elite" in str(output.controls[0].value)
+    assert "elite" in str(_text(output.controls[0]).value)
 
     rows.clear()
     _click(refresh)
@@ -168,7 +179,9 @@ def test_archive_screen_reports_service_error() -> None:
     def fail() -> list[dict[str, object]]:
         raise RuntimeError("database unavailable")
 
-    screen = ArchiveScreen(_Services(list_archive_elites=fail)).build()
+    screen = _column(
+        ArchiveScreen(complete_ui_services(_Services(list_archive_elites=fail))).build()
+    )
     assert isinstance(screen, ft.Column)
     refresh = screen.controls[2]
     status = screen.controls[3]
@@ -187,12 +200,14 @@ def test_card_screen_validates_and_renders_card() -> None:
         calls.append(card_id)
         return {"card_id": card_id, "title": "Frontier card"}
 
-    screen = CardScreen(_Services(get_frontier_card=get_frontier_card)).build()
+    screen = _column(
+        CardScreen(complete_ui_services(_Services(get_frontier_card=get_frontier_card))).build()
+    )
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
     card_input, load = row.controls
-    output = screen.controls[3]
+    output = _text(screen.controls[3])
     assert isinstance(card_input, ft.TextField)
     assert isinstance(load, ft.Button)
     assert isinstance(output, ft.Text)
@@ -211,12 +226,12 @@ def test_card_screen_reports_service_error() -> None:
     def fail(_card_id: str) -> dict[str, object] | None:
         raise RuntimeError("lookup failed")
 
-    screen = CardScreen(_Services(get_frontier_card=fail)).build()
+    screen = _column(CardScreen(complete_ui_services(_Services(get_frontier_card=fail))).build())
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
     card_input, load = row.controls
-    output = screen.controls[3]
+    output = _text(screen.controls[3])
     assert isinstance(card_input, ft.TextField)
     assert isinstance(load, ft.Button)
     assert isinstance(output, ft.Text)
@@ -234,12 +249,15 @@ def test_harvest_screen_runs_configured_service() -> None:
         calls.append({"file_path": file_path})
         return {"record_ids": ["r1", "r2"]}
 
-    screen = HarvestScreen(_Services(harvest_records=harvest_records)).build()
+    screen = _column(
+        HarvestScreen(complete_ui_services(_Services(harvest_records=harvest_records))).build()
+    )
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
-    file_input, run = row.controls
-    output = screen.controls[3]
+    _row_fields, run = _row_fields_and_button(row)
+    file_input = _row_fields[0]
+    output = _text(screen.controls[3])
     assert isinstance(file_input, ft.TextField)
     assert isinstance(run, ft.Button)
     _click(run)
@@ -252,12 +270,13 @@ def test_harvest_screen_runs_configured_service() -> None:
 
 
 def test_harvest_screen_reports_missing_service_and_errors() -> None:
-    screen = HarvestScreen(_Services()).build()
+    screen = _column(HarvestScreen(complete_ui_services(_Services())).build())
     assert isinstance(screen, ft.Column)
-    row = screen.controls[2]
+    row = _row(screen.controls[2])
     assert isinstance(row, ft.Row)
-    file_input, run = row.controls
-    output = screen.controls[3]
+    _row_fields, run = _row_fields_and_button(row)
+    file_input = _row_fields[0]
+    output = _text(screen.controls[3])
     file_input.value = "missing.yaml"
     _click(run)
     assert output.value == "Harvest is not configured."
@@ -265,10 +284,11 @@ def test_harvest_screen_reports_missing_service_and_errors() -> None:
     def fail(*, file_path: str) -> dict[str, object]:
         raise ValueError("essays exhaust")
 
-    screen = HarvestScreen(_Services(harvest_records=fail)).build()
-    row = screen.controls[2]
-    file_input, run = row.controls
-    output = screen.controls[3]
+    screen = _column(HarvestScreen(complete_ui_services(_Services(harvest_records=fail))).build())
+    row = _row(screen.controls[2])
+    _row_fields, run = _row_fields_and_button(row)
+    file_input = _row_fields[0]
+    output = _text(screen.controls[3])
     file_input.value = "bad.yaml"
     _click(run)
     assert output.value == "Error: essays exhaust"
@@ -281,17 +301,20 @@ def test_diverge_screen_runs_operator_a_and_rejects_deferred_operators() -> None
         calls.append(kwargs)
         return {"candidate_artifact_hash": "ab" * 32}
 
-    screen = DivergeScreen(_Services(diverge_candidate=diverge_candidate)).build()
+    screen = _column(
+        DivergeScreen(complete_ui_services(_Services(diverge_candidate=diverge_candidate))).build()
+    )
     assert isinstance(screen, ft.Column)
-    form = screen.controls[2]
+    form = _column(screen.controls[2])
     assert isinstance(form, ft.Column)
-    paths = form.controls[0]
-    operator_row = form.controls[1]
+    paths = _row(form.controls[0])
+    operator_row = _row(form.controls[1])
     assert isinstance(paths, ft.Row)
     assert isinstance(operator_row, ft.Row)
-    fixture, axiom, snapshot, policy = paths.controls
-    operator, target, axiom_cell, state, run = operator_row.controls
-    output = screen.controls[3]
+    fixture, axiom, snapshot, policy = (_field(control) for control in paths.controls)
+    _row_fields, run = _row_fields_and_button(operator_row)
+    operator, target, axiom_cell, state = _row_fields
+    output = _text(screen.controls[3])
     _click(run)
     assert "required" in str(output.value).lower()
     fixture.value = "candidate.yaml"
@@ -325,13 +348,16 @@ def test_diverge_screen_requires_cells_for_operator_b() -> None:
         calls.append(kwargs)
         return {"candidate_artifact_hash": "cd" * 32}
 
-    screen = DivergeScreen(_Services(diverge_candidate=diverge_candidate)).build()
-    form = screen.controls[2]
-    paths = form.controls[0]
-    operator_row = form.controls[1]
-    fixture, axiom, snapshot, _policy = paths.controls
-    operator, target, axiom_cell, _state, run = operator_row.controls
-    output = screen.controls[3]
+    screen = _column(
+        DivergeScreen(complete_ui_services(_Services(diverge_candidate=diverge_candidate))).build()
+    )
+    form = _column(screen.controls[2])
+    paths = _row(form.controls[0])
+    operator_row = _row(form.controls[1])
+    fixture, axiom, snapshot, _policy = (_field(control) for control in paths.controls)
+    _row_fields, run = _row_fields_and_button(operator_row)
+    operator, target, axiom_cell, _state = _row_fields
+    output = _text(screen.controls[3])
     fixture.value = "candidate.yaml"
     axiom.value = "whitespace axiom"
     snapshot.value = "snap"
@@ -359,10 +385,13 @@ def test_ground_and_gate_screens_validate_and_run() -> None:
         gate_calls.append(kwargs)
         return {"card_decision": "rejected", "viability": 0, "cell_id": "c"}
 
-    ground = GroundScreen(_Services(ground_candidate=ground_candidate)).build()
-    row = ground.controls[2]
-    hash_input, snapshot, version, state, run = row.controls
-    output = ground.controls[3]
+    ground = _column(
+        GroundScreen(complete_ui_services(_Services(ground_candidate=ground_candidate))).build()
+    )
+    row = _row(ground.controls[2])
+    _row_fields, run = _row_fields_and_button(row)
+    hash_input, snapshot, version, state = _row_fields
+    output = _text(ground.controls[3])
     _click(run)
     assert "required" in str(output.value).lower()
     hash_input.value = "aa" * 32
@@ -379,10 +408,13 @@ def test_ground_and_gate_screens_validate_and_run() -> None:
     ]
     assert "unevaluated" in str(output.value)
 
-    gate = GateScreen(_Services(gate_candidate=gate_candidate)).build()
-    row = gate.controls[2]
-    hash_input, snapshot, version, evaluator, state, run = row.controls
-    output = gate.controls[3]
+    gate = _column(
+        GateScreen(complete_ui_services(_Services(gate_candidate=gate_candidate))).build()
+    )
+    row = _row(gate.controls[2])
+    _row_fields, run = _row_fields_and_button(row)
+    hash_input, snapshot, version, evaluator, state = _row_fields
+    output = _text(gate.controls[3])
     hash_input.value = "bb" * 32
     snapshot.value = "snap"
     version.value = "11"
@@ -404,14 +436,20 @@ def test_project_screen_projects_and_approves_digest() -> None:
         approved.append(digest)
         return {"digest": digest, "approved": True}
 
-    screen = ProjectScreen(
-        _Services(project_records=project_records, approve_digest=approve_digest)
-    ).build()
-    form = screen.controls[2]
-    project_row, digest_row = form.controls
-    projection, manifest, project_btn = project_row.controls
-    digest, confirmation, approve_btn = digest_row.controls
-    output = screen.controls[3]
+    screen = _column(
+        ProjectScreen(
+            complete_ui_services(
+                _Services(project_records=project_records, approve_digest=approve_digest)
+            )
+        ).build()
+    )
+    form = _column(screen.controls[2])
+    project_row, digest_row = (_row(control) for control in form.controls)
+    _row_fields, project_btn = _row_fields_and_button(project_row)
+    projection, manifest = _row_fields
+    _row_fields, approve_btn = _row_fields_and_button(digest_row)
+    digest, confirmation = _row_fields
+    output = _text(screen.controls[3])
     _click(project_btn)
     assert "required" in str(output.value).lower()
     projection.value = "proj.yaml"
@@ -439,14 +477,20 @@ def test_acquire_and_paper_jobs_screens_run_services() -> None:
         processed.append(max_jobs)
         return {"processed": max_jobs}
 
-    screen = AcquireScreen(
-        _Services(acquire_corpus=acquire_corpus, run_paper_jobs=run_paper_jobs)
-    ).build()
-    form = screen.controls[2]
-    acquire_row, jobs_row = form.controls
-    snapshot, policy, target, decision, acquire_btn = acquire_row.controls
-    max_jobs, jobs_btn = jobs_row.controls
-    output = screen.controls[3]
+    screen = _column(
+        AcquireScreen(
+            complete_ui_services(
+                _Services(acquire_corpus=acquire_corpus, run_paper_jobs=run_paper_jobs)
+            )
+        ).build()
+    )
+    form = _column(screen.controls[2])
+    acquire_row, jobs_row = (_row(control) for control in form.controls)
+    _row_fields, acquire_btn = _row_fields_and_button(acquire_row)
+    snapshot, policy, target, decision = _row_fields
+    _row_fields, jobs_btn = _row_fields_and_button(jobs_row)
+    max_jobs = _row_fields[0]
+    output = _text(screen.controls[3])
     _click(acquire_btn)
     assert "required" in str(output.value).lower()
     snapshot.value = "snap"
@@ -475,10 +519,13 @@ def test_rescore_tau_and_skeleton_screens_validate_and_run() -> None:
         skeletons.append(kwargs)
         return {"card_decision": "rejected", "archive_empty": True}
 
-    rescore = RescoreScreen(_Services(rescore_card=rescore_card)).build()
-    row = rescore.controls[2]
-    card_id, snapshot, version, state, run = row.controls
-    output = rescore.controls[3]
+    rescore = _column(
+        RescoreScreen(complete_ui_services(_Services(rescore_card=rescore_card))).build()
+    )
+    row = _row(rescore.controls[2])
+    _row_fields, run = _row_fields_and_button(row)
+    card_id, snapshot, version, state = _row_fields
+    output = _text(rescore.controls[3])
     _click(run)
     assert "required" in str(output.value).lower()
     card_id.value = "card-1"
@@ -488,11 +535,13 @@ def test_rescore_tau_and_skeleton_screens_validate_and_run() -> None:
     assert rescored[0]["card_id"] == "card-1"
     assert rescored[0]["current_corpus_version"] == 11
 
-    tau = TauScreen(_Services(tau_command=tau_command)).build()
-    form = tau.controls[2]
-    hashes, action_row = form.controls
-    action, output_path, inputs, balanced, run = action_row.controls
-    output = tau.controls[3]
+    tau = _column(TauScreen(complete_ui_services(_Services(tau_command=tau_command))).build())
+    form = _column(tau.controls[2])
+    hashes = _field(form.controls[0])
+    action_row = _row(form.controls[1])
+    _row_fields, run = _row_fields_and_button(action_row)
+    action, output_path, inputs, balanced = _row_fields
+    output = _text(tau.controls[3])
     _click(run)
     assert "required" in str(output.value).lower()
     hashes.value = "aa" * 32 + "\n" + "bb" * 32
@@ -504,10 +553,13 @@ def test_rescore_tau_and_skeleton_screens_validate_and_run() -> None:
     _click(run)
     assert "export, inventory, review, or evaluate" in str(output.value)
 
-    skeleton = SkeletonScreen(_Services(run_skeleton_loop=run_skeleton_loop)).build()
-    row = skeleton.controls[2]
-    fixture, axiom, run = row.controls
-    output = skeleton.controls[3]
+    skeleton = _column(
+        SkeletonScreen(complete_ui_services(_Services(run_skeleton_loop=run_skeleton_loop))).build()
+    )
+    row = _row(skeleton.controls[2])
+    _row_fields, run = _row_fields_and_button(row)
+    fixture, axiom = _row_fields
+    output = _text(skeleton.controls[3])
     fixture.value = "gamma-flow.yaml"
     axiom.value = "predictors assume stationary return signal"
     _click(run)

@@ -7,10 +7,11 @@ import pytest
 
 from papers.app.use_cases.prompts import CreatePromptUseCase, CreatePromptVersionUseCase
 from papers.domain.errors import InvalidExtractionSchemaError, NotFoundError, ValidationError
+from tests.support.port_stubs import PromptStoreStub
 
 
 @dataclass
-class FakePromptStore:
+class FakePromptStore(PromptStoreStub):
     prompts: dict[str, dict[str, Any]] = field(default_factory=dict)
     versions: dict[str, dict[str, Any]] = field(default_factory=dict)
     created_prompts: list[dict[str, Any]] = field(default_factory=list)

@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import flet as ft
 
 from papers.ui.screens.monitor import JobsTable, MonitorScreen, RunHistoryTable
+from tests.ui.fake_services import complete_ui_services
 
 
 @dataclass
@@ -64,13 +65,15 @@ def _make_table() -> tuple[JobsTable, MagicMock, ft.Row]:
         [selection_count_text, ft.Button("Delete Selected"), ft.Button("Cancel Selected")],
         visible=False,
     )
-    table = JobsTable(FakeServices(), status_text, stats_text, bulk_action_row)
+    table = JobsTable(
+        complete_ui_services(FakeServices()), status_text, stats_text, bulk_action_row
+    )
     mock_page = MagicMock()
     return table, mock_page, bulk_action_row
 
 
 def test_monitor_builds() -> None:
-    services = FakeServices()
+    services = complete_ui_services(FakeServices())
     screen = MonitorScreen(services)
 
     control = screen.build()
@@ -127,7 +130,9 @@ def test_show_dialog_on_dismiss_clears_active_dialog() -> None:
         table._show_dialog(dialog)
 
         # Simulate dismiss (e.g. user presses Escape)
-        dialog.on_dismiss(MagicMock())
+        on_dismiss = getattr(dialog, "on_dismiss")
+        assert callable(on_dismiss)
+        on_dismiss(MagicMock())
 
         assert table._active_dialog is None
 
@@ -212,7 +217,9 @@ def test_bulk_action_bar_visible_when_selected() -> None:
     table._selected_job_ids.add("job-1")
     table._update_bulk_action_bar()
     assert bulk_action_row.visible is True
-    assert bulk_action_row.controls[0].value == "1 selected"
+    selection_text = bulk_action_row.controls[0]
+    assert isinstance(selection_text, ft.Text)
+    assert selection_text.value == "1 selected"
 
 
 def test_bulk_action_bar_hidden_when_none_selected() -> None:
@@ -260,12 +267,14 @@ def test_jobs_table_shows_progress_column() -> None:
         table.update = MagicMock()
         table.refresh_jobs()
         assert len(table.columns) == 7
-        assert table.columns[4].label.value == "Progress"
+        progress_label = table.columns[4].label
+        assert isinstance(progress_label, ft.Text)
+        assert progress_label.value == "Progress"
 
 
 def test_run_history_defaults_to_completed() -> None:
     runs_stats_text = ft.Text(value="")
-    table = RunHistoryTable(FakeServices(), runs_stats_text)
+    table = RunHistoryTable(complete_ui_services(FakeServices()), runs_stats_text)
     table.update = MagicMock()
 
     table.refresh_runs()
@@ -276,7 +285,7 @@ def test_run_history_defaults_to_completed() -> None:
 
 def test_run_history_status_filter_applies() -> None:
     runs_stats_text = ft.Text(value="")
-    table = RunHistoryTable(FakeServices(), runs_stats_text)
+    table = RunHistoryTable(complete_ui_services(FakeServices()), runs_stats_text)
     table.update = MagicMock()
 
     table.set_status_filter("running")

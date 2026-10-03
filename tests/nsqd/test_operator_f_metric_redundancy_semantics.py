@@ -6,6 +6,7 @@ from nsqd.domain import operator_f_evaluation as operator_f
 from nsqd.domain.operator_f_evaluation_metrics_stats import redundancy
 from nsqd.domain.operator_f_evaluation_types import (
     FoldAssignment,
+    TrackId,
     TrackLabel,
     TrackReplay,
     ValidationTarget,
@@ -66,7 +67,7 @@ def _tracks(
     )
     shuffled_labels = candidate if shuffled is None else shuffled
 
-    def track(track_id: str, labels: dict[str, ValidationTarget]) -> TrackReplay:
+    def track(track_id: TrackId, labels: dict[str, ValidationTarget]) -> TrackReplay:
         return TrackReplay(
             track_id=track_id,
             eligible_source_group_identities=identities,

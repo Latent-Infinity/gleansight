@@ -218,7 +218,7 @@ def test_import_command_hides_domain_error_details(monkeypatch, error: Exception
     cli_app = importlib.import_module("papers.cli.app")
     runner = CliRunner()
 
-    class FailingImport:
+    class FailingImport(FakeImport):
         def import_candidate(self, candidate_id: str, **_: object) -> str:
             raise error
 

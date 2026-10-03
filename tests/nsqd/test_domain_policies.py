@@ -10,17 +10,18 @@ import yaml
 from nsqd.domain.card import card_decision, corpus_ingest_rejection, missing_card_fields
 from nsqd.domain.descriptor import cell_id_from_descriptor
 from nsqd.domain.elite import choose_elite
-from nsqd.domain.grounding import classify_local
-from nsqd.domain.novelty import NOVELTY_BIN_EDGES, mean_cosine_distance, novelty_term
+from nsqd.domain.grounding import GroundingClass, classify_local
+from nsqd.domain.novelty import NOVELTY_BIN_EDGES, SnapshotState, mean_cosine_distance, novelty_term
 from nsqd.domain.snapshot import normalize_source, record_content_hash, snapshot_id
 from nsqd.domain.status import cell_status, record_lifecycle
 from nsqd.domain.viability import score_dpred, score_dval, score_fals, score_mech, viability
+from tests.nsqd.typing_support import CellStatusOptions
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 RECENT = AS_OF - timedelta(days=10)
 STALE = AS_OF - timedelta(days=365 * 3)
 NSQD_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
-CAL = {"snapshot_state": "calibration", "inspected": True, "expected": True}
+CAL: CellStatusOptions = {"snapshot_state": "calibration", "inspected": True, "expected": True}
 
 
 def _rec(
@@ -135,15 +136,15 @@ def test_novelty_evidence_mean_and_k_sizes() -> None:
 )
 def test_novelty_term_bins(
     evidence: float | None,
-    snapshot_state: str,
-    grounding_class: str,
+    snapshot_state: SnapshotState,
+    grounding_class: GroundingClass,
     expected: int,
 ) -> None:
     assert (
         novelty_term(
             evidence=evidence,
-            snapshot_state=snapshot_state,  # type: ignore[arg-type]
-            grounding_class=grounding_class,  # type: ignore[arg-type]
+            snapshot_state=snapshot_state,
+            grounding_class=grounding_class,
         )
         == expected
     )
@@ -494,10 +495,10 @@ def test_viability_zero_paths_and_finance_presence() -> None:
 )
 def test_status_table_and_overlaps(
     records: list[dict[str, object]],
-    kwargs: dict[str, object],
+    kwargs: CellStatusOptions,
     expected: str,
 ) -> None:
-    assert cell_status(records, as_of=AS_OF, **kwargs) == expected  # type: ignore[arg-type]
+    assert cell_status(records, as_of=AS_OF, **kwargs) == expected
 
 
 def test_status_policies_reject_non_utc_as_of() -> None:
@@ -590,7 +591,7 @@ def test_elite_replacement_and_hash_tie_and_rejection() -> None:
 
 
 def test_elite_replay_is_order_independent() -> None:
-    cards = [
+    cards: list[dict[str, object]] = [
         {"viability": 4, "candidate_artifact_hash": "ccc"},
         {"viability": 9, "candidate_artifact_hash": "zzz"},
         {"viability": 9, "candidate_artifact_hash": "aaa"},

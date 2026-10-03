@@ -22,7 +22,7 @@ class HarvestCommit:
 NsqdJobType = Literal[
     "harvest", "project", "diverge", "ground", "score", "rescore", "map", "acquire"
 ]
-NSQD_JOB_TYPES: frozenset[str] = frozenset(
+NSQD_JOB_TYPES: frozenset[NsqdJobType] = frozenset(
     {"harvest", "project", "diverge", "ground", "score", "rescore", "map", "acquire"}
 )
 

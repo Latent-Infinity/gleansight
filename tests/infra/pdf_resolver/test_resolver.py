@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import httpx
 
@@ -212,7 +212,7 @@ class TestSemanticScholarPdfResolver:
         assert result == "CorpusID:12345"
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_with_doi_success(self, mock_get: object) -> None:
+    def test_resolve_with_doi_success(self, mock_get: MagicMock) -> None:
         """Should return PDF URL when S2 API returns openAccessPdf."""
         mock_response = httpx.Response(
             200,
@@ -221,7 +221,7 @@ class TestSemanticScholarPdfResolver:
                 "GET", "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1234/abc"
             ),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = SemanticScholarPdfResolver()
         result = resolver.resolve({"DOI": "10.1234/abc"})
@@ -231,7 +231,7 @@ class TestSemanticScholarPdfResolver:
         assert result.source == "semantic_scholar"
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_with_corpusid_success(self, mock_get: object) -> None:
+    def test_resolve_with_corpusid_success(self, mock_get: MagicMock) -> None:
         """Should resolve using CorpusId when DOI is absent."""
         mock_response = httpx.Response(
             200,
@@ -240,7 +240,7 @@ class TestSemanticScholarPdfResolver:
                 "GET", "https://api.semanticscholar.org/graph/v1/paper/CorpusID:99999"
             ),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = SemanticScholarPdfResolver()
         result = resolver.resolve({"CorpusId": "99999"})
@@ -249,7 +249,7 @@ class TestSemanticScholarPdfResolver:
         assert result.url == "https://example.com/paper2.pdf"
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_returns_none_when_no_open_access(self, mock_get: object) -> None:
+    def test_resolve_returns_none_when_no_open_access(self, mock_get: MagicMock) -> None:
         """Should return None when S2 API returns no openAccessPdf."""
         mock_response = httpx.Response(
             200,
@@ -258,7 +258,7 @@ class TestSemanticScholarPdfResolver:
                 "GET", "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1234/abc"
             ),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = SemanticScholarPdfResolver()
         result = resolver.resolve({"DOI": "10.1234/abc"})
@@ -266,7 +266,7 @@ class TestSemanticScholarPdfResolver:
         assert result is None
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_returns_none_on_404(self, mock_get: object) -> None:
+    def test_resolve_returns_none_on_404(self, mock_get: MagicMock) -> None:
         """Should return None when S2 API returns 404."""
         mock_response = httpx.Response(
             404,
@@ -275,7 +275,7 @@ class TestSemanticScholarPdfResolver:
                 "GET", "https://api.semanticscholar.org/graph/v1/paper/DOI:10.9999/missing"
             ),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = SemanticScholarPdfResolver()
         result = resolver.resolve({"DOI": "10.9999/missing"})
@@ -283,9 +283,9 @@ class TestSemanticScholarPdfResolver:
         assert result is None
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_returns_none_on_http_error(self, mock_get: object) -> None:
+    def test_resolve_returns_none_on_http_error(self, mock_get: MagicMock) -> None:
         """Should return None on network errors."""
-        mock_get.side_effect = httpx.ConnectError("connection refused")  # type: ignore[attr-defined]
+        mock_get.side_effect = httpx.ConnectError("connection refused")
 
         resolver = SemanticScholarPdfResolver()
         result = resolver.resolve({"DOI": "10.1234/abc"})
@@ -293,7 +293,7 @@ class TestSemanticScholarPdfResolver:
         assert result is None
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_passes_api_key(self, mock_get: object) -> None:
+    def test_resolve_passes_api_key(self, mock_get: MagicMock) -> None:
         """Should include x-api-key header when api_key is set."""
         mock_response = httpx.Response(
             200,
@@ -302,12 +302,12 @@ class TestSemanticScholarPdfResolver:
                 "GET", "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1234/abc"
             ),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = SemanticScholarPdfResolver(api_key="test-key-123")
         resolver.resolve({"DOI": "10.1234/abc"})
 
-        call_kwargs = mock_get.call_args  # type: ignore[attr-defined]
+        call_kwargs = mock_get.call_args
         assert call_kwargs.kwargs["headers"]["x-api-key"] == "test-key-123"
 
 
@@ -333,7 +333,7 @@ class TestMdpiPdfResolver:
         assert result is None
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_constructs_cdn_url_from_crossref_link(self, mock_get: object) -> None:
+    def test_resolve_constructs_cdn_url_from_crossref_link(self, mock_get: MagicMock) -> None:
         """Construct CDN URL from CrossRef link and journal name."""
         mock_response = httpx.Response(
             200,
@@ -350,7 +350,7 @@ class TestMdpiPdfResolver:
             },
             request=httpx.Request("GET", "https://api.crossref.org/works/10.3390/math10122128"),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = MdpiPdfResolver()
         result = resolver.resolve({"DOI": "10.3390/math10122128"})
@@ -363,7 +363,7 @@ class TestMdpiPdfResolver:
         assert result.source == "mdpi_cdn"
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_uses_resource_url_fallback(self, mock_get: object) -> None:
+    def test_resolve_uses_resource_url_fallback(self, mock_get: MagicMock) -> None:
         """Should fall back to resource URL + volume when link field has no MDPI URL."""
         mock_response = httpx.Response(
             200,
@@ -377,7 +377,7 @@ class TestMdpiPdfResolver:
             },
             request=httpx.Request("GET", "https://api.crossref.org/works/10.3390/math10122128"),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = MdpiPdfResolver()
         result = resolver.resolve({"DOI": "10.3390/math10122128"})
@@ -389,9 +389,9 @@ class TestMdpiPdfResolver:
         )
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_returns_none_when_crossref_fails(self, mock_get: object) -> None:
+    def test_resolve_returns_none_when_crossref_fails(self, mock_get: MagicMock) -> None:
         """Should return None when CrossRef API fails."""
-        mock_get.side_effect = httpx.ConnectError("connection refused")  # type: ignore[attr-defined]
+        mock_get.side_effect = httpx.ConnectError("connection refused")
 
         resolver = MdpiPdfResolver()
         result = resolver.resolve({"DOI": "10.3390/math10122128"})
@@ -399,14 +399,14 @@ class TestMdpiPdfResolver:
         assert result is None
 
     @patch("papers.infra.pdf_resolver.resolver.httpx.get")
-    def test_resolve_returns_none_when_no_journal_name(self, mock_get: object) -> None:
+    def test_resolve_returns_none_when_no_journal_name(self, mock_get: MagicMock) -> None:
         """Should return None when CrossRef response has no container-title."""
         mock_response = httpx.Response(
             200,
             json={"message": {"container-title": [], "link": []}},
             request=httpx.Request("GET", "https://api.crossref.org/works/10.3390/math10122128"),
         )
-        mock_get.return_value = mock_response  # type: ignore[attr-defined]
+        mock_get.return_value = mock_response
 
         resolver = MdpiPdfResolver()
         result = resolver.resolve({"DOI": "10.3390/math10122128"})

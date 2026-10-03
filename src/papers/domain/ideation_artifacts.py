@@ -29,7 +29,8 @@ def write_ideation_bundle(repo_root: Path, data: IdeationBundleData) -> Path:
         write_json(staging / "ideas.json", data.generation.model_dump(mode="json"))
         write_json(staging / "critique.json", data.critique.model_dump(mode="json"))
         (staging / "report.md").write_text(
-            render_ideation_report(data.evidence, data.generation, data.critique)
+            render_ideation_report(data.evidence, data.generation, data.critique),
+            encoding="utf-8",
         )
         write_json(
             staging / "provenance.json",

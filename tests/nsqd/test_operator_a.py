@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from unittest.mock import Mock
 
 import pytest
 
@@ -325,19 +326,21 @@ def test_diverge_requires_complete_policy_universe_when_status_table_is_supplied
 
 def test_diverge_rejects_invalid_cell_status_values() -> None:
     universe = FINANCE_POLICY.universe()
-    with pytest.raises(ValueError, match="invalid CellStatus value"):
-        DivergeUseCase(
-            candidates=NullNsqdCandidateStore(),
-            cards=_cards(),
-            clock=FixedClock(AS_OF),
-        ).run(
-            candidate={"title": "x", "domain_policy_id": "finance/1"},
-            generator_run_id="gen-1",
-            axioms=["first axiom"],
-            cell_statuses={
-                cell_id: ("Bogus" if cell_id == SPARSE else "Unknown") for cell_id in universe
-            },
-        )
+    use_case = DivergeUseCase(
+        candidates=NullNsqdCandidateStore(),
+        cards=_cards(),
+        clock=FixedClock(AS_OF),
+    )
+    pytest.raises(
+        ValueError,
+        Mock(wraps=use_case.run),
+        candidate={"title": "x", "domain_policy_id": "finance/1"},
+        generator_run_id="gen-1",
+        axioms=["first axiom"],
+        cell_statuses={
+            cell_id: ("Bogus" if cell_id == SPARSE else "Unknown") for cell_id in universe
+        },
+    ).match("invalid CellStatus value")
 
 
 def test_diverge_rejects_axiom_cells_outside_policy_or_target() -> None:

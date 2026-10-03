@@ -15,6 +15,7 @@ from nsqd.domain.operator_g_evidence import (
     TrustedEvidenceArtifactError,
     TrustedOperatorGEvidenceArtifact,
 )
+from nsqd.domain.operator_g_types import StructuredValue
 from nsqd.infrastructure.operator_g_census import CensusLimits, census_operator_g_evidence
 from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from tests.nsqd.operator_g_census_support import (
@@ -165,7 +166,7 @@ def test_submitted_trusted_evidence_metadata_is_not_promoted(tmp_path: Path) -> 
     initialize_repository(tmp_path)
     digest = write_evidence(tmp_path)
     record = approved_record(digest)
-    submitted = {
+    submitted: dict[str, StructuredValue] = {
         "record": record,
         "trusted_evidence_artifacts": [
             {

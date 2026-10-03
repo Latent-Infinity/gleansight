@@ -8,15 +8,32 @@ from typing import Any, Protocol, runtime_checkable
 
 @runtime_checkable
 class Job(Protocol):
-    job_id: str
-    type: str
-    status: str
-    paper_id: str | None
-    run_id: str | None
-    payload: dict[str, Any]
-    attempts: int
-    max_attempts: int
-    run_after: datetime | None
+    @property
+    def job_id(self) -> str: ...
+
+    @property
+    def type(self) -> str: ...
+
+    @property
+    def status(self) -> str: ...
+
+    @property
+    def paper_id(self) -> str | None: ...
+
+    @property
+    def run_id(self) -> str | None: ...
+
+    @property
+    def payload(self) -> dict[str, Any]: ...
+
+    @property
+    def attempts(self) -> int: ...
+
+    @property
+    def max_attempts(self) -> int: ...
+
+    @property
+    def run_after(self) -> datetime | None: ...
 
 
 @runtime_checkable
@@ -111,12 +128,23 @@ class PaperStore(Protocol):
 
 @runtime_checkable
 class Extraction(Protocol):
-    entity_type: str
-    entity_ref: str | None
-    field_path: str
-    value_text: str | None
-    value_numeric: float | None
-    value_boolean: int | None
+    @property
+    def entity_type(self) -> str: ...
+
+    @property
+    def entity_ref(self) -> str | None: ...
+
+    @property
+    def field_path(self) -> str: ...
+
+    @property
+    def value_text(self) -> str | None: ...
+
+    @property
+    def value_numeric(self) -> float | None: ...
+
+    @property
+    def value_boolean(self) -> int | None: ...
 
 
 @runtime_checkable

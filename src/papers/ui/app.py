@@ -153,12 +153,12 @@ class UIApp:
         page.window.width = 1200
         page.window.height = 800
 
-        def on_nav_change(e: ft.ControlEvent) -> None:
+        def on_nav_change(e: ft.Event[ft.NavigationRail]) -> None:
             index = int(e.control.selected_index or 0)
             self.state.current_route = self.state.route_for_index(index)
             render()
 
-        def pick_icon(*names: str) -> str:
+        def pick_icon(*names: str) -> ft.IconData:
             for name in names:
                 icon = getattr(ft.Icons, name, None)
                 if icon is not None:
@@ -252,7 +252,7 @@ class UIApp:
             scroll=ft.ScrollMode.ALWAYS,
         )
 
-        def resize_navigation(_: ft.ControlEvent) -> None:
+        def resize_navigation(_: ft.PageResizeEvent) -> None:
             nav_scroller.height = max(float(page.height or page.window.height or 800) - 20, 0)
             nav_scroller.update()
 

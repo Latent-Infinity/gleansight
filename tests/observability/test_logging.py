@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -22,14 +22,20 @@ from papers.infra.piccolo.stores import (
     PiccoloProfileStore,
     PiccoloPromptStore,
 )
+from tests.support.port_stubs import JobQueueStub
 
 
 class _VectorIndex:
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self, embedding: list[float], limit: int, *, allowed_ids: set[str] | None = None
+    ) -> list[tuple[str, float]]:
         return []
+
+    def reset(self) -> None:
+        return None
 
 
 class _Converter:
@@ -143,9 +149,9 @@ def test_job_logging_includes_context_fields(
     assert started is not None
     assert finished is not None
 
-    first = cast(logging.LogRecord, records[0])
+    first = records[0]
     for record in (started, finished):
-        typed = cast(logging.LogRecord, record)
+        typed = record
         assert getattr(typed, "job_id") == getattr(first, "job_id")
         assert getattr(typed, "job_type") == "download"
         assert getattr(typed, "paper_id") == "paper"
@@ -286,13 +292,13 @@ def test_auto_chain_logging_uses_new_job_identity(
 def test_use_case_enqueue_logging_has_transition_fields(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    class _Queue:
+    class _Queue(JobQueueStub):
         def enqueue(
             self,
             type: str,
             paper_id: str | None,
             run_id: str | None,
-            payload: dict[str, object],
+            payload: dict[str, Any],
             run_after: datetime | None = None,
         ) -> str:
             return "job-1"

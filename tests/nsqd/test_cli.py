@@ -994,11 +994,11 @@ def test_map_and_archive_cli_on_empty_snapshot(tmp_path: Path) -> None:
 
 
 def test_map_cli_lists_window_days_override() -> None:
-    from click import Group
+    from typer.core import TyperGroup
     from typer.main import get_command
 
     click_app = get_command(app)
-    assert isinstance(click_app, Group)
+    assert isinstance(click_app, TyperGroup)
     command = click_app.commands["map"]
     opts = {opt for param in command.params for opt in param.opts}
     assert "--window-days" in opts

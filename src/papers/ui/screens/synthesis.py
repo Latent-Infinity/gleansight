@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -9,7 +10,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class SynthesisScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
@@ -38,7 +39,7 @@ class SynthesisScreen:
             status_bar.color = ft.Colors.RED_700 if is_error else ft.Colors.GREY_700
             _safe_update(status_bar)
 
-        def on_ask(_: ft.ControlEvent | None) -> None:
+        def on_ask(_: ft.Event[ft.TextField] | ft.Event[ft.Button] | None) -> None:
             question = (question_input.value or "").strip()
             if not question:
                 error_text.value = "Please enter a question."
@@ -111,3 +112,7 @@ class SynthesisScreen:
             ],
             expand=True,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

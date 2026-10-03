@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from papers.app import ports
+from papers.infra.lancedb.tables import MissingTableError, table_exists
 
 
 @dataclass(frozen=True)
@@ -42,7 +43,7 @@ class LanceDBVectorIndex(ports.VectorIndex):
     def __init__(self, config: LanceDBConfig) -> None:
         try:
             import lancedb
-        except Exception as exc:  # pragma: no cover - optional dependency
+        except ImportError as exc:  # pragma: no cover - optional dependency
             raise ImportError("lancedb is required for LanceDBVectorIndex") from exc
         self._lancedb: Any = lancedb
         self._config = config
@@ -74,21 +75,20 @@ class LanceDBVectorIndex(ports.VectorIndex):
                 raise AttributeError("lancedb has no supported connect API")
 
     def _get_table(self, dimension: int | None = None):
-        try:
+        if table_exists(self._db, self._table_name):
             return self._db.open_table(self._table_name)
-        except Exception:
-            if dimension is None:
-                raise
-            import pyarrow as pa
+        if dimension is None:
+            raise MissingTableError(self._table_name)
+        import pyarrow as pa
 
-            schema = pa.schema(
-                [
-                    ("paper_id", pa.string()),
-                    ("embedding", self._lancedb.vector(dimension)),
-                    ("updated_at", pa.string()),
-                ]
-            )
-            return self._db.create_table(self._table_name, schema=schema)
+        schema = pa.schema(
+            [
+                ("paper_id", pa.string()),
+                ("embedding", self._lancedb.vector(dimension)),
+                ("updated_at", pa.string()),
+            ]
+        )
+        return self._db.create_table(self._table_name, schema=schema)
 
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         import numpy as np
@@ -129,7 +129,7 @@ class LanceDBVectorIndex(ports.VectorIndex):
         )
         try:
             table = self._get_table()
-        except Exception:
+        except MissingTableError:
             return []
         search = table.search(embedding, vector_column_name="embedding")
         if allowed_ids is not None:
@@ -145,7 +145,4 @@ class LanceDBVectorIndex(ports.VectorIndex):
         return output
 
     def reset(self) -> None:
-        try:
-            self._db.drop_table(self._table_name)
-        except Exception:
-            return None
+        self._db.drop_table(self._table_name, ignore_missing=True)

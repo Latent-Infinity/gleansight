@@ -9,10 +9,17 @@ from papers.app.use_cases.admin import (
     RebuildVectorIndexUseCase,
     RecoverStuckJobsUseCase,
 )
+from tests.support.port_stubs import (
+    BlobStoreStub,
+    EmbedderStub,
+    JobQueueStub,
+    PaperStoreStub,
+    VectorIndexStub,
+)
 
 
 @dataclass
-class FakeJobQueue:
+class FakeJobQueue(JobQueueStub):
     recovered: list[tuple[datetime, str]] = field(default_factory=list)
 
     def requeue_running_before(self, cutoff: datetime, error: str) -> list[str]:
@@ -21,7 +28,7 @@ class FakeJobQueue:
 
 
 @dataclass
-class FakePaperStore:
+class FakePaperStore(PaperStoreStub):
     paper_ids: list[str]
 
     def list_papers_with_markdown(self) -> list[str]:
@@ -29,7 +36,7 @@ class FakePaperStore:
 
 
 @dataclass
-class FakeBlobStore:
+class FakeBlobStore(BlobStoreStub):
     markdowns: dict[str, Path]
 
     def get_markdown_path(self, paper_id: str) -> Path | None:
@@ -37,13 +44,13 @@ class FakeBlobStore:
 
 
 @dataclass
-class FakeEmbedder:
+class FakeEmbedder(EmbedderStub):
     def embed(self, text: str) -> list[float]:
         return [float(len(text))]
 
 
 @dataclass
-class FakeVectorIndex:
+class FakeVectorIndex(VectorIndexStub):
     reset_calls: int = 0
     upserts: list[tuple[str, list[float]]] = field(default_factory=list)
 

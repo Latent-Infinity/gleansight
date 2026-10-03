@@ -6,10 +6,13 @@ from collections import Counter
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, NoReturn
+from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
 import yaml
+
+if TYPE_CHECKING:
+    from nsqd.infra.paper_runtime import NsqdPaperRuntime
 
 from nsqd.app.use_cases import (
     AutonomousTauLabelingUseCase,
@@ -17,7 +20,7 @@ from nsqd.app.use_cases import (
     RankArchiveUseCase,
     TauMeasurementEvidenceUseCase,
 )
-from nsqd.composition import build_container, build_local_ollama_embedder
+from nsqd.composition import NsqdContainer, build_container, build_local_ollama_embedder
 from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.diverge import enabled_operators_from_settings
@@ -155,7 +158,7 @@ def project(
     )
 
 
-def _container(db: Path, index: Path, config: Path | None = None) -> Any:
+def _container(db: Path, index: Path, config: Path | None = None) -> NsqdContainer:
     resolved_config = config if config is not None else _cli_options["config"]
     settings = _standalone_settings(resolved_config)
     return build_container(
@@ -175,7 +178,7 @@ def _default_paper_runtime(
     llm_base_url: str,
     llm_api_key: str | None,
     approved_projection_digests: frozenset[str] | None = None,
-) -> Any:
+) -> NsqdPaperRuntime:
     from nsqd.infra.paper_runtime import compose_default_runtime
     from papers.app.composition_root import build_container as build_papers
 

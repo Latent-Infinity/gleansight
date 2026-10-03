@@ -15,13 +15,20 @@ from papers.infra.piccolo.stores import (
     PiccoloProfileStore,
     PiccoloPromptStore,
 )
+from tests.support.port_stubs import VectorIndexStub
 
 
-class _VectorIndex:
+class _VectorIndex(VectorIndexStub):
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self,
+        embedding: list[float],
+        limit: int,
+        *,
+        allowed_ids: set[str] | None = None,
+    ) -> list[tuple[str, float]]:
         return []
 
 

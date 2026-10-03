@@ -27,6 +27,7 @@ from nsqd.domain.tau_review import (
 from nsqd.null_adapters import FixedClock, NullNsqdCandidateStore
 from papers.app.ports import LLMResponse
 from papers.config.settings import NsqdAutonomousTauSettings
+from tests.nsqd.typing_support import numeric_distance
 
 AS_OF = datetime(2026, 8, 29, 12, 0, tzinfo=UTC)
 POLICIES = ("finance/1", "optimization/1")
@@ -113,7 +114,7 @@ def _measurement_row(
     candidate_text = f"candidate text {pair_id}"
     snapshot_digest = sha256_hex(f"snapshot:{policy_id}".encode())
     neighbors = [_approved_neighbor(policy_id=policy_id, rank=rank) for rank in range(1, 6)]
-    mean_distance = sum(float(item["distance"]) for item in neighbors) / len(neighbors)
+    mean_distance = sum(numeric_distance(item) for item in neighbors) / len(neighbors)
     row: dict[str, object] = {
         "pair_id": pair_id,
         "candidate_artifact_hash": candidate_hash,
@@ -132,7 +133,7 @@ def _measurement_row(
         "measurement": {
             "evidence_mean_distance": mean_distance,
             "k": 5,
-            "distances": [float(item["distance"]) for item in neighbors],
+            "distances": [numeric_distance(item) for item in neighbors],
             "embedding_model_id": "qwen3-embedding:latest",
             "embedding_model_version": "latest",
             "embedding_dimension": 4096,

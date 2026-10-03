@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import flet as ft
 
 from papers.ui.screens.query import QueryScreen
+from tests.ui.fake_services import complete_ui_services
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -29,15 +31,15 @@ _HIT = {"paper_id": "p1", "score": 0.95}
 
 def _build_query_services(**overrides):
     """Build a minimal services object for QueryScreen tests."""
-    svc = type("Services", (), {})()
+    svc = SimpleNamespace()
     # search use-case mock
-    search_uc = type("FakeSearch", (), {})()
+    search_uc = SimpleNamespace()
     search_uc.search = lambda *, query, limit=10: [_HIT]
-    filter_uc = type("FakeFilter", (), {})()
+    filter_uc = SimpleNamespace()
     filter_uc.filter = lambda *, field_path, prompt_version_id, constraints, latest_only=True: [
         "p1"
     ]
-    aggregate_uc = type("FakeAggregate", (), {})()
+    aggregate_uc = SimpleNamespace()
     aggregate_uc.count_by_value = lambda *, field_path, prompt_version_id, latest_only=True: {
         "transformer": 1
     }
@@ -55,7 +57,7 @@ def _build_query_services(**overrides):
     svc.ui_settings = {}
     for key, val in overrides.items():
         setattr(svc, key, val)
-    return svc
+    return complete_ui_services(svc)
 
 
 def _find_all(root: ft.Control, control_type: type) -> list:
@@ -95,7 +97,8 @@ def _control_label(ctrl: ft.Control) -> str:
     return ""
 
 
-def _trigger_query(col: ft.Column, query_text: str = "attention") -> ft.ListView:
+def _trigger_query(col: ft.Control, query_text: str = "attention") -> ft.ListView:
+    assert isinstance(col, ft.Column)
     """Enter a query and trigger the search, return the ListView."""
     listviews = _find_all(col, ft.ListView)
     assert listviews, "No ListView found in control tree"
@@ -110,6 +113,30 @@ def _trigger_query(col: ft.Column, query_text: str = "attention") -> ft.ListView
         query_input.on_submit(MagicMock())
 
     return results_view
+
+
+def test_abstract_toggle_updates_label_and_visibility() -> None:
+    results_view = _trigger_query(QueryScreen(_build_query_services()).build())
+    toggle = next(
+        button
+        for button in _find_all(results_view, ft.TextButton)
+        if _control_label(button) == "Show more"
+    )
+    abstract_texts = [
+        text for text in _find_all(results_view, ft.Text) if text.value == _PAPER["abstract"]
+    ]
+    assert len(abstract_texts) == 2
+    preview, full = abstract_texts
+    assert preview.visible and not full.visible
+
+    with patch.object(ft.Control, "update", return_value=None):
+        toggle.on_click(MagicMock())
+        assert _control_label(toggle) == "Show less"
+        assert not preview.visible and full.visible
+        toggle.on_click(MagicMock())
+
+    assert _control_label(toggle) == "Show more"
+    assert preview.visible and not full.visible
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +179,7 @@ def test_query_enriches_with_paper_data() -> None:
 
 def test_query_filters_null_papers() -> None:
     """Hits where list_paper returns None are excluded from results."""
-    search_uc = type("S", (), {})()
+    search_uc = SimpleNamespace()
     search_uc.search = lambda *, query, limit=10: [
         {"paper_id": "p1", "score": 0.9},
         {"paper_id": "missing", "score": 0.5},
@@ -194,7 +221,7 @@ def test_query_retry_enqueues_job() -> None:
     downloaded_paper = dict(_PAPER, pipeline_stage="downloaded")
     services = _build_query_services(
         list_paper=lambda pid: downloaded_paper if pid == "p1" else None,
-        enqueue_job=lambda t, p, r, pl: (enqueue_calls.append((t, p)) or "job-id"),
+        enqueue_job=lambda t, p, r, pl: enqueue_calls.append((t, p)) or "job-id",
     )
     screen = QueryScreen(services)
     col = screen.build()
@@ -264,7 +291,7 @@ def test_query_does_not_call_page_update_on_search() -> None:
 
 def test_query_applies_extraction_filter() -> None:
     captured: dict[str, object] = {}
-    filter_uc = type("CapturingFilter", (), {})()
+    filter_uc = SimpleNamespace()
     filter_uc.filter = lambda **kwargs: (captured.update(kwargs), ["p1"])[1]
     services = _build_query_services(filter_extractions=filter_uc)
     screen = QueryScreen(services)

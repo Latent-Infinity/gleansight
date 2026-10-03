@@ -217,7 +217,9 @@ Use decimal JSON numbers such as 8.0, not integers, for any proposed numeric est
         }
         with atomic_bundle(self.repo_root, "selected-idea-plan") as (staging, published):
             write_json(staging / "investigation-plan.json", plan.model_dump(mode="json"))
-            (staging / "report.md").write_text(render_investigation_plan_markdown(plan) + "\n")
+            (staging / "report.md").write_text(
+                render_investigation_plan_markdown(plan) + "\n", encoding="utf-8"
+            )
             write_json(staging / "provenance.json", provenance)
             write_manifest(staging, PLAN_ARTIFACTS)
         return published

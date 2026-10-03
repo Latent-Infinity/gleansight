@@ -55,6 +55,11 @@ class FakeVectorIndex(VectorIndex):
     query_results: list[tuple[str, float]] = field(default_factory=list)
     last_allowed_ids: set[str] | None = None
 
+    def reset(self) -> None:
+        self.store.clear()
+        self.query_results.clear()
+        self.last_allowed_ids = None
+
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         self.store[paper_id] = embedding
 
@@ -142,7 +147,8 @@ class FakeBlobStore(BlobStore):
             self._content = content
             self._exists = exists
 
-        def read_text(self) -> str:
+        def read_text(self, encoding: str | None = None) -> str:
+            assert encoding == "utf-8"
             return self._content
 
         def exists(self) -> bool:

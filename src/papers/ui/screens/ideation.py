@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -17,7 +18,7 @@ def _integer(field: ft.TextField, label: str) -> int:
 
 @dataclass
 class IdeationScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         project_id = ft.TextField(label="Project id", width=320)
@@ -41,7 +42,7 @@ class IdeationScreen:
         )
         output = ft.Text(value="", selectable=True)
 
-        def ideate(_: ft.ControlEvent) -> None:
+        def ideate(_: ft.Event[ft.Button]) -> None:
             operation = getattr(self.services, "ideate_project", None)
             if not str(project_id.value or "").strip() or not str(question.value or "").strip():
                 output.value = "Project id and question are required."
@@ -66,7 +67,7 @@ class IdeationScreen:
                     output.value = f"Error: {public_ui_error(exc)}"
             output.update()
 
-        def plan(_: ft.ControlEvent) -> None:
+        def plan(_: ft.Event[ft.Button]) -> None:
             operation = getattr(self.services, "plan_idea", None)
             if not str(bundle.value or "").strip() or not str(idea_id.value or "").strip():
                 output.value = "Verified bundle path and idea id are required."
@@ -135,3 +136,7 @@ class IdeationScreen:
             spacing=12,
             scroll=ft.ScrollMode.AUTO,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

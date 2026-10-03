@@ -5,7 +5,7 @@ import csv
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
@@ -23,7 +23,7 @@ def _next_job_type(stage: str | None) -> str | None:
 
 @dataclass
 class QueryScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
@@ -159,10 +159,10 @@ class QueryScreen:
             abstract_full_text = ft.Text(abstract, visible=False)
             toggle_button = ft.TextButton("Show more")
 
-            def on_toggle(e: ft.ControlEvent) -> None:
+            def on_toggle(e: ft.Event[ft.TextButton]) -> None:
                 abstract_full_text.visible = not abstract_full_text.visible
                 abstract_preview_text.visible = not abstract_full_text.visible
-                toggle_button.text = "Show less" if abstract_full_text.visible else "Show more"
+                toggle_button.content = "Show less" if abstract_full_text.visible else "Show more"
                 page = getattr(e, "page", None) or getattr(e.control, "page", None)
                 if page:
                     page.update()
@@ -171,7 +171,7 @@ class QueryScreen:
             if abstract == "No abstract available.":
                 toggle_button.visible = False
 
-            def on_details(e: ft.ControlEvent) -> None:
+            def on_details(e: ft.Event[ft.TextButton]) -> None:
                 page = getattr(e, "page", None) or getattr(e.control, "page", None)
                 if page is None:
                     return
@@ -181,6 +181,7 @@ class QueryScreen:
                 if get_markdown and paper_id:
                     markdown_content = get_markdown(paper_id)
 
+                content_controls: list[ft.Control]
                 if markdown_content:
                     content_controls = [
                         ft.Text(value=f"Authors: {authors}", size=12, color=ft.Colors.GREY_700),
@@ -248,7 +249,7 @@ class QueryScreen:
             def _set_status_message(msg: str) -> None:
                 _set_status(msg, is_error=False)
 
-            def _on_retry(_: ft.ControlEvent) -> None:
+            def _on_retry(_: ft.Event[ft.PopupMenuItem]) -> None:
                 if enqueue_job is None or not paper_id:
                     return
                 job_type = _next_job_type(pipeline_stage)
@@ -257,19 +258,19 @@ class QueryScreen:
                 enqueue_job(job_type, paper_id, None, {})
                 _set_status_message(f"Enqueued {job_type} for {title[:50]}")
 
-            def _on_redownload(_: ft.ControlEvent) -> None:
+            def _on_redownload(_: ft.Event[ft.PopupMenuItem]) -> None:
                 if enqueue_job is None or not paper_id:
                     return
                 enqueue_job("download", paper_id, None, {})
                 _set_status_message(f"Enqueued re-download for {title[:50]}")
 
-            def _on_reset(_: ft.ControlEvent) -> None:
+            def _on_reset(_: ft.Event[ft.PopupMenuItem]) -> None:
                 if reset_stage_fn is None or not paper_id:
                     return
                 reset_stage_fn(paper_id, "imported")
                 _set_status_message(f"Reset {title[:50]} to imported")
 
-            def _on_delete(_: ft.ControlEvent) -> None:
+            def _on_delete(_: ft.Event[ft.PopupMenuItem]) -> None:
                 if delete_paper_fn is None or not paper_id:
                     return
                 page = getattr(_, "page", None) or getattr(_.control, "page", None)
@@ -392,7 +393,7 @@ class QueryScreen:
             results_view.controls = [_build_result_card(hit) for hit in enriched]
             _safe_update(results_view)
 
-        def on_query(_: ft.ControlEvent | None) -> None:
+        def on_query(_: ft.Event[ft.TextField] | ft.Event[ft.Button] | None) -> None:
             query = (query_input.value or "").strip()
             if not query:
                 _set_status("Enter a query string.", is_error=True)
@@ -403,7 +404,7 @@ class QueryScreen:
             _render_results(_enrich_hits(hits))
             _set_status(f"Query returned {len(last_results)} papers.")
 
-        def on_apply_filter(_: ft.ControlEvent | None) -> None:
+        def on_apply_filter(_: ft.Event[ft.OutlinedButton] | None) -> None:
             filter_uc = getattr(self.services, "filter_extractions", None)
             if filter_uc is None:
                 _set_status("Extraction filter use-case unavailable.", is_error=True)
@@ -446,7 +447,7 @@ class QueryScreen:
             _render_results(_enrich_hits(hits))
             _set_status(f"Filter matched {len(last_results)} papers.")
 
-        def on_aggregate(_: ft.ControlEvent | None) -> None:
+        def on_aggregate(_: ft.Event[ft.OutlinedButton] | None) -> None:
             aggregate_uc = getattr(self.services, "aggregate_extractions", None)
             if aggregate_uc is None:
                 _set_status("Aggregate use-case unavailable.", is_error=True)
@@ -484,7 +485,7 @@ class QueryScreen:
             _safe_update(aggregation_output)
             _set_status("Aggregation complete.")
 
-        def on_export(_: ft.ControlEvent | None) -> None:
+        def on_export(_: ft.Event[ft.Button] | None) -> None:
             if not last_results:
                 _set_status("No results to export.", is_error=True)
                 return
@@ -613,3 +614,7 @@ class QueryScreen:
             ],
             expand=True,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

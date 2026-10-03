@@ -258,7 +258,7 @@ class TestSemanticScholarClient:
     def test_search_network_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Network errors should be translated to domain errors."""
 
-        class FakeRateLimiter:
+        class FakeRateLimiter(RateLimiter):
             def acquire(self) -> None:
                 return None
 
@@ -280,7 +280,7 @@ class TestSemanticScholarClient:
 
         client = SemanticScholarClient(
             send_func=send_func,
-            rate_limiter=FakeRateLimiter(),
+            rate_limiter=FakeRateLimiter(rate_per_second=1.0),
             max_retries=3,
             retry_delay_s=0.5,
         )
@@ -293,7 +293,7 @@ class TestSemanticScholarClient:
     def test_search_timeout_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Timeout errors should be translated to domain errors."""
 
-        class FakeRateLimiter:
+        class FakeRateLimiter(RateLimiter):
             def acquire(self) -> None:
                 return None
 
@@ -315,7 +315,7 @@ class TestSemanticScholarClient:
 
         client = SemanticScholarClient(
             send_func=send_func,
-            rate_limiter=FakeRateLimiter(),
+            rate_limiter=FakeRateLimiter(rate_per_second=1.0),
             max_retries=3,
             retry_delay_s=0.5,
         )
@@ -328,7 +328,7 @@ class TestSemanticScholarClient:
     def test_search_http_error_translation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """HTTP errors should be translated to domain errors."""
 
-        class FakeRateLimiter:
+        class FakeRateLimiter(RateLimiter):
             def acquire(self) -> None:
                 return None
 
@@ -352,7 +352,7 @@ class TestSemanticScholarClient:
 
         client = SemanticScholarClient(
             send_func=send_func,
-            rate_limiter=FakeRateLimiter(),
+            rate_limiter=FakeRateLimiter(rate_per_second=1.0),
             max_retries=3,
             retry_delay_s=0.5,
         )
@@ -365,7 +365,7 @@ class TestSemanticScholarClient:
     def test_retry_backoff_caps_at_30s(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Backoff should be exponential with jitter and capped at 30s."""
 
-        class FakeRateLimiter:
+        class FakeRateLimiter(RateLimiter):
             def acquire(self) -> None:
                 return None
 
@@ -389,7 +389,7 @@ class TestSemanticScholarClient:
 
         client = SemanticScholarClient(
             send_func=send_func,
-            rate_limiter=FakeRateLimiter(),
+            rate_limiter=FakeRateLimiter(rate_per_second=1.0),
             max_retries=4,
             retry_delay_s=20.0,
         )

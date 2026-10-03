@@ -4,7 +4,7 @@ import importlib
 from dataclasses import dataclass, field
 from typing import Any
 
-from click import Group
+from typer.core import TyperGroup
 from typer.main import get_command
 from typer.testing import CliRunner
 
@@ -75,7 +75,7 @@ def test_analyze_project_help_lists_flags() -> None:
     )
     assert result.exit_code == 0, result.output
     click_app = get_command(cli_app.app)
-    assert isinstance(click_app, Group)
+    assert isinstance(click_app, TyperGroup)
     command = click_app.commands["analyze-project"]
     opts = {opt for param in command.params for opt in param.opts}
     for flag in (

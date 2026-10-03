@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,7 +11,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class ProjectScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         projection = ft.TextField(label="Projection path", width=320)
@@ -19,7 +20,7 @@ class ProjectScreen:
         confirmation = ft.TextField(label="Type APPROVE", width=160)
         output = ft.Text(value="", selectable=True)
 
-        def project(_: ft.ControlEvent) -> None:
+        def project(_: ft.Event[ft.Button]) -> None:
             projector = getattr(self.services, "project_records", None)
             projection_path = str(projection.value or "").strip()
             manifest_path = str(manifest.value or "").strip()
@@ -38,7 +39,7 @@ class ProjectScreen:
                     output.value = f"Error: {public_ui_error(exc)}"
             output.update()
 
-        def approve(_: ft.ControlEvent) -> None:
+        def approve(_: ft.Event[ft.Button]) -> None:
             approver = getattr(self.services, "approve_digest", None)
             digest_value = str(digest.value or "").strip()
             if not digest_value:
@@ -83,3 +84,7 @@ class ProjectScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

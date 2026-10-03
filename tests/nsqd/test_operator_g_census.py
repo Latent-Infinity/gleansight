@@ -10,6 +10,7 @@ from nsqd.domain.operator_g import (
     operator_g_registration_digest,
 )
 from nsqd.domain.operator_g_census import CandidateClass, CensusStatus, ReasonCode
+from nsqd.domain.operator_g_types import StructuredValue
 from nsqd.infrastructure.operator_g_census import census_operator_g_evidence
 from nsqd.infrastructure.operator_g_census_files import APPROVED_INPUT_ROOT
 from tests.nsqd.operator_g_census_support import (
@@ -123,7 +124,7 @@ def test_forged_submitted_approval_is_not_promoted_to_trust(tmp_path: Path) -> N
     initialize_repository(tmp_path)
     record = approved_record(write_evidence(tmp_path))
     review = mapping(record["review"])
-    submitted = {
+    submitted: dict[str, StructuredValue] = {
         "record": record,
         "trusted_approvals": [
             {

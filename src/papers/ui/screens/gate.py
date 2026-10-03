@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,7 +11,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class GateScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         hash_input = ft.TextField(label="Candidate artifact hash", width=320)
@@ -20,7 +21,7 @@ class GateScreen:
         state = ft.TextField(label="Snapshot state", value="calibration", width=160)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             gate = getattr(self.services, "gate_candidate", None)
             artifact_hash = str(hash_input.value or "").strip()
             snapshot_id = str(snapshot.value or "").strip()
@@ -71,3 +72,7 @@ class GateScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

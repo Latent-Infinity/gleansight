@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -142,7 +143,7 @@ def _downgrade_nsqd_jobs_to_map_era(db: PiccoloDatabase) -> None:
     db.execute("DROP TABLE nsqd_jobs_old")
 
 
-def _dump_json(payload: dict[str, object]) -> str:
+def _dump_json(payload: Mapping[str, object]) -> str:
     return json.dumps(payload)
 
 

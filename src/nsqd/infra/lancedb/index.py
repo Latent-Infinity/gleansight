@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, SupportsFloat, cast
 
 from nsqd.ports import CorpusHit
+from papers.infra.lancedb.tables import MissingTableError, table_exists
 
 
 def _cosine_distance(left: list[float], right: list[float]) -> float:
@@ -63,7 +64,7 @@ class LanceDBCorpusIndex:
     ) -> None:
         try:
             import lancedb
-        except Exception as exc:  # pragma: no cover - optional dependency
+        except ImportError as exc:  # pragma: no cover - optional dependency
             raise ImportError("lancedb is required for LanceDBCorpusIndex") from exc
         self._lancedb = lancedb
         self._embedding_model = embedding_model
@@ -85,22 +86,21 @@ class LanceDBCorpusIndex:
         return int(table.count_rows(filter=filter_expr))
 
     def _get_table(self, dimension: int | None = None):
-        try:
+        if table_exists(self._db, self._table_name):
             return self._db.open_table(self._table_name)
-        except Exception:
-            if dimension is None:
-                raise
-            import pyarrow as pa
+        if dimension is None:
+            raise MissingTableError(self._table_name)
+        import pyarrow as pa
 
-            schema = pa.schema(
-                [
-                    ("key", pa.string()),
-                    ("snapshot_id", pa.string()),
-                    ("record_id", pa.string()),
-                    ("embedding", self._lancedb.vector(dimension)),
-                ]
-            )
-            return self._db.create_table(self._table_name, schema=schema)
+        schema = pa.schema(
+            [
+                ("key", pa.string()),
+                ("snapshot_id", pa.string()),
+                ("record_id", pa.string()),
+                ("embedding", self._lancedb.vector(dimension)),
+            ]
+        )
+        return self._db.create_table(self._table_name, schema=schema)
 
     def upsert(self, snapshot_id: str, record_id: str, vector: list[float]) -> None:
         import numpy as np
@@ -143,7 +143,7 @@ class LanceDBCorpusIndex:
         )
         try:
             table = self._get_table()
-        except Exception:
+        except MissingTableError:
             return []
         filter_expr = _snapshot_filter(snapshot_id)
         row_count = self._count_rows(table, filter_expr)

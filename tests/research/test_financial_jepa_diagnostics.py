@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
+from zipfile import ZipFile
 
 import numpy as np
 import pytest
@@ -509,7 +510,10 @@ def test_reload_rejects_hash_valid_seed_aggregate_drift(tmp_path: Path) -> None:
 
 def _rewrite_npz(run_root: Path, filename: str, arrays: dict[str, np.ndarray]) -> None:
     path = run_root / filename
-    np.savez(path, **arrays)
+    with ZipFile(path, "w") as archive:
+        for name, array in arrays.items():
+            with archive.open(f"{name}.npy", "w") as entry:
+                np.save(entry, array, allow_pickle=False)
     _rehash(run_root, filename)
 
 

@@ -42,7 +42,7 @@ def build_sentence_transformer_embedder(model_name: str) -> SentenceTransformerE
         ) from exc
 
     model = SentenceTransformer(model_name)
-    dimension = model.get_sentence_embedding_dimension()
+    dimension = model.get_embedding_dimension()
     if dimension is None:
         raise PipelineError(
             ErrorCode.EMBEDDING_FAILED,

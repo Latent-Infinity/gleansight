@@ -9,7 +9,7 @@ from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.card import card_decision, missing_card_fields
@@ -407,7 +407,12 @@ def _required_scratch_runtime(value: object, *, require_exists: bool = False) ->
     return {"db_path": db_path, "index_path": index_path}
 
 
-def _require_projection_bindings(value: object) -> dict[str, object]:
+class _ProjectionBindings(TypedDict):
+    by_projected_record_id: dict[str, dict[str, Any]]
+    approved_projection_digests: frozenset[str]
+
+
+def _require_projection_bindings(value: object) -> _ProjectionBindings:
     bindings = value
     if not isinstance(bindings, list) or len(bindings) != len(APPROVED_FINANCE_RECORD_IDS):
         raise ValueError("projection_bindings must contain the six approved finance records")

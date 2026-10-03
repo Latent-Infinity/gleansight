@@ -12,6 +12,7 @@ import pytest
 
 from nsqd.domain.contract_validation import StructuredInput, StructuredValue
 from nsqd.domain.operator_approval import (
+    ApprovalInput,
     OperatorApprovalKind,
     TrustedOperatorApproval,
     require_operator_d_approval,
@@ -66,6 +67,12 @@ def _validate_g(
     return validate_operator_g_failure_record(payload, contract=contract, trusted_approvals=trusted)
 
 
+def _registered_record_input() -> dict[str, StructuredInput]:
+    record: dict[str, StructuredInput] = {}
+    record.update(registered_record())
+    return record
+
+
 D_CASE = _OperatorCase(
     OperatorApprovalKind.D_MAPPING_PROPOSAL,
     "approved_proposal_digest",
@@ -80,7 +87,7 @@ G_CASE = _OperatorCase(
     "approved_record_digest",
     "review_status",
     "approved",
-    registered_record,
+    _registered_record_input,
     operator_g_contract_v2,
     _validate_g,
 )
@@ -359,7 +366,7 @@ def test_submitted_d_approval_accepts_a_utc_datetime_instant() -> None:
         datetime(2026, 9, 11, 12, tzinfo=timezone(timedelta(hours=1))),
     ],
 )
-def test_submitted_d_approval_rejects_malformed_or_non_utc_instants(instant: object) -> None:
+def test_submitted_d_approval_rejects_malformed_or_non_utc_instants(instant: ApprovalInput) -> None:
     # Given: otherwise complete D approval metadata with an invalid instant
     review = {
         "human_reviewer": "human:d-reviewer",
@@ -402,10 +409,10 @@ def test_operator_g_rejects_non_string_submitted_approval_instant() -> None:
     ],
 )
 def test_operator_g_rejects_malformed_submitted_binding_fields(
-    field: str, value: object, message: str
+    field: str, value: ApprovalInput, message: str
 ) -> None:
     # Given: one malformed field in otherwise exact G submitted metadata
-    review: dict[str, object] = {
+    review: dict[str, ApprovalInput] = {
         "human_reviewer": "human:g-reviewer",
         "human_approved_at_utc": "2026-09-11T12:00:00Z",
         "reviewer_session": "session:g-reviewer",

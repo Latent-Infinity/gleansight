@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import flet as ft
 
 from papers.ui.screens.paper import PaperDetailScreen
+from tests.ui.fake_services import complete_ui_services
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,12 +68,12 @@ _EXTRACTIONS = [
 
 def _build_paper_services(**overrides):
     """Build a minimal services object for PaperDetailScreen tests."""
-    svc = type("Services", (), {})()
+    svc = SimpleNamespace()
     svc.list_paper = lambda pid: _PAPER if pid == "paper-1" else None
     svc.list_runs = lambda pid: [_RUN] if pid == "paper-1" else []
     svc.list_extractions = lambda pid, pv=None: list(_EXTRACTIONS) if pid == "paper-1" else []
-    svc.get_paper_markdown = (
-        lambda pid: "# Test Markdown\nContent here." if pid == "paper-1" else None
+    svc.get_paper_markdown = lambda pid: (
+        "# Test Markdown\nContent here." if pid == "paper-1" else None
     )
     svc.enqueue_job = lambda t, p, r, pl: "job-id"
     svc.delete_paper = lambda pid: None
@@ -79,7 +81,7 @@ def _build_paper_services(**overrides):
     svc.ui_settings = {}
     for key, val in overrides.items():
         setattr(svc, key, val)
-    return svc
+    return complete_ui_services(svc)
 
 
 def _find_all(root: ft.Control, control_type: type) -> list:
@@ -129,7 +131,6 @@ def _trigger_load(col: ft.Control, paper_id: str = "paper-1") -> None:
         # Find and click the Load button
         buttons = (
             _find_all(col, ft.Button)
-            + _find_all(col, ft.ElevatedButton)
             + _find_all(col, ft.TextButton)
             + _find_all(col, ft.IconButton)
         )
@@ -309,10 +310,10 @@ def test_paper_action_retry() -> None:
     """Retry action should enqueue a job."""
     enqueue_calls = []
     services = _build_paper_services(
-        list_paper=lambda pid: dict(_PAPER, pipeline_stage="downloaded")
-        if pid == "paper-1"
-        else None,
-        enqueue_job=lambda t, p, r, pl: (enqueue_calls.append((t, p)) or "job-id"),
+        list_paper=lambda pid: (
+            dict(_PAPER, pipeline_stage="downloaded") if pid == "paper-1" else None
+        ),
+        enqueue_job=lambda t, p, r, pl: enqueue_calls.append((t, p)) or "job-id",
     )
     screen = PaperDetailScreen(services)
     col = screen.build()

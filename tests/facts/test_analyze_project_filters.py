@@ -28,6 +28,7 @@ from papers.infra.piccolo.stores import (
     PiccoloProjectStore,
     PiccoloPromptStore,
 )
+from tests.support.port_stubs import VectorIndexStub
 
 APPROVED = Path(__file__).resolve().parents[1] / "fixtures" / "approved"
 ROLES = ("DATA-01a", "DATA-01b", "DATA-01c")
@@ -64,7 +65,7 @@ class _Embedder:
         raise AssertionError("analysis must not invoke embedding")
 
 
-class _VectorIndex:
+class _VectorIndex(VectorIndexStub):
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         raise AssertionError("analysis must not update vectors")
 

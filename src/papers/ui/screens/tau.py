@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -16,7 +17,7 @@ def _parse_hashes(raw: str) -> list[str]:
 
 @dataclass
 class TauScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         hashes = ft.TextField(label="Candidate artifact hashes", expand=True)
@@ -26,7 +27,7 @@ class TauScreen:
         balanced = ft.TextField(label="Require balanced", value="false", width=140)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             command = getattr(self.services, "tau_command", None)
             hash_list = _parse_hashes(str(hashes.value or ""))
             action_id = str(action.value or "").strip().lower()
@@ -86,3 +87,7 @@ class TauScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

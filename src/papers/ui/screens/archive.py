@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,7 +11,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class ArchiveScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         output = ft.ListView(expand=True, spacing=8, padding=8)
@@ -20,7 +21,7 @@ class ArchiveScreen:
         state = ft.TextField(label="Snapshot state", value="calibration", width=180)
         rank_output = ft.Text(value="", selectable=True)
 
-        def load(_: ft.ControlEvent) -> None:
+        def load(_: ft.Event[ft.Button]) -> None:
             lister = getattr(self.services, "list_archive_elites", None)
             output.controls.clear()
             if lister is None:
@@ -41,7 +42,7 @@ class ArchiveScreen:
             status.update()
             output.update()
 
-        def rank(_: ft.ControlEvent) -> None:
+        def rank(_: ft.Event[ft.Button]) -> None:
             ranker = getattr(self.services, "rank_archive", None)
             snapshot_id = str(snapshot.value or "").strip()
             if not snapshot_id:
@@ -79,3 +80,7 @@ class ArchiveScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

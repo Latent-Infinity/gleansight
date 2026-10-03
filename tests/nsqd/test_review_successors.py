@@ -177,7 +177,7 @@ def test_c_readme_successor_is_closed_and_prior_review_does_not_transfer() -> No
     assert not (C_SUCCESSOR / "review-seal.json").exists()
 
 
-def test_f_formula_successor_binds_approved_semantics_and_implementations() -> None:
+def test_historical_f_formula_successor_binds_approved_semantics_and_implementations() -> None:
     _assert_manifest_closure(F_SUCCESSOR)
     readiness = _json(F_SUCCESSOR / "readiness.json")
     assert readiness["review_status"] == "review_pending"
@@ -203,7 +203,13 @@ def test_f_formula_successor_binds_approved_semantics_and_implementations() -> N
     assert isinstance(bindings, list)
     for binding in bindings:
         assert isinstance(binding, dict)
-        assert _sha256(REPO_ROOT / str(binding["path"])) == binding["sha256"]
+        source_path = str(binding["path"])
+        if source_path == "tests/nsqd/test_operator_f_metric_redundancy_semantics.py":
+            source_path = (
+                "tests/fixtures/source-history/nsqd/operator-f/"
+                "redundancy-semantics-2026-09-12.py.txt"
+            )
+        assert _sha256(REPO_ROOT / source_path) == binding["sha256"]
     assert readiness["evidence_sufficient"] is False
     assert readiness["schema_admission_authorized"] is False
     assert readiness["runtime_authorized"] is False

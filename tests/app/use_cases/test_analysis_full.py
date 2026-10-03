@@ -10,10 +10,11 @@ from papers.app.use_cases.analysis import (
     ReanalyzeWithPromptVersionUseCase,
 )
 from papers.domain.errors import NotFoundError
+from tests.support.port_stubs import PaperProjectStoreStub, PromptStoreStub
 
 
 @dataclass
-class FakePromptStore:
+class FakePromptStore(PromptStoreStub):
     versions: dict[str, dict[str, str]]
 
     def get_version(self, prompt_version_id: str):
@@ -21,7 +22,7 @@ class FakePromptStore:
 
 
 @dataclass
-class FakePaperProjectStore:
+class FakePaperProjectStore(PaperProjectStoreStub):
     project_papers: dict[str, list[str]]
     calls: list[tuple[str, str | None]] = field(default_factory=list)
 

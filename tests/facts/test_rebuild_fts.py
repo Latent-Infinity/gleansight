@@ -13,13 +13,11 @@ from papers.infra.piccolo.tables import Paper
 def test_rebuild_fts_indexes_papers_missing_from_title_abstract_table(tmp_path: Path) -> None:
     PiccoloDatabase(tmp_path / "app.sqlite").initialize_schema()
     Paper(
-        {
-            "paper_id": "paper-1",
-            "title": "Gamma Fragility in Flow Driven Markets",
-            "abstract": "Dealer hedging convexity and drawdown.",
-            "pipeline_stage": "imported",
-            "pipeline_health": "ok",
-        }
+        paper_id="paper-1",
+        title="Gamma Fragility in Flow Driven Markets",
+        abstract="Dealer hedging convexity and drawdown.",
+        pipeline_stage="imported",
+        pipeline_health="ok",
     ).save().run_sync()
     fts = PiccoloPaperFTS()
     assert fts.search("Gamma Fragility", limit=10) == []
@@ -35,26 +33,22 @@ def test_rebuild_fts_indexes_papers_missing_from_title_abstract_table(tmp_path: 
 def test_rebuild_fts_rolls_back_when_an_insert_fails(tmp_path: Path) -> None:
     PiccoloDatabase(tmp_path / "app.sqlite").initialize_schema()
     Paper(
-        {
-            "paper_id": "paper-1",
-            "title": "Existing Search Result",
-            "abstract": "Preserve this index entry.",
-            "pipeline_stage": "imported",
-            "pipeline_health": "ok",
-        }
+        paper_id="paper-1",
+        title="Existing Search Result",
+        abstract="Preserve this index entry.",
+        pipeline_stage="imported",
+        pipeline_health="ok",
     ).save().run_sync()
     fts = PiccoloPaperFTS()
     assert fts.rebuild() == 1
     assert fts.search("Existing Search Result", limit=10) == ["paper-1"]
 
     Paper(
-        {
-            "paper_id": "paper-2",
-            "title": "New Uncommitted Result",
-            "abstract": "This rebuild will fail.",
-            "pipeline_stage": "imported",
-            "pipeline_health": "ok",
-        }
+        paper_id="paper-2",
+        title="New Uncommitted Result",
+        abstract="This rebuild will fail.",
+        pipeline_stage="imported",
+        pipeline_health="ok",
     ).save().run_sync()
 
     with pytest.raises(ValueError, match="injected FTS rebuild failure"):

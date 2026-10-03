@@ -93,7 +93,7 @@ class SynthesizeFromCorpusUseCase:
                 if markdown_path is None or not markdown_path.exists():
                     continue
                 try:
-                    markdown_content = markdown_path.read_text()
+                    markdown_content = markdown_path.read_text(encoding="utf-8")
                 except OSError:
                     continue
                 title = str(paper.get("title") or "Untitled")

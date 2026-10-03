@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
@@ -12,7 +12,7 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class MapScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         snapshot_input = ft.TextField(label="Snapshot id", width=320)
@@ -20,7 +20,7 @@ class MapScreen:
         state_input = ft.TextField(label="Snapshot state", value="calibration", width=180)
         output = ft.Text(value="", selectable=True)
 
-        def load(_: ft.ControlEvent) -> None:
+        def load(_: ft.Event[ft.Button]) -> None:
             mapper = getattr(self.services, "map_snapshot", None)
             snapshot_id = str(snapshot_input.value or "").strip()
             if not snapshot_id:
@@ -68,3 +68,7 @@ class MapScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

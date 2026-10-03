@@ -7,10 +7,11 @@ import pytest
 from nsqd.domain.ablation import calendar_month_cutoff, calendar_month_window
 from nsqd.domain.diverge import select_target_cell
 from nsqd.domain.status import cell_status, record_lifecycle, status_window
+from tests.nsqd.typing_support import TimedCellStatusOptions
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 WINDOW_CHOICES_DAYS = (365, 730, 1095)
-CAL = {
+CAL: TimedCellStatusOptions = {
     "as_of": AS_OF,
     "snapshot_state": "calibration",
     "inspected": True,

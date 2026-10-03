@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,13 +11,13 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class CardScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         card_input = ft.TextField(label="Card id", width=320)
         output = ft.Text(value="", selectable=True)
 
-        def load(_: ft.ControlEvent) -> None:
+        def load(_: ft.Event[ft.Button]) -> None:
             getter = getattr(self.services, "get_frontier_card", None)
             card_id = str(card_input.value or "").strip()
             if not card_id:
@@ -49,3 +50,7 @@ class CardScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

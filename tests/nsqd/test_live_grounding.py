@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Never
 
 import yaml
 
@@ -20,7 +20,7 @@ from nsqd.null_adapters import (
     NullMorphospaceStore,
     NullNsqdCandidateStore,
 )
-from nsqd.ports import NsqdJob
+from nsqd.ports import HybridPaperSearch, LivePaperSearch, NsqdJob
 from nsqd.runner import run_job
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
@@ -67,10 +67,10 @@ class StrictScholarSearch:
 
 
 class _ForbiddenSearch:
-    def query(self, *args: object, **kwargs: object) -> list[object]:
+    def query(self, *args: object, **kwargs: object) -> Never:
         raise AssertionError("paper hybrid search must not be called")
 
-    def search(self, *args: object, **kwargs: object) -> list[object]:
+    def search(self, *args: object, **kwargs: object) -> Never:
         raise AssertionError("live search must not be called")
 
 
@@ -82,8 +82,8 @@ def _load_card(name: str) -> dict[str, Any]:
 
 def _ctx(
     *,
-    scholar: object | None = None,
-    hybrid: object | None = None,
+    scholar: LivePaperSearch | None = None,
+    hybrid: HybridPaperSearch | None = None,
 ) -> NsqdHandlerContext:
     records = NullCorpusRecordStore()
     snapshots = NullCorpusSnapshotStore()

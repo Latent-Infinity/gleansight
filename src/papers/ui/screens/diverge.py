@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -12,7 +13,7 @@ _RUNTIME_OPERATORS = frozenset({"A", "B"})
 
 @dataclass
 class DivergeScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         fixture = ft.TextField(label="Candidate fixture path", width=320)
@@ -25,7 +26,7 @@ class DivergeScreen:
         state = ft.TextField(label="Snapshot state", value="calibration", width=140)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             diverge = getattr(self.services, "diverge_candidate", None)
             fixture_path = str(fixture.value or "").strip()
             axiom_text = str(axiom.value or "").strip()
@@ -87,3 +88,7 @@ class DivergeScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

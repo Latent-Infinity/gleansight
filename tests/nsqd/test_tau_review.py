@@ -17,6 +17,7 @@ from nsqd.domain.tau_review import (
     tau_measurement_inventory,
     tau_review_packet_digest,
 )
+from tests.nsqd.typing_support import numeric_distance
 
 POLICIES = ("finance/1", "optimization/1")
 TRUSTED_REVIEWERS = frozenset({"human-reviewer"})
@@ -276,7 +277,7 @@ def _measurement_row(
     candidate_hash = sha256_hex(pair_id.encode("utf-8"))
     candidate_text = f"candidate text {pair_id}"
     neighbors = [_approved_neighbor(policy_id=policy_id, rank=rank) for rank in range(1, 6)]
-    distances = [float(neighbor["distance"]) for neighbor in neighbors]
+    distances = [numeric_distance(neighbor) for neighbor in neighbors]
     snapshot_digest = sha256_hex(f"snapshot-{policy_id}".encode())
     row: dict[str, object] = {
         "pair_id": pair_id,

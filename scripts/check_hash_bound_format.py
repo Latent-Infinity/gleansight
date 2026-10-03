@@ -13,6 +13,37 @@ REPO_ROOT: Final = Path(__file__).resolve().parents[1]
 EXCEPTIONS_PATH: Final = resolve_artifact_path(
     REPO_ROOT, Path("docs/reviews/hash-bound-format-exceptions.json")
 )
+TEXT_SUFFIXES: Final = frozenset(
+    {
+        ".cfg",
+        ".css",
+        ".csv",
+        ".example",
+        ".html",
+        ".ini",
+        ".ipynb",
+        ".js",
+        ".json",
+        ".jsonl",
+        ".lock",
+        ".md",
+        ".py",
+        ".pyi",
+        ".rst",
+        ".sh",
+        ".sql",
+        ".svg",
+        ".toml",
+        ".ts",
+        ".tsv",
+        ".tsx",
+        ".txt",
+        ".xml",
+        ".yaml",
+        ".yml",
+    }
+)
+TEXT_FILENAMES: Final = frozenset({".gitignore", ".gitkeep", ".python-version", "LICENSE"})
 
 
 def _trailing_whitespace_count(contents: bytes) -> int:
@@ -62,6 +93,8 @@ def validate_paths(repo_root: Path, exceptions_path: Path, paths: Iterable[Path]
     exceptions = _load_exceptions(exceptions_path)
     validate_exception_inventory(repo_root, exceptions_path)
     for path in paths:
+        if path.suffix.lower() not in TEXT_SUFFIXES and path.name not in TEXT_FILENAMES:
+            continue
         contents = path.read_bytes()
         count = _trailing_whitespace_count(contents)
         if count == 0:

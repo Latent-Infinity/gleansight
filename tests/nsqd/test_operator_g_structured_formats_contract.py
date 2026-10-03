@@ -167,7 +167,7 @@ def test_depth_boundary_is_inclusive_and_preserves_error() -> None:
 
 def test_mapping_walk_and_record_candidates_preserve_sorted_depth_first_order() -> None:
     # Given: mappings inserted in reverse lexical order with nested record candidates
-    value = {
+    value: StructuredValue = {
         "z": {"failure_record_id": "z"},
         "a": [{"record_type": "approved_failed_experiment"}],
     }
@@ -180,7 +180,7 @@ def test_mapping_walk_and_record_candidates_preserve_sorted_depth_first_order() 
 
 
 def test_registered_source_class_metadata_is_not_a_failure_record_candidate() -> None:
-    value = {"source_class": "registered_experiment_artifact"}
+    value: StructuredValue = {"source_class": "registered_experiment_artifact"}
 
     assert list(record_candidates(value, "root")) == []
 

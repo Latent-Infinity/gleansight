@@ -256,11 +256,12 @@ def test_projector_rejects_missing_legacy_digest_without_mutating_record() -> No
 
 def test_projector_rejects_existing_different_review_digest() -> None:
     projection = _non_nsqd_projection()
-    original_ctx = _ctx(_approved_digests(projection))
+    records = NullCorpusRecordStore()
+    original_ctx = _ctx(_approved_digests(projection), records=records)
     _project(original_ctx).run(domain_policy_id="optimization/1", projection=projection)
     revised = dict(projection)
     revised["human_reviewer"] = "different-reviewer"
-    revised_ctx = _ctx(_approved_digests(revised), records=original_ctx.records)
+    revised_ctx = _ctx(_approved_digests(revised), records=records)
 
     with pytest.raises(ValueError, match="different reviewed projection metadata"):
         _project(revised_ctx).run(domain_policy_id="optimization/1", projection=revised)

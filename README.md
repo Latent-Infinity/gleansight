@@ -33,12 +33,10 @@ Best practices:
 - Commit `uv.lock` to make installs reproducible.
 - Use a local `.venv` for isolation.
 
-Quickstart:
+Quickstart (uv 0.12.18, Python 3.12.14 by default):
 
 ```bash
-uv venv --python 3.12 .venv
-source .venv/bin/activate
-uv sync --group dev --group infra
+uv sync --locked --group dev --group infra --group research
 ```
 
 ## Configuration (.env)
@@ -130,27 +128,36 @@ PY
 
 ## Quality tools
 
-Repository-standard gate (same as the plans):
+Run the same locked gate locally and in CI:
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run ty check
-uv run pytest -q
+bash scripts/verify.sh
 ```
 
-`pyproject.toml` `fail_under` is **91.90** (combined coverage on `src`, omitting `src/papers/ui/*`).
+The gate checks Ruff formatting and lint, ty, the hash-bound formatting inventory, and the full
+pytest suite. `pyproject.toml` requires **91.90%** combined coverage on `src`, omitting
+`src/papers/ui/*`. It installs the explicit `dev`, `infra`, and `research` groups from `uv.lock`.
+The gate sets `HF_HUB_OFFLINE=1` and `TRANSFORMERS_OFFLINE=1` before running checks.
+Tests use local fixtures without hosted models or external services. The Docling PDF integration
+test uses downloaded local models. On a fresh machine, provision them before running the gate:
 
 ```bash
-# Integration tests (real dependencies)
-uv run pytest -m integration -q --no-cov
+export DOCLING_ARTIFACTS_PATH="${HOME}/.cache/docling/models"
+uv run --locked --group dev --group infra --group research \
+  docling-tools models download --output-dir "$DOCLING_ARTIFACTS_PATH" \
+  layout tableformer rapidocr
+bash scripts/verify.sh
 ```
+
+CI runs that gate on Python 3.12, 3.13, and 3.14, then builds the wheel and source distribution
+and smoke-tests each installed wheel outside the checkout. `UV_PYTHON` selects the interpreter
+in each matrix job while `.python-version` records the local default.
 
 ## Dependency workflow
 
 - Add/update deps in `pyproject.toml`
 - Run `uv lock` to refresh `uv.lock`
-- Run `uv sync --group dev` to install dev tooling
+- Run `uv sync --locked --group dev --group infra --group research` to install the locked groups
 
 ## Retry backoff parameters
 

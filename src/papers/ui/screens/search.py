@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import flet as ft
 
 
-def _pick_icon(*names: str) -> str:
+def _pick_icon(*names: str) -> ft.IconData:
     for name in names:
         icon = getattr(ft.Icons, name, None)
         if icon is not None:
@@ -17,7 +17,7 @@ def _pick_icon(*names: str) -> str:
 
 @dataclass
 class SearchScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         instructions = ft.Text(
@@ -207,7 +207,7 @@ class SearchScreen:
             abstract_full_text = ft.Text(abstract, visible=False, selectable=True)
             toggle_button = ft.TextButton("Show more")
 
-            def on_details(e: ft.ControlEvent) -> None:
+            def on_details(e: ft.Event[ft.TextButton]) -> None:
                 page = getattr(e, "page", None) or getattr(e.control, "page", None)
                 if page is None:
                     return
@@ -240,7 +240,7 @@ class SearchScreen:
                     page.dialog.open = False
                     page.update()
 
-            def on_import(_: ft.ControlEvent) -> None:
+            def on_import(_: ft.Event[ft.Button]) -> None:
                 import_use_case = self.services.import_candidate
                 try:
                     import_use_case.import_candidate(candidate_id=candidate["candidate_id"])
@@ -260,7 +260,7 @@ class SearchScreen:
                     status_text.color = ft.Colors.RED_600
                     status_text.update()
 
-            def on_reject(_: ft.ControlEvent) -> None:
+            def on_reject(_: ft.Event[ft.OutlinedButton]) -> None:
                 reject_use_case = self.services.reject_candidate
                 try:
                     reject_use_case.reject(candidate_id=candidate["candidate_id"])
@@ -279,10 +279,10 @@ class SearchScreen:
                     status_text.color = ft.Colors.RED_600
                     status_text.update()
 
-            def on_toggle(_: ft.ControlEvent) -> None:
+            def on_toggle(_: ft.Event[ft.TextButton]) -> None:
                 abstract_full_text.visible = not abstract_full_text.visible
                 abstract_preview_text.visible = not abstract_full_text.visible
-                toggle_button.text = "Show less" if abstract_full_text.visible else "Show more"
+                toggle_button.content = "Show less" if abstract_full_text.visible else "Show more"
                 card.update()
 
             toggle_button.on_click = on_toggle
@@ -292,7 +292,7 @@ class SearchScreen:
             checkbox = ft.Checkbox(value=False)
             checkbox_by_id[candidate["candidate_id"]] = checkbox
 
-            def on_select_change(_: ft.ControlEvent) -> None:
+            def on_select_change(_: ft.Event[ft.Checkbox]) -> None:
                 if checkbox.value:
                     selected_ids.add(candidate["candidate_id"])
                 else:
@@ -323,7 +323,7 @@ class SearchScreen:
                         return "embed"
                     return None
 
-                def on_retry(_: ft.ControlEvent) -> None:
+                def on_retry(_: ft.Event[ft.TextButton]) -> None:
                     if enqueue_job is None or not imported_paper_id:
                         return
                     job_type = _next_job_type(pipeline_stage)
@@ -611,7 +611,7 @@ class SearchScreen:
                 append=True,
             )
 
-        def on_search(_: ft.ControlEvent) -> None:
+        def on_search(_: ft.Event[ft.TextField] | ft.Event[ft.Button]) -> None:
             query = query_input.value or ""
             page_size = _parse_int(max_results_input.value) or 10
             if page_size < 1:
@@ -708,3 +708,7 @@ class SearchScreen:
             expand=True,
             spacing=4,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

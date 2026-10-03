@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from nsqd.domain.contract_validation import StructuredInput
+from nsqd.domain.contract_validation import StructuredInput, StructuredValue
 from nsqd.domain.diverge import require_operator
 from nsqd.domain.operator_d import (
     operator_d_mapping_proposal_digest,
@@ -114,7 +114,7 @@ def test_operator_d_mapping_proposal_rejects_same_policy_and_c_authorization() -
     ],
 )
 def test_operator_d_mapping_proposal_rejects_forbidden_surface_attribute_widening(
-    forbidden_surface_attributes: list[str],
+    forbidden_surface_attributes: list[StructuredValue],
     surface_attribute: str,
 ) -> None:
     proposal = _proposal()
@@ -140,7 +140,7 @@ def test_operator_d_mapping_proposal_rejects_forbidden_surface_attribute_widenin
 )
 def test_operator_d_mapping_contract_rejects_caller_mutated_mapping_policy(
     field: str,
-    value: list[str],
+    value: list[StructuredValue],
 ) -> None:
     contract = _contract()
     contract[field] = value
@@ -156,12 +156,15 @@ def test_operator_d_rejects_caller_mutated_canonical_evidence_requirements(
     mutation: str,
 ) -> None:
     canonical = _CANONICAL_D_REQUIREMENTS[field]
-    mutated = {
-        "deletion": canonical[1:],
-        "replacement": ["attacker_metric"],
-        "widening": [*canonical, "attacker_metric"],
-        "duplication": [*canonical, canonical[0]],
-    }[mutation]
+    mutated: list[StructuredValue] = [
+        item
+        for item in {
+            "deletion": canonical[1:],
+            "replacement": ["attacker_metric"],
+            "widening": [*canonical, "attacker_metric"],
+            "duplication": [*canonical, canonical[0]],
+        }[mutation]
+    ]
     contract = _contract()
     contract[field] = mutated
     proposal = _proposal()

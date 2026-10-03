@@ -257,7 +257,7 @@ def test_job_queue_rejects_invalid_job_type_strings() -> None:
     queue = NullNsqdJobQueue()
 
     with pytest.raises(ValueError, match="unknown job type"):
-        queue.enqueue("invalid", {})
+        getattr(queue, "enqueue")("invalid", {})
 
 
 def test_utc_boundaries_reject_naive_and_nonzero_offset_datetimes() -> None:

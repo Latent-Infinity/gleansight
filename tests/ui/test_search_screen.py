@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import flet as ft
 
 from papers.ui.screens.search import SearchScreen
+from tests.ui.fake_services import complete_ui_services
 
 
 @dataclass
@@ -58,7 +60,7 @@ def test_search_screen_builds() -> None:
             "get_candidate": FakeCandidateStore().get_candidate,
         },
     )()
-    screen = SearchScreen(services)
+    screen = SearchScreen(complete_ui_services(services))
 
     control = screen.build()
 
@@ -78,7 +80,7 @@ def test_search_screen_uses_require_open_access_from_settings() -> None:
             "ui_settings": {"require_open_access": True},
         },
     )()
-    screen = SearchScreen(services)
+    screen = SearchScreen(complete_ui_services(services))
 
     control = screen.build()
 
@@ -91,17 +93,21 @@ def test_search_screen_uses_require_open_access_from_settings() -> None:
         switches = []
         if isinstance(ctrl, ft.Switch):
             switches.append(ctrl)
-        if hasattr(ctrl, "controls"):
-            for child in ctrl.controls:
+        for child in getattr(ctrl, "controls", []):
+            if isinstance(child, ft.Control):
                 switches.extend(find_switches(child))
-        if hasattr(ctrl, "content"):
-            if ctrl.content:
-                switches.extend(find_switches(ctrl.content))
+        content = getattr(ctrl, "content", None)
+        if isinstance(content, ft.Control):
+            switches.extend(find_switches(content))
         return switches
 
     switches = find_switches(control)
     # Find the open access switch
-    open_access_switches = [s for s in switches if "Open access" in (s.label or "")]
+    open_access_switches = [
+        switch
+        for switch in switches
+        if isinstance(switch.label, str) and "Open access" in switch.label
+    ]
     assert len(open_access_switches) == 1
     assert open_access_switches[0].value is True
 
@@ -144,7 +150,7 @@ def _build_search_services(**overrides):
     ``type("S", (), {"fn": lambda x: x})().fn`` would bind the lambda to the
     instance, adding an unwanted ``self`` argument.
     """
-    services = type("Services", (), {})()
+    services = SimpleNamespace()
     services.discover = FakeDiscover()
     services.import_candidate = FakeImport()
     services.reject_candidate = FakeReject()
@@ -155,10 +161,11 @@ def _build_search_services(**overrides):
     services.ui_settings = {}
     for key, val in overrides.items():
         setattr(services, key, val)
-    return services
+    return complete_ui_services(services)
 
 
-def _trigger_search(col: ft.Column) -> ft.ListView:
+def _trigger_search(col: ft.Control) -> ft.ListView:
+    assert isinstance(col, ft.Column)
     """Trigger a search on a built SearchScreen Column, return the ListView."""
     from unittest.mock import patch
 
@@ -177,6 +184,28 @@ def _trigger_search(col: ft.Column) -> ft.ListView:
         query_input.on_submit(MagicMock())
 
     return results_view
+
+
+def test_abstract_toggle_updates_label_and_visibility() -> None:
+    results_view = _trigger_search(SearchScreen(_build_search_services()).build())
+    toggle = next(
+        button
+        for button in _find_all(results_view, ft.TextButton)
+        if _button_label(button) == "Show more"
+    )
+    abstract_texts = [text for text in _find_all(results_view, ft.Text) if text.value == "Abstract"]
+    assert len(abstract_texts) == 2
+    preview, full = abstract_texts
+    assert preview.visible and not full.visible
+
+    with patch.object(ft.Control, "update", return_value=None):
+        toggle.on_click(MagicMock())
+        assert _button_label(toggle) == "Show less"
+        assert not preview.visible and full.visible
+        toggle.on_click(MagicMock())
+
+    assert _button_label(toggle) == "Show more"
+    assert preview.visible and not full.visible
 
 
 def test_import_click_does_not_call_page_update() -> None:

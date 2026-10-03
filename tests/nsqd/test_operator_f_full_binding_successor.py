@@ -76,8 +76,8 @@ def _assert_manifest_replays(packet_root: Path) -> dict[str, StructuredValue]:
     return manifest
 
 
-def _local_module_path(module_parts: tuple[str, ...]) -> Path | None:
-    for root in (REPO_ROOT / "src", REPO_ROOT):
+def _local_module_path(module_parts: tuple[str, ...], repo_root: Path) -> Path | None:
+    for root in (repo_root / "src", repo_root):
         module_path = root.joinpath(*module_parts).with_suffix(".py")
         if module_path.is_file():
             return module_path
@@ -94,11 +94,11 @@ def _local_module_path(module_parts: tuple[str, ...]) -> Path | None:
     return None
 
 
-def _local_imports(path: Path) -> set[Path]:
+def _local_imports(path: Path, repo_root: Path) -> set[Path]:
     try:
-        relative = path.relative_to(REPO_ROOT / "src")
+        relative = path.relative_to(repo_root / "src")
     except ValueError:
-        relative = path.relative_to(REPO_ROOT)
+        relative = path.relative_to(repo_root)
     module_parts = relative.with_suffix("").parts
     package_parts = module_parts[:-1]
     imports: set[Path] = set()
@@ -117,26 +117,28 @@ def _local_imports(path: Path) -> set[Path]:
             targets.append(base)
             targets.extend(base + tuple(alias.name.split(".")) for alias in node.names)
         for target in targets:
-            imported = _local_module_path(target)
+            imported = _local_module_path(target, repo_root)
             if imported is not None:
                 imports.add(imported)
     return imports
 
 
-def _transitive_local_import_closure(bound_paths: set[str]) -> set[str]:
+def _transitive_local_import_closure(
+    bound_paths: set[str], repo_root: Path = REPO_ROOT
+) -> set[str]:
     closure = set(bound_paths)
-    pending = [REPO_ROOT / path for path in bound_paths if path.endswith(".py")]
+    pending = [repo_root / path for path in bound_paths if path.endswith(".py")]
     while pending:
         path = pending.pop()
-        for imported in _local_imports(path):
-            relative = imported.relative_to(REPO_ROOT).as_posix()
+        for imported in _local_imports(path, repo_root):
+            relative = imported.relative_to(repo_root).as_posix()
             if relative not in closure:
                 closure.add(relative)
                 pending.append(imported)
     return closure
 
 
-def test_f_successor_binds_complete_current_implementation_and_exact_metric_tests() -> None:
+def test_f_successor_binds_historical_2026_09_12_implementation_and_exact_metric_tests() -> None:
     _assert_manifest_replays(F_SUCCESSOR)
     readiness = _json(F_SUCCESSOR / "readiness.json")
 
@@ -159,13 +161,19 @@ def test_f_successor_binds_complete_current_implementation_and_exact_metric_test
     assert bound_paths == _transitive_local_import_closure(bound_paths)
     for binding in bindings:
         assert isinstance(binding, dict)
-        assert _sha256(REPO_ROOT / str(binding["path"])) == binding["sha256"]
+        source_path = str(binding["path"])
+        if source_path == "tests/nsqd/test_operator_f_metric_redundancy_semantics.py":
+            source_path = (
+                "tests/fixtures/source-history/nsqd/operator-f/"
+                "redundancy-semantics-2026-09-12.py.txt"
+            )
+        assert _sha256(REPO_ROOT / source_path) == binding["sha256"]
     authority = readiness["authority"]
     assert isinstance(authority, dict)
     assert authority and all(value is False for value in authority.values())
 
 
-def test_activation_successor_syncs_current_pointers_without_authority() -> None:
+def test_historical_activation_successor_syncs_2026_09_12_pointers_without_authority() -> None:
     _assert_manifest_replays(ACTIVATION_SUCCESSOR)
     status = yaml.safe_load((ACTIVATION_SUCCESSOR / "activation-status.yaml").read_text())
     assert isinstance(status, dict)

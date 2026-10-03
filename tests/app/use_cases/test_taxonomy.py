@@ -12,10 +12,11 @@ from papers.app.use_cases.taxonomy import (
     CreateTagUseCase,
 )
 from papers.domain.errors import ConflictError, NotFoundError, ValidationError
+from tests.support.port_stubs import PaperProjectStoreStub, PaperStoreStub
 
 
 @dataclass
-class FakePaperStore:
+class FakePaperStore(PaperStoreStub):
     papers: set[str]
 
     def get(self, paper_id: str) -> dict[str, Any] | None:
@@ -76,7 +77,7 @@ class FakeProjectStore:
 
 
 @dataclass
-class FakePaperProjectStore:
+class FakePaperProjectStore(PaperProjectStoreStub):
     attached: set[tuple[str, str]] = field(default_factory=set)
 
     def is_attached(self, paper_id: str, project_id: str) -> bool:

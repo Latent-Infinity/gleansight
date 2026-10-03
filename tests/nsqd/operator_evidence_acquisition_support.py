@@ -75,8 +75,8 @@ class RecordingExternalAdapter:
         self.shortlist_limits.append(limit)
         return [{**candidates[0], "review_status": "pending"}] if limit else []
 
-    def stage_import(self, item: dict[str, Any]) -> str:
-        source_id = str(item["source_paper_id"])
+    def stage_import(self, candidate: dict[str, Any]) -> str:
+        source_id = str(candidate["source_paper_id"])
         self.staged_source_ids.append(source_id)
         paper_id = f"research-paper-{len(self.staged_source_ids)}"
         self.blob_store.put_markdown(paper_id, f"test-only source for {source_id}")

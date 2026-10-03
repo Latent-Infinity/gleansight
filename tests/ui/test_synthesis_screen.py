@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import flet as ft
 
 from papers.ui.screens.synthesis import SynthesisScreen
+from tests.ui.fake_services import complete_ui_services
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -90,15 +92,16 @@ class FakeSynthesizeFromCorpusUseCase:
 
 def _build_synthesis_services(**overrides):
     """Build a minimal services object for SynthesisScreen tests."""
-    services = type("Services", (), {})()
+    services = SimpleNamespace()
     services.synthesize_from_corpus = FakeSynthesizeFromCorpusUseCase()
     services.ui_settings = {}
     for key, val in overrides.items():
         setattr(services, key, val)
-    return services
+    return complete_ui_services(services)
 
 
-def _trigger_ask(col: ft.Column, question_text: str) -> None:
+def _trigger_ask(col: ft.Control, question_text: str) -> None:
+    assert isinstance(col, ft.Column)
     """Enter a question and trigger the ask action."""
     textfields = _find_all(col, ft.TextField)
     question_input = next((tf for tf in textfields if tf.label == "Your Question"), None)

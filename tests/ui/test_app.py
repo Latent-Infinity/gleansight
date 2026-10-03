@@ -1,85 +1,32 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 import flet as ft
 
 from papers.ui.app import UIApp, UIServices, run_app
+from tests.ui.fake_services import complete_ui_services
 
 
-@dataclass
-class FakeServices(UIServices):
-    discover: object
-    import_candidate: object
-    reject_candidate: object
-    search: object
-    filter_extractions: object
-    aggregate_extractions: object
-    get_candidate: object
-    list_paper: object
-    list_runs: object
-    list_jobs: object
-    run_next_job: object
-    enqueue_job: object
-    cancel_job: object
-    delete_job: object
-    bulk_delete_jobs: object
-    bulk_cancel_jobs: object
-    get_paper_markdown: object
-    list_extractions: object
-    delete_paper: object
-    reset_pipeline_stage: object
-    synthesize_from_corpus: object
-    ui_settings: object
+def _build_services() -> UIServices:
+    return complete_ui_services()
 
 
-def _build_services() -> FakeServices:
-    return FakeServices(
-        discover=object(),
-        import_candidate=object(),
-        reject_candidate=object(),
-        search=object(),
-        filter_extractions=object(),
-        aggregate_extractions=object(),
-        get_candidate=lambda _: None,
-        list_paper=lambda _: None,
-        list_runs=lambda _: [],
-        list_jobs=lambda _status, _limit: [],
-        run_next_job=lambda: False,
-        enqueue_job=lambda _t, _p, _r, _pl: "job-id",
-        cancel_job=lambda _: None,
-        delete_job=lambda _: None,
-        bulk_delete_jobs=lambda _ids: 0,
-        bulk_cancel_jobs=lambda _ids: 0,
-        get_paper_markdown=lambda _: None,
-        list_extractions=lambda _pid, _pv=None: [],
-        delete_paper=lambda _: None,
-        reset_pipeline_stage=lambda _pid, _stage: None,
-        synthesize_from_corpus=object(),
-        ui_settings={},
-    )
-
-
-class FakeWindow:
+class FakePage(ft.Page):
     def __init__(self) -> None:
-        self.width = 0
-        self.height = 0
-
-
-class FakePage:
-    def __init__(self) -> None:
-        self.controls: list = []
+        super().__init__(sess=MagicMock())
+        self.controls: list[ft.Control] = []
         self.height = 800
         self.on_resize = None
         self.title = ""
         self.theme_mode = None
-        self.window = FakeWindow()
+        self.window.width = 0
+        self.window.height = 0
 
-    def add(self, *controls) -> None:  # noqa: ANN001 - test stub
+    def add(self, *controls: ft.Control) -> None:
         self.controls.extend(controls)
 
-    def update(self) -> None:  # noqa: ANN001 - test stub
+    def update(self, *controls: ft.Control) -> None:
         return None
 
 
@@ -148,7 +95,9 @@ def test_navigation_updates_route_and_screen() -> None:
 
     initial_content = content.content
     nav.selected_index = 1
-    nav.on_change(MagicMock(control=nav))
+    on_change = getattr(nav, "on_change")
+    assert callable(on_change)
+    on_change(MagicMock(control=nav))
 
     assert app.state.current_route == "/paper"
     assert content.content is app.state.get_screen(1)
@@ -160,6 +109,7 @@ def test_navigation_exposes_every_registered_workflow_label() -> None:
     page = FakePage()
     app.build(page)
     root_row = page.controls[0]
+    assert isinstance(root_row, ft.Row)
     nav_scroller = root_row.controls[0]
 
     assert isinstance(nav_scroller, ft.Column)
@@ -192,5 +142,7 @@ def test_navigation_exposes_every_registered_workflow_label() -> None:
     page.height = 600
     assert page.on_resize is not None
     with patch.object(ft.Control, "update", return_value=None):
-        page.on_resize(MagicMock())
+        on_resize = getattr(page, "on_resize")
+        assert callable(on_resize)
+        on_resize(MagicMock())
     assert nav_scroller.height == 580

@@ -25,8 +25,13 @@ class _VectorIndex:
     def upsert(self, paper_id: str, embedding: list[float]) -> None:
         return None
 
-    def query(self, embedding: list[float], limit: int):
+    def query(
+        self, embedding: list[float], limit: int, *, allowed_ids: set[str] | None = None
+    ) -> list[tuple[str, float]]:
         return []
+
+    def reset(self) -> None:
+        return None
 
 
 class _Embedder:

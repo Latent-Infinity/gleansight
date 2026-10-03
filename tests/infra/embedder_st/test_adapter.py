@@ -43,10 +43,10 @@ def test_build_embedder_missing_dimension(monkeypatch: pytest.MonkeyPatch) -> No
         def __init__(self, model_name: str) -> None:
             self.model_name = model_name
 
-        def get_sentence_embedding_dimension(self) -> None:
+        def get_embedding_dimension(self) -> None:
             return None
 
-    fake_st.SentenceTransformer = FakeModel  # type: ignore[attr-defined]
+    monkeypatch.setattr(fake_st, "SentenceTransformer", FakeModel, raising=False)
     monkeypatch.setitem(sys.modules, "sentence_transformers", fake_st)
 
     with pytest.raises(PipelineError) as excinfo:
@@ -66,7 +66,7 @@ def test_build_embedder_success_with_fake() -> None:
         def __init__(self, model_name: str) -> None:
             self.model_name = model_name
 
-        def get_sentence_embedding_dimension(self) -> int:
+        def get_embedding_dimension(self) -> int:
             return 384
 
         def encode(self, text: str, normalize_embeddings: bool = False) -> Any:

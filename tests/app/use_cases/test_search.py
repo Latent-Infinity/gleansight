@@ -10,6 +10,7 @@ from papers.app.use_cases.search import (
     SearchPapersUseCase,
     compute_rrf_scores,
 )
+from tests.support.port_stubs import ExtractionStoreStub
 
 
 class FakePapersFTS:
@@ -48,7 +49,7 @@ class FakeEmbedder:
         return [0.1] * 384
 
 
-class FakeExtractionStore:
+class FakeExtractionStore(ExtractionStoreStub):
     """Fake extraction store for testing."""
 
     def __init__(self) -> None:

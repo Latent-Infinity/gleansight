@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -13,21 +14,42 @@ from nsqd.composition import build_container as build_nsqd_container
 from nsqd.infra.paper_runtime import (
     ACQUISITION_PROFILE_ID,
     ACQUISITION_PROMPT_ID,
+    MarkdownPathStore,
+    PaperJobRunner,
+    PaperSettings,
     bootstrap_analysis_defaults,
     compose_default_runtime,
     markdown_reader,
 )
 from nsqd.infra.papers_bridge import PapersAcquisitionBridge
 from nsqd.null_adapters import FixedClock, NullPaperAcquisitionBridge
+from papers.app import ports
+from papers.app.use_cases.discovery import CandidateStore as DiscoveryCandidateStore
 from papers.domain.errors import ConfigurationError
+from tests.support.port_stubs import (
+    AnalysisRunStoreStub,
+    CandidateStoreStub,
+    JobQueueStub,
+    PaperStoreStub,
+    PromptStoreStub,
+    ScholarClientStub,
+)
 
 
 @dataclass
-class _PromptStore:
+class _PromptStore(PromptStoreStub):
     prompts: dict[str, dict[str, Any]] = field(default_factory=dict)
     versions: dict[str, dict[str, Any]] = field(default_factory=dict)
 
-    def create_prompt(self, prompt_id: str, name: str, **_kwargs: Any) -> None:
+    def create_prompt(
+        self,
+        prompt_id: str,
+        name: str,
+        description: str | None = None,
+        domain: str | None = None,
+        tags: list[str] | None = None,
+        created_at: str | None = None,
+    ) -> None:
         self.prompts[prompt_id] = {"prompt_id": prompt_id, "name": name}
 
     def get_prompt(self, prompt_id: str) -> dict[str, Any] | None:
@@ -100,6 +122,52 @@ class _FakeEmbedder:
         return [1.0, 0.0]
 
 
+@dataclass
+class _MarkdownStore(MarkdownPathStore):
+    path: Path | None
+    _paths: SimpleNamespace | None = None
+
+    def get_markdown_path(self, paper_id: str) -> Path | None:
+        return self.path
+
+
+class _NoopRunner(PaperJobRunner):
+    def run_next(self, now: datetime) -> bool:
+        return False
+
+
+@dataclass(frozen=True)
+class _LLMSettings:
+    default_profile: str | None
+    default_model: str | None
+
+
+@dataclass(frozen=True)
+class _Settings:
+    llm: _LLMSettings | None
+    data: SimpleNamespace | None = None
+    nsqd: SimpleNamespace | None = None
+
+
+@dataclass
+class _PaperServices:
+    settings: PaperSettings
+    prompt_store: ports.PromptStore
+    profile_store: ports.ProfileStore
+    job_queue: ports.JobQueue
+    job_runner: PaperJobRunner
+    scholar_client: ports.ScholarClient = field(default_factory=ScholarClientStub)
+    candidate_store: DiscoveryCandidateStore = field(default_factory=CandidateStoreStub)
+    paper_store: ports.PaperStore = field(default_factory=PaperStoreStub)
+    analysis_store: ports.AnalysisRunStore = field(default_factory=AnalysisRunStoreStub)
+    blob_store: MarkdownPathStore | None = None
+    external_id_store: None = None
+    atomic_candidate_import: None = None
+    project_store: None = None
+    tag_store: None = None
+    embedder: ports.Embedder = field(default_factory=_FakeEmbedder)
+
+
 def test_bootstrap_analysis_defaults_is_idempotent() -> None:
     prompts = _PromptStore()
     profiles = _ProfileStore()
@@ -140,10 +208,7 @@ def test_markdown_reader_rejects_path_outside_blob_root(tmp_path: Path) -> None:
     markdown_root.mkdir()
     outside = tmp_path / "outside.md"
     outside.write_text("outside", encoding="utf-8")
-    store = SimpleNamespace(
-        _paths=SimpleNamespace(md_dir=markdown_root),
-        get_markdown_path=lambda _paper_id: outside,
-    )
+    store = _MarkdownStore(outside, SimpleNamespace(md_dir=markdown_root))
 
     try:
         markdown_reader(store)("p1")
@@ -167,25 +232,12 @@ def test_compose_default_runtime_restores_paper_database_binding(tmp_path: Path)
     profile_store = PiccoloProfileStore()
     job_queue = PiccoloJobQueue()
     job_id = job_queue.enqueue("discover", None, None, {})
-    papers = SimpleNamespace(
-        db=paper_database,
-        settings=SimpleNamespace(
-            llm=SimpleNamespace(default_profile="default", default_model="acquire-model-x")
-        ),
+    papers = _PaperServices(
+        settings=_Settings(_LLMSettings("default", "acquire-model-x")),
         prompt_store=prompt_store,
         profile_store=profile_store,
         job_queue=job_queue,
-        candidate_store=SimpleNamespace(),
-        paper_store=SimpleNamespace(),
-        analysis_store=SimpleNamespace(),
-        scholar_client=SimpleNamespace(),
-        blob_store=None,
-        job_runner=SimpleNamespace(run_next=lambda _now: False),
-        external_id_store=None,
-        atomic_candidate_import=None,
-        project_store=None,
-        tag_store=None,
-        embedder=_FakeEmbedder(),
+        job_runner=_NoopRunner(),
     )
 
     runtime = compose_default_runtime(
@@ -227,31 +279,16 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
             ran["count"] += 1
             return False
 
-    papers = SimpleNamespace(
-        settings=SimpleNamespace(
+    papers = _PaperServices(
+        settings=_Settings(
             data=SimpleNamespace(db_path=tmp_path / "app.sqlite"),
-            llm=SimpleNamespace(default_profile="default", default_model="runtime-model-z"),
+            llm=_LLMSettings("default", "runtime-model-z"),
         ),
-        candidate_store=SimpleNamespace(
-            create_candidate=lambda fields: fields["candidate_id"],
-            get_candidate=lambda _cid: None,
-            get_candidate_by_source=lambda *_a: None,
-        ),
-        paper_store=SimpleNamespace(get=lambda _pid: None),
-        job_queue=SimpleNamespace(enqueue=lambda **_k: "job"),
-        scholar_client=SimpleNamespace(
-            search=lambda **_k: [],
-        ),
+        job_queue=JobQueueStub(),
         prompt_store=_PromptStore(),
         profile_store=_ProfileStore(),
-        analysis_store=SimpleNamespace(),
-        blob_store=SimpleNamespace(get_markdown_path=lambda _pid: None),
+        blob_store=_MarkdownStore(None),
         job_runner=_Runner(),
-        atomic_candidate_import=None,
-        project_store=None,
-        tag_store=None,
-        external_id_store=None,
-        embedder=_FakeEmbedder(),
     )
     runtime = compose_default_runtime(
         papers=papers,
@@ -271,30 +308,17 @@ def test_compose_default_runtime_wires_production_bridge_and_worker(tmp_path: Pa
 
 
 def test_compose_default_runtime_reads_settings_operator_allowlist(tmp_path: Path) -> None:
-    papers = SimpleNamespace(
-        settings=SimpleNamespace(
+    papers = _PaperServices(
+        settings=_Settings(
             data=SimpleNamespace(db_path=tmp_path / "app.sqlite"),
-            llm=SimpleNamespace(default_profile="default", default_model="runtime-model-z"),
+            llm=_LLMSettings("default", "runtime-model-z"),
             nsqd=SimpleNamespace(enabled_operators=("A", "B")),
         ),
-        candidate_store=SimpleNamespace(
-            create_candidate=lambda fields: fields["candidate_id"],
-            get_candidate=lambda _cid: None,
-            get_candidate_by_source=lambda *_a: None,
-        ),
-        paper_store=SimpleNamespace(get=lambda _pid: None),
-        job_queue=SimpleNamespace(enqueue=lambda **_k: "job"),
-        scholar_client=SimpleNamespace(search=lambda **_k: []),
+        job_queue=JobQueueStub(),
         prompt_store=_PromptStore(),
         profile_store=_ProfileStore(),
-        analysis_store=SimpleNamespace(),
-        blob_store=SimpleNamespace(get_markdown_path=lambda _pid: None),
-        job_runner=SimpleNamespace(run_next=lambda now: False),
-        atomic_candidate_import=None,
-        project_store=None,
-        tag_store=None,
-        external_id_store=None,
-        embedder=_FakeEmbedder(),
+        blob_store=_MarkdownStore(None),
+        job_runner=_NoopRunner(),
     )
     runtime = compose_default_runtime(
         papers=papers,
@@ -316,20 +340,17 @@ def test_build_container_defaults_to_no_embedder(tmp_path: Path) -> None:
 
 def test_markdown_reader_handles_missing_and_unreadable_paths(tmp_path: Path) -> None:
     assert markdown_reader(None)("p1") is None
-    assert markdown_reader(SimpleNamespace())("p1") is None
-    assert markdown_reader(SimpleNamespace(get_markdown_path=lambda _pid: None))("p1") is None
+    assert Mock(wraps=markdown_reader)(SimpleNamespace())("p1") is None
+    assert markdown_reader(_MarkdownStore(None))("p1") is None
     readable = tmp_path / "paper.md"
     readable.write_text("mechanism draft", encoding="utf-8")
-    assert (
-        markdown_reader(SimpleNamespace(get_markdown_path=lambda _pid: readable))("p1")
-        == "mechanism draft"
-    )
+    assert markdown_reader(_MarkdownStore(readable))("p1") == "mechanism draft"
     missing = tmp_path / "missing.md"
-    assert markdown_reader(SimpleNamespace(get_markdown_path=lambda _pid: missing))("p1") is None
+    assert markdown_reader(_MarkdownStore(missing))("p1") is None
     oversized = tmp_path / "oversized.md"
     oversized.write_bytes(b"x" * (10 * 1024 * 1024 + 1))
     try:
-        markdown_reader(SimpleNamespace(get_markdown_path=lambda _pid: oversized))("p1")
+        markdown_reader(_MarkdownStore(oversized))("p1")
     except ValueError as exc:
         assert "paper markdown is too large" in str(exc)
     else:

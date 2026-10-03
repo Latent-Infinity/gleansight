@@ -63,6 +63,12 @@ class _FakeDB:
     def __init__(self) -> None:
         self._table: _FakeTable | None = None
 
+    def list_tables(self, *, page_token: str | None = None) -> types.SimpleNamespace:
+        return types.SimpleNamespace(
+            tables=["paper_embeddings"] if self._table is not None else [],
+            page_token=None,
+        )
+
     def open_table(self, _name: str) -> _FakeTable:
         if self._table is None:
             raise RuntimeError("missing table")

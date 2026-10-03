@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import flet as ft
 
@@ -10,13 +11,13 @@ from papers.ui.errors import public_ui_error
 
 @dataclass
 class HarvestScreen:
-    services: object
+    services: UIServices
 
     def build(self) -> ft.Control:
         file_input = ft.TextField(label="Harvest file path", width=320)
         output = ft.Text(value="", selectable=True)
 
-        def run(_: ft.ControlEvent) -> None:
+        def run(_: ft.Event[ft.Button]) -> None:
             harvest = getattr(self.services, "harvest_records", None)
             file_path = str(file_input.value or "").strip()
             if not file_path:
@@ -51,3 +52,7 @@ class HarvestScreen:
             expand=True,
             spacing=12,
         )
+
+
+if TYPE_CHECKING:
+    from papers.ui.app import UIServices

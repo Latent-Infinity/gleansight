@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+      DOCLING_ARTIFACTS_PATH: ${{ runner.temp }}/docling-models
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.18"
+          enable-cache: true
+
+      - name: Install locked dependencies
+        run: uv sync --locked --group dev --group infra --group research
+
+      - name: Provision Docling PDF models
+        env:
+          HF_HUB_OFFLINE: "0"
+          TRANSFORMERS_OFFLINE: "0"
+        run: >-
+          uv run --locked --group dev --group infra --group research
+          docling-tools models download --output-dir "$DOCLING_ARTIFACTS_PATH"
+          layout tableformer rapidocr
+
+      - name: Verify source and tests
+        run: bash scripts/verify.sh
+
+      - name: Verify built distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv build --no-sources --out-dir "$RUNNER_TEMP/dist"
+          sdist=("$RUNNER_TEMP"/dist/gleansight-*.tar.gz)
+          wheel=("$RUNNER_TEMP"/dist/gleansight-*.whl)
+          test -f "${sdist[0]}"
+          test -f "${wheel[0]}"
+          uv build --no-sources --wheel "${sdist[0]}" --out-dir "$RUNNER_TEMP/sdist-wheel"
+          rebuilt_wheel=("$RUNNER_TEMP"/sdist-wheel/gleansight-*.whl)
+          test -f "${rebuilt_wheel[0]}"
+          index=0
+          for artifact in "${wheel[0]}" "${rebuilt_wheel[0]}"; do
+            venv="$RUNNER_TEMP/artifact-venv-$index"
+            index=$((index + 1))
+            uv venv --python "$UV_PYTHON" "$venv"
+            uv pip install --python "$venv/bin/python" "$artifact"
+            (
+              cd "$RUNNER_TEMP"
+              env -u PYTHONPATH "$venv/bin/python" -c 'import gleansight, nsqd, papers'
+              env -u PYTHONPATH "$venv/bin/python" -c 'from papers.config.settings import load_settings, packaged_defaults_path; path = packaged_defaults_path(); assert path.is_file(); load_settings(defaults_path=path)'
+              env -u PYTHONPATH "$venv/bin/gleansight" --help
+              env -u PYTHONPATH "$venv/bin/papers" --help
+            )
+          done

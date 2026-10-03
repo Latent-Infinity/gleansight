@@ -40,7 +40,7 @@ class BundleIntegrityError(ValueError):
 
 
 def write_json(path: Path, value: JsonValue) -> None:
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def write_manifest(bundle: Path, names: tuple[str, ...]) -> dict[str, str]:

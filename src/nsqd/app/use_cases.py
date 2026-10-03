@@ -1581,7 +1581,7 @@ class ScoreUseCase:
     cards: FrontierCardStore
     snapshots: CorpusSnapshotStore
     records: CorpusRecordStore
-    tau: float = NOVELTY_THRESHOLD_TAU
+    tau: float | None = NOVELTY_THRESHOLD_TAU
 
     def run(
         self,

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import pytest
 
+from nsqd.domain.contract_validation import StructuredInput
 from nsqd.domain.operator_d import (
     validate_operator_d_mapping_contract,
     validate_operator_d_mapping_proposal,
@@ -14,7 +17,7 @@ from tests.nsqd.operator_dg_contract_support import (
 
 def test_operator_d_mapping_contract_and_proposal_reject_schema_drift() -> None:
     contract = operator_d_contract()
-    for field, value, message in (
+    cases: tuple[tuple[str, StructuredInput, str], ...] = (
         ("schema_version", 2, "schema_version"),
         ("record_type", "operator_c_bridge", "record_type"),
         ("template_only", False, "template_only"),
@@ -23,7 +26,8 @@ def test_operator_d_mapping_contract_and_proposal_reject_schema_drift() -> None:
         ("approval_digest_field", "other", "approval_digest_field"),
         ("forbidden_surface_attributes", ["venue"], "forbidden_surface_attributes"),
         ("forbidden_surface_attributes", ["title", "topic"], "forbidden_surface_attributes"),
-    ):
+    )
+    for field, value, message in cases:
         broken = dict(contract)
         broken[field] = value
         with pytest.raises(ValueError, match=message):
@@ -87,8 +91,9 @@ def test_operator_d_mapping_contract_and_proposal_reject_schema_drift() -> None:
     }
     with pytest.raises(ValueError, match="review status"):
         validate_operator_d_mapping_proposal(proposal, contract=operator_d_contract())
-    with pytest.raises(ValueError, match="string-keyed mapping"):
-        validate_operator_d_mapping_contract("missing")
+    pytest.raises(ValueError, Mock(wraps=validate_operator_d_mapping_contract), "missing").match(
+        "string-keyed mapping"
+    )
     proposal = operator_d_proposal()
     proposal["source_graph"] = "missing"
     with pytest.raises(ValueError, match="source_graph"):

@@ -4,6 +4,7 @@ import ast
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
@@ -135,7 +136,9 @@ def test_runner_logs_utc_job_transitions(tmp_path: Path, caplog: pytest.LogCaptu
     assert ("running", "succeeded") in transitions
 
 
-def test_run_job_fails_closed_when_claim_is_lost(tmp_path: Path) -> None:
+def test_run_job_fails_closed_when_claim_is_lost(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from nsqd.app.use_cases import empty_smoke_snapshot_id
 
     container = build_container(
@@ -145,7 +148,7 @@ def test_run_job_fails_closed_when_claim_is_lost(tmp_path: Path) -> None:
     )
     snapshot_id = empty_smoke_snapshot_id()
     container.ctx.snapshots.commit(snapshot_id, [], schema_version=1)
-    container.queue.claim_job = lambda _job_id, _now: None  # type: ignore[method-assign]
+    monkeypatch.setattr(container.queue, "claim_job", lambda _job_id, _now: None)
     with pytest.raises(RuntimeError, match="failed to claim"):
         run_job(
             container,
@@ -169,8 +172,12 @@ def test_dispatch_rejects_unknown_job_type(tmp_path: Path) -> None:
         index_path=tmp_path / "corpus.lancedb",
         clock=FixedClock(AS_OF),
     )
-    with pytest.raises(ValueError, match="unsupported nsqd job type"):
-        dispatch_job(container, SimpleNamespace(type="not-a-job"))
+    pytest.raises(
+        ValueError,
+        Mock(wraps=dispatch_job),
+        container,
+        SimpleNamespace(type="not-a-job"),
+    ).match("unsupported nsqd job type")
 
 
 def test_run_skeleton_remains_intentionally_unconfigured_for_smoke(tmp_path: Path) -> None:

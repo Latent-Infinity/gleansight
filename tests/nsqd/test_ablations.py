@@ -29,16 +29,21 @@ from nsqd.null_adapters import (
     NullCorpusSnapshotStore,
     NullPolicyVerdictStore,
 )
+from tests.nsqd.typing_support import TimedCellStatusOptions
 
 AS_OF = datetime(2024, 1, 1, tzinfo=UTC)
 RECENT = AS_OF - timedelta(days=10)
 NSQD_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "approved" / "nsqd"
 
 
-def _load_card(name: str) -> dict[object, object]:
+def _load_card(name: str) -> dict[str, object]:
     payload = yaml.safe_load((NSQD_FIXTURES / name).read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
-    return payload
+    card: dict[str, object] = {}
+    for key, value in payload.items():
+        assert isinstance(key, str)
+        card[key] = value
+    return card
 
 
 def test_keep_axis_triple_uses_sum_threshold() -> None:
@@ -64,7 +69,7 @@ def test_density_cut_parameter_shifts_sparse_and_active() -> None:
         {"type": "paper", "harvested_at": RECENT},
         {"type": "code", "harvested_at": RECENT},
     ]
-    kwargs = {
+    kwargs: TimedCellStatusOptions = {
         "as_of": AS_OF,
         "snapshot_state": "calibration",
         "inspected": True,
