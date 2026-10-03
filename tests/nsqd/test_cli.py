@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 import nsqd.__main__ as main_module
 from nsqd import cli as cli_module
+from nsqd import tau_runtime as tau_runtime_module
 from nsqd.cli import app
 from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
 from nsqd.null_adapters import HashParaphraseEmbedder
@@ -278,6 +279,7 @@ def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
         nsqd=SimpleNamespace(
             autonomous_tau=SimpleNamespace(
                 writer=SimpleNamespace(base_url="http://127.0.0.1:11434"),
+                adjudicator=SimpleNamespace(executable_path="codex", reasoning_effort="high"),
             )
         )
     )
@@ -316,9 +318,9 @@ def test_autonomous_tau_review_cli_uses_configured_boundary_and_persists_packet(
 
     monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
     monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
-    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
-    monkeypatch.setattr(cli_module, "AutonomousTauLabelingUseCase", FakeAutonomousUseCase)
-    monkeypatch.setattr(cli_module, "build_openai_compat_client", fake_client)
+    monkeypatch.setattr(tau_runtime_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    monkeypatch.setattr(tau_runtime_module, "AutonomousTauLabelingUseCase", FakeAutonomousUseCase)
+    monkeypatch.setattr(tau_runtime_module, "build_openai_compat_client", fake_client)
     monkeypatch.setattr(
         cli_module,
         "create_run_directory",
@@ -470,7 +472,7 @@ def test_load_autonomous_tau_rows_rejects_oversized_packet(
 ) -> None:
     packet = tmp_path / "oversized.json"
     packet.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(cli_module, "MAX_AUTONOMOUS_TAU_PACKET_BYTES", 1)
+    monkeypatch.setattr(tau_runtime_module, "MAX_AUTONOMOUS_TAU_PACKET_BYTES", 1)
 
     with pytest.raises(ValueError, match="exceeds byte limit"):
         cli_module._load_autonomous_tau_rows([packet])
@@ -518,7 +520,8 @@ def test_autonomous_tau_review_cli_reports_frontier_config_error_only_on_escalat
     settings = SimpleNamespace(
         nsqd=SimpleNamespace(
             autonomous_tau=SimpleNamespace(
-                writer=SimpleNamespace(base_url="http://127.0.0.1:11434")
+                writer=SimpleNamespace(base_url="http://127.0.0.1:11434"),
+                adjudicator=SimpleNamespace(executable_path="codex", reasoning_effort="high"),
             )
         )
     )
@@ -543,9 +546,13 @@ def test_autonomous_tau_review_cli_reports_frontier_config_error_only_on_escalat
 
     monkeypatch.setattr(cli_module, "_container", lambda _db, _index, _config=None: container)
     monkeypatch.setattr(cli_module, "_standalone_settings", lambda _config=None: settings)
-    monkeypatch.setattr(cli_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
-    monkeypatch.setattr(cli_module, "AutonomousTauLabelingUseCase", FailingAutonomousUseCase)
-    monkeypatch.setattr(cli_module, "build_openai_compat_client", lambda **_kwargs: object())
+    monkeypatch.setattr(tau_runtime_module, "TauMeasurementEvidenceUseCase", FakeEvidenceUseCase)
+    monkeypatch.setattr(
+        tau_runtime_module, "AutonomousTauLabelingUseCase", FailingAutonomousUseCase
+    )
+    monkeypatch.setattr(
+        tau_runtime_module, "build_openai_compat_client", lambda **_kwargs: object()
+    )
 
     result = CliRunner().invoke(
         app,

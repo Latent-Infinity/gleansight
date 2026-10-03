@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Annotated, Any, NoReturn
 
 import typer
 import yaml
+from pydantic import JsonValue
 
 if TYPE_CHECKING:
     from nsqd.infra.paper_runtime import NsqdPaperRuntime
@@ -21,14 +22,12 @@ from nsqd.app.use_cases import (
     TauMeasurementEvidenceUseCase,
 )
 from nsqd.composition import NsqdContainer, build_container, build_local_ollama_embedder
-from nsqd.domain.artifact_paths import resolve_artifact_path
 from nsqd.domain.coverage import RankGuardBlocked
 from nsqd.domain.diverge import enabled_operators_from_settings
 from nsqd.domain.harvest import HarvestRejected
 from nsqd.domain.novelty import novelty_threshold_tau_from_settings
 from nsqd.domain.project import canonical_reviewed_projection_digest
 from nsqd.domain.status import STATUS_WINDOW_DAYS
-from nsqd.domain.tau_review import autonomous_tau_review_packet_digest
 from nsqd.harvest import run_harvest
 from nsqd.infra.piccolo.stores import PiccoloApprovedDigestStore
 from nsqd.infrastructure.workflow_output import create_run_directory
@@ -36,6 +35,7 @@ from nsqd.ports import ParaphraseEmbedder
 from nsqd.project_runtime import load_verified_projection, run_project
 from nsqd.runner import run_job
 from nsqd.skeleton import run_skeleton
+from nsqd.tau_runtime import build_autonomous_tau_use_case, load_autonomous_tau_rows
 from papers.config.settings import (
     DEFAULT_OLLAMA_BASE_URL,
     Settings,
@@ -43,8 +43,6 @@ from papers.config.settings import (
     public_configuration_error_message,
 )
 from papers.domain.errors import ConfigurationError, PipelineError
-from papers.infra.llm_codex_subscription.client import CodexSubscriptionClient, RoutedLLMClient
-from papers.infra.llm_openai_compat.client import build_openai_compat_client
 from papers.infra.piccolo.database import PiccoloDatabase
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -208,32 +206,8 @@ def _canonical_json_text(value: object) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-MAX_AUTONOMOUS_TAU_PACKET_BYTES = 8 * 1024 * 1024
-
-
-def _load_autonomous_tau_rows(inputs: list[Path]) -> list[dict[str, object]]:
-    rows: list[dict[str, object]] = []
-    for input_path in inputs:
-        path = (
-            input_path if input_path.is_absolute() else resolve_artifact_path(REPO_ROOT, input_path)
-        )
-        if path.stat().st_size > MAX_AUTONOMOUS_TAU_PACKET_BYTES:
-            raise ValueError(f"autonomous tau packet exceeds byte limit: {path}")
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(payload, dict):
-            raise ValueError(f"autonomous tau packet must be an object: {path}")
-        raw_rows = payload.get("rows")
-        if not isinstance(raw_rows, list) or not raw_rows:
-            raise ValueError(f"autonomous tau packet rows are required: {path}")
-        packet_rows: list[dict[str, object]] = []
-        for raw_row in raw_rows:
-            if not isinstance(raw_row, dict):
-                raise ValueError(f"autonomous tau packet row must be an object: {path}")
-            packet_rows.append({str(key): value for key, value in raw_row.items()})
-        if payload.get("packet_digest") != autonomous_tau_review_packet_digest(packet_rows):
-            raise ValueError(f"autonomous tau packet digest drift: {path}")
-        rows.extend(packet_rows)
-    return rows
+def _load_autonomous_tau_rows(inputs: list[Path]) -> list[dict[str, JsonValue]]:
+    return load_autonomous_tau_rows(inputs, repo_root=REPO_ROOT)
 
 
 def _tau_report_output(output: Path | None, *, workflow: str, filename: str) -> Path:
@@ -255,34 +229,8 @@ def _build_autonomous_tau_use_case(
     index: Path,
     config: Path | None,
 ) -> AutonomousTauLabelingUseCase:
-    settings = _standalone_settings(config)
-    container = _container(db, index, config)
-    autonomous_tau = settings.nsqd.autonomous_tau
-    evidence = TauMeasurementEvidenceUseCase(
-        candidates=container.ctx.candidates,
-        approved_projection_digests=container.ctx.approved_projection_digests,
-    )
-    openai_client = build_openai_compat_client(
-        base_url=autonomous_tau.writer.base_url or DEFAULT_OLLAMA_BASE_URL,
-        api_key=None,
-    )
-    adjudicator = getattr(autonomous_tau, "adjudicator", None)
-    llm_client = RoutedLLMClient(
-        default_client=openai_client,
-        provider_clients={
-            "codex_subscription": CodexSubscriptionClient(
-                executable_path=str(getattr(adjudicator, "executable_path", "codex") or "codex"),
-                default_reasoning_effort=str(
-                    getattr(adjudicator, "reasoning_effort", "high") or "high"
-                ),
-            )
-        },
-    )
-    return AutonomousTauLabelingUseCase(
-        measurement_evidence=evidence,
-        llm_client=llm_client,
-        clock=container.clock,
-        settings=autonomous_tau,
+    return build_autonomous_tau_use_case(
+        container=_container(db, index, config), settings=_standalone_settings(config)
     )
 
 
